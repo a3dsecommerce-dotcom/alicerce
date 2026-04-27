@@ -111,8 +111,8 @@ export default function LoginPage() {
           cidade: candidato.cidade,
           estado: candidato.estado,
           tamanho_camisa: candidato.tamanho_camisa,
+          tamanho_calca: candidato.tamanho_calca,
           tamanho_calcado: parseInt(candidato.tamanho_calcado),
-          observacoes_rh: `Tamanho Calça: ${candidato.tamanho_calca}`,
           experiencia_previa: candidato.experiencia,
           ultimo_emprego: candidato.ultimo_emprego
         }]);
