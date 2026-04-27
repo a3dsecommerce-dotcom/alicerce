@@ -1,0 +1,17 @@
+{
+  "name": "Alicerce CRM",
+  "short_name": "Alicerce",
+  "description": "Sistema de Gestão Operacional — Alicerce Construtora e Serviços Ltda",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#070C18",
+  "theme_color": "#E8621A",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
