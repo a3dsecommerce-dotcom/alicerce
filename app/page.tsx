@@ -7,16 +7,16 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 export default function LoginPage() {
   const router = useRouter();
   const [telefone, setTelefone] = useState("");
-  const [codigo, setCodigo] = useState("");
-  const [etapa, setEtapa] = useState<"telefone" | "codigo">("telefone");
+  const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [modalTrabalhe, setModalTrabalhe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [candidato, setCandidato] = useState({ 
     nome: "", telefone: "", cargo: "ASG", cep: "", rua: "", bairro: "", uniforme: "", experiencia: false 
   });
 
-  async function handleRequestOTP(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -29,60 +29,44 @@ export default function LoginPage() {
       return;
     }
 
-    try {
-      // Disparar n8n para enviar o código via WhatsApp
-      const res = await n8n.trigger("auth-otp-send", { telefone: telLimpo });
-      if (res) {
-        setEtapa("codigo");
-      } else {
-        setError("Erro ao enviar código. Tente novamente.");
-      }
-    } catch (err) {
-      setError("Erro de comunicação com o servidor.");
-    } finally {
+    // A senha devem ser os 4 últimos dígitos do telefone
+    const senhaCorreta = telLimpo.slice(-4);
+    if (senha !== senhaCorreta) {
+      setError("Senha incorreta. Use os 4 últimos dígitos do seu telefone.");
       setLoading(false);
+      return;
     }
-  }
-
-  async function handleVerifyOTP(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
 
     try {
-      // Verificar código no Supabase ou via n8n
-      // Aqui simulamos a validação e busca do usuário
+      // Verificar usuário no Supabase
+      // O banco armazena com @s.whatsapp.net ou apenas números
       const { data: user, error: userError } = await supabase
         .from('usuarios')
         .select('*')
-        .eq('telefone', telefone.replace(/\D/g, "") + "@s.whatsapp.net")
+        .or(`telefone.eq.${telLimpo},telefone.eq.${telLimpo}@s.whatsapp.net`)
         .single();
 
       if (userError || !user) {
-        setError("Usuário não cadastrado ou sem permissão de acesso.");
+        setError("Usuário não cadastrado ou inativo.");
         setLoading(false);
         return;
       }
 
-      // Mock de validação de código (em produção, verificar contra tabela login_otp)
-      if (codigo === "1234" || codigo.length === 4) { // Demo: aceita 1234 ou qualquer 4 digitos para facilitar
-        localStorage.setItem("crm_user", JSON.stringify({ 
-          email: user.telefone, 
-          role: user.cargo, 
-          name: user.nome,
-          nivel: user.nivel_acesso 
-        }));
-        
-        let dest = "/dashboard";
-        if (user.cargo === "COMPRADOR") dest = "/dashboard/compras";
-        else if (user.cargo === "ALMOXARIFADO") dest = "/dashboard/almoxarifado";
-        
-        router.push(dest);
-      } else {
-        setError("Código incorreto. Verifique seu WhatsApp.");
-      }
+      // Login bem sucedido
+      localStorage.setItem("crm_user", JSON.stringify({ 
+        email: user.telefone, 
+        role: user.cargo, 
+        name: user.nome,
+        nivel: user.nivel_acesso 
+      }));
+      
+      let dest = "/dashboard";
+      if (user.cargo === "COMPRADOR") dest = "/dashboard/compras";
+      else if (user.cargo === "ALMOXARIFADO") dest = "/dashboard/almoxarifado";
+      
+      router.push(dest);
     } catch (err) {
-      setError("Falha na autenticação.");
+      setError("Falha na autenticação com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -125,44 +109,50 @@ export default function LoginPage() {
         <div className="card" style={{ padding: "2rem" }}>
           <div style={{ marginBottom: "1.5rem" }}>
             <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              {etapa === "telefone" ? "Acesso Soberano" : "Verificação de Identidade"}
+              Acesso Soberano
             </h2>
             <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "0.25rem" }}>
-              {etapa === "telefone" 
-                ? "Informe seu WhatsApp vinculado ao sistema" 
-                : `Enviamos um código para o número ${telefone}`}
+              Utilize seu telefone e os 4 últimos dígitos como senha.
             </p>
           </div>
 
-          <form onSubmit={etapa === "telefone" ? handleRequestOTP : handleVerifyOTP} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            {etapa === "telefone" ? (
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-                  Telefone (DDD + Número)
-                </label>
+          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
+                Telefone (Usuário)
+              </label>
+              <input
+                type="tel" required
+                className="input-field"
+                placeholder="(92) 9XXXX-XXXX"
+                value={telefone}
+                onChange={e => setTelefone(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
+                Senha (4 últimos dígitos)
+              </label>
+              <div style={{ position: "relative" }}>
                 <input
-                  type="tel" required
+                  type={showPassword ? "text" : "password"} 
+                  required maxLength={4}
                   className="input-field"
-                  placeholder="(92) 9XXXX-XXXX"
-                  value={telefone}
-                  onChange={e => setTelefone(e.target.value)}
+                  placeholder="****"
+                  value={senha}
+                  onChange={e => setSenha(e.target.value)}
+                  style={{ paddingRight: "2.5rem" }}
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
-            ) : (
-              <div>
-                <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-                  Código de 4 dígitos
-                </label>
-                <input
-                  type="text" required maxLength={4}
-                  className="input-field"
-                  placeholder="0 0 0 0"
-                  value={codigo}
-                  onChange={e => setCodigo(e.target.value)}
-                  style={{ textAlign: "center", fontSize: "1.5rem", letterSpacing: "0.5rem", fontWeight: "bold" }}
-                />
-              </div>
-            )}
+            </div>
 
             {error && (
               <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "0.75rem", fontSize: "0.8rem", color: "#EF4444", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -174,10 +164,11 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <div style={{ width: "14px", height: "14px", border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  Processando...
+                  Autenticando...
                 </>
-              ) : etapa === "telefone" ? "Receber Código via WhatsApp" : "Verificar e Entrar"}
+              ) : "Entrar no Sistema"}
             </button>
+          </form>
 
             {etapa === "codigo" && (
               <button type="button" onClick={() => setEtapa("telefone")} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "0.75rem", cursor: "pointer", marginTop: "0.5rem" }}>
