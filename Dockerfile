@@ -11,13 +11,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# CRÍTICO: Next.js precisa das variáveis NEXT_PUBLIC no tempo de BUILD
-# O EasyPanel deve passar estas variáveis como BUILD ARGS ou elas devem estar no .env
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+# O arquivo .env.production será lido automaticamente pelo Next.js durante o build.
+# Certifique-se de que o arquivo .env.production foi enviado para o GitHub.
 ENV NEXT_TELEMETRY_DISABLED 1
 
 RUN npm run build
