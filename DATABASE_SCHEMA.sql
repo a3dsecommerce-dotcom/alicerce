@@ -180,6 +180,16 @@ CREATE TABLE IF NOT EXISTS tickets_sla (
   finalizado_at TIMESTAMP WITH TIME ZONE
 );
 
+-- 13. CONTROLE DE LOGIN (OTP WHATSAPP)
+CREATE TABLE IF NOT EXISTS login_otp (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  telefone TEXT NOT NULL,
+  codigo TEXT NOT NULL,
+  expira_em TIMESTAMP WITH TIME ZONE DEFAULT (now() + interval '10 minutes'),
+  usado BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
 -- ==========================================================
 -- 🛠️ TRIGGERS DE AUTOMAÇÃO
 -- ==========================================================
