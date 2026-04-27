@@ -454,22 +454,6 @@ export default function LoginPage() {
           </div>
         </AdaptiveModal>
 
-        {/* Níveis de acesso */}
-        <div style={{ marginTop: "1rem", display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap" }}>
-          {[
-            { label: "Colaborador", color: "var(--text-muted)" },
-            { label: "Encarregado", color: "var(--info)" },
-            { label: "RH / Supervisor", color: "var(--warning)" },
-            { label: "Diretoria", color: "var(--brand)" },
-          ].map(n => (
-            <span key={n.label} style={{ fontSize: "0.7rem", color: n.color, fontWeight: 500 }}>● {n.label}</span>
-          ))}
-        </div>
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
-    </div>
   );
 }
