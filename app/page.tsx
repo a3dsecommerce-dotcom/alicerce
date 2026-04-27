@@ -65,6 +65,9 @@ export default function LoginPage() {
         return;
       }
 
+      // Set cookie to bypass middleware checks
+      document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
+
       localStorage.setItem("crm_user", JSON.stringify({ 
         email: user.telefone, 
         role: user.cargo, 
