@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Shield, Zap } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,8 +77,9 @@ export default function LoginPage() {
       else if (user.cargo === "ALMOXARIFADO") dest = "/dashboard/almoxarifado";
       
       router.push(dest);
-    } catch (err) {
-      setError("Erro de conexão.");
+    } catch (err: any) {
+      console.error("ERRO LOGIN DETALHADO:", err);
+      setError(`Erro: ${err.message || String(err)}. Verifique o Console (F12).`);
     } finally {
       setLoading(false);
     }
