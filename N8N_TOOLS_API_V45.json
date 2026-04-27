@@ -1,0 +1,16 @@
+{
+  "name": "1. TOOLS API UNIVERSAL V45",
+  "nodes": [
+    { "id": "tr", "name": "Tool Trigger", "type": "n8n-nodes-base.executeWorkflowTrigger", "typeVersion": 1, "position": [0, 0] },
+    { "id": "sw_t", "name": "Tool Router", "type": "n8n-nodes-base.switch", "typeVersion: 1, "position": [800, 0], "parameters": { "dataType": "string", "value1": "={{ $json.tool_action }}", "rules": { "rules": [
+        { "value2": "CRIAR_OCORRENCIA", "output": 0 }, { "value2": "LER_ALMOXARIFADO", "output": 1 }, { "value2": "LER_OCORRENCIAS_RH", "output": 2 }, { "value2": "AGENDAR_REUNIAO", "output": 3 }, { "value2": "LER_RH_COLABORADOR", "output": 4 }, { "value2": "ATUALIZAR_ESTOQUE", "output": 5 }, { "value2": "SOLICITAR_VOLANTE", "output": 6 }, { "value2": "CONFIRMAR_VOLANTE", "output": 7 }, { "value2": "LER_PRESENCA_UNIDADE", "output": 8 }, { "value2": "REGISTRAR_PONTO", "output": 9 }, { "value2": "ADMITIR_COLABORADOR", "output": 10 }, { "value2": "DEMITIR_COLABORADOR", "output": 11 }, { "value2": "ADVERTIR_COLABORADOR", "output": 12 }, { "value2": "ANALISAR_REQUISICAO", "output": 13 }, { "value2": "REGISTRAR_ENTREGA", "output": 14 }, { "value2": "CONSULTAR_REQUISICAO", "output": 15 }, { "value2": "GERAR_RECIBO", "output": 16 }, { "value2": "CALCULAR_PEDIDO", "output": 17 }
+    ] } } },
+    { "id": "db_rh", "name": "Supabase Fetch Colaborador", "type": "n8n-nodes-base.supabase", "typeVersion: 1, "position": [1100, 250], "parameters": { "operation": "getAll", "table": "usuarios" } },
+    { "id": "adm_supa", "name": "Supabase INSERT Novo Colaborador", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [1600, 1700], "parameters": { "operation": "create", "table": "usuarios" } },
+    { "id": "dem_supa", "name": "Supabase Desativar Demitido", "type": "n8n-nodes-base.supabase", "typeVersion: 1, "position": [2100, 2100], "parameters": { "operation": "update", "table": "usuarios" } }
+  ],
+  "connections": {
+    "Tool Trigger": { "main": [[{ "node": "Tool Router", "type": "main", "index": 0 }]] },
+    "Tool Router": { "main": [ [], [], [], [], [{ "node": "Supabase Fetch Colaborador", "type": "main", "index": 0 }], [], [], [], [], [], [{ "node": "Supabase INSERT Novo Colaborador", "type": "main", "index": 0 }], [{ "node": "Supabase Desativar Demitido", "type": "main", "index": 0 }] ] }
+  }
+}

@@ -230,3 +230,45 @@ FOR EACH ROW EXECUTE FUNCTION audit_log_function();
 -- ==========================================================
 -- ✅ FIM DO SCHEMA MASTER V800.0
 -- ==========================================================
+-- =================================================================================
+-- V820.0: SUPORTE A RAG (VECTOR STORE) & AUDITORIA AVANÇADA
+-- =================================================================================
+
+-- Ativar extensão de vetores (Necessário para IA ler documentos)
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Tabela para Armazenamento de Documentos e Manuais (RAG)
+CREATE TABLE IF NOT EXISTS documents (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    content text, -- O texto do manual
+    metadata jsonb, -- Nome do arquivo, página, etc
+    embedding vector(1536) -- Vetor gerado pela IA (Gemini/OpenAI)
+);
+
+CREATE INDEX IF NOT EXISTS documents_embedding_idx ON documents USING hnsw (embedding vector_cosine_ops);
+
+-- Tabela para Saúde do Sistema (Monitoramento de Crashes)
+CREATE TABLE IF NOT EXISTS system_health (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    workflow_name text,
+    error_node text,
+    error_message text,
+    status text DEFAULT 'CRITICAL',
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now())
+);
+
+-- Tabela de Coeficientes de Suprimentos
+CREATE TABLE IF NOT EXISTS suprimentos_coeficientes (
+    id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    produto text UNIQUE,
+    coeficiente numeric(10,4), -- Qtd por ASG
+    unidade_medida text,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now())
+);
+
+-- Inserir alguns coeficientes básicos de exemplo
+INSERT INTO suprimentos_coeficientes (produto, coeficiente, unidade_medida) VALUES
+('Detergente 500ml', 2.0000, 'frasco'),
+('Papel Higiênico (rolo)', 4.0000, 'un'),
+('Sabonete Líquido 5L', 0.5000, 'galão')
+ON CONFLICT (produto) DO NOTHING;
