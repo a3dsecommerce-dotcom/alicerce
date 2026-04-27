@@ -12,9 +12,19 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [modalTrabalhe, setModalTrabalhe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Estado Expandido do Candidato (ONDA 2)
   const [candidato, setCandidato] = useState({ 
-    nome: "", telefone: "", cargo: "ASG", cep: "", rua: "", bairro: "", uniforme: "", experiencia: false 
+    nome: "", cpf: "", rg: "", pis: "", titulo: "", 
+    telefone: "", email: "", data_nascimento: "",
+    cargo: "ASG", escolaridade: "Médio",
+    cep: "", rua: "", numero: "", bairro: "", 
+    tamanho_camisa: "M", tamanho_calcado: "40",
+    experiencia: false, ultimo_emprego: ""
   });
+
+  // Passo do Modal de Cadastro
+  const [step, setStep] = useState(1);
 
   // Função principal de login: valida telefone e senha (4 últimos dígitos)
   async function handleLogin(e: React.FormEvent) {
@@ -22,38 +32,38 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    // Normalização: remove caracteres não numéricos do telefone
     const telLimpo = telefone.replace(/\D/g, "");
     if (telLimpo.length < 10) {
-      setError("Por favor, insira um telefone válido com DDD.");
+      setError("Telefone inválido.");
       setLoading(false);
       return;
     }
 
-    // Regra de Negócio: A senha são os 4 últimos dígitos do telefone cadastrado
     const senhaCorreta = telLimpo.slice(-4);
     if (senha !== senhaCorreta) {
-      setError("Senha incorreta. Use os 4 últimos dígitos do seu telefone.");
+      setError("Senha incorreta (últimos 4 dígitos).");
       setLoading(false);
       return;
     }
 
     try {
-      // Consulta ao Supabase: verifica se o colaborador existe e está ativo
-      // Aceita formatos com ou sem o sufixo do WhatsApp
+      // Busca Omni-Format (Com 55, Sem 55, Com WhatsApp suffix)
+      const telCom55 = telLimpo.startsWith("55") ? telLimpo : `55${telLimpo}`;
+      const telSem55 = telLimpo.startsWith("55") ? telLimpo.slice(2) : telLimpo;
+
       const { data: user, error: userError } = await supabase
         .from('usuarios')
         .select('*')
-        .or(`telefone.eq.${telLimpo},telefone.eq.${telLimpo}@s.whatsapp.net`)
+        .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telCom55}@s.whatsapp.net,telefone.eq.${telSem55}@s.whatsapp.net`)
         .single();
 
       if (userError || !user) {
-        setError("Usuário não cadastrado ou inativo.");
+        console.warn("Login falhou para:", telLimpo, userError);
+        setError("Usuário não encontrado. Verifique se o número está no banco.");
         setLoading(false);
         return;
       }
 
-      // Persistência local da sessão (Role Based Access Control)
       localStorage.setItem("crm_user", JSON.stringify({ 
         email: user.telefone, 
         role: user.cargo, 
@@ -67,7 +77,45 @@ export default function LoginPage() {
       
       router.push(dest);
     } catch (err) {
-      setError("Falha na autenticação com o servidor.");
+      setError("Erro de conexão.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCadastroCandidato() {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('candidatos')
+        .insert([{
+          nome: candidato.nome,
+          cpf: candidato.cpf.replace(/\D/g, ""),
+          rg: candidato.rg,
+          pis: candidato.pis,
+          titulo_eleitor: candidato.titulo,
+          telefone: candidato.telefone.replace(/\D/g, ""),
+          email: candidato.email,
+          data_nascimento: candidato.data_nascimento,
+          cargo_pretendido: candidato.cargo,
+          escolaridade: candidato.escolaridade,
+          cep: candidato.cep.replace(/\D/g, ""),
+          rua: candidato.rua,
+          numero: candidato.numero,
+          bairro: candidato.bairro,
+          tamanho_camisa: candidato.tamanho_camisa,
+          tamanho_calcado: parseInt(candidato.tamanho_calcado),
+          experiencia_previa: candidato.experiencia,
+          ultimo_emprego: candidato.ultimo_emprego
+        }]);
+
+      if (error) throw error;
+      
+      alert("Cadastro realizado com sucesso! Aguarde contato do RH.");
+      setModalTrabalhe(false);
+      setStep(1);
+    } catch (err: any) {
+      alert("Erro ao cadastrar: " + (err.message || "Verifique os dados."));
     } finally {
       setLoading(false);
     }
@@ -171,13 +219,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-            {etapa === "codigo" && (
-              <button type="button" onClick={() => setEtapa("telefone")} style={{ background: "none", border: "none", color: "var(--text-muted)", fontSize: "0.75rem", cursor: "pointer", marginTop: "0.5rem" }}>
-                Alterar número de telefone
-              </button>
-            )}
-          </form>
-
           <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid var(--border)", textAlign: "center", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
               Sua segurança é nossa prioridade. O acesso é biométrico via dispositivo.
@@ -188,83 +229,154 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Modal Trabalhe Conosco Padronizado */}
+        {/* Modal de Cadastro Avançado V45.0 */}
         <AdaptiveModal
-          title="Pré-Cadastro de Candidato"
+          title={`Cadastro de Candidato (Passo ${step} de 3)`}
           isOpen={modalTrabalhe}
           onClose={() => setModalTrabalhe(false)}
-          width="550px"
+          width="600px"
         >
-          <div className="flex flex-col gap-4">
-            <p className="text-[0.8rem] text-[var(--text-secondary)] mb-2">Preencha seus dados para entrar no nosso banco de talentos oficial.</p>
+          <div className="flex flex-col gap-6">
             
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className="label-sm">Nome Completo *</label>
-                <input className="input-field" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Seu nome completo" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label-sm">Telefone / WhatsApp *</label>
-                  <input className="input-field" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(XX) 99999-9999" />
-                </div>
-                <div>
-                  <label className="label-sm">CEP *</label>
-                  <input className="input-field" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div style={{ gridColumn: "span 2" }}>
-                  <label className="label-sm">Rua / Av *</label>
-                  <input className="input-field" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Nome da rua" />
-                </div>
-                <div>
-                  <label className="label-sm">Bairro *</label>
-                  <input className="input-field" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Bairro" />
-                </div>
-                <div>
-                  <label className="label-sm">Cidade</label>
-                  <input className="input-field" value="Manaus / AM" disabled />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label-sm">Cargo de Interesse *</label>
-                  <select className="input-field" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
-                    <option value="ASG">ASG</option>
-                    <option value="Porteiro">Porteiro</option>
-                    <option value="Zelador">Zelador</option>
-                    <option value="Encarregado">Encarregado</option>
-                    <option value="Administrativo">Administrativo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-sm">Tamanho Uniforme *</label>
-                  <select className="input-field" required value={candidato.uniforme} onChange={e => setCandidato({...candidato, uniforme: e.target.value})}>
-                    <option value="">Selecione...</option>
-                    <option value="P">P</option>
-                    <option value="M">M</option>
-                    <option value="G">G</option>
-                    <option value="GG">GG</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 mt-2">
-                <input type="checkbox" id="exp" checked={candidato.experiencia} onChange={e => setCandidato({...candidato, experiencia: e.target.checked})} className="w-4 h-4 cursor-pointer" />
-                <label htmlFor="exp" className="text-xs text-[var(--text-primary)] cursor-pointer">Já possuo experiência na função selecionada</label>
-              </div>
+            {/* PROGRESS BAR */}
+            <div className="w-full h-1.5 bg-[var(--bg-base)] rounded-full overflow-hidden flex">
+               {[1,2,3].map(i => (
+                 <div key={i} className={`h-full flex-1 border-r border-[var(--bg-card)] transition-all ${i <= step ? 'bg-[var(--brand)]' : 'bg-transparent'}`} />
+               ))}
             </div>
-            
-            <button 
-              className="btn-brand w-full mt-4 !h-14"
-              onClick={() => { alert("Cadastro enviado com sucesso para o RH!"); setModalTrabalhe(false); }}
-            >
-              Enviar Currículo para Triagem
-            </button>
+
+            {step === 1 && (
+              <div className="flex flex-col gap-4 animate-fade-in">
+                <h3 className="text-xs font-black uppercase text-[var(--brand)]">1. Dados Pessoais & Documentos</h3>
+                <div>
+                  <label className="label-sm">Nome Completo *</label>
+                  <input className="input-field" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Seu nome completo" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm">CPF *</label>
+                    <input className="input-field" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
+                  </div>
+                  <div>
+                    <label className="label-sm">RG / Identidade</label>
+                    <input className="input-field" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Número do RG" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm">PIS</label>
+                    <input className="input-field" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número PIS" />
+                  </div>
+                  <div>
+                    <label className="label-sm">Título de Eleitor</label>
+                    <input className="input-field" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Número do Título" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm">Telefone / WhatsApp *</label>
+                    <input className="input-field" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
+                  </div>
+                  <div>
+                    <label className="label-sm">Data de Nascimento *</label>
+                    <input type="date" className="input-field" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="flex flex-col gap-4 animate-fade-in">
+                <h3 className="text-xs font-black uppercase text-[var(--brand)]">2. Endereço & Localização</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-1">
+                    <label className="label-sm">CEP *</label>
+                    <input className="input-field" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="label-sm">Logradouro / Rua *</label>
+                    <input className="input-field" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Ex: Av. Sete de Setembro" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                   <div className="col-span-1">
+                    <label className="label-sm">Número *</label>
+                    <input className="input-field" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="S/N ou Nº" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="label-sm">Bairro *</label>
+                    <input className="input-field" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Nome do Bairro" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="flex flex-col gap-4 animate-fade-in">
+                <h3 className="text-xs font-black uppercase text-[var(--brand)]">3. Cargo, Uniforme & Experiência</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm">Cargo de Interesse *</label>
+                    <select className="input-field" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
+                      <option value="ASG">ASG</option>
+                      <option value="Porteiro">Porteiro</option>
+                      <option value="Zelador">Zelador</option>
+                      <option value="Encarregado">Encarregado</option>
+                      <option value="Administrativo">Administrativo</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-sm">Escolaridade *</label>
+                    <select className="input-field" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
+                      <option value="Fundamental">Fundamental</option>
+                      <option value="Médio">Ensino Médio</option>
+                      <option value="Superior">Superior</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm">Tamanho Camisa *</label>
+                    <select className="input-field" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
+                      <option value="P">P</option>
+                      <option value="M">M</option>
+                      <option value="G">G</option>
+                      <option value="GG">GG</option>
+                      <option value="XG">XG</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-sm">Número do Calçado *</label>
+                    <input type="number" min="30" max="50" className="input-field" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} />
+                  </div>
+                </div>
+                <div>
+                  <label className="label-sm">Último Emprego / Experiência</label>
+                  <textarea className="input-field" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Conte sobre sua última experiência profissional..." />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="exp" checked={candidato.experiencia} onChange={e => setCandidato({...candidato, experiencia: e.target.checked})} className="w-4 h-4 cursor-pointer" />
+                  <label htmlFor="exp" className="text-xs font-bold text-[var(--text-primary)] cursor-pointer">Confirmo que as informações são verdadeiras</label>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4 mt-4">
+              {step > 1 && (
+                <button className="flex-1 px-8 py-4 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-2xl font-black uppercase text-[10px]" onClick={() => setStep(step - 1)}>
+                  Voltar
+                </button>
+              )}
+              {step < 3 ? (
+                <button className="flex-[2] btn-brand !h-14" onClick={() => setStep(step + 1)}>
+                  Próximo Passo
+                </button>
+              ) : (
+                <button className="flex-[2] btn-brand !h-14" onClick={handleCadastroCandidato} disabled={loading}>
+                  {loading ? "Finalizando..." : "Concluir Cadastro"}
+                </button>
+              )}
+            </div>
           </div>
         </AdaptiveModal>
 
