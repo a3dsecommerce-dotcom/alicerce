@@ -20,7 +20,7 @@ export default function LoginPage() {
     telefone: "", email: "", data_nascimento: "",
     cargo: "ASG", escolaridade: "Ensino Médio Completo",
     cep: "", rua: "", numero: "", bairro: "", cidade: "Manaus", estado: "AM",
-    tamanho_camisa: "M", tamanho_calcado: "40",
+    tamanho_camisa: "M", tamanho_calca: "38", tamanho_calcado: "40",
     experiencia: false, ultimo_emprego: ""
   });
 
@@ -112,6 +112,7 @@ export default function LoginPage() {
           estado: candidato.estado,
           tamanho_camisa: candidato.tamanho_camisa,
           tamanho_calcado: parseInt(candidato.tamanho_calcado),
+          observacoes_rh: `Tamanho Calça: ${candidato.tamanho_calca}`,
           experiencia_previa: candidato.experiencia,
           ultimo_emprego: candidato.ultimo_emprego
         }]);
@@ -129,112 +130,125 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-bg" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-      {/* Partículas decorativas */}
-      <div style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
-        {[...Array(6)].map((_, i) => (
-          <div key={i} style={{
-            position: "absolute", borderRadius: "50%",
-            background: i % 2 === 0 ? "rgba(232,98,26,0.06)" : "rgba(59,130,246,0.04)",
-            width: `${120 + i * 60}px`, height: `${120 + i * 60}px`,
-            top: `${10 + i * 15}%`, left: `${5 + i * 18}%`,
-            filter: "blur(40px)"
-          }} />
-        ))}
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-[#0a0a0a] overflow-hidden">
+      
+      {/* BACKGROUND PREMIUM SOBERANO */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px] mix-blend-screen" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
-      <div className="animate-fade-in" style={{ width: "100%", maxWidth: "420px", position: "relative", zIndex: 1 }}>
-        {/* Logo / Brand */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: "200px", height: "80px",
-            marginBottom: "0.5rem",
-          }}>
-            <img src="/logo.png" alt="Alicerce Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+      <div className="animate-fade-in w-full max-w-[460px] relative z-10 flex flex-col items-center">
+        
+        {/* LOGO & BRANDING */}
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="w-24 h-24 mb-4 p-4 rounded-2xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-md flex items-center justify-center relative group">
+            <div className="absolute inset-0 rounded-2xl border border-[var(--brand)]/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-105" />
+            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain drop-shadow-xl" />
           </div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-            Alicerce ERP
+          <h1 className="text-2xl font-black text-white tracking-tight mb-1">
+            Alicerce <span className="text-[var(--brand)]">ERP</span>
           </h1>
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
-            Intelligence Operations Center
+          <p className="text-[0.7rem] font-bold text-white/50 uppercase tracking-[0.3em]">
+            Sovereign Command Center
           </p>
         </div>
 
-        {/* Card de Login */}
-        <div className="card" style={{ padding: "2rem" }}>
-          <div style={{ marginBottom: "1.5rem" }}>
-            <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "var(--text-primary)", margin: 0 }}>
-              Acesso Soberano
+        {/* CARD DE LOGIN "CARTÃO DE VISITAS" */}
+        <div className="w-full bg-white/[0.02] backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-50" />
+          
+          <div className="mb-8">
+            <h2 className="text-lg font-black text-white flex items-center gap-2">
+              <Shield size={20} className="text-[var(--brand)]" />
+              Acesso Restrito
             </h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", marginTop: "0.25rem" }}>
-              Utilize seu telefone e os 4 últimos dígitos como senha.
+            <p className="text-xs text-white/40 mt-1">
+              Credenciais biométricas atreladas ao número de contato.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-                Telefone (Usuário)
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <div className="relative group">
+              <label className="absolute -top-2.5 left-4 bg-[#111] px-2 text-[0.65rem] font-bold text-white/60 uppercase tracking-wider group-focus-within:text-[var(--brand)] transition-colors z-10">
+                Identificação (Telefone)
               </label>
               <input
                 type="tel" required
-                className="input-field"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white placeholder-white/20 focus:border-[var(--brand)]/50 focus:ring-1 focus:ring-[var(--brand)]/50 outline-none transition-all"
                 placeholder="(92) 9XXXX-XXXX"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
               />
             </div>
 
-            <div>
-              <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 500, color: "var(--text-secondary)", marginBottom: "0.375rem" }}>
-                Senha (4 últimos dígitos)
+            <div className="relative group">
+              <label className="absolute -top-2.5 left-4 bg-[#111] px-2 text-[0.65rem] font-bold text-white/60 uppercase tracking-wider group-focus-within:text-[var(--brand)] transition-colors z-10">
+                Chave de Acesso (4 Dígitos)
               </label>
-              <div style={{ position: "relative" }}>
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="input-field"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 pr-12 text-white tracking-[0.2em] placeholder-white/20 focus:border-[var(--brand)]/50 focus:ring-1 focus:ring-[var(--brand)]/50 outline-none transition-all"
                   placeholder="****"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
-                  style={{ paddingRight: "2.5rem" }}
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "0.75rem", fontSize: "0.8rem", color: "#EF4444", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <Shield size={14} /> {error}
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-start gap-2">
+                <Shield size={14} className="shrink-0 mt-0.5" /> 
+                <span>{error}</span>
               </div>
             )}
 
-            <button type="submit" className="btn-brand" disabled={loading} style={{ width: "100%", justifyContent: "center", marginTop: "0.5rem", opacity: loading ? 0.7 : 1 }}>
+            <button 
+              type="submit" 
+              disabled={loading} 
+              className="mt-2 w-full py-4 rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-dark)] hover:opacity-90 text-white font-black uppercase text-sm tracking-widest shadow-lg shadow-[var(--brand)]/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+            >
               {loading ? (
                 <>
-                  <div style={{ width: "14px", height: "14px", border: "2px solid rgba(255,255,255,0.3)", borderTop: "2px solid white", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  Autenticando...
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Conectando...
                 </>
-              ) : "Entrar no Sistema"}
+              ) : (
+                <>
+                  Entrar no Hub
+                  <Zap size={16} fill="currentColor" />
+                </>
+              )}
             </button>
           </form>
 
-          <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid var(--border)", textAlign: "center", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              Sua segurança é nossa prioridade. O acesso é biométrico via dispositivo.
-            </p>
-            <button onClick={() => setModalTrabalhe(true)} style={{ background: "none", border: "none", color: "var(--brand)", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", textDecoration: "underline" }}>
-              Quer fazer parte da equipe? Trabalhe Conosco
+          <div className="mt-8 pt-6 border-t border-white/5 text-center flex flex-col gap-3">
+            <button 
+              onClick={() => setModalTrabalhe(true)} 
+              className="text-[0.75rem] font-bold text-white/50 hover:text-[var(--brand)] uppercase tracking-wider transition-colors"
+            >
+              Trabalhe Conosco (Cadastro)
             </button>
           </div>
         </div>
+        
+        {/* FOOTER DO CARTÃO */}
+        <div className="mt-8 flex gap-6 text-white/20 text-[0.65rem] font-black uppercase tracking-widest">
+          <span>Alicerce © 2026</span>
+          <span>•</span>
+          <span>Sovereign Security</span>
+        </div>
+      </div>
 
         {/* Modal de Cadastro Avançado V45.0 (PREMIUM SOBERANO) */}
         <AdaptiveModal
@@ -385,6 +399,20 @@ export default function LoginPage() {
                     </select>
                   </div>
                   <div>
+                    <label className="label-sm text-[var(--text-secondary)]">Tamanho do Fardamento (Calça) *</label>
+                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})}>
+                      <option value="36">36</option>
+                      <option value="38">38</option>
+                      <option value="40">40</option>
+                      <option value="42">42</option>
+                      <option value="44">44</option>
+                      <option value="46">46</option>
+                      <option value="48">48</option>
+                      <option value="50">50</option>
+                      <option value="52">52+</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
                     <label className="label-sm text-[var(--text-secondary)]">Numeração do Calçado de Segurança *</label>
                     <input type="number" min="30" max="50" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
                   </div>
