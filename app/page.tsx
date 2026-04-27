@@ -18,8 +18,8 @@ export default function LoginPage() {
   const [candidato, setCandidato] = useState({ 
     nome: "", cpf: "", rg: "", pis: "", titulo: "", 
     telefone: "", email: "", data_nascimento: "",
-    cargo: "ASG", escolaridade: "Médio",
-    cep: "", rua: "", numero: "", bairro: "", 
+    cargo: "ASG", escolaridade: "Ensino Médio Completo",
+    cep: "", rua: "", numero: "", bairro: "", cidade: "Manaus", estado: "AM",
     tamanho_camisa: "M", tamanho_calcado: "40",
     experiencia: false, ultimo_emprego: ""
   });
@@ -108,6 +108,8 @@ export default function LoginPage() {
           rua: candidato.rua,
           numero: candidato.numero,
           bairro: candidato.bairro,
+          cidade: candidato.cidade,
+          estado: candidato.estado,
           tamanho_camisa: candidato.tamanho_camisa,
           tamanho_calcado: parseInt(candidato.tamanho_calcado),
           experiencia_previa: candidato.experiencia,
@@ -234,151 +236,190 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Modal de Cadastro Avançado V45.0 */}
+        {/* Modal de Cadastro Avançado V45.0 (PREMIUM SOBERANO) */}
         <AdaptiveModal
-          title={`Cadastro de Candidato (Passo ${step} de 3)`}
+          title={`Triagem de Talentos (Passo ${step} de 4)`}
           isOpen={modalTrabalhe}
-          onClose={() => setModalTrabalhe(false)}
-          width="600px"
+          onClose={() => { setModalTrabalhe(false); setStep(1); }}
+          width="800px"
         >
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 p-2">
             
-            {/* PROGRESS BAR */}
-            <div className="w-full h-1.5 bg-[var(--bg-base)] rounded-full overflow-hidden flex">
-               {[1,2,3].map(i => (
-                 <div key={i} className={`h-full flex-1 border-r border-[var(--bg-card)] transition-all ${i <= step ? 'bg-[var(--brand)]' : 'bg-transparent'}`} />
+            {/* PROGRESS BAR EXECUTIVA */}
+            <div className="w-full h-2 bg-[var(--bg-base)] rounded-full overflow-hidden flex shadow-inner">
+               {[1,2,3,4].map(i => (
+                 <div key={i} className={`h-full flex-1 border-r border-[var(--bg-card)] transition-all duration-500 ${i <= step ? 'bg-gradient-to-r from-[var(--brand)] to-[var(--brand-hover)]' : 'bg-transparent'}`} />
                ))}
             </div>
 
             {step === 1 && (
-              <div className="flex flex-col gap-4 animate-fade-in">
-                <h3 className="text-xs font-black uppercase text-[var(--brand)]">1. Dados Pessoais & Documentos</h3>
-                <div>
-                  <label className="label-sm">Nome Completo *</label>
-                  <input className="input-field" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Seu nome completo" />
+              <div className="flex flex-col gap-5 animate-fade-in">
+                <div className="border-b border-[var(--border)] pb-2 mb-2">
+                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">1. Identificação Básica</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Preencha seus dados de contato e identificação primária.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm">CPF *</label>
-                    <input className="input-field" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="label-sm text-[var(--text-secondary)]">Nome Completo Oficial *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento de identidade" />
                   </div>
                   <div>
-                    <label className="label-sm">RG / Identidade</label>
-                    <input className="input-field" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Número do RG" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm">PIS</label>
-                    <input className="input-field" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número PIS" />
+                    <label className="label-sm text-[var(--text-secondary)]">Telefone / WhatsApp *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
                   </div>
                   <div>
-                    <label className="label-sm">Título de Eleitor</label>
-                    <input className="input-field" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Número do Título" />
+                    <label className="label-sm text-[var(--text-secondary)]">E-mail de Contato *</label>
+                    <input type="email" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="seu.email@exemplo.com" />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm">Telefone / WhatsApp *</label>
-                    <input className="input-field" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
-                  </div>
-                  <div>
-                    <label className="label-sm">Data de Nascimento *</label>
-                    <input type="date" className="input-field" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
+                  <div className="md:col-span-2">
+                    <label className="label-sm text-[var(--text-secondary)]">Data de Nascimento *</label>
+                    <input type="date" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
                   </div>
                 </div>
               </div>
             )}
 
             {step === 2 && (
-              <div className="flex flex-col gap-4 animate-fade-in">
-                <h3 className="text-xs font-black uppercase text-[var(--brand)]">2. Endereço & Localização</h3>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-1">
-                    <label className="label-sm">CEP *</label>
-                    <input className="input-field" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="label-sm">Logradouro / Rua *</label>
-                    <input className="input-field" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Ex: Av. Sete de Setembro" />
-                  </div>
+              <div className="flex flex-col gap-5 animate-fade-in">
+                <div className="border-b border-[var(--border)] pb-2 mb-2">
+                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">2. Documentação Oficial</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Dados necessários para o processo de admissão (eSocial).</p>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                   <div className="col-span-1">
-                    <label className="label-sm">Número *</label>
-                    <input className="input-field" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="S/N ou Nº" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">CPF *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
                   </div>
-                  <div className="col-span-2">
-                    <label className="label-sm">Bairro *</label>
-                    <input className="input-field" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Nome do Bairro" />
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">RG / Identidade</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Número do RG" />
+                  </div>
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">PIS / NIS</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
+                  </div>
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">Título de Eleitor</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Número do Título" />
                   </div>
                 </div>
               </div>
             )}
 
             {step === 3 && (
-              <div className="flex flex-col gap-4 animate-fade-in">
-                <h3 className="text-xs font-black uppercase text-[var(--brand)]">3. Cargo, Uniforme & Experiência</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm">Cargo de Interesse *</label>
-                    <select className="input-field" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
-                      <option value="ASG">ASG</option>
-                      <option value="Porteiro">Porteiro</option>
-                      <option value="Zelador">Zelador</option>
-                      <option value="Encarregado">Encarregado</option>
-                      <option value="Administrativo">Administrativo</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label-sm">Escolaridade *</label>
-                    <select className="input-field" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
-                      <option value="Fundamental">Fundamental</option>
-                      <option value="Médio">Ensino Médio</option>
-                      <option value="Superior">Superior</option>
-                    </select>
-                  </div>
+              <div className="flex flex-col gap-5 animate-fade-in">
+                <div className="border-b border-[var(--border)] pb-2 mb-2">
+                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">3. Endereço e Logística</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Para análise de rota e auxílio transporte.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm">Tamanho Camisa *</label>
-                    <select className="input-field" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
-                      <option value="P">P</option>
-                      <option value="M">M</option>
-                      <option value="G">G</option>
-                      <option value="GG">GG</option>
-                      <option value="XG">XG</option>
-                    </select>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-1">
+                    <label className="label-sm text-[var(--text-secondary)]">CEP *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
                   </div>
-                  <div>
-                    <label className="label-sm">Número do Calçado *</label>
-                    <input type="number" min="30" max="50" className="input-field" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} />
+                  <div className="md:col-span-2">
+                    <label className="label-sm text-[var(--text-secondary)]">Logradouro / Rua *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Ex: Av. Sete de Setembro" />
                   </div>
-                </div>
-                <div>
-                  <label className="label-sm">Último Emprego / Experiência</label>
-                  <textarea className="input-field" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Conte sobre sua última experiência profissional..." />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="exp" checked={candidato.experiencia} onChange={e => setCandidato({...candidato, experiencia: e.target.checked})} className="w-4 h-4 cursor-pointer" />
-                  <label htmlFor="exp" className="text-xs font-bold text-[var(--text-primary)] cursor-pointer">Confirmo que as informações são verdadeiras</label>
+                  <div className="md:col-span-1">
+                    <label className="label-sm text-[var(--text-secondary)]">Número *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="S/N ou Nº" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label-sm text-[var(--text-secondary)]">Bairro *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Nome do Bairro" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label-sm text-[var(--text-secondary)]">Cidade *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
+                  </div>
+                  <div className="md:col-span-1">
+                    <label className="label-sm text-[var(--text-secondary)]">UF *</label>
+                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="flex gap-4 mt-4">
+            {step === 4 && (
+              <div className="flex flex-col gap-5 animate-fade-in">
+                <div className="border-b border-[var(--border)] pb-2 mb-2">
+                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">4. Perfil Profissional & SST</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Alocação de cargo e preparação de fardamento.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">Cargo de Interesse *</label>
+                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
+                      <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
+                      <option value="Porteiro">Porteiro</option>
+                      <option value="Zelador">Zelador</option>
+                      <option value="Encarregado">Encarregado(a)</option>
+                      <option value="Administrativo">Auxiliar Administrativo</option>
+                      <option value="Tecnico_SST">Técnico de Seg. do Trabalho</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">Grau de Escolaridade *</label>
+                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
+                      <option value="Fundamental Incompleto">Fundamental Incompleto</option>
+                      <option value="Fundamental Completo">Fundamental Completo</option>
+                      <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
+                      <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+                      <option value="Superior Completo">Superior Completo</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">Tamanho do Fardamento (Camisa) *</label>
+                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
+                      <option value="PP">PP</option>
+                      <option value="P">P</option>
+                      <option value="M">M</option>
+                      <option value="G">G</option>
+                      <option value="GG">GG</option>
+                      <option value="XG">XG / EXG</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label-sm text-[var(--text-secondary)]">Numeração do Calçado de Segurança *</label>
+                    <input type="number" min="30" max="50" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="label-sm text-[var(--text-secondary)]">Último Emprego / Resumo Profissional</label>
+                    <textarea className="input-field bg-[var(--bg-base)] border-[var(--border)]" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Cite suas últimas empresas e funções exercidas..." />
+                  </div>
+                  <div className="md:col-span-2 flex items-center gap-3 bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)]">
+                    <input type="checkbox" id="exp" checked={candidato.experiencia} onChange={e => setCandidato({...candidato, experiencia: e.target.checked})} className="w-5 h-5 cursor-pointer accent-[var(--brand)]" />
+                    <label htmlFor="exp" className="text-sm font-semibold text-[var(--text-primary)] cursor-pointer">
+                      Declaro que possuo experiência na função pretendida e que as informações são verdadeiras.
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4 mt-6 pt-4 border-t border-[var(--border)]">
               {step > 1 && (
-                <button className="flex-1 px-8 py-4 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-2xl font-black uppercase text-[10px]" onClick={() => setStep(step - 1)}>
-                  Voltar
+                <button className="flex-1 px-8 py-4 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--bg-card)] transition-colors rounded-2xl font-black uppercase text-xs tracking-wider shadow-sm" onClick={() => setStep(step - 1)}>
+                  Voltar Passo
                 </button>
               )}
-              {step < 3 ? (
-                <button className="flex-[2] btn-brand !h-14" onClick={() => setStep(step + 1)}>
-                  Próximo Passo
+              {step < 4 ? (
+                <button className="flex-[2] btn-brand !h-14 shadow-lg shadow-[var(--brand)]/20" onClick={() => setStep(step + 1)}>
+                  Avançar <span className="opacity-50 ml-1">({step}/4)</span>
                 </button>
               ) : (
-                <button className="flex-[2] btn-brand !h-14" onClick={handleCadastroCandidato} disabled={loading}>
-                  {loading ? "Finalizando..." : "Concluir Cadastro"}
+                <button className="flex-[2] btn-brand !h-14 shadow-xl shadow-[var(--brand)]/30 border border-white/10" onClick={handleCadastroCandidato} disabled={loading}>
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Enviando para Triagem...
+                    </div>
+                  ) : "Finalizar Cadastro de Candidato"}
                 </button>
               )}
             </div>
