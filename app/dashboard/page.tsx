@@ -29,8 +29,10 @@ function CockpitContent() {
   const modParam = searchParams.get("module");
   const tabParam = searchParams.get("tab");
   
+  // Estado que controla qual módulo funcional está visível (ex: Gerência, RH, Compras)
   const [activeModule, setActiveModule] = useState("COMMAND");
   
+  // Sincroniza o módulo ativo caso venha um parâmetro via URL
   useEffect(() => {
     if (modParam && ["COMMAND", "RH", "COMPRAS", "ALMOXARIFADO", "SST"].includes(modParam)) {
       setActiveModule(modParam);
@@ -41,11 +43,13 @@ function CockpitContent() {
   const [reducaoGeral, setReducaoGeral] = useState(20);
   const [loading, setLoading] = useState(true);
 
+  // Carrega dados do usuário logado do armazenamento local
   useEffect(() => {
     const saved = localStorage.getItem("crm_user");
     if (saved) setUser(JSON.parse(saved));
   }, []);
 
+  // Definição dos Módulos do Sistema e suas permissões (RBAC)
   const modules = [
     { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE"] },
     { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
@@ -54,7 +58,8 @@ function CockpitContent() {
     { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
   ];
 
-  // Regra: Gestores (Admin, Diretoria, Gerente) SÓ vêem o Painel de Controle (que já tem tudo dentro)
+  // Regra de Negócio: Gestores seniores vêem o Painel de Controle Consolidado.
+  // Colaboradores de áreas específicas vêem apenas seus respectivos módulos.
   const isManager = user?.role === "ADMIN" || user?.role === "DIRETORIA" || user?.role === "GERENTE";
   const filteredModules = isManager 
     ? modules.filter(m => m.id === "COMMAND")

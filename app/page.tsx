@@ -16,12 +16,13 @@ export default function LoginPage() {
     nome: "", telefone: "", cargo: "ASG", cep: "", rua: "", bairro: "", uniforme: "", experiencia: false 
   });
 
+  // Função principal de login: valida telefone e senha (4 últimos dígitos)
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Normalizar telefone (ex: 5511999999999)
+    // Normalização: remove caracteres não numéricos do telefone
     const telLimpo = telefone.replace(/\D/g, "");
     if (telLimpo.length < 10) {
       setError("Por favor, insira um telefone válido com DDD.");
@@ -29,7 +30,7 @@ export default function LoginPage() {
       return;
     }
 
-    // A senha devem ser os 4 últimos dígitos do telefone
+    // Regra de Negócio: A senha são os 4 últimos dígitos do telefone cadastrado
     const senhaCorreta = telLimpo.slice(-4);
     if (senha !== senhaCorreta) {
       setError("Senha incorreta. Use os 4 últimos dígitos do seu telefone.");
@@ -38,8 +39,8 @@ export default function LoginPage() {
     }
 
     try {
-      // Verificar usuário no Supabase
-      // O banco armazena com @s.whatsapp.net ou apenas números
+      // Consulta ao Supabase: verifica se o colaborador existe e está ativo
+      // Aceita formatos com ou sem o sufixo do WhatsApp
       const { data: user, error: userError } = await supabase
         .from('usuarios')
         .select('*')
@@ -52,7 +53,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Login bem sucedido
+      // Persistência local da sessão (Role Based Access Control)
       localStorage.setItem("crm_user", JSON.stringify({ 
         email: user.telefone, 
         role: user.cargo, 
