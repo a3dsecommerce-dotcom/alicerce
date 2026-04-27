@@ -57,52 +57,120 @@ export default function GerenciaModule({ initialTab }: { initialTab?: GerenciaTa
         {activeTab === "OVERVIEW" && (
           <div className="flex flex-col gap-10 animate-fade-in">
              
+             {/* 📡 MONITOR DE EXPANSÃO (ONDAS V45.0) */}
+             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                   <Cpu size={120} className="text-[var(--brand)]" />
+                </div>
+                
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-4">
+                   <div>
+                      <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2 uppercase tracking-tighter">
+                         <Zap className="text-orange-500" fill="currentColor" /> Roadmap de Expansão Soberana V45.0
+                      </h3>
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Status de Implementação dos Módulos Estratégicos</p>
+                   </div>
+                   <div className="px-6 py-2 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-[10px] font-black text-green-600 uppercase">Sistema Online & Operacional</span>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                   {[
+                      { id: 1, label: "ONDA 1: Ponto & Presença", status: "100%", desc: "Ponto Digital, Visão por Unidade, Volante Multi", color: "bg-green-500" },
+                      { id: 2, label: "ONDA 2: Ciclo de Vida RH", status: "85%", desc: "Admissão, Demissão e Gestão de Documentos", color: "bg-blue-500" },
+                      { id: 3, label: "ONDA 3: Suprimentos Pro", status: "60%", desc: "Requisições, Entregas parciais e Coeficientes", color: "bg-orange-500" },
+                   ].map(onda => (
+                      <div key={onda.id} className="p-6 bg-[var(--bg-base)]/40 rounded-3xl border border-[var(--border)] group/onda hover:border-[var(--brand)]/30 transition-all">
+                         <div className="flex justify-between items-center mb-4">
+                            <span className="text-[10px] font-black uppercase text-[var(--brand)]">{onda.label}</span>
+                            <span className="text-xs font-black">{onda.status}</span>
+                         </div>
+                         <div className="h-2 w-full bg-[var(--bg-base)] rounded-full mb-4 overflow-hidden border border-[var(--border)]">
+                            <div className={`h-full ${onda.color} shadow-lg transition-all duration-1000`} style={{ width: onda.status }} />
+                         </div>
+                         <p className="text-[9px] text-[var(--text-muted)] font-medium leading-relaxed">{onda.desc}</p>
+                      </div>
+                   ))}
+                </div>
+             </div>
+             
              {/* STATS SUPERIORES (INFO UNIDADE + APROVAÇÕES) */}
              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 {[
-                  { label: "Performance", value: "94.2%", icon: Activity, color: "text-green-500" },
-                  { label: "Orçamento", value: "68%", icon: DollarSign, color: "text-orange-500" },
-                  { label: "SLA Operacional", value: "96%", icon: ShieldCheck, color: "text-purple-500" },
-                  // APROVAÇÕES MOVIDAS PARA O TOPO COMO QUADRADOS DE STATUS
-                  { label: "Suplementos", value: "03", icon: AlertTriangle, color: "text-orange-600", bg: "bg-orange-50" },
-                  { label: "Novas Vagas", value: "05", icon: UserPlus, color: "text-blue-600", bg: "bg-blue-50" },
-                  { label: "Denúncias", value: "02", icon: ShieldAlert, color: "text-red-600", bg: "bg-red-50" },
+                  { label: "Performance", value: "94.2%", icon: Activity, color: "text-green-500", detail: "+2.1% este mês" },
+                  { label: "Orçamento", value: "68%", icon: DollarSign, color: "text-orange-500", detail: "R$ 1.2M disponíveis" },
+                  { label: "SLA Operacional", value: "96%", icon: ShieldCheck, color: "text-blue-500", detail: "Metas batidas" },
+                  { label: "Suplementos", value: "03", icon: AlertTriangle, color: "text-orange-600", bg: "bg-orange-50", detail: "Aprovações pendentes" },
+                  { id: "tickets", label: "Novas Vagas", value: "05", icon: UserPlus, color: "text-blue-600", bg: "bg-blue-50", detail: "Triagem em andamento" },
+                  { id: "security", label: "Denúncias", value: "02", icon: ShieldAlert, color: "text-red-600", bg: "bg-red-50", detail: "Ethics Channel" },
                 ].map((s, i) => (
-                  <div key={i} className={`p-6 rounded-[2rem] border border-[var(--border)] shadow-sm ${s.bg || 'bg-[var(--bg-card)]'} group hover:scale-105 transition-all`}>
-                     <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-2 text-center">{s.label}</p>
+                  <div key={i} className={`p-6 rounded-[2.5rem] border border-[var(--border)] shadow-sm ${s.bg || 'bg-[var(--bg-card)]'} group hover:scale-105 transition-all cursor-pointer relative overflow-hidden`}>
+                     <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-2 text-center tracking-widest">{s.label}</p>
                      <div className="flex flex-col items-center gap-2">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white shadow-sm ${s.color}`}><s.icon size={18} /></div>
-                        <h4 className="text-xl font-black">{s.value}</h4>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-md ${s.color} group-hover:rotate-6 transition-transform`}><s.icon size={22} /></div>
+                        <h4 className="text-2xl font-black tracking-tighter">{s.value}</h4>
+                        <p className="text-[8px] font-bold opacity-60 uppercase">{s.detail}</p>
                      </div>
                   </div>
                 ))}
              </div>
 
              {/* TABELA/MATRIZ EM LARGURA TOTAL */}
-             <div className="bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-xl">
-                <div className="flex justify-between items-center mb-10">
-                   <h3 className="text-sm font-black uppercase flex items-center gap-2 tracking-widest"><Zap size={18} className="text-blue-500" /> Matriz de Inteligência de Pessoal Alicerce</h3>
-                   <button className="text-[10px] font-black uppercase text-[var(--brand)] hover:underline">Ver Relatório Completo</button>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* MATRIZ DE INTELIGÊNCIA */}
+                <div className="lg:col-span-2 bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+                   <div className="flex justify-between items-center mb-10">
+                      <h3 className="text-sm font-black uppercase flex items-center gap-2 tracking-widest"><Zap size={18} className="text-blue-500" /> Matriz de Inteligência de Pessoal</h3>
+                      <button className="text-[10px] font-black uppercase text-[var(--brand)] hover:underline">Full Analytics</button>
+                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                      {[
+                        { label: "Saúde (SEMSA)", val: 98, cor: "bg-green-500" },
+                        { label: "Educação (SEMED)", val: 92, cor: "bg-blue-500" },
+                        { label: "Administração", val: 85, cor: "bg-purple-500" },
+                        { label: "Infraestrutura", val: 76, cor: "bg-orange-500" },
+                      ].map((setor, i) => (
+                        <div key={i} className="space-y-4 p-6 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]/50">
+                           <div className="flex justify-between text-[10px] font-black uppercase tracking-tighter">
+                              <span>{setor.label}</span>
+                              <span className="text-[var(--brand)]">{setor.val}%</span>
+                           </div>
+                           <div className="h-3 w-full bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)]">
+                              <div className={`h-full ${setor.cor} shadow-lg`} style={{ width: `${setor.val}%` }} />
+                           </div>
+                        </div>
+                      ))}
+                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-                   {[
-                     { label: "Saúde (SEMSA)", val: 98, cor: "bg-green-500" },
-                     { label: "Educação (SEMED)", val: 92, cor: "bg-blue-500" },
-                     { label: "Administração (SEMAD)", val: 85, cor: "bg-purple-500" },
-                     { label: "Infraestrutura", val: 76, cor: "bg-orange-500" },
-                     { label: "Social (SEMAS)", val: 94, cor: "bg-emerald-500" },
-                     { label: "Meio Ambiente", val: 89, cor: "bg-teal-500" }
-                   ].map((setor, i) => (
-                     <div key={i} className="space-y-4 p-6 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]/50">
-                        <div className="flex justify-between text-xs font-black uppercase tracking-tighter">
-                           <span>{setor.label}</span>
-                           <span className="text-[var(--brand)]">{setor.val}%</span>
-                        </div>
-                        <div className="h-3 w-full bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)]">
-                           <div className={`h-full ${setor.cor} shadow-lg`} style={{ width: `${setor.val}%` }} />
-                        </div>
-                     </div>
-                   ))}
+
+                {/* SWARM ACTIVITY (Ticker de Agentes IA) */}
+                <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl">
+                   <h3 className="text-xs font-black uppercase mb-8 flex items-center gap-2 tracking-widest">
+                      <Activity size={16} className="text-green-500" /> Atividade do Swarm
+                   </h3>
+                   <div className="space-y-6">
+                      {[
+                         { agent: "RH Agent", task: "Triagem de 12 novos candidatos", time: "2m atrás", icon: Users, color: "text-blue-500" },
+                         { agent: "Almox Agent", task: "Reposicionamento de estoque (Detergente)", time: "15m atrás", icon: Package, color: "text-orange-500" },
+                         { agent: "Security Audit", task: "Verificação de inconsistência de ponto", time: "1h atrás", icon: ShieldCheck, color: "text-green-500" },
+                         { agent: "Governance", task: "Relatório Mensal consolidado", time: "3h atrás", icon: FileText, color: "text-purple-500" },
+                      ].map((item, idx) => (
+                         <div key={idx} className="flex gap-4 items-start group">
+                            <div className={`mt-1 p-2 rounded-lg bg-[var(--bg-base)] ${item.color} group-hover:scale-110 transition-transform`}>
+                               <item.icon size={14} />
+                            </div>
+                            <div className="flex-1 border-b border-[var(--border)] pb-4 group-last:border-0">
+                               <div className="flex justify-between items-center mb-1">
+                                  <span className="text-[10px] font-black uppercase text-[var(--text-primary)]">{item.agent}</span>
+                                  <span className="text-[8px] text-[var(--text-muted)] font-bold">{item.time}</span>
+                               </div>
+                               <p className="text-[10px] text-[var(--text-secondary)] font-medium">{item.task}</p>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
                 </div>
              </div>
           </div>
