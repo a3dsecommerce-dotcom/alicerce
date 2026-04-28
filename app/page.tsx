@@ -151,24 +151,23 @@ export default function LoginPage() {
           <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
         </div>
           
-        {/* Formulário Container - Ambient YouTube Effect */}
-        <div className="w-full bg-white/80 backdrop-blur-3xl border border-white/40 p-10 sm:p-14 rounded-[2.5rem] shadow-[0_0_120px_rgba(0,0,0,0.05),0_0_80px_var(--brand)]/15 relative overflow-hidden flex flex-col min-h-[550px] justify-between">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-50" />
+        {/* Formulário Container - Enterprise Clean Style */}
+        <div className="w-full bg-white border border-slate-200 p-8 sm:p-12 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 relative flex flex-col justify-center min-h-[480px]">
           
-          <div className="mb-12 text-center">
-            <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">
+          <div className="mb-10 text-left">
+            <h2 className="text-[1.75rem] font-black text-slate-900 mb-2 tracking-tight">
               Acesso ao Sistema
             </h2>
-            <p className="text-slate-500 font-medium text-[0.9rem] leading-relaxed">
+            <p className="text-slate-500 font-medium text-[0.95rem]">
               Insira suas credenciais corporativas.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-7 flex-1 justify-center">
+          <form onSubmit={handleLogin} className="flex flex-col gap-6 flex-1">
             <div className="group">
               <input
                 type="tel" required
-                className="w-full bg-slate-50/50 backdrop-blur-md border border-slate-200/50 rounded-full px-7 py-5 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-semibold text-lg shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] hover:bg-slate-50/90 text-center tracking-widest"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-medium text-[1rem] hover:border-slate-300"
                 placeholder="Login"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
@@ -180,7 +179,7 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-slate-50/50 backdrop-blur-md border border-slate-200/50 rounded-full px-7 py-5 pr-16 text-slate-900 tracking-[0.75em] font-mono text-2xl placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] hover:bg-slate-50/90 text-center"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 pr-12 text-slate-900 tracking-[0.25em] font-mono text-xl placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all hover:border-slate-300"
                   placeholder="Senha"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
@@ -188,15 +187,15 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors p-2 rounded-full hover:bg-slate-100"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors p-2 rounded-lg hover:bg-slate-100"
                 >
-                  {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="mt-2 p-5 rounded-full bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center justify-center gap-3 animate-fade-in shadow-sm">
+              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center gap-3 animate-fade-in shadow-sm">
                 <Shield size={18} className="shrink-0 text-red-500" /> 
                 <span>{error}</span>
               </div>
@@ -205,7 +204,7 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-8 w-full py-5 rounded-full bg-[var(--brand)] text-white hover:bg-[var(--brand-dark)] font-black uppercase text-[0.9rem] tracking-[0.3em] shadow-[0_20px_40px_-15px_var(--brand)] transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:grayscale flex items-center justify-center gap-3 group/btn"
+              className="mt-4 w-full py-4 rounded-xl bg-slate-900 text-white hover:bg-slate-800 font-bold text-[1rem] shadow-lg shadow-slate-900/20 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3 group/btn"
             >
               {loading ? (
                 <>
@@ -214,20 +213,19 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  Entrar
-                  <ArrowRight size={18} className="text-white group-hover/btn:translate-x-2 transition-transform" />
+                  Entrar no Sistema
+                  <ArrowRight size={18} className="text-white group-hover/btn:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-12 pt-8 border-t border-slate-100 text-center flex flex-col items-center">
-            <p className="text-slate-400 text-[0.8rem] font-medium mb-5">Acesso Exclusivo para Colaboradores</p>
+          <div className="mt-10 pt-8 border-t border-slate-100 text-center">
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.75rem] font-black text-slate-700 hover:text-[var(--brand)] uppercase tracking-[0.25em] transition-colors flex items-center gap-2 group/link py-3 px-6 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-200"
+              className="text-[0.85rem] font-bold text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center gap-2 group/link w-full py-3 rounded-xl hover:bg-slate-50"
             >
-              Candidatar-se à Vaga <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
+              Candidatar-se à Vaga <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
