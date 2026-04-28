@@ -130,34 +130,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-[#0a0a0a] overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-[#141414] overflow-hidden">
       
-      {/* BACKGROUND PREMIUM SOBERANO */}
+      {/* BACKGROUND PREMIUM SOBERANO - CLAREADO */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px] mix-blend-screen" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[100px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/15 blur-[100px] mix-blend-screen" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.04] mix-blend-overlay" />
       </div>
 
       <div className="animate-fade-in w-full max-w-[480px] relative z-10 flex flex-col items-center">
         
         {/* LOGO & BRANDING */}
         <div className="text-center mb-12 flex flex-col items-center">
-          <div className="w-20 h-20 mb-6 p-4 rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/10 shadow-[0_0_40px_rgba(255,255,255,0.1)] backdrop-blur-xl flex items-center justify-center relative group">
-            <div className="absolute inset-0 rounded-3xl border border-[var(--brand)]/40 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-[1.02]" />
+          <div className="w-20 h-20 mb-6 p-4 rounded-3xl bg-white/10 border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.15)] backdrop-blur-xl flex items-center justify-center relative group">
+            <div className="absolute inset-0 rounded-3xl border border-[var(--brand)]/50 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-[1.02]" />
             <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain drop-shadow-2xl" />
           </div>
-          <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 tracking-tight mb-2">
+          <h1 className="text-3xl font-black text-white tracking-tight mb-2">
             Alicerce <span className="text-[var(--brand)]">ERP</span>
           </h1>
-          <p className="text-[0.7rem] font-bold text-white/40 uppercase tracking-[0.4em] mt-1">
+          <p className="text-[0.7rem] font-bold text-white/60 uppercase tracking-[0.4em] mt-1">
             Sovereign Command Center
           </p>
         </div>
 
         {/* CARD DE LOGIN "CARTÃO DE VISITAS PREMIUM" */}
-        <div className="w-full bg-[#0d0d0d]/80 backdrop-blur-3xl border border-white/10 p-10 lg:p-12 rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.8)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-60" />
+        <div className="w-full bg-[#1c1c1c]/90 backdrop-blur-3xl border border-white/20 p-10 lg:p-12 rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.6)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-80" />
           
           <div className="mb-10 text-center">
             <h2 className="text-xl font-medium text-white mb-2">

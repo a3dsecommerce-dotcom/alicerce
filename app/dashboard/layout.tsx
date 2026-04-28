@@ -135,12 +135,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="pl-12 pr-6 py-6 border-t border-[var(--border)] glass-bg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--brand-dark)] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[var(--brand)]/20 flex-shrink-0">
-              {user.name.charAt(0)}
+              {(user?.name || user?.nome || "U").charAt(0).toUpperCase()}
             </div>
             {sidebarOpen && (
               <div className="flex-1 overflow-hidden">
-                <div className="text-[0.85rem] font-black text-[var(--text-primary)] truncate">{user.name}</div>
-                <div className="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase">{user.role}</div>
+                <div className="text-[0.85rem] font-black text-[var(--text-primary)] truncate">{user?.name || user?.nome || "Usuário"}</div>
+                <div className="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase">{user?.role || "ADMIN"}</div>
               </div>
             )}
             {sidebarOpen && (
