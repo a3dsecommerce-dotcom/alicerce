@@ -130,52 +130,52 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-[#141414] overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50 overflow-hidden">
       
-      {/* BACKGROUND PREMIUM SOBERANO - CLAREADO */}
+      {/* BACKGROUND PREMIUM SOBERANO - LIGHT THEME TINTED WITH BRAND */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[100px] mix-blend-screen" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/15 blur-[100px] mix-blend-screen" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.04] mix-blend-overlay" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px]" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay" />
       </div>
 
       <div className="animate-fade-in w-full max-w-[480px] relative z-10 flex flex-col items-center">
         
         {/* LOGO & BRANDING */}
         <div className="text-center mb-12 flex flex-col items-center">
-          <div className="w-20 h-20 mb-6 p-4 rounded-3xl bg-white/10 border border-white/20 shadow-[0_0_40px_rgba(255,255,255,0.15)] backdrop-blur-xl flex items-center justify-center relative group">
-            <div className="absolute inset-0 rounded-3xl border border-[var(--brand)]/50 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-[1.02]" />
-            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain drop-shadow-2xl" />
+          <div className="w-20 h-20 mb-6 p-4 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-[var(--brand)]/5 flex items-center justify-center relative group">
+            <div className="absolute inset-0 rounded-3xl border border-[var(--brand)]/20 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-[1.02]" />
+            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight mb-2">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
             Alicerce <span className="text-[var(--brand)]">ERP</span>
           </h1>
-          <p className="text-[0.7rem] font-bold text-white/60 uppercase tracking-[0.4em] mt-1">
+          <p className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-[0.4em] mt-1">
             Sovereign Command Center
           </p>
         </div>
 
-        {/* CARD DE LOGIN "CARTÃO DE VISITAS PREMIUM" */}
-        <div className="w-full bg-[#1c1c1c]/90 backdrop-blur-3xl border border-white/20 p-10 lg:p-12 rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.6)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-80" />
+        {/* CARD DE LOGIN "CARTÃO DE VISITAS PREMIUM LIGHT" */}
+        <div className="w-full bg-white/80 backdrop-blur-3xl border border-slate-200/60 p-10 lg:p-12 rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.05)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-[var(--brand)] via-[var(--brand-dark)] to-[var(--brand)]" />
           
           <div className="mb-10 text-center">
-            <h2 className="text-xl font-medium text-white mb-2">
+            <h2 className="text-xl font-bold text-slate-800 mb-2">
               Acesso Restrito
             </h2>
-            <p className="text-[0.8rem] text-white/40">
+            <p className="text-[0.8rem] text-slate-500 font-medium">
               Credenciais biométricas atreladas ao número de contato.
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <label className="text-[0.7rem] font-bold text-white/50 uppercase tracking-widest pl-1">
+              <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest pl-1">
                 Identificação (Telefone)
               </label>
               <input
                 type="tel" required
-                className="w-full bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:bg-white/[0.06] focus:border-[var(--brand)]/60 focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300"
+                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-300 focus:bg-slate-50 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300 font-medium shadow-sm"
                 placeholder="(92) 9XXXX-XXXX"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
@@ -183,14 +183,14 @@ export default function LoginPage() {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-[0.7rem] font-bold text-white/50 uppercase tracking-widest pl-1">
+              <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest pl-1">
                 Chave de Acesso (4 Dígitos)
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 pr-14 text-white tracking-[0.3em] font-mono text-lg placeholder-white/20 focus:bg-white/[0.06] focus:border-[var(--brand)]/60 focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300"
+                  className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 pr-14 text-slate-900 tracking-[0.3em] font-mono text-xl placeholder-slate-300 focus:bg-slate-50 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300 shadow-sm"
                   placeholder="••••"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
@@ -198,7 +198,7 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -206,8 +206,8 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-3 animate-fade-in">
-                <Shield size={16} className="shrink-0" /> 
+              <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold flex items-center gap-3 animate-fade-in shadow-sm">
+                <Shield size={16} className="shrink-0 text-red-500" /> 
                 <span>{error}</span>
               </div>
             )}
@@ -215,26 +215,26 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-6 w-full py-5 rounded-2xl bg-white text-black hover:bg-gray-100 font-black uppercase text-[0.8rem] tracking-[0.2em] shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:bg-white/20 disabled:text-white flex items-center justify-center gap-3 group"
+              className="mt-6 w-full py-5 rounded-2xl bg-[var(--brand)] text-white hover:opacity-90 font-black uppercase text-[0.8rem] tracking-[0.2em] shadow-[0_15px_30px_var(--brand-opacity)] transition-all duration-300 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 group"
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Conectando...
                 </>
               ) : (
                 <>
                   Entrar no Hub
-                  <Zap size={16} className="text-black group-hover:scale-110 transition-transform" />
+                  <Zap size={16} className="text-white group-hover:scale-110 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center flex flex-col gap-3">
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center flex flex-col gap-3">
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.75rem] font-bold text-white/50 hover:text-[var(--brand)] uppercase tracking-wider transition-colors"
+              className="text-[0.75rem] font-bold text-slate-400 hover:text-[var(--brand)] uppercase tracking-wider transition-colors"
             >
               Trabalhe Conosco (Cadastro)
             </button>
@@ -242,7 +242,7 @@ export default function LoginPage() {
         </div>
         
         {/* FOOTER DO CARTÃO */}
-        <div className="mt-8 flex gap-6 text-white/20 text-[0.65rem] font-black uppercase tracking-widest">
+        <div className="mt-8 flex gap-6 text-slate-400 text-[0.65rem] font-black uppercase tracking-widest">
           <span>Alicerce © 2026</span>
           <span>•</span>
           <span>Sovereign Security</span>
