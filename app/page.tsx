@@ -146,34 +146,34 @@ export default function LoginPage() {
       </div>
 
       {/* --- FORMULÁRIO DE ACESSO CENTRALIZADO --- */}
-      <div className="w-full max-w-[460px] flex flex-col justify-center items-center relative z-10 animate-fade-in">
+      <div className="w-full max-w-[400px] flex flex-col justify-center items-center relative z-10 animate-fade-in">
         
         {/* Logo & Slogan Centralizados */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-20 h-20 bg-[var(--bg-card)] p-4 rounded-3xl shadow-2xl shadow-[var(--border)] mb-5 border border-[var(--border)] flex items-center justify-center">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-[var(--bg-card)] p-3 rounded-2xl shadow-xl shadow-[var(--border)] mb-4 border border-[var(--border)] flex items-center justify-center">
             <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-[2.25rem] font-black text-[var(--text-primary)] tracking-tight">Alicerce ERP</h1>
-          <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
+          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Alicerce ERP</h1>
+          <p className="text-[9px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
         </div>
           
         {/* Formulário Container - Enterprise Clean Style */}
-        <div className="w-full bg-[var(--bg-card)] border border-[var(--border)] p-8 sm:p-12 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-none relative flex flex-col justify-center min-h-[480px]">
+        <div className="w-full bg-[var(--bg-card)] border border-[var(--border)] p-6 sm:p-8 rounded-[1.25rem] shadow-2xl shadow-slate-200/50 dark:shadow-none relative flex flex-col justify-center">
           
-          <div className="mb-10 text-left">
-            <h2 className="text-[1.75rem] font-black text-[var(--text-primary)] mb-2 tracking-tight">
+          <div className="mb-8 text-left">
+            <h2 className="text-2xl font-black text-[var(--text-primary)] mb-1 tracking-tight">
               Acesso ao Sistema
             </h2>
-            <p className="text-[var(--text-secondary)] font-medium text-[0.95rem]">
+            <p className="text-[var(--text-secondary)] font-medium text-sm">
               Insira suas credenciais corporativas.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-6 flex-1">
+          <form onSubmit={handleLogin} className="flex flex-col gap-5 flex-1">
             <div className="group">
               <input
                 type="tel" required
-                className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-5 py-4 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-medium text-[1rem] hover:border-[var(--text-muted)]"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-medium text-[0.95rem] hover:border-[var(--text-muted)]"
                 placeholder="Login"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
@@ -185,7 +185,7 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-5 py-4 pr-12 text-[var(--text-primary)] tracking-[0.25em] font-mono text-xl placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all hover:border-[var(--text-muted)]"
+                  className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-4 py-3 pr-12 text-[var(--text-primary)] tracking-[0.25em] font-mono text-lg placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all hover:border-[var(--text-muted)]"
                   placeholder="Senha"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
@@ -193,9 +193,9 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors p-2 rounded-lg hover:bg-[var(--bg-card-hover)]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors p-2 rounded-lg hover:bg-[var(--bg-card-hover)]"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
@@ -210,34 +210,34 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-4 w-full py-4 rounded-xl bg-[var(--text-primary)] text-[var(--bg-card)] hover:opacity-90 font-bold text-[1rem] shadow-lg shadow-[var(--text-primary)]/10 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3 group/btn"
+              className="mt-2 w-full py-3 rounded-xl bg-[var(--text-primary)] text-[var(--bg-card)] hover:opacity-90 font-bold text-[0.95rem] shadow-lg shadow-[var(--text-primary)]/10 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 group/btn"
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   Conectando...
                 </>
               ) : (
                 <>
                   Entrar no Sistema
-                  <ArrowRight size={18} className="text-[var(--bg-card)] group-hover/btn:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="text-[var(--bg-card)] group-hover/btn:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-10 pt-8 border-t border-[var(--border)] text-center">
+          <div className="mt-8 pt-6 border-t border-[var(--border)] text-center">
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.85rem] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 group/link w-full py-3 rounded-xl hover:bg-[var(--bg-card-hover)]"
+              className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 group/link w-full py-2.5 rounded-xl hover:bg-[var(--bg-card-hover)]"
             >
-              Candidatar-se à Vaga <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
+              Candidatar-se à Vaga <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
         
         {/* FOOTER DO CARTÃO */}
-        <div className="mt-8 flex gap-6 text-slate-400 text-[0.65rem] font-black uppercase tracking-widest">
+        <div className="mt-6 flex gap-6 text-[var(--text-muted)] text-[0.6rem] font-black uppercase tracking-widest">
           <span>Alicerce © 2026</span>
           <span>•</span>
           <span>Sovereign Security</span>
