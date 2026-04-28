@@ -477,4 +477,5 @@ export default function LoginPage() {
       </AdaptiveModal>
 
     </div>
+  );
 }
