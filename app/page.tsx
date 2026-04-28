@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Shield, Zap, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Shield, ShieldCheck, Zap, ArrowRight, CheckCircle2 } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { supabase } from "@/lib/supabase";
 import { ThemeToggle } from "@/components/ThemeToggle";
