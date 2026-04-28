@@ -166,27 +166,21 @@ export default function LoginPage() {
 
           <form onSubmit={handleLogin} className="flex flex-col gap-6">
             <div className="group">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
-                Identificação (Celular)
-              </label>
               <input
                 type="tel" required
-                className="w-full bg-white border-2 border-slate-200 rounded-[1.25rem] px-5 py-4 text-slate-900 placeholder-slate-300 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-semibold text-base shadow-sm group-hover:border-slate-300"
-                placeholder="(92) 9XXXX-XXXX"
+                className="w-full bg-slate-50/40 backdrop-blur-sm border border-slate-200/60 rounded-[1.25rem] px-5 py-4 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-semibold text-base shadow-[inset_0_2px_10px_rgba(0,0,0,0.01)] hover:bg-slate-50/80"
+                placeholder="Número do Celular"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
               />
             </div>
 
             <div className="group">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
-                Chave de Acesso
-              </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-white border-2 border-slate-200 rounded-[1.25rem] px-5 py-4 pr-14 text-slate-900 tracking-[0.5em] font-mono text-xl placeholder-slate-300 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all shadow-sm group-hover:border-slate-300"
+                  className="w-full bg-slate-50/40 backdrop-blur-sm border border-slate-200/60 rounded-[1.25rem] px-5 py-4 pr-14 text-slate-900 tracking-[0.5em] font-mono text-xl placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.01)] hover:bg-slate-50/80"
                   placeholder="••••"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
