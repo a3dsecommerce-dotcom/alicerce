@@ -145,24 +145,45 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay dark:opacity-[0.05]" />
       </div>
 
-      {/* --- FORMULÁRIO DE ACESSO CENTRALIZADO --- */}
-      <div className="w-full max-w-[400px] flex flex-col justify-center items-center relative z-10 animate-fade-in">
+      {/* --- FORMULÁRIO DE ACESSO BANKING/ENTERPRISE STYLE --- */}
+      <div className="w-full max-w-[900px] flex flex-col md:flex-row bg-[var(--bg-card)] border border-[var(--border)] rounded-[1.5rem] shadow-2xl overflow-hidden relative z-10 animate-fade-in min-h-[550px]">
         
-        {/* Logo & Slogan Centralizados */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-[var(--bg-card)] p-3 rounded-2xl shadow-xl shadow-[var(--border)] mb-4 border border-[var(--border)] flex items-center justify-center">
-            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
-          </div>
-          <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">Alicerce ERP</h1>
-          <p className="text-[9px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
-        </div>
+        {/* LADO ESQUERDO - BRANDING & INSTITUCIONAL */}
+        <div className="w-full md:w-[45%] bg-slate-900 dark:bg-black p-10 flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand)]/20 to-transparent opacity-50" />
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
           
-        {/* Formulário Container - Enterprise Clean Style */}
-        <div className="w-full bg-[var(--bg-card)] border border-[var(--border)] p-6 sm:p-8 rounded-[1.25rem] shadow-2xl shadow-slate-200/50 dark:shadow-none relative flex flex-col justify-center">
+          <div className="relative z-10">
+            <div className="w-16 h-16 bg-white p-3 rounded-2xl shadow-lg mb-8 flex items-center justify-center">
+              <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tight mb-2">Alicerce ERP</h1>
+            <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mb-10">Sovereign Command</p>
+            
+            <p className="text-slate-300 font-medium text-[1.05rem] leading-relaxed">
+              Um sistema de gestão empresarial na nuvem: com máxima economia, implementação rápida e suporte total.
+            </p>
+          </div>
+
+          <div className="relative z-10 mt-12 flex flex-col gap-3">
+            <div className="flex items-center gap-3 text-slate-400 text-xs font-semibold">
+              <ShieldCheck size={16} className="text-[var(--brand)]" />
+              <span>Ambiente Seguro Criptografado (256-bit)</span>
+            </div>
+            <div className="flex gap-4 text-slate-500 text-[0.65rem] font-bold uppercase tracking-widest mt-2 border-t border-white/10 pt-4">
+              <span>Alicerce © 2026</span>
+              <span>•</span>
+              <span>Sovereign Security</span>
+            </div>
+          </div>
+        </div>
+
+        {/* LADO DIREITO - LOGIN FORM */}
+        <div className="w-full md:w-[55%] p-10 sm:p-12 flex flex-col justify-center bg-[var(--bg-card)] relative">
           
           <div className="mb-8 text-left">
             <h2 className="text-2xl font-black text-[var(--text-primary)] mb-1 tracking-tight">
-              Acesso ao Sistema
+              Acesso Restrito
             </h2>
             <p className="text-[var(--text-secondary)] font-medium text-sm">
               Insira suas credenciais corporativas.
@@ -215,11 +236,11 @@ export default function LoginPage() {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Conectando...
+                  Autenticando...
                 </>
               ) : (
                 <>
-                  Entrar no Sistema
+                  Autenticar no Sistema
                   <ArrowRight size={16} className="text-[var(--bg-card)] group-hover/btn:translate-x-1 transition-transform" />
                 </>
               )}
@@ -231,16 +252,9 @@ export default function LoginPage() {
               onClick={() => setModalTrabalhe(true)} 
               className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 group/link w-full py-2.5 rounded-xl hover:bg-[var(--bg-card-hover)]"
             >
-              Candidatar-se à Vaga <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
+              Portal de Talentos (Trabalhe Conosco) <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
           </div>
-        </div>
-        
-        {/* FOOTER DO CARTÃO */}
-        <div className="mt-6 flex gap-6 text-[var(--text-muted)] text-[0.6rem] font-black uppercase tracking-widest">
-          <span>Alicerce © 2026</span>
-          <span>•</span>
-          <span>Sovereign Security</span>
         </div>
       </div>
 
