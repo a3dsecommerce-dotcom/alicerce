@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Shield, Zap, ArrowRight, CheckCircle2 } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { supabase } from "@/lib/supabase";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -130,13 +131,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-[var(--bg-base)] font-sans text-[var(--text-primary)] overflow-hidden transition-colors duration-300">
       
+      {/* --- THEME TOGGLE --- */}
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay dark:opacity-[0.05]" />
       </div>
 
       {/* --- FORMULÁRIO DE ACESSO CENTRALIZADO --- */}
@@ -144,21 +150,21 @@ export default function LoginPage() {
         
         {/* Logo & Slogan Centralizados */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-20 h-20 bg-white p-4 rounded-3xl shadow-2xl shadow-slate-200/60 mb-5 border border-slate-100 flex items-center justify-center">
+          <div className="w-20 h-20 bg-[var(--bg-card)] p-4 rounded-3xl shadow-2xl shadow-[var(--border)] mb-5 border border-[var(--border)] flex items-center justify-center">
             <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-[2.25rem] font-black text-slate-900 tracking-tight">Alicerce ERP</h1>
+          <h1 className="text-[2.25rem] font-black text-[var(--text-primary)] tracking-tight">Alicerce ERP</h1>
           <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
         </div>
           
         {/* Formulário Container - Enterprise Clean Style */}
-        <div className="w-full bg-white border border-slate-200 p-8 sm:p-12 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 relative flex flex-col justify-center min-h-[480px]">
+        <div className="w-full bg-[var(--bg-card)] border border-[var(--border)] p-8 sm:p-12 rounded-[1.5rem] shadow-2xl shadow-slate-200/50 dark:shadow-none relative flex flex-col justify-center min-h-[480px]">
           
           <div className="mb-10 text-left">
-            <h2 className="text-[1.75rem] font-black text-slate-900 mb-2 tracking-tight">
+            <h2 className="text-[1.75rem] font-black text-[var(--text-primary)] mb-2 tracking-tight">
               Acesso ao Sistema
             </h2>
-            <p className="text-slate-500 font-medium text-[0.95rem]">
+            <p className="text-[var(--text-secondary)] font-medium text-[0.95rem]">
               Insira suas credenciais corporativas.
             </p>
           </div>
@@ -167,7 +173,7 @@ export default function LoginPage() {
             <div className="group">
               <input
                 type="tel" required
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-medium text-[1rem] hover:border-slate-300"
+                className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-5 py-4 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-medium text-[1rem] hover:border-[var(--text-muted)]"
                 placeholder="Login"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
@@ -179,7 +185,7 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 pr-12 text-slate-900 tracking-[0.25em] font-mono text-xl placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all hover:border-slate-300"
+                  className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-5 py-4 pr-12 text-[var(--text-primary)] tracking-[0.25em] font-mono text-xl placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all hover:border-[var(--text-muted)]"
                   placeholder="Senha"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
@@ -187,7 +193,7 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors p-2 rounded-lg hover:bg-slate-100"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors p-2 rounded-lg hover:bg-[var(--bg-card-hover)]"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -204,7 +210,7 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-4 w-full py-4 rounded-xl bg-slate-900 text-white hover:bg-slate-800 font-bold text-[1rem] shadow-lg shadow-slate-900/20 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3 group/btn"
+              className="mt-4 w-full py-4 rounded-xl bg-[var(--text-primary)] text-[var(--bg-card)] hover:opacity-90 font-bold text-[1rem] shadow-lg shadow-[var(--text-primary)]/10 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3 group/btn"
             >
               {loading ? (
                 <>
@@ -214,16 +220,16 @@ export default function LoginPage() {
               ) : (
                 <>
                   Entrar no Sistema
-                  <ArrowRight size={18} className="text-white group-hover/btn:translate-x-1 transition-transform" />
+                  <ArrowRight size={18} className="text-[var(--bg-card)] group-hover/btn:translate-x-1 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-10 pt-8 border-t border-slate-100 text-center">
+          <div className="mt-10 pt-8 border-t border-[var(--border)] text-center">
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.85rem] font-bold text-slate-600 hover:text-slate-900 transition-colors flex items-center justify-center gap-2 group/link w-full py-3 rounded-xl hover:bg-slate-50"
+              className="text-[0.85rem] font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 group/link w-full py-3 rounded-xl hover:bg-[var(--bg-card-hover)]"
             >
               Candidatar-se à Vaga <ArrowRight size={16} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
