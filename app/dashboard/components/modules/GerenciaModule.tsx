@@ -20,8 +20,12 @@ export default function GerenciaModule({ initialTab }: { initialTab?: GerenciaTa
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("crm_user");
-    if (saved) setUser(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) setUser(JSON.parse(saved));
+    } catch (err) {
+      console.error(err);
+    }
     if (initialTab) setActiveTab(initialTab);
   }, [initialTab]);
 

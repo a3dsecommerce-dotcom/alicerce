@@ -28,8 +28,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState({ name: "Diretoria", role: "ADMIN" });
 
   useEffect(() => {
-    const saved = localStorage.getItem("crm_user");
-    if (saved) setUser(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) setUser(JSON.parse(saved));
+    } catch (err) {
+      console.error("Erro ao ler crm_user", err);
+      localStorage.removeItem("crm_user");
+    }
   }, []);
 
   // Agora mostramos todos os itens, mas controlamos quem está "aceso"
@@ -77,11 +82,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Nav List - Filtragem por Role (RBAC) */}
         <nav className="flex-1 px-6 flex flex-col gap-2 overflow-y-auto custom-scrollbar pb-6 mt-4">
-          {nav.filter(item => item.roles.includes(user.role)).map(item => {
+          {nav.filter(item => item.roles.includes(user?.role || '')).map(item => {
             if (item.subItems) {
               const isOpen = openMenus[item.label] && sidebarOpen;
               const hasActiveSub = item.subItems.some(sub => pathname === sub.href);
-              const permittedSubItems = item.subItems.filter(sub => sub.roles.includes(user.role));
+              const permittedSubItems = item.subItems.filter(sub => sub.roles.includes(user?.role || ''));
 
               if (permittedSubItems.length === 0) return null;
               

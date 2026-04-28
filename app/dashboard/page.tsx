@@ -45,8 +45,13 @@ function CockpitContent() {
 
   // Carrega dados do usuário logado do armazenamento local
   useEffect(() => {
-    const saved = localStorage.getItem("crm_user");
-    if (saved) setUser(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) setUser(JSON.parse(saved));
+    } catch (err) {
+      console.error(err);
+      localStorage.removeItem("crm_user");
+    }
   }, []);
 
   // Definição dos Módulos do Sistema e suas permissões (RBAC)
