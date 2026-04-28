@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Shield, Zap } from "lucide-react";
+import { Eye, EyeOff, Shield, Zap, ArrowRight, CheckCircle2 } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { supabase } from "@/lib/supabase";
 
@@ -130,67 +130,89 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50 overflow-hidden">
+    <div className="min-h-screen flex w-full bg-slate-50 font-sans text-slate-900 overflow-hidden">
       
-      {/* BACKGROUND PREMIUM SOBERANO - LIGHT THEME TINTED WITH BRAND */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay" />
-      </div>
-
-      <div className="animate-fade-in w-full max-w-[480px] relative z-10 flex flex-col items-center">
+      {/* --- ESQUERDA: BRANDING CORPORATIVO (Oculto no Mobile) --- */}
+      <div className="hidden lg:flex w-1/2 bg-[var(--brand)] relative flex-col justify-between p-16 overflow-hidden">
+        {/* Efeitos de Fundo Abstratos */}
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
+        <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full bg-white/20 blur-[150px]" />
+        <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[60%] rounded-full bg-black/20 blur-[120px]" />
         
-        {/* LOGO & BRANDING */}
-        <div className="text-center mb-12 flex flex-col items-center">
-          <div className="w-20 h-20 mb-6 p-4 rounded-3xl bg-white border border-slate-100 shadow-xl shadow-[var(--brand)]/5 flex items-center justify-center relative group">
-            <div className="absolute inset-0 rounded-3xl border border-[var(--brand)]/20 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-[1.02]" />
+        {/* Top Logo */}
+        <div className="relative z-10 flex items-center gap-5">
+          <div className="w-16 h-16 bg-white p-3 rounded-[1.25rem] shadow-2xl">
             <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
-            Alicerce <span className="text-[var(--brand)]">ERP</span>
-          </h1>
-          <p className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-[0.4em] mt-1">
-            Sovereign Command Center
+          <div>
+            <h1 className="text-3xl font-black text-white tracking-tight">Alicerce</h1>
+            <p className="text-[10px] font-bold text-white/80 uppercase tracking-[0.4em] mt-1">Gestão Soberana</p>
+          </div>
+        </div>
+
+        {/* Center Slogan */}
+        <div className="relative z-10 max-w-xl animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          <h2 className="text-5xl font-black text-white leading-[1.1] tracking-tight mb-8">
+            A inteligência por trás das grandes operações.
+          </h2>
+          <p className="text-[1.1rem] text-white/90 font-medium leading-relaxed">
+            Acesso estritamente restrito. Plataforma central para gerenciamento de logística, 
+            suprimentos, inteligência de RH e monitoramento operacional.
           </p>
         </div>
 
-        {/* CARD DE LOGIN "CARTÃO DE VISITAS PREMIUM LIGHT" */}
-        <div className="w-full bg-white/80 backdrop-blur-3xl border border-slate-200/60 p-10 lg:p-12 rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.05)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-[var(--brand)] via-[var(--brand-dark)] to-[var(--brand)]" />
+        {/* Bottom Footer */}
+        <div className="relative z-10 flex items-center justify-between text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">
+          <span>Sovereign Security Protocol</span>
+          <span>V45.0 ERP Enterprise</span>
+        </div>
+      </div>
+
+      {/* --- DIREITA: FORMULÁRIO DE ACESSO --- */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-24 relative overflow-y-auto">
+        <div className="w-full max-w-[420px] animate-fade-in relative z-10">
           
-          <div className="mb-10 text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-2">
-              Acesso Restrito
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex flex-col items-center mb-12">
+            <div className="w-20 h-20 bg-white p-4 rounded-3xl shadow-xl shadow-slate-200/50 mb-5 border border-slate-100">
+              <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
+            </div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Alicerce ERP</h1>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Sovereign Command</p>
+          </div>
+
+          <div className="mb-12">
+            <h2 className="text-[2rem] font-black text-slate-900 tracking-tight mb-3 leading-tight">
+              Acesso ao Sistema
             </h2>
-            <p className="text-[0.8rem] text-slate-500 font-medium">
-              Credenciais biométricas atreladas ao número de contato.
+            <p className="text-slate-500 font-medium text-[0.95rem] leading-relaxed">
+              Insira suas credenciais corporativas.
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest pl-1">
-                Identificação (Telefone)
+            <div className="group">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
+                Identificação (Celular)
               </label>
               <input
                 type="tel" required
-                className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 text-slate-900 placeholder-slate-300 focus:bg-slate-50 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300 font-medium shadow-sm"
+                className="w-full bg-white border-2 border-slate-200 rounded-[1.25rem] px-5 py-4 text-slate-900 placeholder-slate-300 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-semibold text-base shadow-sm group-hover:border-slate-300"
                 placeholder="(92) 9XXXX-XXXX"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-[0.7rem] font-bold text-slate-400 uppercase tracking-widest pl-1">
-                Chave de Acesso (4 Dígitos)
+            <div className="group">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 ml-1">
+                Chave de Acesso
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-white border border-slate-200 rounded-2xl px-5 py-4 pr-14 text-slate-900 tracking-[0.3em] font-mono text-xl placeholder-slate-300 focus:bg-slate-50 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300 shadow-sm"
+                  className="w-full bg-white border-2 border-slate-200 rounded-[1.25rem] px-5 py-4 pr-14 text-slate-900 tracking-[0.5em] font-mono text-xl placeholder-slate-300 focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all shadow-sm group-hover:border-slate-300"
                   placeholder="••••"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
@@ -198,16 +220,16 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors p-2"
                 >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold flex items-center gap-3 animate-fade-in shadow-sm">
-                <Shield size={16} className="shrink-0 text-red-500" /> 
+              <div className="p-4 rounded-[1rem] bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center gap-3 animate-fade-in shadow-sm">
+                <Shield size={18} className="shrink-0 text-red-500" /> 
                 <span>{error}</span>
               </div>
             )}
@@ -215,244 +237,244 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-6 w-full py-5 rounded-2xl bg-[var(--brand)] text-white hover:opacity-90 font-black uppercase text-[0.8rem] tracking-[0.2em] shadow-[0_15px_30px_var(--brand-opacity)] transition-all duration-300 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 group"
+              className="mt-6 w-full py-[1.35rem] rounded-[1.25rem] bg-[var(--brand)] text-white hover:bg-[var(--brand-dark)] font-black uppercase text-[0.85rem] tracking-[0.25em] shadow-[0_20px_40px_-15px_var(--brand)] transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:grayscale flex items-center justify-center gap-3 group/btn"
             >
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Conectando...
+                  Autenticando...
                 </>
               ) : (
                 <>
-                  Entrar no Hub
-                  <Zap size={16} className="text-white group-hover:scale-110 transition-transform" />
+                  Autenticar
+                  <Zap size={18} className="text-white group-hover/btn:translate-x-1 group-hover/btn:scale-110 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center flex flex-col gap-3">
+          <div className="mt-14 flex flex-col items-center">
+            <div className="w-12 h-[3px] bg-slate-200 mb-8 rounded-full" />
+            <p className="text-slate-500 text-[0.85rem] font-medium mb-5">Não possui credenciais de acesso?</p>
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.75rem] font-bold text-slate-400 hover:text-[var(--brand)] uppercase tracking-wider transition-colors"
+              className="text-[0.75rem] font-black text-slate-800 hover:text-[var(--brand)] uppercase tracking-[0.2em] transition-colors flex items-center gap-2 group/link px-6 py-3 rounded-full hover:bg-slate-100"
             >
-              Trabalhe Conosco (Cadastro)
+              Portal de Talentos <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
-        
-        {/* FOOTER DO CARTÃO */}
-        <div className="mt-8 flex gap-6 text-slate-400 text-[0.65rem] font-black uppercase tracking-widest">
-          <span>Alicerce © 2026</span>
-          <span>•</span>
-          <span>Sovereign Security</span>
-        </div>
       </div>
 
-        {/* Modal de Cadastro Avançado V45.0 (PREMIUM SOBERANO) */}
-        <AdaptiveModal
-          title={`Triagem de Talentos (Passo ${step} de 4)`}
-          isOpen={modalTrabalhe}
-          onClose={() => { setModalTrabalhe(false); setStep(1); }}
-          width="800px"
-        >
-          <div className="flex flex-col gap-6 p-2">
-            
-            {/* PROGRESS BAR EXECUTIVA */}
-            <div className="w-full h-2 bg-[var(--bg-base)] rounded-full overflow-hidden flex shadow-inner">
-               {[1,2,3,4].map(i => (
-                 <div key={i} className={`h-full flex-1 border-r border-[var(--bg-card)] transition-all duration-500 ${i <= step ? 'bg-gradient-to-r from-[var(--brand)] to-[var(--brand-hover)]' : 'bg-transparent'}`} />
-               ))}
-            </div>
-
-            {step === 1 && (
-              <div className="flex flex-col gap-5 animate-fade-in">
-                <div className="border-b border-[var(--border)] pb-2 mb-2">
-                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">1. Identificação Básica</h3>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Preencha seus dados de contato e identificação primária.</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Nome Completo Oficial *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento de identidade" />
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">Telefone / WhatsApp *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">E-mail de Contato *</label>
-                    <input type="email" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="seu.email@exemplo.com" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Data de Nascimento *</label>
-                    <input type="date" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="flex flex-col gap-5 animate-fade-in">
-                <div className="border-b border-[var(--border)] pb-2 mb-2">
-                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">2. Documentação Oficial</h3>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Dados necessários para o processo de admissão (eSocial).</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">CPF *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">RG / Identidade</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Número do RG" />
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">PIS / NIS</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">Título de Eleitor</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Número do Título" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="flex flex-col gap-5 animate-fade-in">
-                <div className="border-b border-[var(--border)] pb-2 mb-2">
-                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">3. Endereço e Logística</h3>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Para análise de rota e auxílio transporte.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-1">
-                    <label className="label-sm text-[var(--text-secondary)]">CEP *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Logradouro / Rua *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Ex: Av. Sete de Setembro" />
-                  </div>
-                  <div className="md:col-span-1">
-                    <label className="label-sm text-[var(--text-secondary)]">Número *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="S/N ou Nº" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Bairro *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Nome do Bairro" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Cidade *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
-                  </div>
-                  <div className="md:col-span-1">
-                    <label className="label-sm text-[var(--text-secondary)]">UF *</label>
-                    <input className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {step === 4 && (
-              <div className="flex flex-col gap-5 animate-fade-in">
-                <div className="border-b border-[var(--border)] pb-2 mb-2">
-                  <h3 className="text-sm font-black uppercase text-[var(--brand)] tracking-widest">4. Perfil Profissional & SST</h3>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Alocação de cargo e preparação de fardamento.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">Cargo de Interesse *</label>
-                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
-                      <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
-                      <option value="Porteiro">Porteiro</option>
-                      <option value="Zelador">Zelador</option>
-                      <option value="Encarregado">Encarregado(a)</option>
-                      <option value="Administrativo">Auxiliar Administrativo</option>
-                      <option value="Tecnico_SST">Técnico de Seg. do Trabalho</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">Grau de Escolaridade *</label>
-                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
-                      <option value="Fundamental Incompleto">Fundamental Incompleto</option>
-                      <option value="Fundamental Completo">Fundamental Completo</option>
-                      <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
-                      <option value="Ensino Médio Completo">Ensino Médio Completo</option>
-                      <option value="Superior Completo">Superior Completo</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">Tamanho do Fardamento (Camisa) *</label>
-                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
-                      <option value="PP">PP</option>
-                      <option value="P">P</option>
-                      <option value="M">M</option>
-                      <option value="G">G</option>
-                      <option value="GG">GG</option>
-                      <option value="XG">XG / EXG</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label-sm text-[var(--text-secondary)]">Tamanho do Fardamento (Calça) *</label>
-                    <select className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})}>
-                      <option value="36">36</option>
-                      <option value="38">38</option>
-                      <option value="40">40</option>
-                      <option value="42">42</option>
-                      <option value="44">44</option>
-                      <option value="46">46</option>
-                      <option value="48">48</option>
-                      <option value="50">50</option>
-                      <option value="52">52+</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Numeração do Calçado de Segurança *</label>
-                    <input type="number" min="30" max="50" className="input-field bg-[var(--bg-base)] border-[var(--border)]" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="label-sm text-[var(--text-secondary)]">Último Emprego / Resumo Profissional</label>
-                    <textarea className="input-field bg-[var(--bg-base)] border-[var(--border)]" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Cite suas últimas empresas e funções exercidas..." />
-                  </div>
-                  <div className="md:col-span-2 flex items-center gap-3 bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)]">
-                    <input type="checkbox" id="exp" checked={candidato.experiencia} onChange={e => setCandidato({...candidato, experiencia: e.target.checked})} className="w-5 h-5 cursor-pointer accent-[var(--brand)]" />
-                    <label htmlFor="exp" className="text-sm font-semibold text-[var(--text-primary)] cursor-pointer">
-                      Declaro que possuo experiência na função pretendida e que as informações são verdadeiras.
-                    </label>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-4 mt-6 pt-4 border-t border-[var(--border)]">
-              {step > 1 && (
-                <button className="flex-1 px-8 py-4 bg-[var(--bg-base)] text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--bg-card)] transition-colors rounded-2xl font-black uppercase text-xs tracking-wider shadow-sm" onClick={() => setStep(step - 1)}>
-                  Voltar Passo
-                </button>
-              )}
-              {step < 4 ? (
-                <button className="flex-[2] btn-brand !h-14 shadow-lg shadow-[var(--brand)]/20" onClick={() => setStep(step + 1)}>
-                  Avançar <span className="opacity-50 ml-1">({step}/4)</span>
-                </button>
-              ) : (
-                <button className="flex-[2] btn-brand !h-14 shadow-xl shadow-[var(--brand)]/30 border border-white/10" onClick={handleCadastroCandidato} disabled={loading}>
-                  {loading ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Enviando para Triagem...
-                    </div>
-                  ) : "Finalizar Cadastro de Candidato"}
-                </button>
-              )}
-            </div>
+      {/* --- MODAL DE CADASTRO: CORPORATIVO E MINIMALISTA --- */}
+      <AdaptiveModal
+        title={``}
+        isOpen={modalTrabalhe}
+        onClose={() => { setModalTrabalhe(false); setStep(1); }}
+        width="800px"
+      >
+        <div className="flex flex-col p-2 lg:p-6">
+          
+          <div className="mb-8">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Cadastro de Candidato</h2>
+            <p className="text-slate-500 font-medium text-sm mt-2">Siga as etapas para registrar suas informações no banco de talentos da Alicerce.</p>
           </div>
-        </AdaptiveModal>
 
-      </div>
-  );
+          {/* PROGRESS BAR ESTILO STRIPE */}
+          <div className="w-full flex gap-2 mb-10">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="flex-1 h-2 rounded-full overflow-hidden bg-slate-100 relative">
+                <div className={`absolute top-0 left-0 h-full w-full transition-transform duration-700 ease-out ${i <= step ? 'translate-x-0 bg-[var(--brand)]' : '-translate-x-full bg-[var(--brand)]'}`} />
+              </div>
+            ))}
+          </div>
+
+          {step === 1 && (
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">1. Informações Pessoais Básicas</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nome Completo Oficial *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Celular / WhatsApp *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">E-mail Profissional *</label>
+                  <input type="email" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="nome@exemplo.com" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Data de Nascimento *</label>
+                  <input type="date" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm text-slate-600" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">2. Documentação e eSocial</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">CPF *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identidade (RG)</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Opcional neste passo" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">PIS / NIS</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Título de Eleitor</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Opcional" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">3. Localização Estratégica</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div className="md:col-span-1">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">CEP *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Endereço (Rua/Av) *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Sua rua" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Número *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="Nº" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Bairro *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Seu bairro" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cidade *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Estado *</label>
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">4. Vaga & Logística Operacional (SST)</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cargo Pretendido *</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
+                    <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
+                    <option value="Porteiro">Porteiro</option>
+                    <option value="Zelador">Zelador</option>
+                    <option value="Encarregado">Encarregado(a)</option>
+                    <option value="Administrativo">Auxiliar Administrativo</option>
+                    <option value="Tecnico_SST">Técnico de Seg. do Trabalho</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escolaridade *</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
+                    <option value="Fundamental Incompleto">Fundamental Incompleto</option>
+                    <option value="Fundamental Completo">Fundamental Completo</option>
+                    <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
+                    <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+                    <option value="Superior Completo">Superior Completo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho da Camisa (EPI) *</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
+                    <option value="PP">PP</option>
+                    <option value="P">P</option>
+                    <option value="M">M</option>
+                    <option value="G">G</option>
+                    <option value="GG">GG</option>
+                    <option value="XG">XG / EXG</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho da Calça (EPI) *</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})}>
+                    <option value="36">36</option>
+                    <option value="38">38</option>
+                    <option value="40">40</option>
+                    <option value="42">42</option>
+                    <option value="44">44</option>
+                    <option value="46">46</option>
+                    <option value="48">48</option>
+                    <option value="50">50</option>
+                    <option value="52">52+</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho do Calçado (Botina) *</label>
+                  <input type="number" min="30" max="50" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Último Emprego / Resumo (Opcional)</label>
+                  <textarea className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Onde você trabalhou por último e o que fazia?" />
+                </div>
+                <div className="md:col-span-2 flex items-start gap-4 bg-slate-50 p-5 rounded-[1rem] border border-slate-200 mt-2 hover:border-[var(--brand)]/30 transition-colors">
+                  <div className="mt-1">
+                    <div className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center cursor-pointer overflow-hidden transition-colors" onClick={() => setCandidato({...candidato, experiencia: !candidato.experiencia})}>
+                       {candidato.experiencia ? <CheckCircle2 className="text-[var(--brand)] w-full h-full" /> : <div className="w-full h-full bg-transparent" />}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[13px] font-bold text-slate-700 cursor-pointer" onClick={() => setCandidato({...candidato, experiencia: !candidato.experiencia})}>
+                      Confirmo a veracidade das informações
+                    </label>
+                    <p className="text-[11px] text-slate-500 mt-1">Declaro que possuo experiência na área e que os dados informados acima são reais.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-4 mt-10 pt-6 border-t border-slate-100">
+            {step > 1 && (
+              <button className="flex-1 py-4 bg-white text-slate-600 border-2 border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-colors rounded-xl font-black uppercase text-[11px] tracking-widest shadow-sm" onClick={() => setStep(step - 1)}>
+                Voltar
+              </button>
+            )}
+            {step < 4 ? (
+              <button className="flex-[2] py-4 bg-slate-900 text-white rounded-xl font-black uppercase text-[11px] tracking-[0.2em] hover:bg-slate-800 transition-colors shadow-lg flex justify-center items-center gap-2" onClick={() => setStep(step + 1)}>
+                Próxima Etapa <ArrowRight size={14} />
+              </button>
+            ) : (
+              <button className="flex-[2] py-4 bg-[var(--brand)] text-white rounded-xl font-black uppercase text-[11px] tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-[var(--brand)]/30 flex justify-center items-center gap-2 disabled:opacity-50" onClick={handleCadastroCandidato} disabled={loading || !candidato.experiencia}>
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Enviando Banco...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} /> Finalizar Inscrição
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </AdaptiveModal>
+
+    </div>
 }
