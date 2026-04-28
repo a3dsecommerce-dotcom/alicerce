@@ -139,76 +139,75 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
       </div>
 
-      <div className="animate-fade-in w-full max-w-[460px] relative z-10 flex flex-col items-center">
+      <div className="animate-fade-in w-full max-w-[480px] relative z-10 flex flex-col items-center">
         
         {/* LOGO & BRANDING */}
-        <div className="text-center mb-8 flex flex-col items-center">
-          <div className="w-24 h-24 mb-4 p-4 rounded-2xl bg-white/5 border border-white/10 shadow-2xl backdrop-blur-md flex items-center justify-center relative group">
-            <div className="absolute inset-0 rounded-2xl border border-[var(--brand)]/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-105" />
-            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain drop-shadow-xl" />
+        <div className="text-center mb-12 flex flex-col items-center">
+          <div className="w-20 h-20 mb-6 p-4 rounded-3xl bg-gradient-to-b from-white/10 to-white/5 border border-white/10 shadow-[0_0_40px_rgba(255,255,255,0.1)] backdrop-blur-xl flex items-center justify-center relative group">
+            <div className="absolute inset-0 rounded-3xl border border-[var(--brand)]/40 opacity-0 group-hover:opacity-100 transition-all duration-700 scale-[1.02]" />
+            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain drop-shadow-2xl" />
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight mb-1">
+          <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 tracking-tight mb-2">
             Alicerce <span className="text-[var(--brand)]">ERP</span>
           </h1>
-          <p className="text-[0.7rem] font-bold text-white/50 uppercase tracking-[0.3em]">
+          <p className="text-[0.7rem] font-bold text-white/40 uppercase tracking-[0.4em] mt-1">
             Sovereign Command Center
           </p>
         </div>
 
-        {/* CARD DE LOGIN "CARTÃO DE VISITAS" */}
-        <div className="w-full bg-white/[0.02] backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-50" />
+        {/* CARD DE LOGIN "CARTÃO DE VISITAS PREMIUM" */}
+        <div className="w-full bg-[#0d0d0d]/80 backdrop-blur-3xl border border-white/10 p-10 lg:p-12 rounded-[2.5rem] shadow-[0_30px_80px_rgba(0,0,0,0.8)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-60" />
           
-          <div className="mb-8">
-            <h2 className="text-lg font-black text-white flex items-center gap-2">
-              <Shield size={20} className="text-[var(--brand)]" />
+          <div className="mb-10 text-center">
+            <h2 className="text-xl font-medium text-white mb-2">
               Acesso Restrito
             </h2>
-            <p className="text-xs text-white/40 mt-1">
+            <p className="text-[0.8rem] text-white/40">
               Credenciais biométricas atreladas ao número de contato.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-5">
-            <div className="relative group">
-              <label className="absolute -top-2.5 left-4 bg-[#111] px-2 text-[0.65rem] font-bold text-white/60 uppercase tracking-wider group-focus-within:text-[var(--brand)] transition-colors z-10">
+          <form onSubmit={handleLogin} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[0.7rem] font-bold text-white/50 uppercase tracking-widest pl-1">
                 Identificação (Telefone)
               </label>
               <input
                 type="tel" required
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 text-white placeholder-white/20 focus:border-[var(--brand)]/50 focus:ring-1 focus:ring-[var(--brand)]/50 outline-none transition-all"
+                className="w-full bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-white/20 focus:bg-white/[0.06] focus:border-[var(--brand)]/60 focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300"
                 placeholder="(92) 9XXXX-XXXX"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
               />
             </div>
 
-            <div className="relative group">
-              <label className="absolute -top-2.5 left-4 bg-[#111] px-2 text-[0.65rem] font-bold text-white/60 uppercase tracking-wider group-focus-within:text-[var(--brand)] transition-colors z-10">
+            <div className="flex flex-col gap-2">
+              <label className="text-[0.7rem] font-bold text-white/50 uppercase tracking-widest pl-1">
                 Chave de Acesso (4 Dígitos)
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-4 pr-12 text-white tracking-[0.2em] placeholder-white/20 focus:border-[var(--brand)]/50 focus:ring-1 focus:ring-[var(--brand)]/50 outline-none transition-all"
-                  placeholder="****"
+                  className="w-full bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-2xl px-5 py-4 pr-14 text-white tracking-[0.3em] font-mono text-lg placeholder-white/20 focus:bg-white/[0.06] focus:border-[var(--brand)]/60 focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all duration-300"
+                  placeholder="••••"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-start gap-2">
-                <Shield size={14} className="shrink-0 mt-0.5" /> 
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium flex items-center gap-3 animate-fade-in">
+                <Shield size={16} className="shrink-0" /> 
                 <span>{error}</span>
               </div>
             )}
@@ -216,17 +215,17 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-2 w-full py-4 rounded-xl bg-gradient-to-r from-[var(--brand)] to-[var(--brand-dark)] hover:opacity-90 text-white font-black uppercase text-sm tracking-widest shadow-lg shadow-[var(--brand)]/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="mt-6 w-full py-5 rounded-2xl bg-white text-black hover:bg-gray-100 font-black uppercase text-[0.8rem] tracking-[0.2em] shadow-[0_0_40px_rgba(255,255,255,0.1)] transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:bg-white/20 disabled:text-white flex items-center justify-center gap-3 group"
             >
               {loading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                   Conectando...
                 </>
               ) : (
                 <>
                   Entrar no Hub
-                  <Zap size={16} fill="currentColor" />
+                  <Zap size={16} className="text-black group-hover:scale-110 transition-transform" />
                 </>
               )}
             </button>
