@@ -151,25 +151,25 @@ export default function LoginPage() {
           <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
         </div>
           
-        {/* Formulário Container */}
-        <div className="w-full bg-white/80 backdrop-blur-xl border border-slate-200/80 p-8 sm:p-10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.03)] relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-[var(--brand)] via-[var(--brand-dark)] to-[var(--brand)]" />
+        {/* Formulário Container - Ambient YouTube Effect */}
+        <div className="w-full bg-white/80 backdrop-blur-3xl border border-white/40 p-10 sm:p-14 rounded-[2.5rem] shadow-[0_0_120px_rgba(0,0,0,0.05),0_0_80px_var(--brand)]/15 relative overflow-hidden flex flex-col min-h-[550px] justify-between">
+          <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-[var(--brand)] to-transparent opacity-50" />
           
-          <div className="mb-10 text-center">
-            <h2 className="text-xl font-bold text-slate-800 mb-2">
+          <div className="mb-12 text-center">
+            <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">
               Acesso ao Sistema
             </h2>
-            <p className="text-slate-500 font-medium text-[0.85rem] leading-relaxed">
+            <p className="text-slate-500 font-medium text-[0.9rem] leading-relaxed">
               Insira suas credenciais corporativas.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-6">
+          <form onSubmit={handleLogin} className="flex flex-col gap-7 flex-1 justify-center">
             <div className="group">
               <input
                 type="tel" required
-                className="w-full bg-slate-50/40 backdrop-blur-sm border border-slate-200/60 rounded-[1.25rem] px-5 py-4 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-semibold text-base shadow-[inset_0_2px_10px_rgba(0,0,0,0.01)] hover:bg-slate-50/80"
-                placeholder="Número do Celular"
+                className="w-full bg-slate-50/50 backdrop-blur-md border border-slate-200/50 rounded-full px-7 py-5 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-semibold text-lg shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] hover:bg-slate-50/90 text-center tracking-widest"
+                placeholder="Login"
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
               />
@@ -180,15 +180,15 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"} 
                   required maxLength={4}
-                  className="w-full bg-slate-50/40 backdrop-blur-sm border border-slate-200/60 rounded-[1.25rem] px-5 py-4 pr-14 text-slate-900 tracking-[0.5em] font-mono text-xl placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.01)] hover:bg-slate-50/80"
-                  placeholder="••••"
+                  className="w-full bg-slate-50/50 backdrop-blur-md border border-slate-200/50 rounded-full px-7 py-5 pr-16 text-slate-900 tracking-[0.75em] font-mono text-2xl placeholder-slate-400 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.02)] hover:bg-slate-50/90 text-center"
+                  placeholder="Senha"
                   value={senha}
                   onChange={e => setSenha(e.target.value)}
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors p-2"
+                  className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[var(--brand)] transition-colors p-2 rounded-full hover:bg-slate-100"
                 >
                   {showPassword ? <EyeOff size={22} /> : <Eye size={22} />}
                 </button>
@@ -196,7 +196,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-4 rounded-[1rem] bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center gap-3 animate-fade-in shadow-sm">
+              <div className="mt-2 p-5 rounded-full bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center justify-center gap-3 animate-fade-in shadow-sm">
                 <Shield size={18} className="shrink-0 text-red-500" /> 
                 <span>{error}</span>
               </div>
@@ -205,29 +205,29 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={loading} 
-              className="mt-6 w-full py-[1.35rem] rounded-[1.25rem] bg-[var(--brand)] text-white hover:bg-[var(--brand-dark)] font-black uppercase text-[0.85rem] tracking-[0.25em] shadow-[0_20px_40px_-15px_var(--brand)] transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:grayscale flex items-center justify-center gap-3 group/btn"
+              className="mt-8 w-full py-5 rounded-full bg-[var(--brand)] text-white hover:bg-[var(--brand-dark)] font-black uppercase text-[0.9rem] tracking-[0.3em] shadow-[0_20px_40px_-15px_var(--brand)] transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:grayscale flex items-center justify-center gap-3 group/btn"
             >
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Autenticando...
+                  Conectando...
                 </>
               ) : (
                 <>
-                  Autenticar
-                  <Zap size={18} className="text-white group-hover/btn:translate-x-1 group-hover/btn:scale-110 transition-transform" />
+                  Entrar
+                  <ArrowRight size={18} className="text-white group-hover/btn:translate-x-2 transition-transform" />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-10 pt-6 border-t border-slate-100 text-center flex flex-col items-center">
-            <p className="text-slate-400 text-[0.75rem] font-medium mb-4">Não possui credenciais de acesso?</p>
+          <div className="mt-12 pt-8 border-t border-slate-100 text-center flex flex-col items-center">
+            <p className="text-slate-400 text-[0.8rem] font-medium mb-5">Acesso Exclusivo para Colaboradores</p>
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.75rem] font-black text-slate-800 hover:text-[var(--brand)] uppercase tracking-[0.2em] transition-colors flex items-center gap-2 group/link py-2 px-4 rounded-full hover:bg-slate-50"
+              className="text-[0.75rem] font-black text-slate-700 hover:text-[var(--brand)] uppercase tracking-[0.25em] transition-colors flex items-center gap-2 group/link py-3 px-6 rounded-full hover:bg-slate-50 border border-transparent hover:border-slate-200"
             >
-              Portal de Talentos <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
+              Candidatar-se à Vaga <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
