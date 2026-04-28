@@ -130,62 +130,36 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-slate-50 font-sans text-slate-900 overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-50 font-sans text-slate-900 overflow-hidden">
       
-      {/* --- ESQUERDA: BRANDING CORPORATIVO (Oculto no Mobile) --- */}
-      <div className="hidden lg:flex w-1/2 bg-[var(--brand)] relative flex-col justify-between p-16 overflow-hidden">
-        {/* Efeitos de Fundo Abstratos */}
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
-        <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full bg-white/20 blur-[150px]" />
-        <div className="absolute bottom-[-10%] right-[-20%] w-[60%] h-[60%] rounded-full bg-black/20 blur-[120px]" />
-        
-        {/* Top Logo */}
-        <div className="relative z-10 flex items-center gap-5">
-          <div className="w-16 h-16 bg-white p-3 rounded-[1.25rem] shadow-2xl">
-            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Alicerce</h1>
-            <p className="text-[10px] font-bold text-white/80 uppercase tracking-[0.4em] mt-1">Gestão Soberana</p>
-          </div>
-        </div>
-
-        {/* Center Slogan */}
-        <div className="relative z-10 max-w-xl animate-fade-in" style={{ animationDelay: "0.2s" }}>
-          <h2 className="text-5xl font-black text-white leading-[1.1] tracking-tight mb-8">
-            A inteligência por trás das grandes operações.
-          </h2>
-          <p className="text-[1.1rem] text-white/90 font-medium leading-relaxed">
-            Acesso estritamente restrito. Plataforma central para gerenciamento de logística, 
-            suprimentos, inteligência de RH e monitoramento operacional.
-          </p>
-        </div>
-
-        {/* Bottom Footer */}
-        <div className="relative z-10 flex items-center justify-between text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">
-          <span>Sovereign Security Protocol</span>
-          <span>V45.0 ERP Enterprise</span>
-        </div>
+      {/* --- BACKGROUND EFFECTS --- */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px]" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay" />
       </div>
 
-      {/* --- DIREITA: FORMULÁRIO DE ACESSO --- */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-24 relative overflow-y-auto">
-        <div className="w-full max-w-[420px] animate-fade-in relative z-10">
-          
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex flex-col items-center mb-12">
-            <div className="w-20 h-20 bg-white p-4 rounded-3xl shadow-xl shadow-slate-200/50 mb-5 border border-slate-100">
-              <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Alicerce ERP</h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Sovereign Command</p>
+      {/* --- FORMULÁRIO DE ACESSO CENTRALIZADO --- */}
+      <div className="w-full max-w-[460px] flex flex-col justify-center items-center relative z-10 animate-fade-in">
+        
+        {/* Logo & Slogan Centralizados */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="w-20 h-20 bg-white p-4 rounded-3xl shadow-2xl shadow-slate-200/60 mb-5 border border-slate-100 flex items-center justify-center">
+            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
           </div>
-
-          <div className="mb-12">
-            <h2 className="text-[2rem] font-black text-slate-900 tracking-tight mb-3 leading-tight">
+          <h1 className="text-[2.25rem] font-black text-slate-900 tracking-tight">Alicerce ERP</h1>
+          <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mt-1">Sovereign Command</p>
+        </div>
+          
+        {/* Formulário Container */}
+        <div className="w-full bg-white/80 backdrop-blur-xl border border-slate-200/80 p-8 sm:p-10 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.03)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-[var(--brand)] via-[var(--brand-dark)] to-[var(--brand)]" />
+          
+          <div className="mb-10 text-center">
+            <h2 className="text-xl font-bold text-slate-800 mb-2">
               Acesso ao Sistema
             </h2>
-            <p className="text-slate-500 font-medium text-[0.95rem] leading-relaxed">
+            <p className="text-slate-500 font-medium text-[0.85rem] leading-relaxed">
               Insira suas credenciais corporativas.
             </p>
           </div>
@@ -253,16 +227,22 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-14 flex flex-col items-center">
-            <div className="w-12 h-[3px] bg-slate-200 mb-8 rounded-full" />
-            <p className="text-slate-500 text-[0.85rem] font-medium mb-5">Não possui credenciais de acesso?</p>
+          <div className="mt-10 pt-6 border-t border-slate-100 text-center flex flex-col items-center">
+            <p className="text-slate-400 text-[0.75rem] font-medium mb-4">Não possui credenciais de acesso?</p>
             <button 
               onClick={() => setModalTrabalhe(true)} 
-              className="text-[0.75rem] font-black text-slate-800 hover:text-[var(--brand)] uppercase tracking-[0.2em] transition-colors flex items-center gap-2 group/link px-6 py-3 rounded-full hover:bg-slate-100"
+              className="text-[0.75rem] font-black text-slate-800 hover:text-[var(--brand)] uppercase tracking-[0.2em] transition-colors flex items-center gap-2 group/link py-2 px-4 rounded-full hover:bg-slate-50"
             >
               Portal de Talentos <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
             </button>
           </div>
+        </div>
+        
+        {/* FOOTER DO CARTÃO */}
+        <div className="mt-8 flex gap-6 text-slate-400 text-[0.65rem] font-black uppercase tracking-widest">
+          <span>Alicerce © 2026</span>
+          <span>•</span>
+          <span>Sovereign Security</span>
         </div>
       </div>
 
@@ -293,22 +273,22 @@ export default function LoginPage() {
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">1. Informações Pessoais Básicas</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nome Completo Oficial *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Celular / WhatsApp *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">E-mail Profissional *</label>
-                  <input type="email" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="nome@exemplo.com" />
+                  <input type="email" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="nome@exemplo.com" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Data de Nascimento *</label>
-                  <input type="date" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm text-slate-600" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
+                  <input type="date" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm text-slate-600" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
                 </div>
               </div>
             </div>
@@ -318,22 +298,22 @@ export default function LoginPage() {
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">2. Documentação e eSocial</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">CPF *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identidade (RG)</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Opcional neste passo" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Opcional neste passo" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">PIS / NIS</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Título de Eleitor</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Opcional" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Opcional" />
                 </div>
               </div>
             </div>
@@ -343,30 +323,30 @@ export default function LoginPage() {
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">3. Localização Estratégica</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">CEP *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Endereço (Rua/Av) *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Sua rua" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Sua rua" />
                 </div>
                 <div className="md:col-span-1">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Número *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="Nº" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="Nº" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Bairro *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Seu bairro" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Seu bairro" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cidade *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
                 </div>
                 <div className="md:col-span-1">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Estado *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
                 </div>
               </div>
             </div>
@@ -376,10 +356,10 @@ export default function LoginPage() {
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">4. Vaga & Logística Operacional (SST)</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cargo Pretendido *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
                     <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
                     <option value="Porteiro">Porteiro</option>
                     <option value="Zelador">Zelador</option>
@@ -390,7 +370,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escolaridade *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
                     <option value="Fundamental Incompleto">Fundamental Incompleto</option>
                     <option value="Fundamental Completo">Fundamental Completo</option>
                     <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
@@ -400,7 +380,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho da Camisa (EPI) *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
                     <option value="PP">PP</option>
                     <option value="P">P</option>
                     <option value="M">M</option>
@@ -411,7 +391,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho da Calça (EPI) *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})}>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})}>
                     <option value="36">36</option>
                     <option value="38">38</option>
                     <option value="40">40</option>
@@ -425,11 +405,11 @@ export default function LoginPage() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho do Calçado (Botina) *</label>
-                  <input type="number" min="30" max="50" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
+                  <input type="number" min="30" max="50" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Último Emprego / Resumo (Opcional)</label>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-3 outline-none transition-all font-medium text-sm" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Onde você trabalhou por último e o que fazia?" />
+                  <textarea className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Onde você trabalhou por último e o que fazia?" />
                 </div>
                 <div className="md:col-span-2 flex items-start gap-4 bg-slate-50 p-5 rounded-[1rem] border border-slate-200 mt-2 hover:border-[var(--brand)]/30 transition-colors">
                   <div className="mt-1">
