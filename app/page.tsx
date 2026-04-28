@@ -133,129 +133,125 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 bg-[var(--bg-base)] font-sans text-[var(--text-primary)] overflow-hidden transition-colors duration-300">
       
+      {/* Estilos injetados para o glow do botão */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(var(--brand-rgb, 59, 130, 246), 0.4);
+            transition: all 0.3s ease;
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(var(--brand-rgb, 59, 130, 246), 0.6);
+            transform: translateY(-2px);
+        }
+      `}} />
+
       {/* --- THEME TOGGLE --- */}
       <div className="absolute top-6 right-6 z-50">
         <ThemeToggle />
       </div>
 
-      {/* --- BACKGROUND EFFECTS --- */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/15 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[var(--brand)]/10 blur-[120px]" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.02] mix-blend-overlay dark:opacity-[0.05]" />
+      {/* --- BACKGROUND EFFECTS (Orgânico, sem linhas retas) --- */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: `
+          radial-gradient(at 0% 0%, rgba(var(--brand-rgb, 59, 130, 246), 0.15) 0px, transparent 50%),
+          radial-gradient(at 100% 100%, rgba(var(--brand-rgb, 59, 130, 246), 0.1) 0px, transparent 50%)
+        `,
+        backgroundAttachment: 'fixed'
+      }}>
       </div>
 
-      {/* --- FORMULÁRIO DE ACESSO BANKING/ENTERPRISE STYLE --- */}
-      <div className="w-full max-w-[900px] flex flex-col md:flex-row bg-[var(--bg-card)] border border-[var(--border)] rounded-[1.5rem] shadow-2xl overflow-hidden relative z-10 animate-fade-in min-h-[550px]">
+      {/* --- MOCKUP DO USUÁRIO --- */}
+      <div className="relative w-full max-w-md p-10 bg-[var(--bg-card)]/60 backdrop-blur-xl border border-[var(--border)] rounded-[3rem] shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-10 animate-fade-in">
         
-        {/* LADO ESQUERDO - BRANDING & INSTITUCIONAL */}
-        <div className="w-full md:w-[45%] bg-slate-900 dark:bg-black p-10 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--brand)]/20 to-transparent opacity-50" />
-          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay" />
-          
-          <div className="relative z-10">
-            <div className="w-16 h-16 bg-white p-3 rounded-2xl shadow-lg mb-8 flex items-center justify-center">
-              <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
+        <div className="flex justify-center mb-8">
+            <div className="w-20 h-20 bg-[var(--brand)]/10 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(var(--brand-rgb,59,130,246),0.4)]">
+              <img src="/logo.png" alt="Alicerce Logo" className="w-12 h-12 object-contain" />
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tight mb-2">Alicerce ERP</h1>
-            <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-[0.4em] mb-10">Sovereign Command</p>
-            
-            <p className="text-slate-300 font-medium text-[1.05rem] leading-relaxed">
-              Um sistema de gestão empresarial na nuvem: com máxima economia, implementação rápida e suporte total.
-            </p>
-          </div>
-
-          <div className="relative z-10 mt-12 flex flex-col gap-3">
-            <div className="flex items-center gap-3 text-slate-400 text-xs font-semibold">
-              <ShieldCheck size={16} className="text-[var(--brand)]" />
-              <span>Ambiente Seguro Criptografado (256-bit)</span>
-            </div>
-            <div className="flex gap-4 text-slate-500 text-[0.65rem] font-bold uppercase tracking-widest mt-2 border-t border-white/10 pt-4">
-              <span>Alicerce © 2026</span>
-              <span>•</span>
-              <span>Sovereign Security</span>
-            </div>
-          </div>
         </div>
 
-        {/* LADO DIREITO - LOGIN FORM */}
-        <div className="w-full md:w-[55%] p-10 sm:p-12 flex flex-col justify-center bg-[var(--bg-card)] relative">
-          
-          <div className="mb-8 text-left">
-            <h2 className="text-2xl font-black text-[var(--text-primary)] mb-1 tracking-tight">
-              Acesso Restrito
-            </h2>
-            <p className="text-[var(--text-secondary)] font-medium text-sm">
-              Insira suas credenciais corporativas.
-            </p>
-          </div>
+        <div className="text-center mb-10">
+            <h1 className="text-2xl font-semibold tracking-wide text-[var(--text-primary)]">Portal do Sistema</h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-2">Acesse seu ambiente de gestão</p>
+        </div>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-5 flex-1">
-            <div className="group">
-              <input
-                type="tel" required
-                className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all font-medium text-[0.95rem] hover:border-[var(--text-muted)]"
-                placeholder="Login"
-                value={telefone}
-                onChange={e => setTelefone(e.target.value)}
-              />
+        <form onSubmit={handleLogin} className="space-y-6">
+            <div className="relative">
+                <input 
+                    type="tel" 
+                    id="telefone" 
+                    className="w-full px-6 py-4 bg-[var(--bg-base)]/50 border border-[var(--border)] rounded-full text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/50 transition-all font-medium"
+                    placeholder="Seu número de celular"
+                    required
+                    value={telefone}
+                    onChange={e => setTelefone(e.target.value)}
+                />
             </div>
 
-            <div className="group">
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"} 
-                  required maxLength={4}
-                  className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-4 py-3 pr-12 text-[var(--text-primary)] tracking-[0.25em] font-mono text-lg placeholder-[var(--text-muted)] focus:bg-[var(--bg-card)] focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 outline-none transition-all hover:border-[var(--text-muted)]"
-                  placeholder="Senha"
-                  value={senha}
-                  onChange={e => setSenha(e.target.value)}
+            <div className="relative">
+                <input 
+                    type={showPassword ? "text" : "password"} 
+                    id="password" 
+                    maxLength={4}
+                    className="w-full px-6 py-4 pr-12 bg-[var(--bg-base)]/50 border border-[var(--border)] rounded-full text-[var(--text-primary)] tracking-[0.25em] font-mono text-lg placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/50 transition-all"
+                    placeholder="Sua senha"
+                    required
+                    value={senha}
+                    onChange={e => setSenha(e.target.value)}
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors p-2 rounded-lg hover:bg-[var(--bg-card-hover)]"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors p-2"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
-              </div>
             </div>
 
             {error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-bold flex items-center gap-3 animate-fade-in shadow-sm">
-                <Shield size={18} className="shrink-0 text-red-500" /> 
+              <div className="px-6 py-3 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold flex items-center justify-center gap-2">
+                <Shield size={16} className="shrink-0" /> 
                 <span>{error}</span>
               </div>
             )}
 
-            <button 
-              type="submit" 
-              disabled={loading} 
-              className="mt-2 w-full py-3 rounded-xl bg-[var(--text-primary)] text-[var(--bg-card)] hover:opacity-90 font-bold text-[0.95rem] shadow-lg shadow-[var(--text-primary)]/10 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 group/btn"
-            >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Autenticando...
-                </>
-              ) : (
-                <>
-                  Autenticar no Sistema
-                  <ArrowRight size={16} className="text-[var(--bg-card)] group-hover/btn:translate-x-1 transition-transform" />
-                </>
-              )}
-            </button>
-          </form>
+            <div className="flex items-center justify-between px-2">
+                <label className="flex items-center cursor-pointer group">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only peer" />
+                      <div className="w-10 h-6 bg-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--brand)] transition-colors"></div>
+                    </div>
+                    <span className="ml-3 text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">Lembrar-me</span>
+                </label>
+                <button type="button" className="text-sm text-[var(--brand)] hover:brightness-110 transition-all font-medium">Esqueceu a senha?</button>
+            </div>
 
-          <div className="mt-8 pt-6 border-t border-[var(--border)] text-center">
             <button 
-              onClick={() => setModalTrabalhe(true)} 
-              className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex items-center justify-center gap-2 group/link w-full py-2.5 rounded-xl hover:bg-[var(--bg-card-hover)]"
+                type="submit" 
+                disabled={loading}
+                className="w-full py-4 mt-6 bg-[var(--brand)] text-white font-semibold rounded-full btn-glow tracking-wide flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:transform-none"
             >
-              Portal de Talentos (Trabalhe Conosco) <ArrowRight size={14} className="group-hover/link:translate-x-1 transition-transform" />
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Entrando...
+                  </>
+                ) : (
+                  <>
+                    Entrar no Sistema
+                  </>
+                )}
             </button>
-          </div>
-        </div>
+
+            <div className="mt-8 pt-6 border-t border-[var(--border)] text-center">
+              <button 
+                type="button"
+                onClick={() => setModalTrabalhe(true)} 
+                className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors w-full"
+              >
+                Candidatar-se à Vaga
+              </button>
+            </div>
+        </form>
       </div>
 
       {/* --- MODAL DE CADASTRO: CORPORATIVO E MINIMALISTA --- */}
