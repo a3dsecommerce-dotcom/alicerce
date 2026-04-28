@@ -121,6 +121,7 @@ export default function LoginPage() {
       if (error) throw error;
       
       alert("Cadastro realizado com sucesso! Aguarde contato do RH.");
+      alert("Cadastro realizado com sucesso!");
       setModalTrabalhe(false);
       setStep(1);
     } catch (err: any) {
@@ -131,130 +132,114 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-[var(--bg-base)] font-sans text-[var(--text-primary)] overflow-hidden transition-colors duration-300">
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-6 bg-black font-sans text-white overflow-y-auto selection:bg-orange-500/30">
       
-      {/* Estilos injetados para o glow do botão */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .btn-glow {
-            box-shadow: 0 0 20px rgba(var(--brand-rgb, 59, 130, 246), 0.4);
-            transition: all 0.3s ease;
-        }
-        .btn-glow:hover {
-            box-shadow: 0 0 30px rgba(var(--brand-rgb, 59, 130, 246), 0.6);
-            transform: translateY(-2px);
-        }
-      `}} />
-
-      {/* --- THEME TOGGLE --- */}
-      <div className="absolute top-6 right-6 z-50">
-        <ThemeToggle />
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-orange-600/5 rounded-full blur-[120px]" />
       </div>
 
-      {/* --- BACKGROUND EFFECTS (Orgânico, sem linhas retas) --- */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: `
-          radial-gradient(at 0% 0%, rgba(var(--brand-rgb, 59, 130, 246), 0.15) 0px, transparent 50%),
-          radial-gradient(at 100% 100%, rgba(var(--brand-rgb, 59, 130, 246), 0.1) 0px, transparent 50%)
-        `,
-        backgroundAttachment: 'fixed'
-      }}>
-      </div>
-
-      {/* --- MOCKUP DO USUÁRIO --- */}
-      <div className="relative w-full max-w-md p-10 bg-[var(--bg-card)]/60 backdrop-blur-xl border border-[var(--border)] rounded-[3rem] shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] z-10 animate-fade-in">
+      <div className="w-full max-w-[440px] z-10 flex flex-col gap-6 py-12 animate-fade-in">
         
-        <div className="flex justify-center mb-8">
-            <div className="w-20 h-20 bg-[var(--brand)]/10 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(var(--brand-rgb,59,130,246),0.4)]">
-              <img src="/logo.png" alt="Alicerce Logo" className="w-12 h-12 object-contain" />
+        <div className="bg-neutral-900/80 backdrop-blur-md border border-neutral-800 rounded-[2.5rem] p-10 shadow-2xl">
+          
+          <div className="flex flex-col items-center mb-10 text-center">
+            <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20 mb-6 transition-transform hover:scale-105 duration-300">
+              <ShieldCheck className="text-white w-10 h-10" />
             </div>
-        </div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Alicerce CRM</h1>
+            <p className="text-neutral-500 font-medium text-sm">Acesso Restrito: Administrativo e Gestão</p>
+          </div>
 
-        <div className="text-center mb-10">
-            <h1 className="text-2xl font-semibold tracking-wide text-[var(--text-primary)]">Portal do Sistema</h1>
-            <p className="text-sm text-[var(--text-secondary)] mt-2">Acesse seu ambiente de gestão</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-6">
-            <div className="relative">
-                <input 
-                    type="tel" 
-                    id="telefone" 
-                    className="w-full px-6 py-4 bg-[var(--bg-base)]/50 border border-[var(--border)] rounded-full text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/50 transition-all font-medium"
-                    placeholder="Seu número de celular"
-                    required
-                    value={telefone}
-                    onChange={e => setTelefone(e.target.value)}
+          <form onSubmit={handleLogin} className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest pl-1">Número de WhatsApp</label>
+              <div className="relative group">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600 group-focus-within:text-orange-500 transition-colors">
+                  <span className="text-lg">📱</span>
+                </div>
+                <input
+                  type="tel" required
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-neutral-700 focus:border-orange-500 outline-none transition-all font-medium text-base hover:border-neutral-700"
+                  placeholder="92991234567"
+                  value={telefone}
+                  onChange={e => setTelefone(e.target.value)}
                 />
+              </div>
             </div>
 
-            <div className="relative">
-                <input 
-                    type={showPassword ? "text" : "password"} 
-                    id="password" 
-                    maxLength={4}
-                    className="w-full px-6 py-4 pr-12 bg-[var(--bg-base)]/50 border border-[var(--border)] rounded-full text-[var(--text-primary)] tracking-[0.25em] font-mono text-lg placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/50 transition-all"
-                    placeholder="Sua senha"
-                    required
-                    value={senha}
-                    onChange={e => setSenha(e.target.value)}
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest pl-1">Chave de Acesso (4 dígitos)</label>
+              <div className="relative group">
+                <input
+                  type={showPassword ? "text" : "password"} 
+                  required maxLength={4}
+                  className="w-full bg-neutral-950 border border-neutral-800 rounded-2xl px-5 py-4 text-white tracking-[0.5em] font-mono text-xl placeholder-neutral-700 focus:border-orange-500 outline-none transition-all hover:border-neutral-700"
+                  placeholder="••••"
+                  value={senha}
+                  onChange={e => setSenha(e.target.value)}
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors p-2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-orange-500 transition-colors p-2"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
+              </div>
             </div>
 
             {error && (
-              <div className="px-6 py-3 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold flex items-center justify-center gap-2">
-                <Shield size={16} className="shrink-0" /> 
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-[13px] font-bold flex items-center gap-3 animate-fade-in shadow-sm">
+                <Shield size={18} className="shrink-0" /> 
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="flex items-center justify-between px-2">
-                <label className="flex items-center cursor-pointer group">
-                    <div className="relative">
-                      <input type="checkbox" className="sr-only peer" />
-                      <div className="w-10 h-6 bg-[var(--border)] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--brand)] transition-colors"></div>
-                    </div>
-                    <span className="ml-3 text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">Lembrar-me</span>
-                </label>
-                <button type="button" className="text-sm text-[var(--brand)] hover:brightness-110 transition-all font-medium">Esqueceu a senha?</button>
-            </div>
-
             <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full py-4 mt-6 bg-[var(--brand)] text-white font-semibold rounded-full btn-glow tracking-wide flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:transform-none"
+              type="submit" 
+              disabled={loading} 
+              className="mt-4 w-full py-4 rounded-2xl bg-orange-600 text-white font-bold text-base shadow-xl shadow-orange-600/20 hover:bg-orange-500 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-3 group"
             >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Entrando...
-                  </>
-                ) : (
-                  <>
-                    Entrar no Sistema
-                  </>
-                )}
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Autenticando...
+                </>
+              ) : (
+                <>
+                  <span className="text-xl">💬</span>
+                  Enviar Link de Acesso
+                  <ArrowRight size={18} className="text-white/70 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
+          </form>
 
-            <div className="mt-8 pt-6 border-t border-[var(--border)] text-center">
-              <button 
-                type="button"
-                onClick={() => setModalTrabalhe(true)} 
-                className="text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--brand)] transition-colors w-full"
-              >
-                Candidatar-se à Vaga
-              </button>
-            </div>
-        </form>
+          <div className="mt-10 pt-8 border-t border-neutral-800 text-center">
+            <p className="text-[11px] font-bold text-neutral-600 uppercase tracking-[0.2em]">Segurança Criptografada</p>
+          </div>
+        </div>
+
+        <div className="bg-neutral-900/60 backdrop-blur-md border border-neutral-800 rounded-[2rem] p-10 text-center shadow-xl">
+          <h2 className="text-xl font-bold mb-3">Faça parte da Alicerce!</h2>
+          <p className="text-neutral-500 text-sm leading-relaxed mb-8">
+            Estamos sempre em busca de novos talentos. Cadastre seu currículo em nosso banco de dados.
+          </p>
+          <button 
+            onClick={() => setModalTrabalhe(true)} 
+            className="w-full py-4 rounded-xl bg-neutral-800 border border-neutral-700 text-white font-bold text-sm hover:bg-neutral-700 transition-colors active:scale-[0.98]"
+          >
+            Trabalhe Conosco
+          </button>
+        </div>
+
+        <div className="flex justify-center gap-6 text-neutral-700 text-[10px] font-bold uppercase tracking-widest">
+          <span>Alicerce © 2026</span>
+          <span>•</span>
+          <span>Suporte Técnico</span>
+        </div>
       </div>
 
-      {/* --- MODAL DE CADASTRO: CORPORATIVO E MINIMALISTA --- */}
       <AdaptiveModal
         title={``}
         isOpen={modalTrabalhe}
@@ -262,112 +247,101 @@ export default function LoginPage() {
         width="800px"
       >
         <div className="flex flex-col p-2 lg:p-6">
-          
           <div className="mb-8">
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">Cadastro de Candidato</h2>
             <p className="text-slate-500 font-medium text-sm mt-2">Siga as etapas para registrar suas informações no banco de talentos da Alicerce.</p>
           </div>
-
-          {/* PROGRESS BAR ESTILO STRIPE */}
           <div className="w-full flex gap-2 mb-10">
             {[1,2,3,4].map(i => (
               <div key={i} className="flex-1 h-2 rounded-full overflow-hidden bg-slate-100 relative">
-                <div className={`absolute top-0 left-0 h-full w-full transition-transform duration-700 ease-out ${i <= step ? 'translate-x-0 bg-[var(--brand)]' : '-translate-x-full bg-[var(--brand)]'}`} />
+                <div className={`absolute top-0 left-0 h-full w-full transition-transform duration-700 ease-out ${i <= step ? 'translate-x-0 bg-orange-600' : '-translate-x-full bg-orange-600'}`} />
               </div>
             ))}
           </div>
-
           {step === 1 && (
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">1. Informações Pessoais Básicas</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nome Completo Oficial *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} placeholder="Conforme documento" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Celular / WhatsApp *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} placeholder="(92) 99999-9999" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">E-mail Profissional *</label>
-                  <input type="email" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="nome@exemplo.com" />
+                  <input type="email" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} placeholder="nome@exemplo.com" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Data de Nascimento *</label>
-                  <input type="date" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm text-slate-600" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
+                  <input type="date" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm text-slate-600" required value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
                 </div>
               </div>
             </div>
           )}
-
           {step === 2 && (
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">2. Documentação e eSocial</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">CPF *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} placeholder="000.000.000-00" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identidade (RG)</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Opcional neste passo" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} placeholder="Opcional neste passo" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">PIS / NIS</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} placeholder="Número do PIS" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Título de Eleitor</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Opcional" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" value={candidato.titulo} onChange={e => setCandidato({...candidato, titulo: e.target.value})} placeholder="Opcional" />
                 </div>
               </div>
             </div>
           )}
-
           {step === 3 && (
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">3. Localização Estratégica</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">CEP *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} placeholder="00000-000" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Endereço (Rua/Av) *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Sua rua" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} placeholder="Sua rua" />
                 </div>
                 <div className="md:col-span-1">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Número *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="Nº" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} placeholder="Nº" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Bairro *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Seu bairro" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} placeholder="Seu bairro" />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cidade *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cidade} onChange={e => setCandidato({...candidato, cidade: e.target.value})} placeholder="Manaus" />
                 </div>
                 <div className="md:col-span-1">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Estado *</label>
-                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
+                  <input className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.estado} onChange={e => setCandidato({...candidato, estado: e.target.value})} placeholder="AM" maxLength={2} />
                 </div>
               </div>
             </div>
           )}
-
           {step === 4 && (
             <div className="flex flex-col gap-6 animate-fade-in">
               <h3 className="text-[11px] font-black uppercase text-slate-400 tracking-[0.2em] border-b border-slate-100 pb-3">4. Vaga & Logística Operacional (SST)</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Cargo Pretendido *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
                     <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
                     <option value="Porteiro">Porteiro</option>
                     <option value="Zelador">Zelador</option>
@@ -378,7 +352,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Escolaridade *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
+                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
                     <option value="Fundamental Incompleto">Fundamental Incompleto</option>
                     <option value="Fundamental Completo">Fundamental Completo</option>
                     <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
@@ -386,43 +360,14 @@ export default function LoginPage() {
                     <option value="Superior Completo">Superior Completo</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho da Camisa (EPI) *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
-                    <option value="PP">PP</option>
-                    <option value="P">P</option>
-                    <option value="M">M</option>
-                    <option value="G">G</option>
-                    <option value="GG">GG</option>
-                    <option value="XG">XG / EXG</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho da Calça (EPI) *</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})}>
-                    <option value="36">36</option>
-                    <option value="38">38</option>
-                    <option value="40">40</option>
-                    <option value="42">42</option>
-                    <option value="44">44</option>
-                    <option value="46">46</option>
-                    <option value="48">48</option>
-                    <option value="50">50</option>
-                    <option value="52">52+</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tamanho do Calçado (Botina) *</label>
-                  <input type="number" min="30" max="50" className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" required value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} placeholder="Ex: 40" />
-                </div>
                 <div className="md:col-span-2">
                   <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Último Emprego / Resumo (Opcional)</label>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand)]/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Onde você trabalhou por último e o que fazia?" />
+                  <textarea className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 rounded-xl px-4 py-4 outline-none transition-all font-medium text-sm" rows={3} value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} placeholder="Onde você trabalhou por último e o que fazia?" />
                 </div>
-                <div className="md:col-span-2 flex items-start gap-4 bg-slate-50 p-5 rounded-[1rem] border border-slate-200 mt-2 hover:border-[var(--brand)]/30 transition-colors">
+                <div className="md:col-span-2 flex items-start gap-4 bg-slate-50 p-5 rounded-[1rem] border border-slate-200 mt-2 hover:border-orange-500/30 transition-colors">
                   <div className="mt-1">
                     <div className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center cursor-pointer overflow-hidden transition-colors" onClick={() => setCandidato({...candidato, experiencia: !candidato.experiencia})}>
-                       {candidato.experiencia ? <CheckCircle2 className="text-[var(--brand)] w-full h-full" /> : <div className="w-full h-full bg-transparent" />}
+                       {candidato.experiencia ? <CheckCircle2 className="text-orange-600 w-full h-full" /> : <div className="w-full h-full bg-transparent" />}
                     </div>
                   </div>
                   <div className="flex-1">
@@ -447,7 +392,7 @@ export default function LoginPage() {
                 Próxima Etapa <ArrowRight size={14} />
               </button>
             ) : (
-              <button className="flex-[2] py-4 bg-[var(--brand)] text-white rounded-xl font-black uppercase text-[11px] tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-[var(--brand)]/30 flex justify-center items-center gap-2 disabled:opacity-50" onClick={handleCadastroCandidato} disabled={loading || !candidato.experiencia}>
+              <button className="flex-[2] py-4 bg-orange-600 text-white rounded-xl font-black uppercase text-[11px] tracking-[0.2em] hover:opacity-90 transition-all shadow-xl shadow-orange-600/30 flex justify-center items-center gap-2 disabled:opacity-50" onClick={handleCadastroCandidato} disabled={loading || !candidato.experiencia}>
                 {loading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
