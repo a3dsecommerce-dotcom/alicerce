@@ -54,7 +54,7 @@ export default function RHPessoalPage() {
           admissao: u.data_admissao || "Desconhecida",
           nivel: u.nivel_acesso || 1,
           cpf: u.cpf || "000.000.000-00",
-          avatar: u.nome.substring(0, 2).toUpperCase()
+          avatar: (u.nome || "??").substring(0, 2).toUpperCase()
         })));
       }
 
@@ -71,7 +71,9 @@ export default function RHPessoalPage() {
 
   const filtrados = colaboradores.filter(c =>
     (filtro === "TODOS" || c.status === filtro) &&
-    (c.nome.toLowerCase().includes(busca.toLowerCase()) || c.cargo.toLowerCase().includes(busca.toLowerCase()) || c.unidade.toLowerCase().includes(busca.toLowerCase()))
+    ((c.nome || "").toLowerCase().includes((busca || "").toLowerCase()) || 
+     (c.cargo || "").toLowerCase().includes((busca || "").toLowerCase()) || 
+     (c.unidade || "").toLowerCase().includes((busca || "").toLowerCase()))
   );
 
   return (

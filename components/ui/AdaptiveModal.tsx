@@ -61,21 +61,32 @@ export default function AdaptiveModal({ title, isOpen, onClose, children, width 
           <div className="w-12 h-1.5 bg-[var(--border)] rounded-full opacity-50" />
         </div>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pb-4 lg:py-5 border-b border-[var(--border)]">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white">
-              <GripHorizontal size={18} />
+        {/* Header - Only if title is provided */}
+        {title && (
+          <div className="flex items-center justify-between px-6 pb-4 lg:py-5 border-b border-[var(--border)]">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[var(--brand)] flex items-center justify-center text-white">
+                <GripHorizontal size={18} />
+              </div>
+              <h3 className="text-lg font-black text-[var(--text-primary)] tracking-tight">{title}</h3>
             </div>
-            <h3 className="text-lg font-black text-[var(--text-primary)] tracking-tight">{title}</h3>
+            <button 
+              onClick={onClose}
+              className="p-2 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:bg-red-500 hover:text-white transition-all"
+            >
+              <X size={20} />
+            </button>
           </div>
+        )}
+
+        {!title && (
           <button 
             onClick={onClose}
-            className="p-2 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:bg-red-500 hover:text-white transition-all"
+            className="absolute top-6 right-6 z-[60] p-3 rounded-full bg-slate-900/10 dark:bg-white/10 text-slate-500 dark:text-neutral-500 hover:bg-red-500 hover:text-white transition-all backdrop-blur-md"
           >
             <X size={20} />
           </button>
-        </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">

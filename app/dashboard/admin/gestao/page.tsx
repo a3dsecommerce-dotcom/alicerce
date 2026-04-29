@@ -66,9 +66,9 @@ export default function GestaoEstrategicaPage() {
   // Otimização: Lista de missões filtrada com useMemo
   const missoesFiltradas = useMemo(() => {
     return missoes.filter(m => 
-      m.titulo?.toLowerCase().includes(buscaMissoes.toLowerCase()) || 
-      m.usuarios?.nome?.toLowerCase().includes(buscaMissoes.toLowerCase()) ||
-      m.descricao?.toLowerCase().includes(buscaMissoes.toLowerCase())
+      (m.titulo || "").toLowerCase().includes((buscaMissoes || "").toLowerCase()) || 
+      (m.usuarios?.nome || "").toLowerCase().includes((buscaMissoes || "").toLowerCase()) ||
+      (m.descricao || "").toLowerCase().includes((buscaMissoes || "").toLowerCase())
     );
   }, [missoes, buscaMissoes]);
 
@@ -261,7 +261,7 @@ export default function GestaoEstrategicaPage() {
                   <input placeholder="Buscar..." className="input-field !pl-12 !h-10 !text-xs" value={buscaParticipante} onChange={e => setBuscaParticipante(e.target.value)} />
                 </div>
                 <div className="flex-1 overflow-y-auto max-h-[300px] border border-[var(--border)] rounded-2xl p-4 flex flex-col gap-2 custom-scrollbar">
-                  {usuarios.filter(u => u.nome.toLowerCase().includes(buscaParticipante.toLowerCase())).map(u => (
+                  {usuarios.filter(u => (u.nome || "").toLowerCase().includes((buscaParticipante || "").toLowerCase())).map(u => (
                     <label key={u.id} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${agendamento.participantes.includes(u.id) ? 'bg-[var(--brand)]/10 border-[var(--brand)]' : 'bg-[var(--bg-base)] border-[var(--border)]'}`}>
                       <input type="checkbox" className="hidden" checked={agendamento.participantes.includes(u.id)} onChange={e => {
                         setAgendamento({...agendamento, participantes: e.target.checked ? [...agendamento.participantes, u.id] : agendamento.participantes.filter(id => id !== u.id)});

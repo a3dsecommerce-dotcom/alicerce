@@ -82,9 +82,9 @@ export default function IntegridadePage() {
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-[var(--bg-base)] flex items-center justify-center text-[var(--text-secondary)]">
-                    {s.servico.includes("Supabase") ? <Database size={20} /> : 
-                     s.servico.includes("n8n") ? <Zap size={20} /> : 
-                     s.servico.includes("API") ? <MessageSquare size={20} /> : <Server size={20} />}
+                    {(s.servico || "").includes("Supabase") ? <Database size={20} /> : 
+                     (s.servico || "").includes("n8n") ? <Zap size={20} /> : 
+                     (s.servico || "").includes("API") ? <MessageSquare size={20} /> : <Server size={20} />}
                   </div>
                   <div>
                     <h3 className="font-bold text-[var(--text-primary)]">{s.servico}</h3>

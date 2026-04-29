@@ -31,9 +31,9 @@ export default function ColaboradoresSharedTable() {
   }, []);
 
   const filtered = data.filter(c => 
-    c.nome.toLowerCase().includes(search.toLowerCase()) ||
-    (c.unidade_alocacao || "").toLowerCase().includes(search.toLowerCase()) ||
-    (c.cargo || "").toLowerCase().includes(search.toLowerCase())
+    (c.nome || "").toLowerCase().includes((search || "").toLowerCase()) ||
+    (c.unidade_alocacao || "").toLowerCase().includes((search || "").toLowerCase()) ||
+    (c.cargo || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
   return (

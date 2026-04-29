@@ -45,14 +45,14 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
       if (users) {
         setColaboradores(users.map(u => ({
           id: u.id,
-          nome: u.nome,
-          cargo: u.cargo || "ASG",
+          nome: u.nome || "Sem Nome",
+          cargo: u.cargo || "Não definido",
           unidade: u.unidade_alocacao || "Não alocado",
-          status: u.status,
-          avatar: u.nome.substring(0, 2).toUpperCase(),
-          cpf: u.cpf || "000.000.000-00",
-          telefone: u.telefone,
-          admissao: u.data_admissao || "Desconhecida"
+          status: u.status || "INATIVO",
+          avatar: (u.nome || "??").substring(0, 2).toUpperCase(),
+          cpf: u.cpf || "---",
+          telefone: u.telefone || "---",
+          admissao: u.data_admissao || "---"
         })));
       }
 
@@ -73,7 +73,11 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
   // FILTROS DP
   const filtradosDP = colaboradores.filter(c =>
     (filtro === "TODOS" || c.status === filtro) &&
-    (c.nome.toLowerCase().includes(busca.toLowerCase()) || c.cargo.toLowerCase().includes(busca.toLowerCase()) || c.unidade.toLowerCase().includes(busca.toLowerCase()))
+    (
+      (c.nome || "").toLowerCase().includes((busca || "").toLowerCase()) || 
+      (c.cargo || "").toLowerCase().includes((busca || "").toLowerCase()) || 
+      (c.unidade || "").toLowerCase().includes((busca || "").toLowerCase())
+    )
   );
 
   return (

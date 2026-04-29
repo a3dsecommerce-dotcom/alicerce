@@ -259,7 +259,7 @@ export default function AlmoxarifadoPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {estoque.filter(i => (i.tipo_estoque === "PROPRIO" || !i.tipo_estoque) && i.item.toLowerCase().includes(busca.toLowerCase())).map((item, idx) => (
+                    {estoque.filter(i => (i.tipo_estoque === "PROPRIO" || !i.tipo_estoque) && (i.item || "").toLowerCase().includes((busca || "").toLowerCase())).map((item, idx) => (
                       <tr key={idx} className="table-row group">
                         <td style={{ padding: "1rem", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{item.item}</td>
                         <td style={{ padding: "1rem", fontSize: "0.75rem", color: "var(--text-secondary)" }}>{item.ca || "-"}</td>
@@ -306,7 +306,7 @@ export default function AlmoxarifadoPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {estoque.filter(i => i.tipo_estoque === "CATALOGO" && i.item.toLowerCase().includes(busca.toLowerCase())).map((item, idx) => (
+                    {estoque.filter(i => i.tipo_estoque === "CATALOGO" && (i.item || "").toLowerCase().includes((busca || "").toLowerCase())).map((item, idx) => (
                       <tr key={idx} className="table-row">
                         <td style={{ padding: "1rem", fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{item.item}</td>
                         <td style={{ padding: "1rem" }}><span className="badge badge-amber">{item.categoria}</span></td>
@@ -332,7 +332,7 @@ export default function AlmoxarifadoPage() {
                 <input className="input-field" placeholder="Digite o nome..." value={buscaColab} onChange={(e) => { setBuscaColab(e.target.value); setShowSugestoes(true); }} onFocus={() => setShowSugestoes(true)} />
                 {showSugestoes && buscaColab.length > 0 && (
                   <div className="card shadow-2xl" style={{ position: "absolute", zIndex: 50, marginTop: "4px", width: "calc(100% - 2.5rem)", borderRadius: "8px" }}>
-                    {colaboradores.filter(c => c.nome.toLowerCase().includes(buscaColab.toLowerCase())).map(c => (
+                    {colaboradores.filter(c => (c.nome || "").toLowerCase().includes((buscaColab || "").toLowerCase())).map(c => (
                       <div key={c.id} onClick={() => { setColaboradorSelecionado(c.nome); setBuscaColab(c.nome); setShowSugestoes(false); }} style={{ padding: "0.75rem", fontSize: "0.8rem", cursor: "pointer", borderBottom: "1px solid var(--border-light)" }} className="hover:bg-[var(--brand)]/10">
                         {c.nome} - {c.cargo}
                       </div>
@@ -490,7 +490,7 @@ export default function AlmoxarifadoPage() {
           </div>
           {epiCesta.map((e, i) => (
             <div key={i} style={{ width: "100%", fontSize: "12px", height: "45px", lineHeight: "45px", background: i % 2 === 0 ? "#f9f9f9" : "#fff" }}>
-              <div style={{ float: "left", width: "60%", padding: "0 15px" }}>{e.item.toUpperCase()}</div>
+              <div style={{ float: "left", width: "60%", padding: "0 15px" }}>{(e.item || "").toUpperCase()}</div>
               <div style={{ float: "left", width: "20%", textAlign: "center" }}>{e.qtd}</div>
               <div style={{ float: "left", width: "20%", textAlign: "center" }}>42150</div>
               <div style={{ clear: "both" }}></div>
@@ -795,7 +795,7 @@ export default function AlmoxarifadoPage() {
           {/* Itens com Espaçamento Limpo (Sem Bordas) */}
           {(epiCesta.length > 0 ? epiCesta : [{ item: 'Botina Bico de Aço', qtd: 1 }, { item: 'Luva de Nitrila', qtd: 2 }]).map((e, i) => (
             <div key={i} style={{ width: "100%", fontSize: "12px", color: "#000", height: "45px", lineHeight: "45px", fontWeight: "500", background: i % 2 === 0 ? "#fcfcfc" : "#fff" }}>
-              <div style={{ float: "left", width: "50%", padding: "0 15px", boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap" }}>{e.item.toUpperCase()}</div>
+              <div style={{ float: "left", width: "50%", padding: "0 15px", boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap" }}>{(e.item || "").toUpperCase()}</div>
               <div style={{ float: "left", width: "15%", textAlign: "center", boxSizing: "border-box" }}>{e.qtd}</div>
               <div style={{ float: "left", width: "15%", textAlign: "center", boxSizing: "border-box" }}>42</div>
               <div style={{ float: "left", width: "20%", textAlign: "center", boxSizing: "border-box" }}>42150</div>
@@ -879,8 +879,8 @@ export default function AlmoxarifadoPage() {
             {/* Itens com Espaçamento Limpo */}
             {dadosCheckin.itens.map((i, idx) => (
               <div key={idx} style={{ width: "100%", fontSize: "12px", color: "#000", height: "45px", lineHeight: "45px", fontWeight: "500", background: idx % 2 === 0 ? "#fcfcfc" : "#fff" }}>
-                <div style={{ float: "left", width: "70%", padding: "0 15px", boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap" }}>{i.item.toUpperCase()}</div>
-                <div style={{ float: "left", width: "30%", textAlign: "center", boxSizing: "border-box", fontWeight: "700" }}>{i.recebido} {i.un.toUpperCase()}</div>
+                <div style={{ float: "left", width: "70%", padding: "0 15px", boxSizing: "border-box", overflow: "hidden", whiteSpace: "nowrap" }}>{(i.item || "").toUpperCase()}</div>
+                <div style={{ float: "left", width: "30%", textAlign: "center", boxSizing: "border-box", fontWeight: "700" }}>{i.recebido} {(i.un || "").toUpperCase()}</div>
                 <div style={{ clear: "both" }}></div>
               </div>
             ))}

@@ -56,8 +56,8 @@ export default function ComprasPage() {
   };
 
   const produtosFiltrados = produtos.filter(p => 
-    p.item?.toLowerCase().includes(busca.toLowerCase()) || 
-    p.categoria?.toLowerCase().includes(busca.toLowerCase())
+    (p.item || "").toLowerCase().includes((busca || "").toLowerCase()) || 
+    (p.categoria || "").toLowerCase().includes((busca || "").toLowerCase())
   );
 
   return (

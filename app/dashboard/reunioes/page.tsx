@@ -193,7 +193,10 @@ export default function ReunioesPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-2 max-h-[400px] custom-scrollbar">
-            {usuarios.filter(u => u.nome.toLowerCase().includes(buscaParticipante.toLowerCase()) || u.cargo.toLowerCase().includes(buscaParticipante.toLowerCase())).map(u => (
+            {usuarios.filter(u => 
+              ((u.nome || "").toLowerCase().includes((buscaParticipante || "").toLowerCase()) || 
+               (u.cargo || "").toLowerCase().includes((buscaParticipante || "").toLowerCase()))
+            ).map(u => (
               <label 
                 key={u.id}
                 className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${agendamento.participantes.includes(u.id) ? 'bg-[var(--brand)]/10 border-[var(--brand)]' : 'bg-[var(--bg-base)] border-[var(--border)] hover:border-[var(--text-muted)]'}`}

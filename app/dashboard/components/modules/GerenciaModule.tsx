@@ -5,7 +5,7 @@ import {
   TrendingUp, BarChart3, Zap, Bell, 
   ArrowUpRight, ArrowDownRight, Briefcase, 
   CheckCircle, Clock, Megaphone, Settings,
-  PieChart, Globe, Cpu, Layout, Search, Filter,
+  PieChart, Globe, Cpu, LayoutDashboard as Layout, Search, Filter,
   ShieldCheck, MessageSquare, AlertTriangle, FileText,
   Map as MapIcon, HardHat, UserPlus, ClipboardList
 } from "lucide-react";

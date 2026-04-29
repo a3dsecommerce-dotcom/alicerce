@@ -74,14 +74,16 @@ export default function RotaPage() {
   const supervisorAtual = supervisores.find(s => s.id === rotaSelecionada)?.nome;
   
   const unidadesNaRota = unidades.filter(u => 
-    u.encarregado_nome?.toLowerCase().includes(supervisorAtual?.toLowerCase() || "")
+    (u.encarregado_nome || "").toLowerCase().includes((supervisorAtual || "").toLowerCase())
   );
 
   const unidadesIdsNaRota = unidadesNaRota.map(u => u.nome); // Usando nome para vincular por enquanto
 
   const equipeNaRota = colaboradores.filter(c => 
-    unidadesIdsNaRota.includes(c.unidade_alocacao) &&
-    (busca === "" || c.nome.toLowerCase().includes(busca.toLowerCase()) || c.cargo.toLowerCase().includes(busca.toLowerCase()))
+    (unidadesIdsNaRota || []).includes(c.unidade_alocacao) &&
+    (busca === "" || 
+     (c.nome || "").toLowerCase().includes((busca || "").toLowerCase()) || 
+     (c.cargo || "").toLowerCase().includes((busca || "").toLowerCase()))
   );
 
   const contagemFuncoes = equipeNaRota.reduce((acc: any, cur: any) => {

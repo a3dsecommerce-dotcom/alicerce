@@ -66,7 +66,7 @@ export default function PortalDiretorPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8 no-print">
          {[
            { label: "Unidade Ativa", value: unidadeAtiva.nome, icon: MapPin, color: "text-blue-500" },
-           { label: "Código Unidade", value: `#${unidadeAtiva.id.toUpperCase()}`, icon: Hash, color: "text-orange-500" },
+           { label: "Código Unidade", value: `#${(unidadeAtiva.id || "").toUpperCase()}`, icon: Hash, color: "text-orange-500" },
            { label: "Secretaria", value: unidadeAtiva.secretária, icon: ShieldCheck, color: "text-purple-500" },
            { label: "Efetivo na Unidade", value: `${equipeFiltrada.length} Colaboradores`, icon: Users, color: "text-green-500" },
          ].map((stat, i) => (
@@ -149,7 +149,7 @@ export default function PortalDiretorPage() {
                       <tr key={c.id} className="hover:bg-[var(--bg-base)]/50 transition-colors group">
                         <td className="p-8 px-10">
                            <div className="flex items-center gap-6">
-                              <div className="w-14 h-14 rounded-2xl bg-[var(--brand)] text-white flex items-center justify-center text-sm font-black shadow-lg shadow-[var(--brand)]/30 shrink-0">{c.nome.substring(0,2).toUpperCase()}</div>
+                              <div className="w-14 h-14 rounded-2xl bg-[var(--brand)] text-white flex items-center justify-center text-sm font-black shadow-lg shadow-[var(--brand)]/30 shrink-0">{(c.nome || "??").substring(0,2).toUpperCase()}</div>
                               <span className="text-lg font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors whitespace-nowrap">{c.nome}</span>
                            </div>
                         </td>

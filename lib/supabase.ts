@@ -12,6 +12,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error("❌ ERRO CRÍTICO: Variáveis de ambiente do Supabase não encontradas.");
 }
 
+const mockSupabase = {
+  from: () => ({
+    select: () => ({ order: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: { message: "Supabase não inicializado" } }) }), limit: () => Promise.resolve({ data: [], error: null }) }), limit: () => Promise.resolve({ data: [], error: null }) }),
+    insert: () => Promise.resolve({ data: null, error: { message: "Supabase não inicializado" } }),
+    update: () => ({ eq: () => Promise.resolve({ data: null, error: { message: "Supabase não inicializado" } }) }),
+    upsert: () => Promise.resolve({ data: null, error: { message: "Supabase não inicializado" } }),
+    delete: () => ({ eq: () => Promise.resolve({ data: null, error: { message: "Supabase não inicializado" } }) }),
+    on: () => ({ subscribe: () => {} }),
+  }),
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+  }
+};
+
 export const supabase = (supabaseUrl && supabaseAnonKey) 
   ? createClient(supabaseUrl, supabaseAnonKey)
-  : {} as any; // Evita crash no import, mas falhará ao usar
+  : mockSupabase as any;

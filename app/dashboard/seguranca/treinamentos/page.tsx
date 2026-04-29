@@ -123,7 +123,7 @@ export default function TreinamentosNRPage() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {treinamentos
-                .filter(t => t.titulo.toLowerCase().includes(busca.toLowerCase()) || t.nr.toLowerCase().includes(busca.toLowerCase()))
+                .filter(t => (t.titulo || "").toLowerCase().includes((busca || "").toLowerCase()) || (t.nr || "").toLowerCase().includes((busca || "").toLowerCase()))
                 .map((t) => (
                 <tr key={t.id} className="group hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4">

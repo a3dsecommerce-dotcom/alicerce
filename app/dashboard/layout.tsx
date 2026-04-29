@@ -12,6 +12,7 @@ import { ALL_NAV } from "./config/navigation";
 import SidebarLink from "./components/SidebarLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNav } from "@/components/BottomNav";
+import { n8n } from "@/lib/n8n";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
