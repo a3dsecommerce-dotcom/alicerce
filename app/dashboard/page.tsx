@@ -110,10 +110,18 @@ function CockpitContent() {
 
       {/* 3. Área de Conteúdo Dinâmico */}
       <main className="flex-1 overflow-hidden min-h-[600px]">
-        {activeModule === "COMMAND" && <GerenciaModule initialTab={tabParam as any} />}
-        {activeModule === "RH" && <RHModule user={user} />}
-        {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
-        {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
+        {user ? (
+          <>
+            {activeModule === "COMMAND" && <GerenciaModule user={user} initialTab={tabParam as any} />}
+            {activeModule === "RH" && <RHModule user={user} />}
+            {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
+            {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand)]"></div>
+          </div>
+        )}
         
         {activeModule === "SST" && (
           <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">

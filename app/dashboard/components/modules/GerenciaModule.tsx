@@ -14,20 +14,24 @@ import RHModule from "./RHModule";
 
 type GerenciaTab = "OVERVIEW" | "INTEL_BI" | "COMMS" | "ETHICS" | "FINANCE" | "RH_FULL" | "OPERACIONAL";
 
-export default function GerenciaModule({ initialTab }: { initialTab?: GerenciaTab }) {
+export default function GerenciaModule({ user: propUser, initialTab }: { user?: any, initialTab?: GerenciaTab }) {
   const [activeTab, setActiveTab] = useState<GerenciaTab>(initialTab || "OVERVIEW");
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(propUser || null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("crm_user");
-      if (saved) setUser(JSON.parse(saved));
-    } catch (err) {
-      console.error(err);
+    if (propUser) {
+      setUser(propUser);
+    } else {
+      try {
+        const saved = localStorage.getItem("crm_user");
+        if (saved) setUser(JSON.parse(saved));
+      } catch (err) {
+        console.error(err);
+      }
     }
     if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
+  }, [propUser, initialTab]);
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20 h-full px-4 lg:px-8">

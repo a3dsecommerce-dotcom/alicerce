@@ -151,7 +151,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       </tr>
                     ))
                   ) : (
-                    requisicoes.filter(r => i === 0).map((r, i) => (
+                    requisicoes.map((r, i) => (
                       <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-colors">
                          <td className="p-6 text-[11px] font-black">#{r.protocolo_compra || 'REQ-881'}</td>
                          <td className="p-6 text-xs font-bold">Secretaria Exemplo</td>
