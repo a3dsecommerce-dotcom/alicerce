@@ -1,0 +1,55 @@
+{
+  "overwrite": true,
+  "zone": [
+    {
+      "name": "n8n",
+      "type": "A",
+      "ttl": 300,
+      "records": [
+        {
+          "content": "187.77.233.165"
+        }
+      ]
+    },
+    {
+      "name": "portal",
+      "type": "A",
+      "ttl": 300,
+      "records": [
+        {
+          "content": "187.77.233.165"
+        }
+      ]
+    },
+    {
+      "name": "db",
+      "type": "A",
+      "ttl": 300,
+      "records": [
+        {
+          "content": "187.77.233.165"
+        }
+      ]
+    },
+    {
+      "name": "@",
+      "type": "A",
+      "ttl": 300,
+      "records": [
+        {
+          "content": "187.77.233.165"
+        }
+      ]
+    },
+    {
+      "name": "www",
+      "type": "CNAME",
+      "ttl": 300,
+      "records": [
+        {
+          "content": "alicerce.cloud."
+        }
+      ]
+    }
+  ]
+}
