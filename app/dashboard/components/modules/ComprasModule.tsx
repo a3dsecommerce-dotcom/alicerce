@@ -29,9 +29,39 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   ];
 
   const acompanhamentoMock = [
-    { id: 101, data: "26/04/2026", nf: "NF-8821", desc: "Kit de Materiais de Escritório Mensal", solicitado: 120, chegou: 45, status: "EM_ROTA", recebedor: "Carlos Silva (Almox. 01)" },
-    { id: 102, data: "24/04/2026", nf: "NF-8790", desc: "Suprimentos de Limpeza Completo", solicitado: 200, chegou: 180, status: "PENDENTE", recebedor: "Mariana Costa (Almox. 02)" },
-    { id: 103, data: "22/04/2026", nf: "NF-8655", desc: "Copo Descartável e Insumos de Copa", solicitado: 50, chegou: 50, status: "CONCLUIDO", recebedor: "Carlos Silva (Almox. 01)" },
+    { 
+      id: 101, 
+      data: "26/04/2026", 
+      nf: "REQ-008821", 
+      status: "EM ANDAMENTO", 
+      recebedor: "Carlos Silva (Almox. 01)",
+      itens: [
+        { desc: "Papel A4 (Resma)", solicitado: 120, chegou: 45 },
+        { desc: "Caneta Esferográfica Azul", solicitado: 50, chegou: 50 }
+      ]
+    },
+    { 
+      id: 102, 
+      data: "24/04/2026", 
+      nf: "REQ-008790", 
+      status: "CONCLUÍDO", 
+      recebedor: "Mariana Costa (Almox. 02)",
+      itens: [
+        { desc: "Copo Descartável 200ml", solicitado: 200, chegou: 200 },
+        { desc: "Água Mineral 500ml", solicitado: 12, chegou: 12 }
+      ]
+    },
+    { 
+      id: 103, 
+      data: "22/04/2026", 
+      nf: "REQ-008655", 
+      status: "ATRASADO", 
+      recebedor: "Carlos Silva (Almox. 01)",
+      itens: [
+        { desc: "Papel Higiênico (Fardo)", solicitado: 15, chegou: 0 },
+        { desc: "Saco de Lixo 100L", solicitado: 10, chegou: 0 }
+      ]
+    },
   ];
 
   useEffect(() => {
@@ -104,8 +134,23 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   const saudacao = new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite';
   
   // Percentual Geral do Tracking
+  const calculateProgress = (req: any) => {
+    if (!req.itens || req.itens.length === 0) return { percent: 0, falta: 0, total: 0 };
+    let totalSolicitado = 0;
+    let totalChegou = 0;
+    req.itens.forEach((i: any) => {
+      totalSolicitado += (i.solicitado || 0);
+      totalChegou += (i.chegou || 0);
+    });
+    return {
+      percent: totalSolicitado > 0 ? Math.round((totalChegou / totalSolicitado) * 100) : 0,
+      falta: totalSolicitado - totalChegou,
+      total: totalSolicitado
+    };
+  };
+
   const percentagemGeral = pedidos.length > 0 
-    ? Math.round((pedidos.reduce((acc, p) => acc + ((p.chegou || 0) / (p.solicitado || 1)), 0) / pedidos.length) * 100)
+    ? Math.round(pedidos.reduce((acc, p) => acc + calculateProgress(p).percent, 0) / pedidos.length)
     : 0;
 
   return (
@@ -296,7 +341,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                         <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                           <tr>
                               <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Data / NF</th>
-                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Material e Recebedor</th>
+                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Resumo da Requisição</th>
                               <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status / Saldo</th>
                               <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Progresso</th>
                               <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Relatório</th>
@@ -306,12 +351,12 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                           {loading ? (
                               <tr><td colSpan={5} className="p-20 text-center text-xs italic text-[var(--text-muted)]">Sincronizando dados...</td></tr>
                           ) : pedidos.map((p) => {
-                              const falta = p.solicitado - p.chegou;
-                              const percent = Math.round((p.chegou / p.solicitado) * 100);
-                              const emAberto = falta > 0;
+                              const prog = calculateProgress(p);
+                              const emAberto = prog.percent < 100;
+                              const itemCount = p.itens?.length || 0;
 
                               return (
-                                <tr key={p.id} className={`transition-all ${emAberto ? 'bg-blue-50/10' : 'hover:bg-[var(--bg-base)]/30'}`}>
+                                <tr key={p.id} onClick={() => setSelectedReport(p)} className={`transition-all cursor-pointer ${emAberto ? 'bg-blue-50/10' : 'hover:bg-[var(--bg-base)]/30'}`}>
                                     <td className="p-6 text-center min-w-[120px]">
                                       <div className="flex flex-col gap-1">
                                           <span className="text-[11px] font-black text-[var(--text-primary)]">{p.data}</span>
@@ -322,33 +367,32 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                                       <div className="flex flex-col gap-2">
                                           <div className="flex items-center gap-3">
                                             {emAberto && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse shrink-0 shadow-lg shadow-blue-500/50" />}
-                                            <span className="text-sm font-black text-[var(--text-primary)] leading-tight">{p.desc}</span>
+                                            <span className="text-sm font-black text-[var(--text-primary)] leading-tight">Requisição de Materiais ({itemCount} {itemCount === 1 ? 'Item' : 'Itens'})</span>
                                           </div>
                                           <div className="flex items-center gap-2 text-[var(--text-muted)]">
-                                            <UserCheck size={12} className="text-green-600" />
-                                            <span className="text-[9px] font-bold uppercase tracking-widest">Recebido por: {p.recebedor}</span>
+                                            <UserCheck size={12} className={emAberto ? "text-orange-500" : "text-green-600"} />
+                                            <span className="text-[9px] font-bold uppercase tracking-widest">Responsável: {p.recebedor || 'Pendente'}</span>
                                           </div>
                                       </div>
                                     </td>
                                     <td className="p-6 text-center min-w-[160px]">
-                                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${emAberto ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
+                                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${emAberto ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
                                           {emAberto ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
                                           <span className="text-[10px] font-black uppercase tracking-widest">
-                                            {emAberto ? `${falta} UN Faltando` : 'Concluído'}
+                                            {emAberto ? p.status : 'Concluído'}
                                           </span>
                                       </div>
                                     </td>
                                     <td className="p-6">
                                       <div className="flex items-center justify-center gap-4">
                                           <div className="w-20 h-2 bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)] shadow-inner">
-                                            <div className={`h-full rounded-full ${percent < 100 ? 'bg-blue-600' : 'bg-green-600'} shadow-lg`} style={{ width: `${percent}%` }} />
+                                            <div className={`h-full rounded-full ${prog.percent < 100 ? 'bg-orange-500' : 'bg-green-600'} shadow-lg`} style={{ width: `${prog.percent}%` }} />
                                           </div>
-                                          <span className="text-[10px] font-black text-[var(--text-primary)] w-8 text-right">{percent}%</span>
+                                          <span className="text-[10px] font-black text-[var(--text-primary)] w-8 text-right">{prog.percent}%</span>
                                       </div>
                                     </td>
                                     <td className="p-6 text-right">
                                       <button 
-                                        onClick={() => setSelectedReport(p)}
                                         className="p-3 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl hover:bg-[var(--brand)] hover:text-white transition-all shadow-sm border border-[var(--border)]"
                                       >
                                           <FileText size={16} />
@@ -461,12 +505,19 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-[var(--border)]">
-                        <tr>
-                           <td className="p-4 text-xs font-bold">{selectedReport?.desc}</td>
-                           <td className="p-4 text-center font-black text-xs">{selectedReport?.solicitado}</td>
-                           <td className="p-4 text-center font-black text-xs text-green-600">{selectedReport?.chegou}</td>
-                           <td className="p-4 text-right font-black text-xs text-red-500">{selectedReport?.solicitado - (selectedReport?.chegou || 0)}</td>
-                        </tr>
+                        {selectedReport?.itens?.map((item: any, idx: number) => {
+                          const itemFalta = (item.solicitado || 0) - (item.chegou || 0);
+                          return (
+                            <tr key={idx} className="hover:bg-[var(--bg-base)]/50">
+                               <td className="p-4 text-xs font-bold text-[var(--text-primary)]">{item.desc}</td>
+                               <td className="p-4 text-center font-black text-xs text-[var(--text-muted)]">{item.solicitado}</td>
+                               <td className="p-4 text-center font-black text-xs text-green-600">{item.chegou}</td>
+                               <td className={`p-4 text-right font-black text-xs ${itemFalta > 0 ? 'text-orange-500' : 'text-[var(--text-muted)]'}`}>
+                                  {itemFalta > 0 ? `${itemFalta} Faltantes` : 'OK'}
+                               </td>
+                            </tr>
+                          );
+                        })}
                      </tbody>
                   </table>
                </div>
