@@ -72,7 +72,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
         const id = parseInt(idStr);
         const item = catalogoMock.find(c => c.id === id);
         return {
-          solicitante: user?.name || 'Portal Suprimentos',
+          solicitante: user?.name || 'Portal de Compras',
           unidade_destino: user?.email || 'Não informado',
           quantidade: qtd,
           status: 'SOLICITADO',
@@ -111,7 +111,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[10px] font-black uppercase tracking-[0.2em]">
                  <Box size={14} /> Logística Soberana
               </div>
-              <h2 className="text-5xl font-black tracking-tighter italic leading-tight">Portal de Suprimentos</h2>
+              <h2 className="text-5xl font-black tracking-tighter italic leading-tight">Portal de Compras</h2>
               <p className="text-sm md:text-base font-medium opacity-90 leading-relaxed">
                  Gestão de cotas operacionais e acompanhamento detalhado de remessas.
               </p>

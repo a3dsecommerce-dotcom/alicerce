@@ -58,15 +58,16 @@ function CockpitContent() {
   const modules = [
     { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE"] },
     { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
-    { id: "COMPRAS", label: "Suprimentos", icon: ShoppingCart, roles: ["COMPRADOR"] },
+    { id: "COMPRAS", label: "Compras", icon: ShoppingCart, roles: ["COMPRADOR"] },
     { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE"] },
     { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
   ];
 
   // Regra de Negócio: nivel_acesso >= 3 = Gestor/Admin → vê o Painel Consolidado
-  // nivel_acesso 1-2 = Colaborador → vê módulo do seu cargo
+  // Exceção: Roles restritas (COMPRADOR, ALMOXARIFE) devem ver APENAS o próprio módulo
   const nivel = user?.nivel || 0;
-  const isManager = nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(user?.role);
+  const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "TECNICO_SEGURANCA"].includes(user?.role);
+  const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(user?.role));
   
   // Se for gestor: mostra o painel de controle completo
   // Se for colaborador de área: mostra módulo do seu cargo
@@ -110,7 +111,7 @@ function CockpitContent() {
         </div>
       </div>
 
-      {/* 2. Barra de Ações Rápidas (Oculta no Portal de Suprimentos conforme pedido) */}
+      {/* 2. Barra de Ações Rápidas */}
       {activeModule !== "COMPRAS" && <QuickActions user={user || { role: 'ADMIN' }} />}
 
       {/* 3. Área de Conteúdo Dinâmico */}

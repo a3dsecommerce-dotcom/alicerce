@@ -365,7 +365,7 @@ export default function AlmoxarifadoPage() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
                 <div>
                   <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Requisições Recebidas</h3>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pedidos criados pelo Portal de Suprimentos aguardando atendimento.</p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pedidos criados pelo Portal de Compras aguardando atendimento.</p>
                 </div>
                 <button className="btn-ghost !text-[11px]" onClick={async () => {
                   const { data } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false }).limit(50);
@@ -376,7 +376,7 @@ export default function AlmoxarifadoPage() {
                 <div className="card" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
                   <ClipboardList size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
                   <p style={{ fontWeight: 700 }}>Nenhuma requisição pendente</p>
-                  <p style={{ fontSize: "0.75rem", marginTop: "0.25rem" }}>Quando o Portal de Suprimentos criar um pedido, ele aparecerá aqui.</p>
+                  <p style={{ fontSize: "0.75rem", marginTop: "0.25rem" }}>Quando o Portal de Compras criar um pedido, ele aparecerá aqui.</p>
                 </div>
               ) : (
                 <div className="card overflow-hidden" style={{ borderRadius: "8px" }}>
@@ -888,7 +888,7 @@ export default function AlmoxarifadoPage() {
           {/* Cabeçalho de Identificação */}
           <div style={{ textAlign: "center", borderBottom: "3px solid #000", paddingBottom: "15px", marginBottom: "25px" }}>
             <h1 style={{ fontSize: "1.6rem", margin: "0", fontWeight: "900" }}>ALICERCE SERVIÇOS E GESTÃO LTDA</h1>
-            <p style={{ fontSize: "1rem", margin: "5px 0", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" }}>Comprovante de Entrega de Suprimentos</p>
+            <p style={{ fontSize: "1rem", margin: "5px 0", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px" }}>Comprovante de Entrega de Materiais</p>
             <p style={{ fontSize: "0.8rem", margin: "0", color: "#444" }}>Controle Logístico e Conferência de Carga Terceirizada</p>
           </div>
 

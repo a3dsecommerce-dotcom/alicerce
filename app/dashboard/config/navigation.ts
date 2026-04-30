@@ -32,8 +32,13 @@ export const ALL_NAV: NavItem[] = [
     subItems: [
       { href: '/dashboard/rh/prefeitura', label: 'Indicadores RH PMG', roles: ['ADMIN', 'DIRETORIA', 'RH_DP', 'RH_SECRETARIA'] },
       { href: '/dashboard/unidade', label: 'Portal do Diretor', roles: ['ADMIN', 'DIRETOR', 'RH_SECRETARIA'] },
-      { href: '/dashboard?module=COMPRAS', label: 'Portal de Suprimentos', roles: ['ADMIN', 'COMPRADOR', 'DIRETORIA'] },
     ],
+  },
+  {
+    label: 'Compras',
+    icon: ShoppingCart,
+    roles: ['ADMIN', 'COMPRADOR', 'DIRETORIA'],
+    href: '/dashboard?module=COMPRAS'
   },
   {
     label: 'RH',
