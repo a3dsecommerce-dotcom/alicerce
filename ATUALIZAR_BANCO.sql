@@ -131,7 +131,7 @@ ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS unidade_medida TEXT DEFAULT 'UN
 CREATE TABLE IF NOT EXISTS compras_processos (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     nf TEXT,
-    desc TEXT,
+    descricao TEXT,
     solicitado INTEGER DEFAULT 0,
     chegou INTEGER DEFAULT 0,
     status TEXT DEFAULT 'PENDENTE', -- PENDENTE, EM_ROTA, CONCLUIDO
