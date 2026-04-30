@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-base)] p-4 gap-4">
+    <div className="flex h-screen overflow-hidden p-4 gap-4 relative z-10">
       {/* SIDEBAR - GLASS STYLE */}
       <aside 
         className={`no-print hidden lg:flex flex-col glass border border-[var(--border)] transition-all duration-500 ease-in-out z-50 shadow-xl rounded-lg ml-4 my-2 ${sidebarOpen ? "w-[300px]" : "w-[90px]"}`}
