@@ -253,15 +253,44 @@ export default function AlmoxarifadoPage() {
     }
   };
 
+  const [recebimentoPasso, setRecebimentoPasso] = useState<number>(1);
+  const [recebimentoReq, setRecebimentoReq] = useState<any>(null);
+  const [recebimentoItens, setRecebimentoItens] = useState<any[]>([]);
+  const [recebItemForm, setRecebItemForm] = useState({ produto: '', qtd: '', valor: '' });
+
+  const handleFinalizarRecebimento = async () => {
+    setLoading(true);
+    try {
+      const recebedor = (document.getElementById('rec-recebedor') as HTMLInputElement).value;
+      const dataRec = (document.getElementById('rec-data') as HTMLInputElement).value;
+      
+      // Update requisicao to ENTREGUE (simplified logic for the flow)
+      await supabase.from('requisicoes').update({ status: 'ENTREGUE' }).eq('id', recebimentoReq.id);
+
+      // Log no historico
+      await supabase.from('historico_gestao').insert([{
+        executor_tel: user?.telefone || "ALMOXARIFE",
+        tipo_acao: "ENTRADA_ESTOQUE",
+        motivo: `Recebimento da REQ #${recebimentoReq.id.substring(0,8)} - Recebedor: ${recebedor}`,
+        para: recebimentoItens.map(i => `${i.qtd}x ${i.produto} (R$${i.valor})`).join(', ')
+      }]);
+
+      alert("Carga recebida e baixada com sucesso!");
+      setAba("estoque_proprio");
+      setRecebimentoPasso(1);
+      setRecebimentoReq(null);
+      setRecebimentoItens([]);
+    } catch (e: any) {
+      alert("Erro ao finalizar recebimento: " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const itensCriticos = estoque.filter(i => i.quantidade <= i.estoque_minimo);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", height: "calc(100vh - 120px)" }}>
-      {/* Command Center: Ações Rápidas & Dashboard */}
-      <div className="no-print">
-        <QuickActions user={user || { role: 'COLABORADOR', nivel: 1 }} />
-      </div>
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: "1.5rem", flex: 1, overflow: "hidden" }} className="no-print">
         {/* Main Operational Card */}
         <div className="card" style={{ display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "8px" }}>
@@ -489,15 +518,123 @@ export default function AlmoxarifadoPage() {
           )}
 
           {aba === "receber" && (
-            <div className="animate-fade-in" style={{ padding: "2rem", textAlign: "center" }}>
-              <Truck size={48} className="mx-auto text-[var(--brand)] mb-4" />
-              <h3 style={{ fontSize: "1.2rem", fontWeight: 900 }}>Check-in de Carga (Cross-docking)</h3>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", maxWidth: "500px", margin: "0 auto 2rem" }}>
-                Use esta função para registrar a chegada de mercadorias que serão enviadas diretamente para as secretarias.
-              </p>
-              <button className="btn-brand !h-14 !px-8" onClick={() => alert("Abrindo scanner de NF-e...")}>
-                Vincular Nota Fiscal à Requisição
-              </button>
+            <div className="animate-fade-in" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem", height: "100%", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h3 style={{ fontSize: "1.2rem", fontWeight: 900, display: "flex", alignItems: "center", gap: "0.5rem" }}><Truck size={20} className="text-[var(--brand)]" /> Receber Carga (Cross-docking)</h3>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Selecione a requisição em aberto, inclua os itens recebidos e anexe a nota.</p>
+                </div>
+                {recebimentoPasso > 1 && (
+                  <button className="btn-ghost !h-8 !text-xs" onClick={() => { setRecebimentoPasso(1); setRecebimentoReq(null); setRecebimentoItens([]); }}>← Voltar para Lista</button>
+                )}
+              </div>
+
+              {recebimentoPasso === 1 && (
+                <div className="card overflow-hidden" style={{ borderRadius: "8px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead style={{ background: "var(--bg-card)", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                      <tr>
+                        <th style={{ padding: "12px", textAlign: "left" }}>REQ #</th>
+                        <th style={{ padding: "12px", textAlign: "left" }}>ITEM SOLICITADO</th>
+                        <th style={{ padding: "12px", textAlign: "left" }}>DESTINO</th>
+                        <th style={{ padding: "12px", textAlign: "center" }}>STATUS</th>
+                        <th style={{ padding: "12px", textAlign: "right" }}>AÇÃO</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {requisicoes.filter(r => r.status !== 'ENTREGUE').map(r => (
+                        <tr key={r.id} style={{ borderBottom: "1px solid var(--border-light)" }} className="hover:bg-[var(--bg-base)]">
+                          <td style={{ padding: "12px", fontSize: "0.75rem", fontFamily: "monospace" }}>{r.id.substring(0, 8).toUpperCase()}</td>
+                          <td style={{ padding: "12px", fontSize: "0.85rem", fontWeight: 600 }}>{r.item_nome || r.item}</td>
+                          <td style={{ padding: "12px", fontSize: "0.75rem" }}>{r.unidade_destino || r.unidade}</td>
+                          <td style={{ padding: "12px", textAlign: "center" }}><span className="badge badge-orange" style={{ fontSize: "0.6rem" }}>{r.status}</span></td>
+                          <td style={{ padding: "12px", textAlign: "right" }}>
+                            <button className="btn-brand !h-8 !px-3 !text-[10px]" onClick={() => { setRecebimentoReq(r); setRecebimentoPasso(2); }}>Selecionar</button>
+                          </td>
+                        </tr>
+                      ))}
+                      {requisicoes.filter(r => r.status !== 'ENTREGUE').length === 0 && (
+                        <tr><td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)", fontSize: "0.8rem" }}>Nenhuma requisição pendente.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {recebimentoPasso === 2 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                  <div className="card" style={{ padding: "1rem", background: "var(--brand)", color: "white", borderRadius: "8px" }}>
+                    <div style={{ fontSize: "0.75rem", opacity: 0.8 }}>REQUISIÇÃO SELECIONADA</div>
+                    <div style={{ fontSize: "1rem", fontWeight: 700 }}>{recebimentoReq.item_nome || recebimentoReq.item} - {recebimentoReq.unidade_destino || recebimentoReq.unidade}</div>
+                  </div>
+
+                  <div className="card" style={{ padding: "1.25rem", borderRadius: "8px" }}>
+                    <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "1rem" }}>Adicionar Produtos Recebidos</h4>
+                    <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto", gap: "0.5rem", alignItems: "end", marginBottom: "1.5rem" }}>
+                      <div>
+                        <label className="text-xs text-[var(--text-muted)] mb-1 block">Produto</label>
+                        <input className="input-field" placeholder="Ex: Cimento" value={recebItemForm.produto} onChange={e => setRecebItemForm({...recebItemForm, produto: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-[var(--text-muted)] mb-1 block">Qtd</label>
+                        <input type="number" className="input-field" placeholder="0" value={recebItemForm.qtd} onChange={e => setRecebItemForm({...recebItemForm, qtd: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-[var(--text-muted)] mb-1 block">Valor Unit (R$)</label>
+                        <input type="number" className="input-field" placeholder="0.00" value={recebItemForm.valor} onChange={e => setRecebItemForm({...recebItemForm, valor: e.target.value})} />
+                      </div>
+                      <button className="btn-ghost !h-10 border border-[var(--brand)] !text-[var(--brand)]" onClick={() => {
+                        if(!recebItemForm.produto || !recebItemForm.qtd) return;
+                        setRecebimentoItens([...recebimentoItens, { produto: recebItemForm.produto, qtd: Number(recebItemForm.qtd), valor: Number(recebItemForm.valor) }]);
+                        setRecebItemForm({ produto: '', qtd: '', valor: '' });
+                      }}>+ Adicionar</button>
+                    </div>
+
+                    <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "1rem" }}>
+                      <thead style={{ background: "var(--bg-base)", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                        <tr><th className="p-2 text-left">PRODUTO</th><th className="p-2 text-center">QTD</th><th className="p-2 text-right">VALOR UNIT.</th><th className="p-2"></th></tr>
+                      </thead>
+                      <tbody>
+                        {recebimentoItens.map((i, idx) => (
+                          <tr key={idx} className="border-b">
+                            <td className="p-2 text-sm">{i.produto}</td>
+                            <td className="p-2 text-sm text-center font-bold">{i.qtd}</td>
+                            <td className="p-2 text-sm text-right">R$ {i.valor.toFixed(2)}</td>
+                            <td className="p-2 text-right"><button className="text-[var(--danger)] text-xs" onClick={() => setRecebimentoItens(recebimentoItens.filter((_, index) => index !== idx))}>Remover</button></td>
+                          </tr>
+                        ))}
+                        {recebimentoItens.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-xs text-[var(--text-muted)]">Nenhum item adicionado ainda.</td></tr>}
+                      </tbody>
+                    </table>
+
+                    <button className="btn-brand w-full !h-12" disabled={recebimentoItens.length === 0} onClick={() => setRecebimentoPasso(3)}>Prosseguir para Conferência</button>
+                  </div>
+                </div>
+              )}
+
+              {recebimentoPasso === 3 && (
+                <div className="card" style={{ padding: "2rem", borderRadius: "8px", maxWidth: "500px", margin: "0 auto", width: "100%" }}>
+                  <h4 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "1.5rem" }}>Informações de Recebimento</h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
+                    <div>
+                      <label className="text-xs text-[var(--text-muted)] mb-1 block">Quem recebeu a carga?</label>
+                      <input id="rec-recebedor" className="input-field" placeholder="Nome do responsável" defaultValue={user?.nome || ""} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[var(--text-muted)] mb-1 block">Data de Recebimento</label>
+                      <input id="rec-data" type="date" className="input-field" defaultValue={new Date().toISOString().split('T')[0]} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[var(--text-muted)] mb-1 block">Anexar Foto da Nota de Entrega Assinada</label>
+                      <input type="file" accept="image/*" className="input-field" style={{ padding: "0.5rem" }} />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="btn-ghost flex-1" onClick={() => setRecebimentoPasso(2)}>Voltar</button>
+                    <button className="btn-brand flex-1" onClick={handleFinalizarRecebimento} disabled={loading}>{loading ? <Loader className="animate-spin" size={16} /> : "Finalizar e Dar Baixa"}</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
