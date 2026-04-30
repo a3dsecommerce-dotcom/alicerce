@@ -105,10 +105,6 @@ function CockpitContent() {
                </button>
              ))}
           </div>
-          <button className="p-3 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--brand)] transition-colors relative">
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[var(--bg-card)]"></span>
-          </button>
         </div>
       </div>
 

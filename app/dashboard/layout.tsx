@@ -166,13 +166,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col overflow-hidden relative glass rounded-[2rem] border border-[var(--border)] shadow-xl mr-4 my-2">
         {/* TOPBAR - COM PROTEÇÃO DE BORDA DIREITA */}
         <header className="no-print h-[80px] flex items-center px-10 lg:px-14 gap-8 glass z-40 border-b border-[var(--border)]">
-          <div className="hidden md:flex flex-1 max-w-[480px] relative group">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--brand)] transition-colors" />
-            <input 
-              className="input-field w-full pl-11 bg-[var(--bg-base)]/50 focus:bg-[var(--bg-card)]" 
-              placeholder="Pesquisar por colaborador, unidade ou chamado..." 
-            />
-          </div>
+          {(!user?.role || String(user.role).toUpperCase() !== "COMPRADOR") && (
+            <div className="hidden md:flex flex-1 max-w-[480px] relative group">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--brand)] transition-colors" />
+              <input 
+                className="input-field w-full pl-11 bg-[var(--bg-base)]/50 focus:bg-[var(--bg-card)]" 
+                placeholder="Pesquisar por colaborador, unidade ou chamado..." 
+              />
+            </div>
+          )}
 
           <div className="flex-1" />
 
