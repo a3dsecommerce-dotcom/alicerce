@@ -145,13 +145,22 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     return {
       percent: totalSolicitado > 0 ? Math.round((totalChegou / totalSolicitado) * 100) : 0,
       falta: totalSolicitado - totalChegou,
-      total: totalSolicitado
+      total: totalSolicitado,
+      chegou: totalChegou
     };
   };
 
-  const percentagemGeral = pedidos.length > 0 
-    ? Math.round(pedidos.reduce((acc, p) => acc + calculateProgress(p).percent, 0) / pedidos.length)
-    : 0;
+  const percentagemGeral = (() => {
+    if (!pedidos || pedidos.length === 0) return 0;
+    let globalSolicitado = 0;
+    let globalChegou = 0;
+    pedidos.forEach(p => {
+      const prog = calculateProgress(p);
+      globalSolicitado += prog.total;
+      globalChegou += prog.chegou;
+    });
+    return globalSolicitado > 0 ? Math.round((globalChegou / globalSolicitado) * 100) : 0;
+  })();
 
   return (
     <div className="flex flex-col gap-10 animate-fade-in pb-32 max-w-full px-4">
