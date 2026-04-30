@@ -34,11 +34,21 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   ];
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setPedidos(acompanhamentoMock);
+    async function fetchPedidos() {
+      setLoading(true);
+      const { data } = await supabase
+        .from('compras_processos')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (data && data.length > 0) {
+        setPedidos(data);
+      } else {
+        setPedidos(acompanhamentoMock);
+      }
       setLoading(false);
-    }, 800);
+    }
+    fetchPedidos();
   }, [filtroMes]);
 
   const handleVolumeChange = (id: number, val: string) => {
@@ -50,11 +60,44 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     const itensParaPedir = Object.entries(volumes).filter(([_, vol]) => vol > 0);
     if (itensParaPedir.length === 0) return alert("Selecione volumes antes de finalizar.");
     setLoading(true);
-    setTimeout(() => {
-      setVolumes({});
-      setActiveTab("TRACKING");
+    
+    const user = (() => {
+      try { return JSON.parse(localStorage.getItem('crm_user') || '{}'); } 
+      catch { return {}; }
+    })();
+
+    try {
+      // Cria uma requisição no banco para CADA item selecionado
+      const requisicoes = itensParaPedir.map(([idStr, qtd]) => {
+        const id = parseInt(idStr);
+        const item = catalogoMock.find(c => c.id === id);
+        return {
+          solicitante: user?.name || 'Portal Suprimentos',
+          unidade_destino: user?.email || 'Não informado',
+          quantidade: qtd,
+          status: 'SOLICITADO',
+          item_nome: item?.nome || `Item #${id}`,
+          unidade_medida: item?.unidade || 'UN',
+          data_solicitacao: new Date().toISOString(),
+        };
+      });
+
+      const { error } = await supabase.from('requisicoes').insert(requisicoes);
+      
+      if (error) {
+        console.error('Erro ao criar requisição:', error);
+        alert('Erro ao salvar requisição. Tente novamente.');
+      } else {
+        setVolumes({});
+        setActiveTab("TRACKING");
+        alert(`✅ ${itensParaPedir.length} requisição(ões) criada(s) com sucesso! O Almoxarifado foi notificado.`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro inesperado. Verifique a conexão.');
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   };
 
   return (

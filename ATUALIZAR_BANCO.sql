@@ -112,11 +112,31 @@ CREATE TABLE IF NOT EXISTS estoque_atual (
 CREATE TABLE IF NOT EXISTS requisicoes (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     item_id UUID REFERENCES estoque_atual(id),
+    item_nome TEXT, -- nome do item para quando não há FK
     solicitante TEXT,
     unidade_destino TEXT,
     quantidade INTEGER NOT NULL,
+    unidade_medida TEXT DEFAULT 'UN',
     status TEXT DEFAULT 'SOLICITADO', -- SOLICITADO, EM_ROTA, ENTREGUE
     data_solicitacao TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Adiciona colunas faltantes se a tabela já existir
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS item_nome TEXT;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS unidade_medida TEXT DEFAULT 'UN';
+
+-- =================================================================================
+-- TABELA DE PROCESSOS DE COMPRAS (TRACKING DE REMESSAS)
+-- =================================================================================
+CREATE TABLE IF NOT EXISTS compras_processos (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    nf TEXT,
+    desc TEXT,
+    solicitado INTEGER DEFAULT 0,
+    chegou INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'PENDENTE', -- PENDENTE, EM_ROTA, CONCLUIDO
+    recebedor TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
 -- =================================================================================
