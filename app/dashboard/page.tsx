@@ -59,7 +59,7 @@ function CockpitContent() {
     { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE"] },
     { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
     { id: "COMPRAS", label: "Compras", icon: ShoppingCart, roles: ["COMPRADOR"] },
-    { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE"] },
+    { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
     { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
   ];
 
@@ -67,7 +67,7 @@ function CockpitContent() {
   // Exceção: Roles restritas (COMPRADOR, ALMOXARIFE) devem ver APENAS o próprio módulo
   const nivel = user?.nivel || 0;
   const safeRole = user?.role ? String(user.role).toUpperCase() : "";
-  const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "TECNICO_SEGURANCA"].includes(safeRole);
+  const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
   const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
   
   // Se for gestor: mostra o painel de controle completo
