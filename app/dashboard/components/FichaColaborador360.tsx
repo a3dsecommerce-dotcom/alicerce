@@ -292,8 +292,15 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
 
             {/* TAB 3: FINANCEIRO E LOGÍSTICA */}
             {tab === "financeiro" && (
-              <div className="flex flex-col gap-6">
-                <h4 className="font-bold text-[var(--text-primary)]">Remuneração e Logística (Uniformes)</h4>
+              <div className="flex flex-col gap-6 animate-fade-in">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-[var(--text-primary)]">Remuneração e Logística (Uniformes)</h4>
+                  {canEdit && (
+                    <button className="btn-ghost text-xs" onClick={() => setEditing(!editing)}>
+                      {editing ? <X size={14} /> : <Edit3 size={14} />} {editing ? "Cancelar" : "Editar Dados"}
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-3 gap-6">
                   {[
                     { key: "salario_base", label: "Salário Base (R$)", type: "number" },
@@ -302,23 +309,34 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                   ].map(f => (
                     <div key={f.key}>
                       <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">{f.label}</label>
-                      <div className="p-3 bg-green-50 rounded-xl border border-green-200 text-sm font-bold text-green-700">R$ {data?.[f.key] || "0,00"}</div>
+                      {editing ? (
+                        <input type="number" className="input-field" value={editForm[f.key] || ""} onChange={e => setEditForm({...editForm, [f.key]: e.target.value})} />
+                      ) : (
+                        <div className="p-3 bg-green-50 rounded-xl border border-green-200 text-sm font-bold text-green-700">R$ {data?.[f.key] || "0,00"}</div>
+                      )}
                     </div>
                   ))}
                 </div>
-                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-[9px] font-bold text-blue-600 uppercase mb-1 block">Tamanho Camisa</label>
-                    <div className="text-lg font-black text-blue-900">{data?.tamanho_camisa || "G"}</div>
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-blue-600 uppercase mb-1 block">Número Calça</label>
-                    <div className="text-lg font-black text-blue-900">{data?.tamanho_calca || "42"}</div>
-                  </div>
-                  <div>
-                    <label className="text-[9px] font-bold text-blue-600 uppercase mb-1 block">Número Sapato</label>
-                    <div className="text-lg font-black text-blue-900">{data?.tamanho_sapato || "40"}</div>
-                  </div>
+                <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 grid grid-cols-3 gap-6">
+                  {[
+                    { key: "tamanho_camisa", label: "Tamanho Camisa", placeholder: "Ex: M, G, GG" },
+                    { key: "tamanho_calca", label: "Número Calça", placeholder: "Ex: 40, 42" },
+                    { key: "tamanho_sapato", label: "Número Sapato", placeholder: "Ex: 41, 42" },
+                  ].map(f => (
+                    <div key={f.key}>
+                      <label className="text-[9px] font-bold text-blue-600 uppercase mb-1 block">{f.label}</label>
+                      {editing ? (
+                        <input 
+                          className="input-field w-full text-xs !bg-white/20 !border-blue-200 focus:!border-blue-500 !text-blue-900 placeholder:text-blue-900/30" 
+                          placeholder={f.placeholder}
+                          value={editForm[f.key] || ""} 
+                          onChange={e => setEditForm({...editForm, [f.key]: e.target.value})} 
+                        />
+                      ) : (
+                        <div className="text-lg font-black text-blue-900">{data?.[f.key] || "—"}</div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
