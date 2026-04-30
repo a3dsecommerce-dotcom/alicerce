@@ -411,3 +411,28 @@ select.input-field option { background: #1a1f2e; color: white; }
   th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
   .page-break { page-break-after: always; }
 }
+
+/* ============================================================
+   DARK MODE OVERRIDES (Corrige visibilidade de indicadores antigos)
+   ============================================================ */
+/* Cores de Fundo (Light para Translúcido) */
+.bg-white { background-color: rgba(255,255,255,0.06) !important; }
+.bg-green-50, .bg-green-100 { background-color: rgba(16,185,129,0.1) !important; }
+.bg-red-50, .bg-red-100 { background-color: rgba(239,68,68,0.1) !important; }
+.bg-orange-50, .bg-orange-100 { background-color: rgba(249,115,22,0.1) !important; }
+.bg-amber-50, .bg-amber-100 { background-color: rgba(245,158,11,0.1) !important; }
+.bg-blue-50, .bg-blue-100 { background-color: rgba(59,130,246,0.1) !important; }
+.bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-gray-200 { background-color: rgba(255,255,255,0.08) !important; }
+
+/* Cores de Texto (Escuro para Claro) */
+.text-green-600, .text-green-700 { color: #34d399 !important; }
+.text-red-600, .text-red-700 { color: #f87171 !important; }
+.text-orange-600, .text-orange-700 { color: #fb923c !important; }
+.text-amber-600, .text-amber-700 { color: #fbbf24 !important; }
+.text-blue-600, .text-blue-700 { color: #60a5fa !important; }
+.text-slate-600, .text-slate-700, .text-gray-500, .text-gray-600, .text-gray-700 { color: rgba(255,255,255,0.7) !important; }
+.text-black { color: #ffffff !important; }
+
+/* Correção de Hover que usa bg-white */
+.hover\:bg-white:hover { background-color: rgba(234,88,12,0.15) !important; }
+.group-hover\:bg-white:hover { background-color: rgba(234,88,12,0.15) !important; }
