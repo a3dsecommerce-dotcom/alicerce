@@ -263,9 +263,10 @@ export default function AlmoxarifadoPage() {
     try {
       const recebedor = (document.getElementById('rec-recebedor') as HTMLInputElement).value;
       const dataRec = (document.getElementById('rec-data') as HTMLInputElement).value;
+      const statusFinal = (document.getElementById('rec-status') as HTMLSelectElement).value;
       
-      // Update requisicao to ENTREGUE (simplified logic for the flow)
-      await supabase.from('requisicoes').update({ status: 'ENTREGUE' }).eq('id', recebimentoReq.id);
+      // Update requisicao based on user selection (Parcial = ANDAMENTO, Completa = ENTREGUE)
+      await supabase.from('requisicoes').update({ status: statusFinal }).eq('id', recebimentoReq.id);
 
       // Log no historico
       await supabase.from('historico_gestao').insert([{
@@ -627,6 +628,13 @@ export default function AlmoxarifadoPage() {
                     <div>
                       <label className="text-xs text-[var(--text-muted)] mb-1 block">Anexar Foto da Nota de Entrega Assinada</label>
                       <input type="file" accept="image/*" className="input-field" style={{ padding: "0.5rem" }} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-[var(--text-muted)] mb-1 block">Status da Entrega</label>
+                      <select id="rec-status" className="input-field" style={{ border: "1px solid var(--brand)", fontWeight: 700, color: "var(--brand)" }}>
+                        <option value="ANDAMENTO">Entrega Parcial (Manter em Andamento)</option>
+                        <option value="ENTREGUE">Entrega Completa (Finalizar Requisição)</option>
+                      </select>
                     </div>
                   </div>
                   <div className="flex gap-2">
