@@ -472,12 +472,9 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                </div>
             </div>
 
-            <div className="flex gap-4">
-               <button className="flex-1 h-14 bg-[var(--brand)] text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg">
-                  <Download size={18} /> Baixar PDF
-               </button>
-               <button onClick={() => setSelectedReport(null)} className="h-14 px-8 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-xl text-xs font-black uppercase tracking-widest border border-[var(--border)]">
-                  Fechar
+            <div className="flex justify-end gap-4">
+               <button onClick={() => setSelectedReport(null)} className="h-14 px-12 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-xl text-xs font-black uppercase tracking-widest border border-[var(--border)] hover:bg-[var(--bg-card)] transition-colors">
+                  Fechar Relatório
                </button>
             </div>
          </div>
