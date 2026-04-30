@@ -290,7 +290,7 @@ export default function LoginPage() {
               <div className="brand-tag">
                 <span /> Sistema Ativo
               </div>
-              <p className="welcome-h2">Bem-vindo ao</p>
+              <p className="welcome-h2">Bem-vindo à</p>
               <h1 className="brand-name">Ali<span>cerce</span></h1>
               <p className="brand-sub">Portal de Gestão · Versão 1.0</p>
             </div>
@@ -382,16 +382,21 @@ export default function LoginPage() {
             <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "5px 14px", background: "rgba(234,88,12,0.15)", border: "1px solid rgba(234,88,12,0.3)", borderRadius: "20px", fontSize: "10px", fontWeight: 700, color: "#fb923c", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "12px" }}>
               <Zap size={12} /> Recrutamento Alicerce
             </div>
-            <h2 style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.5px" }}>Inscrição para Vaga</h2>
-            <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Passo {step} de 5 — Preencha todos os campos para garantir sua vaga</p>
+            <h2 style={{ fontSize: "22px", fontWeight: 900, letterSpacing: "-0.5px" }}>Faça Parte do Time</h2>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", marginTop: "8px", lineHeight: 1.7, maxWidth: "380px", margin: "8px auto 0" }}>
+              Na <strong style={{ color: "#fb923c" }}>Alicerce</strong>, estamos sempre em busca de novos talentos que compartilhem nossos valores de <strong style={{ color: "white" }}>comprometimento, disciplina e trabalho em equipe</strong>. Preencha o formulário abaixo e nossa equipe de RH entrará em contato assim que houver uma oportunidade para o seu perfil.
+            </p>
           </div>
 
           {/* Barra de progresso */}
-          <div style={{ display: "flex", gap: "6px", marginBottom: "24px" }}>
+          <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
             {[1,2,3,4,5].map(i => (
               <div key={i} style={{ flex: 1, height: "3px", borderRadius: "2px", background: i <= step ? "#ea580c" : "rgba(255,255,255,0.1)", transition: "background 0.4s", boxShadow: i <= step ? "0 0 8px rgba(234,88,12,0.5)" : "none" }} />
             ))}
           </div>
+          <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "20px", textAlign: "right" }}>
+            Etapa {step} de 5
+          </p>
 
           {/* Estilos reutilizáveis */}
           {(() => {
