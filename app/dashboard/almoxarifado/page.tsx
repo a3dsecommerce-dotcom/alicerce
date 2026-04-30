@@ -698,58 +698,7 @@ export default function AlmoxarifadoPage() {
         </div>
       </div>
 
-      <style>{`
-        @media screen { #documento-oficial { display: none; } }
-        @media print {
-          body * { visibility: hidden; }
-          #documento-oficial, #documento-oficial * { visibility: visible !important; display: block !important; }
-          #documento-oficial { position: absolute; left: 0; top: 0; width: 100%; display: block !important; background: white !important; color: black !important; padding: 1.5cm; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
 
-      {/* DOCUMENTO OFICIAL PARA IMPRESSÃO (ESTILIZADO ANTERIORMENTE) */}
-      <div id="documento-oficial" style={{ backgroundColor: "#fff", color: "#000", width: "100%", fontFamily: "'Inter', sans-serif" }}>
-        <div style={{ textAlign: "center", borderBottom: "3px solid #000", paddingBottom: "15px", marginBottom: "25px" }}>
-          <h1 style={{ fontSize: "1.6rem", margin: "0", fontWeight: "900" }}>ALICERCE SERVIÇOS E GESTÃO LTDA</h1>
-          <p style={{ fontSize: "1rem", margin: "5px 0", fontWeight: "700", textTransform: "uppercase" }}>Ficha de Controle de Entrega de EPI (NR-06)</p>
-        </div>
-
-        <div style={{ marginBottom: "25px", fontSize: "1.05rem", border: "1px solid #000", padding: "15px" }}>
-          <div><strong>COLABORADOR:</strong> <span style={{ textTransform: "uppercase" }}>{colaboradorSelecionado}</span></div>
-          <div><strong>UNIDADE:</strong> ESCOLA JOAQUIM NABUCO</div>
-          <div><strong>DATA:</strong> {mounted ? new Date().toLocaleDateString('pt-BR') : "--/--/----"}</div>
-        </div>
-
-        <div style={{ width: "100%", marginBottom: "30px" }}>
-          <div style={{ width: "100%", backgroundColor: "#000", color: "#fff", fontWeight: "bold", fontSize: "11px", height: "38px", lineHeight: "38px" }}>
-            <div style={{ float: "left", width: "60%", padding: "0 15px" }}>DESCRIÇÃO DO EQUIPAMENTO</div>
-            <div style={{ float: "left", width: "20%", textAlign: "center" }}>QTD.</div>
-            <div style={{ float: "left", width: "20%", textAlign: "center" }}>C.A (MTE)</div>
-            <div style={{ clear: "both" }}></div>
-          </div>
-          {epiCesta.map((e, i) => (
-            <div key={i} style={{ width: "100%", fontSize: "12px", height: "45px", lineHeight: "45px", background: i % 2 === 0 ? "#f9f9f9" : "#fff" }}>
-              <div style={{ float: "left", width: "60%", padding: "0 15px" }}>{(e.item || "").toUpperCase()}</div>
-              <div style={{ float: "left", width: "20%", textAlign: "center" }}>{e.qtd}</div>
-              <div style={{ float: "left", width: "20%", textAlign: "center" }}>42150</div>
-              <div style={{ clear: "both" }}></div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ padding: "15px", fontSize: "11px", textAlign: "justify", backgroundColor: "#f6f6f6", borderRadius: "6px", lineHeight: "1.6" }}>
-          <strong>DECLARAÇÃO:</strong> Declaro ter recebido os EPIs acima relacionados, estando em perfeitas condições de uso. Comprometo-me a utilizá-los apenas para o fim a que se destinam.
-        </div>
-
-        <div style={{ marginTop: "80px", display: "flex", width: "100%", justifyContent: "space-between" }}>
-          <div style={{ width: "280px", textAlign: "center", borderTop: "2px solid #000", paddingTop: "10px" }}>
-            <strong>ALICERCE SERVIÇOS E GESTÃO</strong><br/>Emissor Responsável
-          </div>
-          <div style={{ width: "280px", textAlign: "center", borderTop: "2px solid #000", paddingTop: "10px" }}>
-            <strong>ASSINATURA DO COLABORADOR</strong><br/>{colaboradorSelecionado}
-          </div>
-        </div>
 
       {/* Modal: Nova Entrada de Estoque */}
       {modalAberto === "entrada" && (
