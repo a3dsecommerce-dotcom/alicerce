@@ -367,7 +367,7 @@ export default function LoginPage() {
                 <div className="sec-dot" />
                 <div className="sec-badge"><Database size={10} /> Dados Seguros</div>
                 <div className="sec-dot" />
-                <div className="sec-badge">v5.0</div>
+                <div className="sec-badge">v1.0</div>
               </div>
             </form>
           </section>
