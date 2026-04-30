@@ -69,41 +69,80 @@ export default function AlmoxarifadoPage() {
       const { data: users } = await supabase.from('usuarios').select('*').order('nome');
       if (users) setColaboradores(users);
 
+      const { data: histData } = await supabase.from('historico_gestao')
+        .select('*')
+        .or('tipo_acao.eq.BAIXA_EPI,tipo_acao.eq.ENTRADA_ESTOQUE,tipo_acao.eq.APROVACAO_TECNICA')
+        .order('created_at', { ascending: false })
+        .limit(50);
+        
+      if (histData && histData.length > 0) {
+        const logsFormatados = histData.map(h => ({
+          id: h.id,
+          data: h.created_at,
+          usuario: h.executor_tel,
+          acao: h.tipo_acao,
+          colaborador: h.motivo,
+          itens: h.para,
+          status: "REGISTRADO"
+        }));
+        setLogsAuditoria(logsFormatados);
+      }
+
       setLoading(false);
     }
     fetchData();
     setMounted(true);
   }, []);
 
-  const handleBaixaEPI = () => {
+  const handleBaixaEPI = async () => {
     if (epiCesta.length === 0) return;
+    setLoading(true);
 
-    // 1. Simular Baixa no Estoque
-    const novoEstoque = [...estoque];
-    epiCesta.forEach(cestaItem => {
-      const idx = novoEstoque.findIndex(i => i.item === cestaItem.item);
-      if (idx !== -1) {
-        novoEstoque[idx].quantidade -= cestaItem.qtd;
+    try {
+      const novoEstoque = [...estoque];
+      
+      // 1. Baixa Real no Estoque (Supabase)
+      for (const cestaItem of epiCesta) {
+        const itemObj = estoque.find(i => i.item === cestaItem.item);
+        if (itemObj) {
+          const novaQtd = (itemObj.quantidade || 0) - cestaItem.qtd;
+          await supabase.from('estoque_atual').update({ quantidade: novaQtd }).eq('id', itemObj.id);
+          
+          const idx = novoEstoque.findIndex(i => i.id === itemObj.id);
+          if (idx !== -1) novoEstoque[idx].quantidade = novaQtd;
+        }
       }
-    });
-    setEstoque(novoEstoque);
+      setEstoque(novoEstoque);
 
-    // 2. Registrar Log de Auditoria
-    const novoLog = {
-      id: Date.now(),
-      data: new Date().toISOString(),
-      usuario: `Encarregado (${userRole})`,
-      acao: "Entrega e Baixa de EPI",
-      colaborador: colaboradorSelecionado,
-      itens: epiCesta.map(i => `${i.qtd}x ${i.item}`).join(", "),
-      status: "SUCESSO"
-    };
-    setLogsAuditoria([novoLog, ...logsAuditoria]);
+      // 2. Registrar Log de Auditoria no Supabase
+      const acaoItems = epiCesta.map(i => `${i.qtd}x ${i.item}`).join(", ");
+      await supabase.from('historico_gestao').insert([{
+        executor_tel: user?.telefone || "ALMOXARIFE",
+        tipo_acao: "BAIXA_EPI",
+        motivo: `Entrega de EPI: ${colaboradorSelecionado}`,
+        para: acaoItems
+      }]);
 
-    // 3. Notificar n8n
-    n8n.trigger('baixa-estoque-epi', { colaborador: colaboradorSelecionado, itens: epiCesta });
-    setEpiCesta([]);
-    alert("Baixa realizada e Ficha NR-06 gerada!");
+      const novoLog = {
+        id: Date.now(),
+        data: new Date().toISOString(),
+        usuario: user?.nome || user?.telefone || "Almoxarifado",
+        acao: "BAIXA_EPI",
+        colaborador: `Entrega de EPI: ${colaboradorSelecionado}`,
+        itens: acaoItems,
+        status: "REGISTRADO"
+      };
+      setLogsAuditoria([novoLog, ...logsAuditoria]);
+
+      // 3. Notificar n8n
+      n8n.trigger('baixa-estoque-epi', { colaborador: colaboradorSelecionado, itens: epiCesta });
+      setEpiCesta([]);
+      alert("Baixa realizada no banco de dados e Ficha NR-06 gerada com sucesso!");
+    } catch (err: any) {
+      alert("Erro ao realizar baixa: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSalvarItem = async () => {
