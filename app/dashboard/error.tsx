@@ -44,17 +44,15 @@ export default function Error({
         </Link>
       </div>
 
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-12 p-4 bg-slate-100 rounded-xl text-left max-w-2xl overflow-auto border border-slate-200">
-          <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Detalhes do Erro (Apenas Dev):</p>
-          <code className="text-xs text-red-600">{error.message}</code>
-          {error.stack && (
-            <pre className="mt-4 text-[10px] text-slate-500 font-mono leading-tight">
-              {error.stack}
-            </pre>
-          )}
-        </div>
-      )}
+      <div className="mt-12 p-4 bg-slate-100 rounded-xl text-left max-w-2xl overflow-auto border border-slate-200">
+        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Detalhes do Erro (Debug):</p>
+        <code className="text-xs text-red-600">{error.message}</code>
+        {error.stack && (
+          <pre className="mt-4 text-[10px] text-slate-500 font-mono leading-tight">
+            {error.stack}
+          </pre>
+        )}
+      </div>
     </div>
   );
 }
