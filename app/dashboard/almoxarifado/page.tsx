@@ -147,10 +147,20 @@ export default function AlmoxarifadoPage() {
 
   const handleSalvarItem = async () => {
     setLoading(true);
-    const payload = {
-      ...formData,
-      tipo_estoque: (formData.tipo === "EPI" || formData.categoria === "UNIFORME") ? "PROPRIO" : "CATALOGO"
+    const payload: any = {
+      item: formData.item,
+      categoria: formData.categoria,
+      quantidade: formData.quantidade || 0,
+      estoque_minimo: formData.estoque_minimo || 0,
+      unidade_medida: formData.unidade_medida || 'un',
+      tipo_estoque: (formData.tipo === "EPI" || formData.categoria === "UNIFORME") ? "PROPRIO" : "CATALOGO",
+      ca: formData.ca || null,
+      coeficiente: formData.coeficiente || 1
     };
+    
+    if (formData.id) {
+      payload.id = formData.id;
+    }
 
     const { error } = await supabase.from('estoque_atual').upsert([payload]);
     
@@ -161,6 +171,7 @@ export default function AlmoxarifadoPage() {
       const { data } = await supabase.from('estoque_atual').select('*').order('item');
       if (data) setEstoque(data);
       setModalAberto(null);
+      setFormData({ item: "", categoria: "", quantidade: 0, estoque_minimo: 0, unidade_medida: "un", tipo: "PRODUTO" });
     }
     setLoading(false);
   };
