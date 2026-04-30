@@ -147,33 +147,38 @@ export default function AlmoxarifadoPage() {
 
   const handleSalvarItem = async () => {
     setLoading(true);
-    const payload: any = {
-      item: formData.item,
-      categoria: formData.categoria,
-      quantidade: formData.quantidade || 0,
-      estoque_minimo: formData.estoque_minimo || 0,
-      unidade_medida: formData.unidade_medida || 'un',
-      tipo_estoque: (formData.tipo === "EPI" || formData.categoria === "UNIFORME") ? "PROPRIO" : "CATALOGO",
-      ca: formData.ca || null,
-      coeficiente: formData.coeficiente || 1
-    };
-    
-    if (formData.id) {
-      payload.id = formData.id;
-    }
+    try {
+      const payload: any = {
+        item: formData.item,
+        categoria: formData.categoria,
+        quantidade: formData.quantidade || 0,
+        estoque_minimo: formData.estoque_minimo || 0,
+        unidade_medida: formData.unidade_medida || 'un',
+        tipo_estoque: (formData.tipo === "EPI" || formData.categoria === "UNIFORME") ? "PROPRIO" : "CATALOGO",
+        ca: formData.ca || null,
+        coeficiente: formData.coeficiente || 1
+      };
+      
+      if (formData.id) {
+        payload.id = formData.id;
+      }
 
-    const { error } = await supabase.from('estoque_atual').upsert([payload]);
-    
-    if (error) {
-      alert("Erro ao salvar: " + error.message);
-    } else {
-      alert("Item salvo com sucesso!");
-      const { data } = await supabase.from('estoque_atual').select('*').order('item');
-      if (data) setEstoque(data);
-      setModalAberto(null);
-      setFormData({ item: "", categoria: "", quantidade: 0, estoque_minimo: 0, unidade_medida: "un", tipo: "PRODUTO" });
+      const { error } = await supabase.from('estoque_atual').upsert([payload]);
+      
+      if (error) {
+        alert("ALERTA DO BANCO: " + (error.message || JSON.stringify(error)));
+      } else {
+        alert("Item salvo com sucesso!");
+        const { data } = await supabase.from('estoque_atual').select('*').order('item');
+        if (data) setEstoque(data);
+        setModalAberto(null);
+        setFormData({ item: "", categoria: "", quantidade: 0, estoque_minimo: 0, unidade_medida: "un", tipo: "PRODUTO" });
+      }
+    } catch (e: any) {
+      alert("FALHA CRÍTICA NA TELA: " + (e.message || String(e)));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleAprovarRequisicao = async (qtdAprovada: number, justificativa: string) => {
