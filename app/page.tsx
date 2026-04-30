@@ -43,11 +43,12 @@ export default function LoginPage() {
         .single();
       if (userError || !user) { setError("Usuário não encontrado."); setLoading(false); return; }
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
-      const cargoResolvido = user.cargo || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+      const rawCargo = user.cargo ? String(user.cargo).toUpperCase() : null;
+      const cargoResolvido = rawCargo || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
       localStorage.setItem("crm_user", JSON.stringify({ email: user.telefone, role: cargoResolvido, name: user.nome, nivel: user.nivel_acesso || 1 }));
       let dest = "/dashboard";
-      if (user.cargo === "COMPRADOR") dest = "/dashboard/compras";
-      else if (user.cargo === "ALMOXARIFADO") dest = "/dashboard/almoxarifado";
+      if (rawCargo === "COMPRADOR") dest = "/dashboard?module=COMPRAS";
+      else if (rawCargo === "ALMOXARIFADO" || rawCargo === "ALMOXARIFE") dest = "/dashboard?module=ALMOXARIFADO";
       router.push(dest);
     } catch (err: any) {
       setError(`Erro: ${err.message || String(err)}`);

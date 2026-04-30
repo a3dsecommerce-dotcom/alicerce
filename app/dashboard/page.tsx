@@ -66,15 +66,16 @@ function CockpitContent() {
   // Regra de Negócio: nivel_acesso >= 3 = Gestor/Admin → vê o Painel Consolidado
   // Exceção: Roles restritas (COMPRADOR, ALMOXARIFE) devem ver APENAS o próprio módulo
   const nivel = user?.nivel || 0;
-  const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "TECNICO_SEGURANCA"].includes(user?.role);
-  const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(user?.role));
+  const safeRole = user?.role ? String(user.role).toUpperCase() : "";
+  const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "TECNICO_SEGURANCA"].includes(safeRole);
+  const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
   
   // Se for gestor: mostra o painel de controle completo
   // Se for colaborador de área: mostra módulo do seu cargo
   // Fallback: se não tem role/nivel definido, mostra COMMAND (evita tela em branco)
   const filteredModules = isManager
     ? modules
-    : modules.filter(m => m.roles.includes(user?.role)) || [modules[0]];
+    : modules.filter(m => m.roles.includes(safeRole)) || [modules[0]];
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">
