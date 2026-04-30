@@ -63,12 +63,17 @@ function CockpitContent() {
     { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
   ];
 
-  // Regra de Negócio: Gestores seniores vêem o Painel de Controle Consolidado.
-  // Colaboradores de áreas específicas vêem apenas seus respectivos módulos.
-  const isManager = user?.role === "ADMIN" || user?.role === "DIRETORIA" || user?.role === "GERENTE";
-  const filteredModules = isManager 
-    ? modules.filter(m => m.id === "COMMAND")
-    : modules.filter(m => m.roles.includes(user?.role));
+  // Regra de Negócio: nivel_acesso >= 3 = Gestor/Admin → vê o Painel Consolidado
+  // nivel_acesso 1-2 = Colaborador → vê módulo do seu cargo
+  const nivel = user?.nivel || 0;
+  const isManager = nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(user?.role);
+  
+  // Se for gestor: mostra o painel de controle completo
+  // Se for colaborador de área: mostra módulo do seu cargo
+  // Fallback: se não tem role/nivel definido, mostra COMMAND (evita tela em branco)
+  const filteredModules = isManager
+    ? modules
+    : modules.filter(m => m.roles.includes(user?.role)) || [modules[0]];
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">
@@ -112,14 +117,15 @@ function CockpitContent() {
       <main className="flex-1 overflow-hidden min-h-[600px]">
         {user ? (
           <>
-            {activeModule === "COMMAND" && <GerenciaModule user={user} initialTab={tabParam as any} />}
+            {(activeModule === "COMMAND" || !activeModule) && <GerenciaModule user={user} initialTab={tabParam as any} />}
             {activeModule === "RH" && <RHModule user={user} />}
             {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
             {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
           </>
         ) : (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-64 flex-col gap-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand)]"></div>
+            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Carregando sessão...</p>
           </div>
         )}
         

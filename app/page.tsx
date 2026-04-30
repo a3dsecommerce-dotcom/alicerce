@@ -65,11 +65,15 @@ export default function LoginPage() {
       }
 
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
+      
+      // Determina o cargo/role com base no nivel_acesso quando cargo for nulo
+      const cargoResolvido = user.cargo || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+      
       localStorage.setItem("crm_user", JSON.stringify({ 
         email: user.telefone, 
-        role: user.cargo, 
+        role: cargoResolvido,
         name: user.nome,
-        nivel: user.nivel_acesso 
+        nivel: user.nivel_acesso || 1
       }));
       
       let dest = "/dashboard";
