@@ -97,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     onClick={() => toggleMenu(item.label)}
                     className={`sidebar-link w-full group justify-center ${hasActiveSub && !isOpen ? "active" : ""}`}
                   >
-                    <item.icon size={20} className="flex-shrink-0" />
+                    {item.icon && <item.icon size={20} className="flex-shrink-0" />}
                     {sidebarOpen && (
                       <>
                         <span className="font-black text-[0.95rem] mx-4">{item.label}</span>

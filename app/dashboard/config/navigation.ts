@@ -1,8 +1,9 @@
+import { LucideIcon } from 'lucide-react';
 import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, Truck, Zap, AlertTriangle } from 'lucide-react';
 
 export type NavItem = {
   href?: string;
-  icon: React.ComponentType<{ size?: number; color?: string }>;
+  icon?: LucideIcon;
   label: string;
   roles: string[];
   subItems?: NavItem[];

@@ -1,3 +1,4 @@
+// build: v2 - fixed Package import
 "use client";
 import { useState, useEffect } from "react";
 import { 
@@ -5,12 +6,15 @@ import {
   TrendingUp, BarChart3, Zap, Bell, 
   ArrowUpRight, ArrowDownRight, Briefcase, 
   CheckCircle, Clock, Megaphone, Settings,
-  PieChart, Globe, Cpu, LayoutDashboard as Layout, Search, Filter,
+  PieChart, Globe, Cpu, LayoutDashboard, Search, Filter,
   ShieldCheck, MessageSquare, AlertTriangle, FileText,
-  Map as MapIcon, HardHat, UserPlus, ClipboardList
+  Map as MapIcon, HardHat, UserPlus, ClipboardList, Package
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import RHModule from "./RHModule";
+
+// Alias para evitar conflito com variáveis locais
+const Layout = LayoutDashboard;
 
 type GerenciaTab = "OVERVIEW" | "INTEL_BI" | "COMMS" | "ETHICS" | "FINANCE" | "RH_FULL" | "OPERACIONAL";
 
