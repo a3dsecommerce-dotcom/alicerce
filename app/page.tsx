@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Shield, ShieldCheck, Zap, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Phone, Lock, Shield, ShieldCheck, Zap, Network, Database, CheckCircle2, ArrowLeftRight } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { supabase } from "@/lib/supabase";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,72 +13,33 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [modalTrabalhe, setModalTrabalhe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
-  // Estado Expandido do Candidato (ONDA 2)
-  const [candidato, setCandidato] = useState({ 
-    nome: "", cpf: "", rg: "", pis: "", titulo: "", 
-    telefone: "", email: "", data_nascimento: "",
-    cargo: "ASG", escolaridade: "Ensino Médio Completo",
-    cep: "", rua: "", numero: "", bairro: "", cidade: "Manaus", estado: "AM",
-    tamanho_camisa: "M", tamanho_calca: "38", tamanho_calcado: "40",
-    experiencia: false, ultimo_emprego: ""
+  const [step, setStep] = useState(1);
+  const [candidato, setCandidato] = useState({
+    nome: "", cpf: "", rg: "", telefone: "", email: "",
+    cargo: "ASG", cep: "", rua: "", numero: "", experiencia: false,
   });
 
-  // Passo do Modal de Cadastro
-  const [step, setStep] = useState(1);
-
-  // Função principal de login: valida telefone e senha (4 últimos dígitos)
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     const telLimpo = telefone.replace(/\D/g, "");
-    if (telLimpo.length < 10) {
-      setError("Telefone inválido.");
-      setLoading(false);
-      return;
-    }
-
+    if (telLimpo.length < 10) { setError("Telefone inválido."); setLoading(false); return; }
     const senhaCorreta = telLimpo.slice(-4);
-    if (senha !== senhaCorreta) {
-      setError("Senha incorreta (últimos 4 dígitos).");
-      setLoading(false);
-      return;
-    }
-
+    if (senha !== senhaCorreta) { setError("Senha incorreta — use os 4 últimos dígitos."); setLoading(false); return; }
     try {
       const telCom55 = telLimpo.startsWith("55") ? telLimpo : `55${telLimpo}`;
       const telSem55 = telLimpo.startsWith("55") ? telLimpo.slice(2) : telLimpo;
-
-      const { data: user, error: userError } = await supabase
-        .from('usuarios')
-        .select('*')
+      const { data: user, error: userError } = await supabase.from('usuarios').select('*')
         .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telCom55}@s.whatsapp.net,telefone.eq.${telSem55}@s.whatsapp.net`)
         .single();
-
-      if (userError || !user) {
-        setError("Usuário não encontrado.");
-        setLoading(false);
-        return;
-      }
-
+      if (userError || !user) { setError("Usuário não encontrado."); setLoading(false); return; }
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
-      
-      // Determina o cargo/role com base no nivel_acesso quando cargo for nulo
       const cargoResolvido = user.cargo || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
-      
-      localStorage.setItem("crm_user", JSON.stringify({ 
-        email: user.telefone, 
-        role: cargoResolvido,
-        name: user.nome,
-        nivel: user.nivel_acesso || 1
-      }));
-      
+      localStorage.setItem("crm_user", JSON.stringify({ email: user.telefone, role: cargoResolvido, name: user.nome, nivel: user.nivel_acesso || 1 }));
       let dest = "/dashboard";
       if (user.cargo === "COMPRADOR") dest = "/dashboard/compras";
       else if (user.cargo === "ALMOXARIFADO") dest = "/dashboard/almoxarifado";
-      
       router.push(dest);
     } catch (err: any) {
       setError(`Erro: ${err.message || String(err)}`);
@@ -91,323 +51,391 @@ export default function LoginPage() {
   async function handleCadastroCandidato() {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('candidatos')
-        .insert([{
-          nome: candidato.nome,
-          cpf: candidato.cpf.replace(/\D/g, ""),
-          telefone: candidato.telefone.replace(/\D/g, ""),
-          email: candidato.email,
-          cargo_pretendido: candidato.cargo,
-          cep: candidato.cep.replace(/\D/g, ""),
-          rua: candidato.rua,
-          numero: candidato.numero,
-          experiencia_previa: candidato.experiencia
-        }]);
-
+      const { error } = await supabase.from('candidatos').insert([{
+        nome: candidato.nome, cpf: candidato.cpf.replace(/\D/g, ""),
+        telefone: candidato.telefone.replace(/\D/g, ""), email: candidato.email,
+        cargo_pretendido: candidato.cargo, cep: candidato.cep.replace(/\D/g, ""),
+        rua: candidato.rua, numero: candidato.numero, experiencia_previa: candidato.experiencia,
+      }]);
       if (error) throw error;
-      
-      alert("Cadastro realizado com sucesso!");
-      setModalTrabalhe(false);
-      setStep(1);
+      alert("Cadastro realizado com sucesso! Entraremos em contato.");
+      setModalTrabalhe(false); setStep(1);
     } catch (err: any) {
       alert("Erro ao cadastrar: " + (err.message || "Erro desconhecido."));
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 bg-slate-100 dark:bg-neutral-950 transition-colors duration-500 font-sans selection:bg-orange-500/30 overflow-hidden">
-      
-      {/* Botão de Troca de Tema */}
-      <div className="fixed top-6 right-6 z-50">
-        <ThemeToggle />
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .login-body {
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          background: #0f1117;
+          font-family: 'Inter', sans-serif;
+          position: relative;
+          overflow: hidden;
+        }
+        .bg-blob {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.35;
+          pointer-events: none;
+        }
+        .blob-1 { width: 500px; height: 500px; background: #ea580c; top: -15%; left: -10%; }
+        .blob-2 { width: 600px; height: 600px; background: #c2410c; bottom: -20%; right: -10%; }
+        .blob-3 { width: 300px; height: 300px; background: #fb923c; top: 40%; left: 40%; }
+        .glass-card {
+          width: min(900px, 95vw);
+          min-height: 520px;
+          background: rgba(255,255,255,0.06);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 28px;
+          box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+          display: flex;
+          position: relative;
+          z-index: 10;
+          overflow: hidden;
+        }
+        .left-panel {
+          flex: 1;
+          padding: 50px 45px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          border-right: 1px solid rgba(255,255,255,0.08);
+          position: relative;
+        }
+        .left-panel::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(234,88,12,0.15) 0%, transparent 60%);
+          pointer-events: none;
+        }
+        .right-panel {
+          flex: 1;
+          padding: 50px 45px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          position: relative;
+        }
+        .swap-btn {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 48px;
+          height: 48px;
+          background: #ea580c;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 0 0 0 6px rgba(234,88,12,0.15), 0 8px 25px rgba(234,88,12,0.4);
+          z-index: 20;
+          cursor: default;
+        }
+        .brand-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 14px;
+          background: rgba(234,88,12,0.2);
+          border: 1px solid rgba(234,88,12,0.4);
+          border-radius: 20px;
+          font-size: 10px;
+          font-weight: 700;
+          color: #fb923c;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          margin-bottom: 24px;
+        }
+        .brand-tag span { width: 6px; height: 6px; background: #ea580c; border-radius: 50%; animation: blink 2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .welcome-h2 { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.5); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+        .brand-name { font-size: 42px; font-weight: 900; color: white; line-height: 1; letter-spacing: -2px; }
+        .brand-name span { color: #ea580c; }
+        .brand-sub { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.4); margin-top: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+        .btn-trabalhe {
+          padding: 14px 28px;
+          border-radius: 30px;
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.15);
+          color: white;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s;
+          letter-spacing: 0.05em;
+          align-self: flex-start;
+        }
+        .btn-trabalhe:hover { background: rgba(234,88,12,0.25); border-color: rgba(234,88,12,0.5); }
+        .footer-icons { display: flex; gap: 16px; align-items: center; }
+        .footer-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); cursor: default; transition: all 0.3s; }
+        .footer-icon:hover { background: rgba(234,88,12,0.15); border-color: rgba(234,88,12,0.3); color: #ea580c; }
+        .login-title { font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px; margin-bottom: 6px; text-align: center; }
+        .login-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 32px; text-align: center; }
+        .login-form { width: 100%; max-width: 320px; display: flex; flex-direction: column; align-items: center; }
+        .input-wrap {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 14px;
+          padding: 14px 18px;
+          margin-bottom: 14px;
+          transition: all 0.3s;
+        }
+        .input-wrap:focus-within { border-color: rgba(234,88,12,0.6); background: rgba(234,88,12,0.07); box-shadow: 0 0 0 3px rgba(234,88,12,0.1); }
+        .input-wrap svg { color: rgba(255,255,255,0.4); flex-shrink: 0; }
+        .input-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.12); margin: 0 14px; }
+        .input-wrap input { flex: 1; background: transparent; border: none; outline: none; color: white; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; }
+        .input-wrap input::placeholder { color: rgba(255,255,255,0.25); }
+        .input-wrap button { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.35); padding: 0; display: flex; transition: color 0.2s; }
+        .input-wrap button:hover { color: rgba(255,255,255,0.7); }
+        .form-opts { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .remember { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.45); cursor: pointer; }
+        .remember input[type=checkbox] { accent-color: #ea580c; cursor: pointer; }
+        .forgot { font-size: 12px; color: #fb923c; text-decoration: none; font-weight: 600; transition: color 0.2s; }
+        .forgot:hover { color: white; }
+        .btn-entrar {
+          width: 100%;
+          padding: 15px;
+          border-radius: 14px;
+          background: linear-gradient(135deg, #ea580c, #c2410c);
+          border: none;
+          color: white;
+          font-size: 14px;
+          font-weight: 800;
+          cursor: pointer;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          transition: all 0.3s;
+          box-shadow: 0 8px 25px rgba(234,88,12,0.4);
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-entrar:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(234,88,12,0.5); }
+        .btn-entrar:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+        .error-box {
+          width: 100%;
+          padding: 12px 16px;
+          border-radius: 10px;
+          background: rgba(239,68,68,0.1);
+          border: 1px solid rgba(239,68,68,0.3);
+          color: #fca5a5;
+          font-size: 12px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          display: flex; align-items: center; gap: 8px;
+        }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .security-row { display: flex; gap: 8px; margin-top: 24px; align-items: center; }
+        .sec-badge { display: flex; align-items: center; gap: 5px; font-size: 10px; color: rgba(255,255,255,0.3); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+        .sec-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+        @media (max-width: 640px) {
+          .glass-card { flex-direction: column; min-height: auto; }
+          .left-panel { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 36px 30px; }
+          .swap-btn { display: none; }
+          .right-panel { padding: 36px 30px; }
+        }
+      `}</style>
 
-      {/* Background Decorativo */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-orange-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-orange-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+      <div className="login-body">
+        {/* Blobs de fundo */}
+        <div className="bg-blob blob-1" />
+        <div className="bg-blob blob-2" />
+        <div className="bg-blob blob-3" />
 
-      {/* --- MOCKUP DE CELULAR MODERNO --- */}
-      <div className="relative w-full max-w-[420px] aspect-[9/19.5] max-h-[92vh] flex flex-col bg-white dark:bg-black rounded-[3.5rem] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.3)] dark:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] border-[10px] border-slate-900 dark:border-neutral-900 overflow-hidden animate-fade-in">
-        
-        {/* Notch / Dynamic Island Sutil */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-slate-900 dark:bg-neutral-900 rounded-b-2xl z-40 flex items-center justify-center">
-          <div className="w-10 h-1 bg-neutral-800 rounded-full" />
-        </div>
-
-        {/* Conteúdo do "Celular" */}
-        <div className="flex-1 overflow-y-auto no-scrollbar p-8 pt-16 flex flex-col gap-8 relative">
-          
-          <div className="flex flex-col items-center text-center mt-4">
-            <div className="w-20 h-20 bg-orange-500 rounded-[1.75rem] flex items-center justify-center shadow-2xl shadow-orange-500/40 mb-8 transform transition-transform hover:rotate-6">
-              <ShieldCheck className="text-white w-12 h-12 drop-shadow-lg" />
+        <div className="glass-card">
+          {/* PAINEL ESQUERDO — Marca */}
+          <section className="left-panel">
+            <div>
+              <div className="brand-tag">
+                <span /> Sistema Ativo
+              </div>
+              <p className="welcome-h2">Bem-vindo ao</p>
+              <h1 className="brand-name">Ali<span>cerce</span></h1>
+              <p className="brand-sub">Portal de Gestão Soberana · v5.0</p>
             </div>
-            <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white mb-2">Alicerce CRM</h1>
-            <p className="text-slate-500 dark:text-neutral-500 font-bold text-xs uppercase tracking-widest">Sovereign Management System</p>
+
+            <button className="btn-trabalhe" onClick={() => setModalTrabalhe(true)}>
+              Trabalhe Conosco
+            </button>
+
+            <div className="footer-icons">
+              <div className="footer-icon" title="Rede segura"><Network size={16} /></div>
+              <div className="footer-icon" title="Banco de dados"><Database size={16} /></div>
+              <div className="footer-icon" title="Segurança SSL"><Shield size={16} /></div>
+            </div>
+          </section>
+
+          {/* Botão central */}
+          <div className="swap-btn">
+            <ShieldCheck size={20} color="white" />
           </div>
 
-          <div className="flex flex-col gap-6">
-            <div className="bg-slate-50 dark:bg-neutral-900/50 backdrop-blur-xl border border-slate-200 dark:border-neutral-800 p-8 rounded-[2.5rem] shadow-sm dark:shadow-none">
-              <h2 className="text-lg font-bold mb-6 text-slate-800 dark:text-neutral-200">Acesso Restrito</h2>
-              
-              <form onSubmit={handleLogin} className="flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest pl-1">WhatsApp / Login</label>
-                  <input
-                    type="tel" required
-                    className="w-full bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-neutral-800 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-bold text-base shadow-sm"
-                    placeholder="Seu número ou login"
-                    value={telefone}
-                    onChange={e => setTelefone(e.target.value)}
-                  />
+          {/* PAINEL DIREITO — Formulário */}
+          <section className="right-panel">
+            <h2 className="login-title">Acesso Restrito</h2>
+            <p className="login-sub">Use seu WhatsApp e os 4 últimos dígitos</p>
+
+            <form className="login-form" onSubmit={handleLogin}>
+              {error && (
+                <div className="error-box">
+                  <Shield size={14} />
+                  {error}
                 </div>
+              )}
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-neutral-500 uppercase tracking-widest pl-1">Senha</label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"} 
-                      required
-                      className="w-full bg-white dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white tracking-[0.2em] font-sans text-xl placeholder-slate-300 dark:placeholder-neutral-800 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all shadow-sm"
-                      placeholder="Sua senha"
-                      value={senha}
-                      onChange={e => setSenha(e.target.value)}
-                    />
-                    <button 
-                      type="button" 
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-neutral-600 hover:text-orange-500 transition-colors p-2"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
-
-                {error && (
-                  <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-[12px] font-bold flex items-center gap-3 animate-shake">
-                    <Shield size={16} className="shrink-0 text-red-500" /> 
-                    <span>{error}</span>
-                  </div>
-                )}
-
-                <button 
-                  type="submit" 
-                  disabled={loading} 
-                  className="mt-4 w-full py-5 rounded-[1.5rem] bg-orange-600 text-white font-black text-sm shadow-[0_8px_30px_rgba(234,88,12,0.4)] hover:bg-orange-500 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3 group"
-                >
-                  {loading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      ENTRAR
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-
-            <div className="bg-slate-900 dark:bg-neutral-900/80 p-8 rounded-[2.5rem] text-center shadow-xl">
-              <h2 className="text-white font-black text-lg mb-2">Seja Alicerce</h2>
-              <p className="text-slate-400 dark:text-neutral-400 text-[13px] leading-relaxed mb-6 font-medium">
-                Faça parte do nosso time. Cadastre seu currículo agora.
-              </p>
-              <button 
-                onClick={() => setModalTrabalhe(true)} 
-                className="w-full py-4 rounded-2xl bg-white text-slate-900 font-black text-[11px] uppercase tracking-widest hover:bg-slate-100 transition-all active:scale-[0.98]"
-              >
-                Trabalhe Conosco
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-auto pt-8 flex flex-col items-center gap-2">
-            <p className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-[0.3em]">Criptografia Militar</p>
-            <div className="flex gap-4 text-slate-300 dark:text-neutral-800 text-[9px] font-bold uppercase tracking-widest">
-              <span>Versão 5.0.2</span>
-              <span>•</span>
-              <span>Status Online</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <AdaptiveModal
-        title={``}
-        isOpen={modalTrabalhe}
-        onClose={() => { setModalTrabalhe(false); setStep(1); }}
-        width="440px"
-      >
-        <div className="flex flex-col min-h-[720px] p-10 lg:p-12 bg-white dark:bg-black rounded-[3.5rem] border-[8px] border-slate-900 dark:border-neutral-900 shadow-2xl relative overflow-hidden transition-all duration-500">
-          
-          {/* Luzes de fundo sutis no modal */}
-          <div className="absolute top-[-5%] right-[-5%] w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-[-5%] left-[-5%] w-48 h-48 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
-
-          {/* Header do Cadastro - Mais Espaçado */}
-          <div className="text-center space-y-4 mb-10 relative z-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-500/10 rounded-full border border-orange-500/20">
-              <Zap size={14} className="text-orange-500" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-600 dark:text-orange-400">RECRUTAMENTO</span>
-            </div>
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">Nova Inscrição</h2>
-            <p className="text-slate-400 dark:text-neutral-500 font-bold text-[10px] uppercase tracking-widest">Portal Alicerce v5.0</p>
-          </div>
-
-          {/* Indicador de Passos Ultra-Minimalista */}
-          <div className="flex items-center justify-between gap-2 mb-12 relative z-10 px-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-neutral-800 overflow-hidden">
-                <div 
-                  className={`h-full bg-orange-600 transition-all duration-1000 ease-in-out ${i <= step ? 'w-full shadow-[0_0_8px_#ea580c]' : 'w-0'}`} 
+              <div className="input-wrap">
+                <Phone size={16} />
+                <div className="input-divider" />
+                <input
+                  type="tel"
+                  placeholder="WhatsApp / Login"
+                  value={telefone}
+                  onChange={e => setTelefone(e.target.value)}
+                  required
                 />
               </div>
+
+              <div className="input-wrap">
+                <Lock size={16} />
+                <div className="input-divider" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••"
+                  value={senha}
+                  onChange={e => setSenha(e.target.value)}
+                  required
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <div className="form-opts">
+                <label className="remember">
+                  <input type="checkbox" /> Lembrar acesso
+                </label>
+                <a href="#" className="forgot">Esqueceu a senha?</a>
+              </div>
+
+              <button type="submit" className="btn-entrar" disabled={loading}>
+                {loading ? <div className="spinner" /> : <><Zap size={15} /> Entrar no Sistema</>}
+              </button>
+
+              <div className="security-row">
+                <div className="sec-badge"><ShieldCheck size={10} /> SSL Ativo</div>
+                <div className="sec-dot" />
+                <div className="sec-badge"><Database size={10} /> Dados Seguros</div>
+                <div className="sec-dot" />
+                <div className="sec-badge">v5.0</div>
+              </div>
+            </form>
+          </section>
+        </div>
+      </div>
+
+      {/* Modal Trabalhe Conosco */}
+      <AdaptiveModal title="" isOpen={modalTrabalhe} onClose={() => { setModalTrabalhe(false); setStep(1); }} width="440px">
+        <div style={{ padding: "2.5rem", background: "#0f1117", borderRadius: "1.5rem", border: "1px solid rgba(255,255,255,0.1)", color: "white", fontFamily: "'Inter', sans-serif" }}>
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 16px", background: "rgba(234,88,12,0.15)", border: "1px solid rgba(234,88,12,0.3)", borderRadius: "20px", fontSize: "10px", fontWeight: 700, color: "#fb923c", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "16px" }}>
+              <Zap size={12} /> Recrutamento Alicerce
+            </div>
+            <h2 style={{ fontSize: "24px", fontWeight: 900, letterSpacing: "-0.5px" }}>Nova Inscrição</h2>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Preencha seus dados para participar do processo seletivo</p>
+          </div>
+
+          {/* Indicador de passos */}
+          <div style={{ display: "flex", gap: "8px", marginBottom: "28px" }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ flex: 1, height: "3px", borderRadius: "2px", background: i <= step ? "#ea580c" : "rgba(255,255,255,0.1)", transition: "background 0.4s", boxShadow: i <= step ? "0 0 8px rgba(234,88,12,0.5)" : "none" }} />
             ))}
           </div>
 
-          {/* Conteúdo Dinâmico - Mais Respiro Vertical */}
-          <div className="flex-1 flex flex-col relative z-10 pb-16">
-            {step === 1 && (
-              <div className="space-y-8 animate-fade-in">
-                <div className="flex flex-col gap-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">Nome Completo</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="Identificação oficial"
-                      value={candidato.nome}
-                      onChange={e => setCandidato({...candidato, nome: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">WhatsApp</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="92 9..."
-                      value={candidato.telefone}
-                      onChange={e => setCandidato({...candidato, telefone: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">E-mail</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="exemplo@gmail.com"
-                      value={candidato.email}
-                      onChange={e => setCandidato({...candidato, email: e.target.value})}
-                    />
-                  </div>
+          {step === 1 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {[
+                { label: "Nome Completo", key: "nome", placeholder: "Seu nome oficial", type: "text" },
+                { label: "WhatsApp", key: "telefone", placeholder: "92 9...", type: "tel" },
+                { label: "E-mail", key: "email", placeholder: "exemplo@gmail.com", type: "email" },
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: "6px" }}>{f.label}</label>
+                  <input type={f.type} placeholder={f.placeholder} value={(candidato as any)[f.key]} onChange={e => setCandidato({...candidato, [f.key]: e.target.value})}
+                    style={{ width: "100%", padding: "12px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", fontSize: "14px", outline: "none", fontFamily: "'Inter', sans-serif" }} />
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          )}
 
-            {step === 2 && (
-              <div className="space-y-8 animate-fade-in">
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">CPF</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="Apenas números"
-                      value={candidato.cpf}
-                      onChange={e => setCandidato({...candidato, cpf: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">RG</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="Opcional"
-                      value={candidato.rg}
-                      onChange={e => setCandidato({...candidato, rg: e.target.value})}
-                    />
-                  </div>
+          {step === 2 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              {[
+                { label: "CPF", key: "cpf", placeholder: "Apenas números", type: "text" },
+                { label: "CEP", key: "cep", placeholder: "00000-000", type: "text" },
+                { label: "Endereço", key: "rua", placeholder: "Rua e bairro", type: "text" },
+              ].map(f => (
+                <div key={f.key}>
+                  <label style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: "6px" }}>{f.label}</label>
+                  <input type={f.type} placeholder={f.placeholder} value={(candidato as any)[f.key]} onChange={e => setCandidato({...candidato, [f.key]: e.target.value})}
+                    style={{ width: "100%", padding: "12px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", fontSize: "14px", outline: "none", fontFamily: "'Inter', sans-serif" }} />
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          )}
 
-            {step === 3 && (
-              <div className="space-y-8 animate-fade-in">
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">CEP</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="00000-000"
-                      value={candidato.cep}
-                      onChange={e => setCandidato({...candidato, cep: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">Rua / Bairro</label>
-                    <input 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all"
-                      placeholder="Endereço completo"
-                      value={candidato.rua}
-                      onChange={e => setCandidato({...candidato, rua: e.target.value})}
-                    />
-                  </div>
+          {step === 3 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ fontSize: "10px", fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: "6px" }}>Cargo Desejado</label>
+                <select value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}
+                  style={{ width: "100%", padding: "12px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", fontSize: "14px", outline: "none", fontFamily: "'Inter', sans-serif" }}>
+                  <option value="ASG">Auxiliar de Serviços Gerais</option>
+                  <option value="Porteiro">Porteiro</option>
+                  <option value="Zelador">Zelador</option>
+                  <option value="Encarregado">Encarregado(a)</option>
+                </select>
+              </div>
+              <div onClick={() => setCandidato({...candidato, experiencia: !candidato.experiencia})}
+                style={{ padding: "20px", borderRadius: "12px", border: `2px solid ${candidato.experiencia ? "rgba(234,88,12,0.5)" : "rgba(255,255,255,0.1)"}`, background: candidato.experiencia ? "rgba(234,88,12,0.08)" : "rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "center", transition: "all 0.3s" }}>
+                <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: candidato.experiencia ? "#ea580c" : "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", transition: "all 0.3s" }}>
+                  {candidato.experiencia && <CheckCircle2 size={22} color="white" />}
                 </div>
+                <p style={{ fontWeight: 700, fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.1em" }}>Declaração de Veracidade</p>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>Confirmo que todos os dados fornecidos são verdadeiros.</p>
               </div>
-            )}
+            </div>
+          )}
 
-            {step === 4 && (
-              <div className="space-y-8 animate-fade-in">
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label className="text-[10px] font-black text-slate-400 dark:text-neutral-600 uppercase tracking-widest ml-1">Cargo Desejado</label>
-                    <select 
-                      className="w-full bg-slate-50 dark:bg-neutral-900/50 border border-slate-200 dark:border-neutral-800 rounded-2xl px-6 py-5 text-slate-900 dark:text-white font-bold text-base outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all appearance-none"
-                      value={candidato.cargo}
-                      onChange={e => setCandidato({...candidato, cargo: e.target.value})}
-                    >
-                      <option value="ASG">Auxiliar de Serviços Gerais</option>
-                      <option value="Porteiro">Porteiro</option>
-                      <option value="Zelador">Zelador</option>
-                      <option value="Encarregado">Encarregado(a)</option>
-                    </select>
-                  </div>
-                  
-                  <div 
-                    onClick={() => setCandidato({...candidato, experiencia: !candidato.experiencia})}
-                    className={`p-8 rounded-[2.5rem] border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-4 ${candidato.experiencia ? 'bg-orange-500/5 border-orange-500/40' : 'bg-slate-50 dark:bg-neutral-900/50 border-slate-200 dark:border-neutral-800'}`}
-                  >
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${candidato.experiencia ? 'bg-orange-600 shadow-xl shadow-orange-600/40' : 'bg-slate-200 dark:bg-neutral-800'}`}>
-                      {candidato.experiencia && <CheckCircle2 className="text-white w-6 h-6" />}
-                    </div>
-                    <div>
-                      <p className="font-black text-slate-900 dark:text-white text-xs uppercase tracking-widest">Declaração de Veracidade</p>
-                      <p className="text-[11px] text-slate-500 dark:text-neutral-500 font-bold mt-2 leading-relaxed">Confirmo que todos os dados fornecidos são reais.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer - Vertical e Harmônico */}
-          <div className="flex flex-col gap-4 mt-12 relative z-10">
-            <button 
-              onClick={step < 4 ? () => setStep(step + 1) : handleCadastroCandidato}
-              disabled={step === 4 && (loading || !candidato.experiencia)}
-              className="w-full py-6 rounded-[2rem] bg-orange-600 text-white font-black text-sm uppercase tracking-widest hover:bg-orange-500 active:scale-[0.98] transition-all shadow-2xl shadow-orange-600/30 disabled:opacity-50"
-            >
-              {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : (step === 4 ? "Finalizar" : "Próximo")}
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "28px" }}>
+            <button onClick={step < 3 ? () => setStep(step + 1) : handleCadastroCandidato}
+              disabled={step === 3 && (!candidato.experiencia || loading)}
+              style={{ width: "100%", padding: "14px", borderRadius: "12px", background: "linear-gradient(135deg, #ea580c, #c2410c)", border: "none", color: "white", fontSize: "13px", fontWeight: 800, cursor: "pointer", letterSpacing: "0.08em", textTransform: "uppercase", opacity: (step === 3 && (!candidato.experiencia || loading)) ? 0.5 : 1, fontFamily: "'Inter', sans-serif" }}>
+              {loading ? "Aguarde..." : step === 3 ? "Finalizar Inscrição" : "Próximo"}
             </button>
             {step > 1 && (
-              <button 
-                onClick={() => setStep(step - 1)}
-                className="w-full py-4 rounded-2xl bg-transparent text-slate-400 dark:text-neutral-600 font-bold text-[10px] uppercase tracking-widest hover:text-slate-900 dark:hover:text-white transition-all"
-              >
-                Voltar etapa anterior
+              <button onClick={() => setStep(step - 1)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "12px", cursor: "pointer", fontFamily: "'Inter', sans-serif" }}>
+                ← Voltar etapa anterior
               </button>
             )}
           </div>
         </div>
       </AdaptiveModal>
-    </div>
+    </>
   );
 }
