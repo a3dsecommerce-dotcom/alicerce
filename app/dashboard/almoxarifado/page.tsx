@@ -154,7 +154,7 @@ export default function AlmoxarifadoPage() {
         quantidade: formData.quantidade || 0,
         estoque_minimo: formData.estoque_minimo || 0,
         unidade_medida: formData.unidade_medida || 'un',
-        tipo_estoque: (formData.tipo === "EPI" || formData.categoria === "UNIFORME") ? "PROPRIO" : "CATALOGO",
+        tipo_estoque: formData.tipo_estoque || ((formData.tipo === "EPI" || formData.categoria === "UNIFORME") ? "PROPRIO" : "CATALOGO"),
         ca: formData.ca || null,
         coeficiente: formData.coeficiente || 1
       };
@@ -330,7 +330,10 @@ export default function AlmoxarifadoPage() {
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem" }}>
                   <button className="btn-ghost !h-10"><Printer size={16} /> Relatório Inventário</button>
-                  <button className="btn-brand !h-10" onClick={() => setModalAberto("cadastro")}><Plus size={16} /> Novo Item Próprio</button>
+                  <button className="btn-brand !h-10" onClick={() => { 
+                    setFormData({ tipo: "EPI", item: "", categoria: "EPI", quantidade: 0, estoque_minimo: 10, unidade_medida: "un", ca: "", coeficiente: 1, tipo_estoque: "PROPRIO" }); 
+                    setModalAberto("cadastro"); 
+                  }}><Plus size={16} /> Novo Item Próprio</button>
                 </div>
               </div>
 
@@ -377,7 +380,10 @@ export default function AlmoxarifadoPage() {
                 </div>
                 <div className="flex gap-2">
                   <button className="btn-ghost !h-10">Exportar Catálogo</button>
-                  <button className="btn-brand !h-10" onClick={() => setModalAberto("cadastro")}><Plus size={16} /> Cadastrar Novo Suprimento</button>
+                  <button className="btn-brand !h-10" onClick={() => { 
+                    setFormData({ tipo: "PRODUTO", item: "", categoria: "Higiene", quantidade: 0, estoque_minimo: 10, unidade_medida: "un", ca: "", coeficiente: 1, tipo_estoque: "CATALOGO" }); 
+                    setModalAberto("cadastro"); 
+                  }}><Plus size={16} /> Cadastrar Novo Suprimento</button>
                 </div>
               </div>
 
