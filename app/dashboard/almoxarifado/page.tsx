@@ -362,40 +362,74 @@ export default function AlmoxarifadoPage() {
 
           {aba === "requisicoes" && (
             <div className="animate-fade-in" style={{ padding: "1.5rem" }}>
-              <div style={{ marginBottom: "1.5rem" }}>
-                <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Acompanhamento de Fluxo (Secretarias)</h3>
-                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Monitoramento de pedidos que transitam pelo almoxarifado sem estocagem fixa.</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+                <div>
+                  <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Requisições Recebidas</h3>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Pedidos criados pelo Portal de Suprimentos aguardando atendimento.</p>
+                </div>
+                <button className="btn-ghost !text-[11px]" onClick={async () => {
+                  const { data } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false }).limit(50);
+                  if (data) setRequisicoes(data);
+                }}>↻ Atualizar</button>
               </div>
-              <div className="card overflow-hidden" style={{ borderRadius: "8px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead style={{ background: "var(--bg-card)", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                    <tr>
-                      <th style={{ padding: "12px", textAlign: "left" }}>REQ #</th>
-                      <th style={{ padding: "12px", textAlign: "left" }}>UNIDADE/SECRETARIA</th>
-                      <th style={{ padding: "12px", textAlign: "left" }}>STATUS LOGÍSTICO</th>
-                      <th style={{ padding: "12px", textAlign: "center" }}>TIPO</th>
-                      <th style={{ padding: "12px", textAlign: "right" }}>AÇÕES</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requisicoes.map((r, i) => (
-                      <tr key={i} className="table-row">
-                        <td style={{ padding: "12px", fontWeight: 800 }}>#{r.id || '0000'}</td>
-                        <td style={{ padding: "12px" }}>{r.unidade || "Não informado"}</td>
-                        <td style={{ padding: "12px" }}>
-                          <span className={`badge ${r.status === 'PENDENTE' ? 'badge-amber' : 'badge-green'}`}>{r.status}</span>
-                        </td>
-                        <td style={{ padding: "12px", textAlign: "center" }}>
-                          <span className="text-[10px] font-bold text-[var(--brand)]">FLUXO DIRETO</span>
-                        </td>
-                        <td style={{ padding: "12px", textAlign: "right" }}>
-                           <button className="btn-ghost !h-8 !text-[10px]" onClick={() => { setItemSelecionado(r); setModalAberto("analise"); }}>Ver Detalhes</button>
-                        </td>
+              {requisicoes.length === 0 ? (
+                <div className="card" style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+                  <ClipboardList size={48} style={{ margin: "0 auto 1rem", opacity: 0.3 }} />
+                  <p style={{ fontWeight: 700 }}>Nenhuma requisição pendente</p>
+                  <p style={{ fontSize: "0.75rem", marginTop: "0.25rem" }}>Quando o Portal de Suprimentos criar um pedido, ele aparecerá aqui.</p>
+                </div>
+              ) : (
+                <div className="card overflow-hidden" style={{ borderRadius: "8px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead style={{ background: "var(--bg-card)", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                      <tr>
+                        <th style={{ padding: "12px", textAlign: "left" }}>REQ #</th>
+                        <th style={{ padding: "12px", textAlign: "left" }}>ITEM</th>
+                        <th style={{ padding: "12px", textAlign: "left" }}>SOLICITANTE / UNIDADE</th>
+                        <th style={{ padding: "12px", textAlign: "center" }}>QTD</th>
+                        <th style={{ padding: "12px", textAlign: "left" }}>STATUS</th>
+                        <th style={{ padding: "12px", textAlign: "left" }}>DATA</th>
+                        <th style={{ padding: "12px", textAlign: "right" }}>AÇÕES</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {requisicoes.map((r, i) => (
+                        <tr key={i} className="table-row">
+                          <td style={{ padding: "12px", fontWeight: 800, fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                            #{(r.id || '0000').toString().substring(0, 8).toUpperCase()}
+                          </td>
+                          <td style={{ padding: "12px", fontWeight: 600 }}>
+                            {r.item_nome || r.item || "Item não identificado"}
+                          </td>
+                          <td style={{ padding: "12px", fontSize: "0.8rem" }}>
+                            <div style={{ fontWeight: 600 }}>{r.solicitante || "—"}</div>
+                            <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{r.unidade_destino || r.unidade || "—"}</div>
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "center", fontWeight: 800 }}>
+                            {r.quantidade} {r.unidade_medida || "UN"}
+                          </td>
+                          <td style={{ padding: "12px" }}>
+                            <span className={`badge ${r.status === 'SOLICITADO' ? 'badge-amber' : r.status === 'ENTREGUE' ? 'badge-green' : 'badge-blue'}`}>
+                              {r.status || 'PENDENTE'}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px", fontSize: "0.75rem", color: "var(--text-muted)" }}>
+                            {r.data_solicitacao ? new Date(r.data_solicitacao).toLocaleDateString('pt-BR') : "—"}
+                          </td>
+                          <td style={{ padding: "12px", textAlign: "right" }}>
+                            <button
+                              className="btn-ghost !h-8 !text-[10px]"
+                              onClick={() => { setItemSelecionado(r); setModalAberto("analise"); }}
+                            >
+                              Atender
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
