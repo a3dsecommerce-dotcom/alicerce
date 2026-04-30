@@ -60,8 +60,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         {/* Logo - Alinhado com pl-12 */}
         <div className="pl-12 pr-6 border-b border-[var(--border)] flex items-center gap-4 h-[70px]">
-          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-white rounded-lg shadow-sm overflow-hidden p-1">
-            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
+          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg shadow-sm overflow-hidden p-1">
+            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain brightness-0 invert" />
           </div>
           {sidebarOpen && (
             <div className="overflow-hidden animate-fade-in">
