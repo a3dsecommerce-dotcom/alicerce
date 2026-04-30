@@ -301,7 +301,7 @@ export default function AlmoxarifadoPage() {
               🛡️ Estoque Próprio (EPI/Uniformes)
             </button>
             <button onClick={() => setAba("catalogo_sec")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.75rem", fontSize: "0.85rem", fontWeight: 700, color: aba === "catalogo_sec" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "catalogo_sec" ? "3px solid var(--brand)" : "3px solid transparent", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              📋 Catálogo (Secretarias)
+              📋 Estoque Suplementos (Secretarias)
             </button>
             <button onClick={() => setAba("requisicoes")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.75rem", fontSize: "0.85rem", fontWeight: 700, color: aba === "requisicoes" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "requisicoes" ? "3px solid var(--brand)" : "3px solid transparent", transition: "all 0.2s", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               🔄 Requisições em Fluxo

@@ -17,6 +17,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   const [volumes, setVolumes] = useState<Record<number, number>>({});
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
   const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [catalogo, setCatalogo] = useState<any[]>([]);
   
   const catalogoMock = [
     { id: 1, nome: "Papel A4 (Resma)", unidade: "UN", cota: 42, categoria: "Escritório" },
@@ -70,8 +71,22 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
       if (saved) setUser(JSON.parse(saved));
     } catch (err) {}
 
-    async function fetchPedidos() {
+    async function fetchDados() {
       setLoading(true);
+      
+      const { data: catData } = await supabase.from('estoque_atual').select('*').eq('tipo_estoque', 'CATALOGO').order('item');
+      if (catData && catData.length > 0) {
+        setCatalogo(catData.map(c => ({
+          id: c.id,
+          nome: c.item,
+          unidade: c.unidade_medida || "UN",
+          cota: c.quantidade || 0,
+          categoria: c.categoria || "Geral"
+        })));
+      } else {
+        setCatalogo(catalogoMock);
+      }
+
       const { data } = await supabase
         .from('compras_processos')
         .select('*')
@@ -84,10 +99,10 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
       }
       setLoading(false);
     }
-    fetchPedidos();
+    fetchDados();
   }, [filtroMes]);
 
-  const handleVolumeChange = (id: number, val: string) => {
+  const handleVolumeChange = (id: string | number, val: string) => {
     const num = parseInt(val) || 0;
     setVolumes(prev => ({ ...prev, [id]: num }));
   };
@@ -100,14 +115,14 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     try {
       // Cria uma requisição no banco para CADA item selecionado
       const requisicoes = itensParaPedir.map(([idStr, qtd]) => {
-        const id = parseInt(idStr);
-        const item = catalogoMock.find(c => c.id === id);
+        const item = catalogo.find(c => String(c.id) === idStr);
         return {
+          item_id: isNaN(Number(idStr)) ? idStr : null, // Set if it is a UUID
           solicitante: user?.name || 'Portal de Compras',
           unidade_destino: user?.email || 'Não informado',
           quantidade: qtd,
           status: 'SOLICITADO',
-          item_nome: item?.nome || `Item #${id}`,
+          item_nome: item?.nome || `Item #${idStr}`,
           unidade_medida: item?.unidade || 'UN',
           data_solicitacao: new Date().toISOString(),
         };
@@ -261,7 +276,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
-                        {catalogoMock.map((prod) => {
+                        {catalogo.map((prod) => {
                             const vol = volumes[prod.id] || 0;
                             const isExcedente = vol > prod.cota;
                             return (
