@@ -123,10 +123,10 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   };
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-in h-full no-print">
+    <div className="flex flex-col gap-10 animate-fade-in h-full no-print px-4 md:px-10 py-6 max-w-[1600px] mx-auto overflow-hidden">
       
       {/* 1. HEADER E AÇÕES RÁPIDAS */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-card)] p-8 md:p-12 rounded-[3rem] border border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-4">
            <div className="w-14 h-14 bg-[var(--brand)]/10 rounded-2xl flex items-center justify-center text-[var(--brand)] border border-[var(--brand)]/20">
               <Package size={28} />
@@ -193,12 +193,12 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Protocolo</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Solicitante / Unidade</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Item Solicitado</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Quantidade</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ações</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-32">Protocolo</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[250px]">Solicitante / Unidade</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[200px]">Item Solicitado</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Quantidade</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -208,23 +208,23 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     r.protocolo?.toLowerCase().includes(busca.toLowerCase())
                   ).map(r => (
                     <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                      <td className="p-6 text-center">
+                      <td className="p-8 text-center">
                         <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black text-[var(--brand)] border border-[var(--brand)]/20 shadow-sm">{r.protocolo || '---'}</span>
                       </td>
-                      <td className="p-6">
-                        <div className="text-sm font-black">{r.solicitante}</div>
+                      <td className="p-8">
+                        <div className="text-sm font-black whitespace-normal max-w-[300px]">{r.solicitante}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{r.unidade_destino}</div>
                       </td>
-                      <td className="p-6 text-sm font-bold text-[var(--text-primary)]">{r.item_nome || r.item}</td>
-                      <td className="p-6 text-center">
+                      <td className="p-8 text-sm font-bold text-[var(--text-primary)] whitespace-normal max-w-[250px]">{r.item_nome || r.item}</td>
+                      <td className="p-8 text-center">
                         <span className="text-base font-black text-[var(--brand)]">{r.quantidade} {r.unidade_medida}</span>
                       </td>
-                      <td className="p-6 text-center">
+                      <td className="p-8 text-center">
                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${r.status === 'SOLICITADO' ? 'bg-orange-100 text-orange-700' : r.status === 'APROVADO' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                           {r.status}
                         </span>
                       </td>
-                      <td className="p-6 text-right space-x-2">
+                      <td className="p-8 text-right space-x-2">
                         {r.status === 'SOLICITADO' && (
                           <>
                             <button onClick={() => { setReqEditando(r); setModalAberto("editar_req"); }} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><Edit3 size={14}/></button>
@@ -243,12 +243,12 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
-                    {activeTab === "ESTOQUE_EPI" && <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>
-                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[200px]">Descrição</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
+                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -257,23 +257,23 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     .filter(i => i.item?.toLowerCase().includes(busca.toLowerCase()))
                     .map(item => (
                       <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                        <td className="p-6">
-                          <div className="text-sm font-black">{item.item}</div>
+                        <td className="p-8">
+                          <div className="text-sm font-black whitespace-normal max-w-[300px]">{item.item}</div>
                           <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
                         </td>
-                        <td className="p-6 text-center text-xs font-black text-[var(--text-muted)]">{item.unidade_medida}</td>
-                        <td className="p-6 text-center">
+                        <td className="p-8 text-center text-xs font-black text-[var(--text-muted)]">{item.unidade_medida}</td>
+                        <td className="p-8 text-center">
                           <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span>
                         </td>
                         {activeTab === "ESTOQUE_EPI" && (
-                          <td className="p-6 text-center">
+                          <td className="p-8 text-center">
                              <span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span>
                           </td>
                         )}
-                        <td className="p-6 text-center">
+                        <td className="p-8 text-center">
                           <span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span>
                         </td>
-                        <td className="p-6 text-right">
+                        <td className="p-8 text-right">
                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
                               {item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}
                            </span>
