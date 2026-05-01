@@ -1,0 +1,249 @@
+"use client";
+import { useState, useEffect } from "react";
+import { 
+  Search, AlertTriangle, Clock, CheckCircle2, Plus, 
+  MessageSquare, User, Calendar, Filter, ArrowRight,
+  ShieldAlert, Send, Info, Save, Eye
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
+
+export default function OcorrenciasModule() {
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [user, setUser] = useState<any>({});
+  
+  const [modalAberto, setModalAberto] = useState<null | "nova" | "detalhes" | "receber" | "resolver">(null);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  
+  const [formData, setFormData] = useState({ 
+    assunto: "", descricao: "", prioridade: "ALTA", prazo_estipulado_dias: 1 
+  });
+  const [receberData, setReceberData] = useState({ prazo_prometido: "" });
+  const [resolverData, setResolverData] = useState({ solucao: "" });
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) setUser(JSON.parse(saved));
+    } catch (err) {}
+    fetchTickets();
+  }, []);
+
+  async function fetchTickets() {
+    setLoading(true);
+    const { data } = await supabase.from('tickets_sla').select('*').order('data_abertura', { ascending: false });
+    if (data) setTickets(data);
+    setLoading(false);
+  }
+
+  const handleNovaOcorrencia = async () => {
+    if (!formData.assunto || !formData.descricao) return alert("Preencha todos os campos.");
+    setLoading(true);
+    const { error } = await supabase.from('tickets_sla').insert([{
+      ...formData,
+      criado_por: user.name || 'Setor Admin',
+      unidade: user.email || 'Unidade Central',
+      status: 'PENDENTE'
+    }]);
+    if (error) alert(error.message);
+    else { setModalAberto(null); fetchTickets(); }
+    setLoading(false);
+  };
+
+  const handleMarcarRecebido = async () => {
+    if (!receberData.prazo_prometido) return alert("Informe sua previsão de entrega.");
+    setLoading(true);
+    const { error } = await supabase.from('tickets_sla').update({
+      status: 'RECEBIDO',
+      data_recebimento: new Date().toISOString(),
+      prazo_prometido: receberData.prazo_prometido,
+      atribuido_a: user.name || 'Técnico'
+    }).eq('id', selectedTicket.id);
+    if (error) alert(error.message);
+    else { setModalAberto(null); fetchTickets(); }
+    setLoading(false);
+  };
+
+  const handleResolverOcorrencia = async () => {
+    if (!resolverData.solucao) return alert("Descreva a solução aplicada.");
+    setLoading(true);
+    const { error } = await supabase.from('tickets_sla').update({
+      status: 'RESOLVIDO',
+      data_fechamento: new Date().toISOString(),
+      solucao_descricao: resolverData.solucao
+    }).eq('id', selectedTicket.id);
+    if (error) alert(error.message);
+    else { setModalAberto(null); fetchTickets(); }
+    setLoading(false);
+  };
+
+  const getStatusInfo = (t: any) => {
+    const agora = new Date();
+    const abertura = new Date(t.data_abertura);
+    const diffDias = Math.floor((agora.getTime() - abertura.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let isAtrasado = diffDias >= (t.prazo_estipulado_dias || 1);
+    
+    if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle2 };
+    if (isAtrasado && t.status !== 'RESOLVIDO') return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white animate-pulse', icon: ShieldAlert };
+    if (t.status === 'RECEBIDO') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
+    return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: AlertTriangle };
+  };
+
+  return (
+    <div className="flex flex-col gap-10 animate-fade-in h-full px-4 md:px-10 py-6 max-w-[1600px] mx-auto">
+      
+      {/* HEADER */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-card)] p-12 rounded-[3rem] border border-[var(--border)] shadow-sm">
+        <div className="flex items-center gap-4">
+           <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-600 border border-red-500/20">
+              <MessageSquare size={28} />
+           </div>
+           <div>
+              <h2 className="text-2xl font-black text-[var(--text-primary)] italic">Ocorrências & Demandas</h2>
+              <p className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest mt-1">Gestão de SLA: Registro, Recebimento e Devolutiva Técnica</p>
+           </div>
+        </div>
+
+        <button onClick={() => setModalAberto("nova")} className="h-12 px-8 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-red-600/20">
+          <Plus size={16} /> Nova Ocorrência
+        </button>
+      </div>
+
+      {/* FILTROS */}
+      <div className="flex justify-end">
+        <div className="relative w-full md:w-80">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+          <input className="input-field !pl-12 !h-12 text-xs" placeholder="Pesquisar por assunto ou solicitante..." value={busca} onChange={e => setBusca(e.target.value)} />
+        </div>
+      </div>
+
+      {/* TABELA DE OCORRÊNCIAS */}
+      <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] overflow-hidden shadow-xl flex flex-col flex-1 min-h-[500px]">
+         <div className="overflow-x-auto">
+            <table className="w-full text-left">
+               <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+                  <tr>
+                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Abertura</th>
+                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Solicitante</th>
+                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição da Demanda</th>
+                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Prazo (Dias)</th>
+                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
+                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Gestão</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-[var(--border)]">
+                  {tickets.filter(t => t.assunto?.toLowerCase().includes(busca.toLowerCase()) || t.criado_por?.toLowerCase().includes(busca.toLowerCase())).map(t => {
+                     const s = getStatusInfo(t);
+                     return (
+                        <tr key={t.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                           <td className="p-8 text-center text-xs font-bold text-[var(--text-muted)]">{new Date(t.data_abertura).toLocaleDateString()}</td>
+                           <td className="p-8">
+                              <div className="text-sm font-black">{t.criado_por}</div>
+                              <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.unidade}</div>
+                           </td>
+                           <td className="p-8">
+                              <div className="text-sm font-bold text-[var(--text-primary)] whitespace-normal max-w-[300px]">{t.assunto}</div>
+                              <div className="text-[10px] text-[var(--text-muted)] truncate max-w-[300px] mt-1">{t.descricao}</div>
+                           </td>
+                           <td className="p-8 text-center">
+                              <span className="text-sm font-black">{t.prazo_estipulado_dias}d</span>
+                           </td>
+                           <td className="p-8 text-center">
+                              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${s.color}`}>
+                                 <s.icon size={12} /> {s.label}
+                              </div>
+                           </td>
+                           <td className="p-8 text-right space-x-2">
+                              <button onClick={() => { setSelectedTicket(t); setModalAberto("detalhes"); }} className="p-3 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl border border-[var(--border)] hover:scale-105 transition-all"><Eye size={16}/></button>
+                           </td>
+                        </tr>
+                     );
+                  })}
+               </tbody>
+            </table>
+         </div>
+      </div>
+
+      {/* MODAL NOVA OCORRÊNCIA */}
+      <AdaptiveModal isOpen={modalAberto === "nova"} onClose={() => setModalAberto(null)} title="Abrir Nova Ocorrência / Demanda">
+         <div className="p-10 space-y-6">
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Assunto da Demanda</label>
+               <input className="input-field !h-14 font-black" value={formData.assunto} onChange={e => setFormData({...formData, assunto: e.target.value})} placeholder="Ex: Ar-condicionado parou de funcionar" />
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
+               <textarea className="input-field !h-32 p-4 text-xs font-bold" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} placeholder="Descreva o problema para que o setor possa resolver..." />
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Tempo Máximo para Solução (Dias)</label>
+               <select className="input-field !h-14 font-black" value={formData.prazo_estipulado_dias} onChange={e => setFormData({...formData, prazo_estipulado_dias: Number(e.target.value)})}>
+                  <option value={1}>24 Horas (Mínimo)</option>
+                  <option value={2}>2 Dias</option>
+                  <option value={3}>3 Dias</option>
+                  <option value={7}>7 Dias</option>
+               </select>
+            </div>
+            <button onClick={handleNovaOcorrencia} className="w-full h-16 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/30 hover:scale-[1.02] transition-all">Registrar Ocorrência</button>
+         </div>
+      </AdaptiveModal>
+
+      {/* MODAL DETALHES E AÇÃO */}
+      <AdaptiveModal isOpen={modalAberto === "detalhes"} onClose={() => setModalAberto(null)} title="Visualização da Ocorrência">
+         {selectedTicket && (
+            <div className="p-10 space-y-8">
+               <div className="border-b border-[var(--border)] pb-6">
+                  <h4 className="text-xl font-black">{selectedTicket.assunto}</h4>
+                  <p className="text-xs text-[var(--text-muted)] font-bold mt-2">{selectedTicket.descricao}</p>
+               </div>
+
+               <div className="grid grid-cols-2 gap-6">
+                  <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                     <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Solicitado em</p>
+                     <p className="text-sm font-black">{new Date(selectedTicket.data_abertura).toLocaleString()}</p>
+                  </div>
+                  <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                     <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo Estipulado</p>
+                     <p className="text-sm font-black text-red-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
+                  </div>
+               </div>
+
+               {selectedTicket.status === 'PENDENTE' && (
+                  <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                     <p className="text-[10px] font-black uppercase text-blue-700 mb-4">Você é o responsável por resolver? Marque como recebido.</p>
+                     <div className="flex flex-col gap-4">
+                        <div>
+                           <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Informe seu Prazo de Entrega (Previsão)</label>
+                           <input type="date" className="input-field" value={receberData.prazo_prometido} onChange={e => setReceberData({prazo_prometido: e.target.value})} />
+                        </div>
+                        <button onClick={handleMarcarRecebido} className="h-14 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Confirmar Recebimento</button>
+                     </div>
+                  </div>
+               )}
+
+               {selectedTicket.status === 'RECEBIDO' && (
+                  <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                     <p className="text-[10px] font-black uppercase text-green-700 mb-4">Finalizar Demanda</p>
+                     <div className="flex flex-col gap-4">
+                        <textarea className="input-field !h-24 p-3 text-xs" value={resolverData.solucao} onChange={e => setResolverData({solucao: e.target.value})} placeholder="Descreva a solução aplicada (Devolutiva)..." />
+                        <button onClick={handleResolverOcorrencia} className="h-14 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Marcar como Resolvido</button>
+                     </div>
+                  </div>
+               )}
+
+               {selectedTicket.status === 'RESOLVIDO' && (
+                  <div className="bg-green-50 p-6 rounded-2xl border border-green-200">
+                     <p className="text-[10px] font-black uppercase text-green-700 mb-2">Devolutiva Técnica</p>
+                     <p className="text-xs font-bold text-green-900 leading-relaxed italic">"{selectedTicket.solucao_descricao}"</p>
+                     <div className="mt-4 text-[9px] font-black text-green-600 uppercase">Resolvido em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
+                  </div>
+               )}
+            </div>
+         )}
+      </AdaptiveModal>
+    </div>
+  );
+}

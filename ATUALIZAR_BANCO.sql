@@ -90,7 +90,11 @@ CREATE TABLE IF NOT EXISTS tickets_sla (
     criado_por TEXT,
     atribuido_a TEXT,
     data_abertura TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
-    data_fechamento TIMESTAMP WITH TIME ZONE
+    data_recebimento TIMESTAMP WITH TIME ZONE,
+    data_fechamento TIMESTAMP WITH TIME ZONE,
+    prazo_estipulado_dias INTEGER DEFAULT 1,
+    prazo_prometido TIMESTAMP WITH TIME ZONE,
+    solucao_descricao TEXT
 );
 
 -- =================================================================================
@@ -127,9 +131,10 @@ CREATE TABLE IF NOT EXISTS requisicoes (
 );
 
 -- Adiciona colunas faltantes se a tabela já existir
-ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS item_nome TEXT;
-ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS unidade_medida TEXT DEFAULT 'UN';
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS protocolo TEXT;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_aprovada INTEGER;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS data_entrega TIMESTAMP WITH TIME ZONE;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS recebedor_nome TEXT;
 
 -- =================================================================================
 -- TABELA DE PROCESSOS DE COMPRAS (TRACKING DE REMESSAS)
