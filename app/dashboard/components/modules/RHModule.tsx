@@ -355,21 +355,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
           </div>
        </AdaptiveModal>
       
-                  </div>
-               </div>
-            </div>
-            {/* ... Resto do Form Master simplificado para visualização ... */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               <div className="md:col-span-2 space-y-4">
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Nome Completo</label>
-                  <input className="input-field w-full h-14" placeholder="Nome Completo do Colaborador" />
-               </div>
-               <div className="space-y-4">
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">CPF</label>
-                  <input className="input-field w-full h-14" placeholder="000.000.000-00" />
-               </div>
-            </div>
-            <div className="flex gap-4 pt-10 border-t border-[var(--border)]">
+
      </div>
   );
 }
