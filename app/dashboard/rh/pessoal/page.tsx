@@ -26,15 +26,7 @@ export default function RHPessoalPage() {
   ]);
   const [selecionado, setSelecionado] = useState<any>(null);
   const [novoStatus, setNovoStatus] = useState("");
-  const [showAdmitir, setShowAdmitir] = useState(false);
   const [candidatos, setCandidatos] = useState<any[]>([]);
-  const [formMaster, setFormMaster] = useState({
-    nome: "", email: "", data_nascimento: "", sexo: "MASCULINO", etnia: "PARDO", nacionalidade: "BRASILEIRA", dependentes_qtd: 0,
-    rg: "", cpf: "", pis: "", cargo: "ASG", unidade_alocacao: "", data_admissao: new Date().toISOString().split('T')[0], nivel_acesso: 1, insalubridade: 20,
-    cep: "", rua: "", bairro: "", endereco_completo: "",
-    tamanho_camisa: "G", tamanho_calca: "42", tamanho_sapato: "40",
-    salario_base: 1412.00, valor_alimentacao: 600.00, valor_vale_transporte: 0
-  });
 
   useEffect(() => {
     // Recuperar usuário para controle de permissões
@@ -102,11 +94,7 @@ export default function RHPessoalPage() {
                 </button>
               </div>
             </div>
-            {(user?.role === "GERENTE" || user?.role === "RH_PESSOAL" || user?.role === "ADMIN") && (
-              <button className="btn-brand" onClick={() => setShowAdmitir(true)}>
-                <Plus size={16} /> Admitir Direto
-              </button>
-            )}
+
           </div>
 
           {/* Filtros */}
@@ -201,7 +189,7 @@ export default function RHPessoalPage() {
                         <span className="badge badge-amber">{c.status}</span>
                       </td>
                       <td style={{ padding: "0.875rem 1rem", display: "flex", gap: "0.5rem" }}>
-                        <button className="btn-brand" onClick={() => setShowAdmitir(true)} style={{ padding: "4px 8px", fontSize: "0.75rem", height: "auto" }}>Aprovar (Admitir)</button>
+                        <button className="btn-brand" onClick={() => alert("Recurso Desativado")} style={{ padding: "4px 8px", fontSize: "0.75rem", height: "auto" }}>Ver Detalhes</button>
                         <button className="btn-ghost" style={{ padding: "4px 8px", fontSize: "0.75rem", height: "auto" }}>Descartar</button>
                       </td>
                     </tr>
@@ -247,195 +235,6 @@ export default function RHPessoalPage() {
         onClose={() => setSelecionado(null)} 
         canEdit={user?.role === "GERENTE" || user?.role === "RH_PESSOAL" || user?.role === "ADMIN"}
       />
-
-      {/* Modal Admitir Master - RESTAURADO COMPLETO */}
-      <AdaptiveModal
-        title="Cadastro Master de Colaborador (Unificado)"
-        isOpen={showAdmitir}
-        onClose={() => setShowAdmitir(false)}
-        width="1000px"
-      >
-        <div className="flex flex-col gap-8 max-h-[80vh] overflow-y-auto pr-4 custom-scrollbar">
-          <div className="flex items-center justify-between bg-[var(--brand)]/5 p-4 rounded-2xl border border-[var(--brand)]/20 -mt-2">
-            <div>
-              <h4 className="text-[var(--brand)] font-black text-sm uppercase tracking-widest">Admissão Master Digital</h4>
-              <p className="text-[10px] text-[var(--text-muted)] font-bold">Este cadastro alimenta simultaneamente o DP, Almoxarifado e Ponto.</p>
-            </div>
-            <ShieldCheck size={24} className="text-[var(--brand)] opacity-50" />
-          </div>
-
-          <div className="flex flex-col gap-10">
-            {/* 1. IDENTIFICAÇÃO CIVIL */}
-            <section className="animate-fade-in">
-              <h3 className="text-[var(--brand)] text-[0.85rem] font-black uppercase tracking-wider mb-5 border-b-2 border-[var(--brand)]/20 pb-2 flex items-center gap-2">
-                <User size={16} /> 1. Identificação Civil e Filiação
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div className="md:col-span-2">
-                  <label className="label-sm">Nome Completo</label>
-                  <input className="input-field w-full" value={formMaster.nome} onChange={e => setFormMaster({...formMaster, nome: e.target.value})} placeholder="Nome Completo" />
-                </div>
-                <div>
-                  <label className="label-sm">E-mail Pessoal</label>
-                  <input className="input-field w-full" value={formMaster.email} onChange={e => setFormMaster({...formMaster, email: e.target.value})} placeholder="email@exemplo.com" />
-                </div>
-                <div>
-                  <label className="label-sm">Data de Nascimento</label>
-                  <input type="date" className="input-field w-full" value={formMaster.data_nascimento} onChange={e => setFormMaster({...formMaster, data_nascimento: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-sm">Sexo</label>
-                  <select className="input-field w-full" value={formMaster.sexo} onChange={e => setFormMaster({...formMaster, sexo: e.target.value})}>
-                    <option>MASCULINO</option>
-                    <option>FEMININO</option>
-                    <option>OUTRO</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-sm">Dependentes</label>
-                  <input type="number" className="input-field w-full" value={formMaster.dependentes_qtd} onChange={e => setFormMaster({...formMaster, dependentes_qtd: parseInt(e.target.value)})} />
-                </div>
-              </div>
-            </section>
-
-            {/* 2. DOCUMENTAÇÃO E CONTRATO */}
-            <section className="animate-fade-in">
-              <h3 className="text-[var(--brand)] text-[0.85rem] font-black uppercase tracking-wider mb-5 border-b-2 border-[var(--brand)]/20 pb-2 flex items-center gap-2">
-                <FileText size={16} /> 2. Documentação e Vínculo Contratual
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <div>
-                  <label className="label-sm">CPF</label>
-                  <input className="input-field w-full" value={formMaster.cpf} onChange={e => setFormMaster({...formMaster, cpf: e.target.value})} placeholder="000.000.000-00" />
-                </div>
-                <div>
-                  <label className="label-sm">RG</label>
-                  <input className="input-field w-full" value={formMaster.rg} onChange={e => setFormMaster({...formMaster, rg: e.target.value})} placeholder="00.000.000-0" />
-                </div>
-                <div>
-                  <label className="label-sm">PIS / PASEP</label>
-                  <input className="input-field w-full" value={formMaster.pis} onChange={e => setFormMaster({...formMaster, pis: e.target.value})} placeholder="000.00000.00-0" />
-                </div>
-                <div>
-                  <label className="label-sm">Cargo</label>
-                  <select className="input-field w-full" value={formMaster.cargo} onChange={e => setFormMaster({...formMaster, cargo: e.target.value})}>
-                    <option>ASG</option>
-                    <option>Porteiro</option>
-                    <option>Zelador</option>
-                    <option>Encarregado</option>
-                    <option>Recepcionista</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-sm">Data de Admissão</label>
-                  <input type="date" className="input-field w-full" value={formMaster.data_admissao} onChange={e => setFormMaster({...formMaster, data_admissao: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-sm">Unidade de Alocação</label>
-                  <input className="input-field w-full" value={formMaster.unidade_alocacao} onChange={e => setFormMaster({...formMaster, unidade_alocacao: e.target.value})} placeholder="Ex: SEMED" />
-                </div>
-                <div>
-                  <label className="label-sm">Insalubridade (%)</label>
-                  <select className="input-field w-full" value={formMaster.insalubridade} onChange={e => setFormMaster({...formMaster, insalubridade: parseInt(e.target.value)})}>
-                    <option value="0">0%</option>
-                    <option value="20">20%</option>
-                    <option value="40">40%</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-sm">Nível de Acesso</label>
-                  <select className="input-field w-full" value={formMaster.nivel_acesso} onChange={e => setFormMaster({...formMaster, nivel_acesso: parseInt(e.target.value)})}>
-                    <option value="1">NÍVEL 1 (Campo)</option>
-                    <option value="2">NÍVEL 2 (Operacional)</option>
-                    <option value="3">NÍVEL 3 (Gestor)</option>
-                    <option value="4">NÍVEL 4 (Master)</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            {/* 3. RESIDÊNCIA E LOCALIZAÇÃO */}
-            <section className="animate-fade-in">
-              <h3 className="text-[var(--brand)] text-[0.85rem] font-black uppercase tracking-wider mb-5 border-b-2 border-[var(--brand)]/20 pb-2 flex items-center gap-2">
-                <MapPin size={16} /> 3. Residência e Contato
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div>
-                  <label className="label-sm">CEP</label>
-                  <input className="input-field w-full" value={formMaster.cep} onChange={e => setFormMaster({...formMaster, cep: e.target.value})} placeholder="00000-000" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="label-sm">Rua / Avenida</label>
-                  <input className="input-field w-full" value={formMaster.rua} onChange={e => setFormMaster({...formMaster, rua: e.target.value})} placeholder="Nome da via..." />
-                </div>
-                <div>
-                  <label className="label-sm">Bairro</label>
-                  <input className="input-field w-full" value={formMaster.bairro} onChange={e => setFormMaster({...formMaster, bairro: e.target.value})} placeholder="Bairro" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="label-sm">Cidade</label>
-                  <input className="input-field w-full" value="Manaus / AM" disabled />
-                </div>
-              </div>
-            </section>
-
-            {/* 4. LOGÍSTICA E FINANCEIRO */}
-            <section className="animate-fade-in">
-              <h3 className="text-[var(--brand)] text-[0.85rem] font-black uppercase tracking-wider mb-5 border-b-2 border-[var(--brand)]/20 pb-2 flex items-center gap-2">
-                <Package size={16} /> 4. Logística de Uniformes e Salário
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 p-5 bg-[var(--bg-base)] rounded-3xl border border-[var(--border)]">
-                <div>
-                  <label className="label-sm">Tamanho Camisa</label>
-                  <select className="input-field w-full" value={formMaster.tamanho_camisa} onChange={e => setFormMaster({...formMaster, tamanho_camisa: e.target.value})}>
-                    <option>P</option><option>M</option><option>G</option><option>GG</option><option>EXG</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="label-sm">Número Calça</label>
-                  <input type="number" className="input-field w-full" value={formMaster.tamanho_calca} onChange={e => setFormMaster({...formMaster, tamanho_calca: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-sm">Número Sapato</label>
-                  <input type="number" className="input-field w-full" value={formMaster.tamanho_sapato} onChange={e => setFormMaster({...formMaster, tamanho_sapato: e.target.value})} />
-                </div>
-                <div>
-                  <label className="label-sm">Salário Base (R$)</label>
-                  <input type="number" className="input-field w-full text-green-600 font-bold" value={formMaster.salario_base} onChange={e => setFormMaster({...formMaster, salario_base: parseFloat(e.target.value)})} />
-                </div>
-                <div>
-                  <label className="label-sm">Vale Alimentação (R$)</label>
-                  <input type="number" className="input-field w-full" value={formMaster.valor_alimentacao} onChange={e => setFormMaster({...formMaster, valor_alimentacao: parseFloat(e.target.value)})} />
-                </div>
-                <div>
-                  <label className="label-sm">Vale Transporte (Opcional)</label>
-                  <input type="number" className="input-field w-full" value={formMaster.valor_vale_transporte} onChange={e => setFormMaster({...formMaster, valor_vale_transporte: parseFloat(e.target.value)})} />
-                </div>
-              </div>
-            </section>
-
-            <div className="flex gap-4 pt-8 border-t border-[var(--border)] sticky bottom-0 bg-[var(--bg-card)] pb-4">
-              <button className="flex-1 btn-ghost !h-14" onClick={() => setShowAdmitir(false)}>Cancelar</button>
-              <button 
-                className="flex-[2] btn-brand !h-14 !text-[1rem] shadow-xl shadow-[var(--brand)]/20" 
-                onClick={() => { 
-                  setLoading(true);
-                  // Simulação de disparo n8n
-                  n8n.trigger('admissao-master-central', formMaster);
-                  setTimeout(() => {
-                    setLoading(false);
-                    alert("Colaborador Admitido com Sucesso! Cadastro Master consolidado."); 
-                    setShowAdmitir(false); 
-                  }, 1500);
-                }}
-                disabled={loading || !formMaster.nome || !formMaster.cpf}
-              >
-                {loading ? <Loader className="animate-spin" /> : "Efetivar Admissão Master"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </AdaptiveModal>
     </div>
   );
 }
