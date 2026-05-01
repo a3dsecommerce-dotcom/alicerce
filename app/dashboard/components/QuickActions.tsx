@@ -32,7 +32,7 @@ export default function QuickActions({ user }: QuickActionsProps) {
       label: 'Gerar Abono / Feriado',
       icon: CheckCircle,
       color: 'var(--success)',
-      allowed: isRH || isDiretor,
+      allowed: isEncarregado || isDiretor,
       onClick: () => setModalActive('informar-abono')
     },
     {

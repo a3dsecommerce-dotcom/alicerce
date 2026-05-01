@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Clock, AlertTriangle, FileSpreadsheet, UserPlus, CheckCircle, Search, Calendar, MessageSquare, Send, History } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { n8n } from "@/lib/n8n";
-import FichaColaborador360 from "../../components/FichaColaborador360";
+import FichaColaborador360 from "../components/FichaColaborador360";
 
 export default function RHPontoPage() {
   const [ajustes, setAjustes] = useState<any[]>([]);

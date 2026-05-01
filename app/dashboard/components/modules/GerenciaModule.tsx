@@ -90,7 +90,7 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                    {[
-                      { id: 1, label: "ONDA 1: Ponto & Presença", status: "100%", desc: "Ponto Digital, Visão por Unidade, Volante Multi", color: "bg-green-500" },
+                      { id: 1, label: "ONDA 1: Gestão de Campo", status: "100%", desc: "Ponto Digital, Visão por Unidade, Controle de Encarregados", color: "bg-green-500" },
                       { id: 2, label: "ONDA 2: Ciclo de Vida RH", status: "85%", desc: "Admissão, Demissão e Gestão de Documentos", color: "bg-blue-500" },
                       { id: 3, label: "ONDA 3: Suprimentos Pro", status: "60%", desc: "Requisições, Entregas parciais e Coeficientes", color: "bg-orange-500" },
                    ].map(onda => (
