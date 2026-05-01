@@ -242,12 +242,13 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[200px]">Descrição</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
+                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>}
                     {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>
+                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>}
                     {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Valor Ref.</th>}
                     {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Coeficiente</th>}
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
+                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -257,12 +258,13 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                         <div className="text-sm font-black whitespace-normal max-w-[300px]">{item.item}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
                       </td>
-                      <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>
+                      <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || '---'}</span></td>
+                      {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>}
                       {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span></td>}
-                      <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>
+                      {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>}
                       {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>}
                       {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-blue-600">{item.coeficiente ? `${item.coeficiente} / ASG` : '---'}</span></td>}
-                      <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>
+                      {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>}
                     </tr>
                   ))}
                 </tbody>
