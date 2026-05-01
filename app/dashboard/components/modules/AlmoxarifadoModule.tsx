@@ -193,6 +193,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
+                    <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Protocolo</th>
                     <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Solicitante / Unidade</th>
                     <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Item Solicitado</th>
                     <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Quantidade</th>
@@ -201,8 +202,15 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
-                  {requisicoes.filter(r => r.solicitante?.toLowerCase().includes(busca.toLowerCase()) || r.item_nome?.toLowerCase().includes(busca.toLowerCase())).map(r => (
+                  {requisicoes.filter(r => 
+                    r.solicitante?.toLowerCase().includes(busca.toLowerCase()) || 
+                    r.item_nome?.toLowerCase().includes(busca.toLowerCase()) ||
+                    r.protocolo?.toLowerCase().includes(busca.toLowerCase())
+                  ).map(r => (
                     <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                      <td className="p-6 text-center">
+                        <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black text-[var(--brand)] border border-[var(--brand)]/20 shadow-sm">{r.protocolo || '---'}</span>
+                      </td>
                       <td className="p-6">
                         <div className="text-sm font-black">{r.solicitante}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{r.unidade_destino}</div>

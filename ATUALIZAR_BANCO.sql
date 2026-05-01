@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS requisicoes (
 -- Adiciona colunas faltantes se a tabela já existir
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS item_nome TEXT;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS unidade_medida TEXT DEFAULT 'UN';
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS protocolo TEXT;
 
 -- =================================================================================
 -- TABELA DE PROCESSOS DE COMPRAS (TRACKING DE REMESSAS)

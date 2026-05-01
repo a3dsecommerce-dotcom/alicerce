@@ -113,6 +113,9 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     setLoading(true);
 
     try {
+      // Gera um número de protocolo único para este pedido (grupo de itens)
+      const protocoloUnico = `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
+
       // Cria uma requisição no banco para CADA item selecionado
       const requisicoes = itensParaPedir.map(([idStr, qtd]) => {
         const item = catalogo.find(c => String(c.id) === idStr);
@@ -124,6 +127,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
           status: 'SOLICITADO',
           item_nome: item?.nome || `Item #${idStr}`,
           unidade_medida: item?.unidade || 'UN',
+          protocolo: protocoloUnico, // NOVO: Campo de agrupamento
           data_solicitacao: new Date().toISOString(),
         };
       });
