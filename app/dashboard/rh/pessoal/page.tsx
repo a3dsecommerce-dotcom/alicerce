@@ -17,8 +17,9 @@ export default function RHPessoalPage() {
   const [user, setUser] = useState<any>(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
-  const [aba, setAba] = useState<"ativos" | "talentos" | "vagas" | "extras">("ativos");
+  const [aba, setAba] = useState<"ativos" | "talentos" | "vagas" | "extras" | "volantes">("ativos");
   const [horasExtras, setHorasExtras] = useState<any[]>([]);
+  const [volantesReqs, setVolantesReqs] = useState<any[]>([]);
   const [vagas, setVagas] = useState<any[]>([
     { id: '1', unidade: 'SEMED', cargo: 'ASG', quantidade: 5, status: 'ABERTA' },
     { id: '2', unidade: 'SEMSA', cargo: 'Porteiro', quantidade: 2, status: 'ABERTA' },
@@ -62,6 +63,12 @@ export default function RHPessoalPage() {
         .select('*, usuarios(nome, cargo)')
         .order('created_at', { ascending: false });
       if (extras) setHorasExtras(extras);
+
+      // Fetch Volantes
+      const { data: vreqs } = await supabase.from('requisicoes_volantes')
+        .select('*, usuarios!requisicoes_volantes_solicitante_id_fkey(nome)')
+        .order('created_at', { ascending: false });
+      if (vreqs) setVolantesReqs(vreqs);
       
       setLoading(false);
     }
@@ -101,6 +108,9 @@ export default function RHPessoalPage() {
                 </button>
                 <button onClick={() => setAba("extras")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "extras" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "extras" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
                   Horas Extras ({horasExtras.length})
+                </button>
+                <button onClick={() => setAba("volantes")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "volantes" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "volantes" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
+                  Equipe Volante ({volantesReqs.length})
                 </button>
               </div>
             </div>
@@ -262,6 +272,47 @@ export default function RHPessoalPage() {
                       </td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <span className={`badge ${e.status === 'PENDENTE' ? 'badge-amber' : 'badge-green'}`}>{e.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead style={{ position: "sticky", top: 0, background: "var(--bg-card)", zIndex: 10 }}>
+                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                    {["Unidade / Motivo", "Solicitante", "Período", "Status", "Alocação"].map(h => (
+                      <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {volantesReqs.length === 0 ? (
+                    <tr><td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>Nenhuma requisição de volante ativa.</td></tr>
+                  ) : volantesReqs.map(v => (
+                    <tr key={v.id} className="table-row">
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--brand)" }}>{v.unidade_destino}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{v.motivo}</div>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)" }}>{v.usuarios?.nome || "Diretoria/RH PMG"}</div>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 600 }}>{new Date(v.data_inicio).toLocaleDateString()}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{v.data_fim ? `até ${new Date(v.data_fim).toLocaleDateString()}` : "Sem data fim"}</div>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <span className={`badge ${v.status === 'PENDENTE' ? 'badge-amber' : v.status === 'URGENTE' ? 'badge-red' : 'badge-green'}`}>{v.status}</span>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div className="flex flex-wrap gap-1">
+                          {v.colaboradores_alocados?.length > 0 ? (
+                            <span className="text-[10px] font-black text-[var(--brand)]">{v.colaboradores_alocados.length} Colab. Alocados</span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-gray-400">Aguardando Alocação</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
