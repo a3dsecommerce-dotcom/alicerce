@@ -170,24 +170,28 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
       <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] overflow-hidden shadow-xl flex flex-col flex-1 min-h-[500px]">
           
           {activeTab === "REQUISICOES" ? (
-            <div className="overflow-x-auto flex-1">
-              <table className="w-full text-left">
-                <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+            <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[700px] relative border-b border-[var(--border)] scrollbar-thin scrollbar-thumb-[var(--brand)]">
+              <table className="w-full text-left border-separate border-spacing-0">
+                <thead className="bg-[var(--bg-base)]/90 backdrop-blur-md sticky top-0 z-20 border-b border-[var(--border)]">
                   <tr>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-32">Nº Requisição</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Data</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Contador</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[200px]">Descrição / Unidade</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Qtd</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ação</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[120px] sticky left-0 z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Nº Requisição</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px] sticky left-[120px] z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Descrição / Unidade</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[120px]">Data</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[120px]">Contador</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[100px]">Qtd</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[140px]">Status</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right min-w-[160px]">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {requisicoes.filter(r => r.solicitante?.toLowerCase().includes(busca.toLowerCase()) || r.item_nome?.toLowerCase().includes(busca.toLowerCase()) || r.protocolo?.toLowerCase().includes(busca.toLowerCase())).map(r => (
                     <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all group">
-                      <td className="p-8 text-center">
+                      <td className="p-8 text-center sticky left-0 z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)] transition-colors">
                         <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black text-[var(--brand)] border border-[var(--brand)]/20 shadow-sm">{r.protocolo || '---'}</span>
+                      </td>
+                      <td className="p-8 sticky left-[120px] z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)] transition-colors">
+                        <div className="text-sm font-black whitespace-normal max-w-[250px]">{r.item_nome || r.item}</div>
+                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Solic: {r.solicitante} ({r.unidade_destino})</div>
                       </td>
                       <td className="p-8 text-center text-[10px] font-bold text-[var(--text-muted)]">
                         {new Date(r.data_solicitacao).toLocaleDateString('pt-BR')}
@@ -197,10 +201,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                             <Clock size={12} className="text-orange-500" />
                             <span className="text-[10px] font-black uppercase text-orange-600">{calcularDias(r.data_solicitacao)}</span>
                          </div>
-                      </td>
-                      <td className="p-8">
-                        <div className="text-sm font-black whitespace-normal max-w-[250px]">{r.item_nome || r.item}</div>
-                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Solic: {r.solicitante} ({r.unidade_destino})</div>
                       </td>
                       <td className="p-8 text-center">
                         <span className="text-base font-black text-[var(--brand)]">{r.quantidade} {r.unidade_medida}</span>
