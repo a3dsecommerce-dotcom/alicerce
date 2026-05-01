@@ -109,46 +109,7 @@ export default function GlobalActionsModals({ modalActive, onClose, user }: Glob
           </div>
         </AdaptiveModal>
 
-      {/* Modal: Admissão Master */}
-      <AdaptiveModal
-        isOpen={modalActive === 'admissao'}
-        onClose={onClose}
-        title="Admissão Rápida"
-        width="600px"
-      >
-        <div className="flex flex-col gap-6">
-           <div className="p-4 bg-[var(--brand)]/5 border border-dashed border-[var(--brand)]/20 rounded-2xl">
-              <p className="text-[0.7rem] text-[var(--brand)] font-bold uppercase">Aviso de Gestão</p>
-              <p className="text-[0.75rem] text-[var(--text-secondary)]">Este é o portal de admissão simplificado. Os dados completos devem ser validados pelo RH Master no DP.</p>
-           </div>
-           
-           <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="label-sm">Nome Completo</label>
-                <input className="input-field w-full" placeholder="Nome do colaborador" />
-              </div>
-              <div>
-                <label className="label-sm">CPF</label>
-                <input className="input-field w-full" placeholder="000.000.000-00" />
-              </div>
-              <div>
-                <label className="label-sm">Telefone (WhatsApp)</label>
-                <input className="input-field w-full" placeholder="5592..." />
-              </div>
-              <div>
-                <label className="label-sm">Cargo</label>
-                <select className="input-field w-full">
-                  <option>ASG</option><option>Porteiro</option><option>Vigilante</option><option>Encarregado</option>
-                </select>
-              </div>
-              <div>
-                <label className="label-sm">Unidade Destino</label>
-                <input className="input-field w-full" placeholder="Ex: SEMED" />
-              </div>
-           </div>
 
-          </div>
-        </AdaptiveModal>
 
       {/* Modal: Informar Abono / Feriado */}
       <AdaptiveModal

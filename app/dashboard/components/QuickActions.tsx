@@ -35,14 +35,7 @@ export default function QuickActions({ user }: QuickActionsProps) {
       allowed: isEncarregado || isDiretor,
       onClick: () => setModalActive('informar-abono')
     },
-    {
-      id: 'admissao',
-      label: 'Admissão Master',
-      icon: UserPlus,
-      color: 'var(--info)',
-      allowed: isRH,
-      onClick: () => setModalActive('admissao')
-    }
+
   ];
 
   return (
