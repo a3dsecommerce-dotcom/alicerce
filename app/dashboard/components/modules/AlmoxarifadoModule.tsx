@@ -27,8 +27,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [modalAberto, setModalAberto] = useState<null | "cadastro" | "entrega" | "editar_req" | "ocorrencia" | "confirmar_entrega">(null);
   
   // --- Formulários ---
-  const [formData, setFormData] = useState({ 
-    item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", 
+  const [formData, setFormData] = useState<any>({ 
+    id: "", item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", 
     quantidade: 0, estoque_minimo: 5, tipo_estoque: "PROPRIO",
     valor_unitario: 0, coeficiente: 1.0
   });
@@ -72,7 +72,18 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const handleSalvarItem = async () => {
     if (!formData.item) return alert("A descrição é obrigatória.");
     setLoading(true);
-    const { error } = await supabase.from('estoque_atual').insert([formData]);
+    
+    let error;
+    if (formData.id) {
+      const { id, ...updateData } = formData;
+      const res = await supabase.from('estoque_atual').update(updateData).eq('id', id);
+      error = res.error;
+    } else {
+      const { id, ...insertData } = formData;
+      const res = await supabase.from('estoque_atual').insert([insertData]);
+      error = res.error;
+    }
+    
     if (error) alert("Erro: " + error.message);
     else { setModalAberto(null); fetchTudo(); }
     setLoading(false);
@@ -139,7 +150,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
            <button onClick={() => setModalAberto("entrega")} className="h-12 px-6 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-orange-600/20">
              <UserCheck size={16} /> Entrega Direta (EPI)
            </button>
-           <button onClick={() => { setFormData({ item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", quantidade: 0, estoque_minimo: 5, tipo_estoque: activeTab === "CATALOGO" ? "CATALOGO" : "PROPRIO" }); setModalAberto("cadastro"); }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
+           <button onClick={() => { setFormData({ id: "", item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", quantidade: 0, estoque_minimo: 5, tipo_estoque: activeTab === "CATALOGO" ? "CATALOGO" : "PROPRIO", valor_unitario: 0, coeficiente: 1.0 }); setModalAberto("cadastro"); }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
              <Plus size={16} /> Cadastrar Material
            </button>
         </div>
@@ -241,7 +252,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {estoque.filter(i => i.tipo_estoque === (activeTab === "ESTOQUE_EPI" ? "PROPRIO" : "CATALOGO")).filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
-                    <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                    <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
                       <td className="p-8">
                         <div className="text-sm font-black whitespace-normal max-w-[300px]">{item.item}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
@@ -344,8 +355,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
          )}
       </AdaptiveModal>
 
-      {/* MODAL NOVO ITEM (EPI, SUPRIMENTO, ESCRITÓRIO) */}
-      <AdaptiveModal isOpen={modalAberto === "cadastro"} onClose={() => setModalAberto(null)} title="Cadastrar Material">
+      {/* MODAL NOVO/EDITAR ITEM */}
+      <AdaptiveModal isOpen={modalAberto === "cadastro"} onClose={() => setModalAberto(null)} title={formData.id ? "Editar Material" : "Cadastrar Material"}>
          <div className="p-8 space-y-6">
             <div>
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Categoria do Material *</label>
@@ -420,7 +431,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             </div>
 
             <button onClick={handleSalvarItem} className="h-14 w-full bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
-              Salvar Material
+              {formData.id ? "Atualizar Material" : "Salvar Material"}
             </button>
          </div>
       </AdaptiveModal>
