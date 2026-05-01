@@ -166,9 +166,6 @@ export default function OcorrenciasPage() {
     setLoading(false);
   };
 
-    setLoading(false);
-  };
-
   const handleFinalizarResolucao = async () => {
     if (!solucaoTexto) return alert("Por favor, explique a solução para registro.");
     
