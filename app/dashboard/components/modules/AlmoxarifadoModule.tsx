@@ -18,6 +18,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [user, setUser] = useState<any>({});
+  const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   
   // --- Tabs ---
   type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "OCORRENCIAS";
@@ -28,7 +29,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
 
   // --- Modais ---
-  const [modalAberto, setModalAberto] = useState<null | "cadastro" | "entrega" | "editar_req" | "ocorrencia" | "confirmar_entrega">(null);
+  const [modalAberto, setModalAberto] = useState<null | "cadastro" | "entrega" | "editar_req" | "ocorrencia" | "confirmar_entrega" | "resolver_ocorrencia">(null);
   
   // --- Formulários ---
   const [formData, setFormData] = useState<any>({ 
@@ -45,6 +46,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [reqEditando, setReqEditando] = useState<any>(null);
   const [ocorrenciaData, setOcorrenciaData] = useState({ reqId: "", desc: "", prioridade: "ALTA", dias_solucao: 1 });
   const [entregaConfirm, setEntregaConfirm] = useState({ recebedor: "" });
+  const [resolucaoData, setResolucaoData] = useState({ id: "", solucao: "" });
 
   // --- Fetch ---
   useEffect(() => {
@@ -77,6 +79,10 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
     const { data: usrData } = await supabase.from('usuarios').select('id, nome, cargo').order('nome');
     if (usrData) setUsuarios(usrData);
+
+    const { data: ocData } = await supabase.from('tickets_sla').select('*').order('created_at', { ascending: false });
+    if (ocData) setOcorrencias(ocData);
+
     setLoading(false);
   }
 
@@ -363,6 +369,20 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
     setLoading(false);
   };
 
+  const handleFinalizarResolucao = async () => {
+    if (!resolucaoData.solucao) return alert("Descreva como foi resolvido.");
+    setLoading(true);
+    const { error } = await supabase.from('tickets_sla').update({
+       status: 'RESOLVIDO',
+       solucao_descricao: resolucaoData.solucao,
+       data_fechamento: new Date().toISOString()
+    }).eq('id', resolucaoData.id);
+
+    if (error) alert(error.message);
+    else { alert("Ocorrência resolvida!"); setModalAberto(null); fetchTudo(); }
+    setLoading(false);
+  };
+
   return (
     <div className="flex flex-col gap-10 animate-fade-in h-full no-print px-4 md:px-10 py-6 max-w-[1600px] mx-auto overflow-hidden">
       
@@ -400,6 +420,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
           {[
             { id: "ESTOQUE", label: "Cadastro Geral", icon: Package },
             { id: "REQUISICOES", label: "Requisições", icon: FileText },
+            { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle },
             { id: "FAZER_REQ", label: "Fazer Requisição", icon: ShoppingBag },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
@@ -697,6 +718,41 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               </div>
            </div>
          )}
+      </AdaptiveModal>
+
+      {/* MODAL RESOLVER OCORRENCIA */}
+      <AdaptiveModal isOpen={modalAberto === "resolver_ocorrencia"} onClose={() => setModalAberto(null)} title="Finalizar Atendimento / Ocorrência">
+          <div className="p-10 space-y-8">
+             <div className="bg-green-50 p-6 rounded-2xl border border-green-100 flex items-start gap-4">
+                <CheckCircle2 className="text-green-600 shrink-0" size={24}/>
+                <div>
+                   <p className="text-xs font-black text-green-900 uppercase tracking-widest">Informar Resolução</p>
+                   <p className="text-[10px] font-bold text-green-700 mt-1 uppercase leading-relaxed">Descreva detalhadamente como o problema foi solucionado para fins de auditoria e histórico.</p>
+                </div>
+             </div>
+             
+             <div className="space-y-6">
+                <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest block">O que foi feito? (Relatório de Solução)</label>
+                   <textarea 
+                     className="input-field !h-40 p-6 text-xs font-bold leading-relaxed resize-none" 
+                     placeholder="Descreva a ação tomada, quem participou e o resultado final..."
+                     value={resolucaoData.solucao}
+                     onChange={e => setResolucaoData({...resolucaoData, solucao: e.target.value})}
+                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 items-center">
+                   <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                      <p className="text-[8px] font-black text-gray-400 uppercase mb-1">Data de Fechamento</p>
+                      <p className="text-xs font-black">{new Date().toLocaleDateString()} (Hoje)</p>
+                   </div>
+                   <button onClick={handleFinalizarResolucao} disabled={loading} className="h-16 bg-green-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-green-600/30 hover:scale-[1.02] transition-all disabled:opacity-50">
+                      Confirmar Resolução
+                   </button>
+                </div>
+             </div>
+          </div>
       </AdaptiveModal>
 
       {/* MODAL NOVO/EDITAR ITEM */}
