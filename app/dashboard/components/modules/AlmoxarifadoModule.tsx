@@ -564,41 +564,79 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
       {/* MODAL ENTREGA DIRETA DE EPI */}
       <AdaptiveModal isOpen={modalAberto === "entrega"} onClose={() => setModalAberto(null)} title="Entrega de EPI (Ficha NR-06)">
-         <div className="p-8 space-y-6">
-            <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Colaborador</label>
-               <select className="input-field w-full font-black" value={entregaData.colaborador} onChange={e => setEntregaData({...entregaData, colaborador: e.target.value})}>
-                  <option value="">Selecione na lista...</option>
-                  {usuarios.map(u => <option key={u.id} value={u.nome}>{u.nome}</option>)}
+         <div className="p-8 space-y-8 max-h-[85vh] overflow-y-auto">
+            {/* Seção 1: Colaborador */}
+            <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)]">
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Colaborador Destinatário</label>
+               <select className="input-field w-full font-black text-orange-600" value={entregaData.colaborador} onChange={e => setEntregaData({...entregaData, colaborador: e.target.value})}>
+                  <option value="">Selecione na lista de usuários...</option>
+                  {usuarios.map(u => <option key={u.id} value={u.nome}>{u.nome} ({u.cargo})</option>)}
                </select>
             </div>
             
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-               {estoque.filter(i => i.categoria === 'EPI' && i.quantidade > 0).map(i => (
-                  <div key={i.id} className="flex justify-between items-center p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] cursor-pointer hover:border-orange-500 transition-colors" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
-                     <span className="text-[11px] font-bold">{i.item} <span className="text-[9px] text-[var(--text-muted)]">({i.tamanho})</span></span>
-                     <Plus size={14} className="text-[var(--brand)]"/>
-                  </div>
-               ))}
+            {/* Seção 2: Seleção de Itens */}
+            <div className="space-y-4">
+               <div className="flex justify-between items-center">
+                  <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Catálogo de EPIs Disponíveis</h4>
+                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase">Apenas Itens com Estoque</span>
+               </div>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1 scrollbar-thin">
+                  {estoque.filter(i => i.categoria === 'EPI' && i.quantidade > 0).map(i => (
+                     <div key={i.id} className="flex flex-col p-4 bg-white rounded-2xl border border-[var(--border)] cursor-pointer hover:border-orange-500 hover:shadow-md transition-all group" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
+                        <div className="flex justify-between items-start mb-2">
+                           <span className="text-xs font-black text-[var(--text-primary)] group-hover:text-orange-600 transition-colors">{i.item}</span>
+                           <Plus size={14} className="text-orange-500"/>
+                        </div>
+                        <div className="flex justify-between items-center">
+                           <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{i.tamanho || 'Tam. Único'} | {i.unidade_medida}</span>
+                           <span className="text-[9px] font-black text-blue-600">Stock: {i.quantidade}</span>
+                        </div>
+                     </div>
+                  ))}
+               </div>
             </div>
 
+            {/* Seção 3: Itens Selecionados para Entrega */}
             {entregaData.itens.length > 0 && (
-              <div className="space-y-2 border-t border-[var(--border)] pt-4">
-                 {entregaData.itens.map((it, idx) => (
-                    <div key={idx} className="flex justify-between items-center bg-orange-50 p-3 rounded-lg border border-orange-100">
-                       <span className="text-[11px] font-black text-orange-900">{it.item}</span>
-                       <div className="flex items-center gap-3">
-                          <input type="number" min="1" max={it.quantidade} className="w-16 h-8 text-center text-xs font-black rounded-md border border-orange-200" value={it.qtd_entrega} onChange={e => {
-                             const newItens = [...entregaData.itens];
-                             newItens[idx].qtd_entrega = Number(e.target.value);
-                             setEntregaData({...entregaData, itens: newItens});
-                          }}/>
-                          <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((_, i) => i !== idx)})} className="text-red-500 hover:scale-110 transition-all"><X size={16}/></button>
+              <div className="space-y-4 pt-6 border-t border-[var(--border)] animate-fade-in">
+                 <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Itens na Ficha de Entrega</h4>
+                 <div className="space-y-3">
+                    {entregaData.itens.map((it, idx) => (
+                       <div key={idx} className="flex justify-between items-center bg-orange-50/50 p-4 rounded-2xl border border-orange-100/50">
+                          <div className="flex items-center gap-4">
+                             <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
+                                <ShieldCheck size={20} />
+                             </div>
+                             <div>
+                                <p className="text-xs font-black text-orange-900">{it.item}</p>
+                                <p className="text-[9px] font-bold text-orange-700/60 uppercase">{it.tamanho}</p>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                             <div className="flex items-center bg-white rounded-xl border border-orange-200 overflow-hidden shadow-sm">
+                                <button className="px-3 py-1 hover:bg-orange-50 text-orange-600 font-bold border-r border-orange-100" onClick={() => {
+                                   const newItens = [...entregaData.itens];
+                                   newItens[idx].qtd_entrega = Math.max(1, newItens[idx].qtd_entrega - 1);
+                                   setEntregaData({...entregaData, itens: newItens});
+                                }}>-</button>
+                                <div className="w-10 h-10 flex items-center justify-center text-xs font-black text-orange-900 bg-transparent">
+                                  {it.qtd_entrega}
+                                </div>
+                                <button className="px-3 py-1 hover:bg-orange-50 text-orange-600 font-bold border-l border-orange-100" onClick={() => {
+                                   const newItens = [...entregaData.itens];
+                                   newItens[idx].qtd_entrega = Math.min(it.quantidade, newItens[idx].qtd_entrega + 1);
+                                   setEntregaData({...entregaData, itens: newItens});
+                                }}>+</button>
+                             </div>
+                             <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((_, i) => i !== idx)})} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><X size={18}/></button>
+                          </div>
                        </div>
-                    </div>
-                 ))}
-                 <button onClick={() => { alert("Simulando baixa NR-06."); setModalAberto(null); }} className="h-14 w-full bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
-                    Confirmar e Imprimir Recibo
+                    ))}
+                 </div>
+                 
+                 <button onClick={() => { alert("Finalizando entrega via Ficha NR-06."); setModalAberto(null); }} className="h-16 w-full bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-6">
+                    <UserCheck size={20}/> Confirmar Entrega e Gerar Comprovante
                  </button>
               </div>
             )}
