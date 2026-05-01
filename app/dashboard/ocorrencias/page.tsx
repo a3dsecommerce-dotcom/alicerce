@@ -6,11 +6,12 @@ import { n8n } from "@/lib/n8n";
 
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-const cols = [
-  { id: "PENDENTE", label: "Pendentes", icon: Clock, cor: "#F59E0B" },
-  { id: "EM_ANDAMENTO", label: "Em Andamento", icon: Loader, cor: "#3B82F6" },
-  { id: "RESOLVIDO", label: "Resolvidos", icon: CheckCircle, cor: "#10B981" },
-];
+// Categorias de status para referência
+const statusMap: Record<string, string> = {
+  "PENDENTE": "Pendentes",
+  "EM_ANDAMENTO": "Em Andamento",
+  "RESOLVIDO": "Resolvidos",
+};
 
 const priorStyles: Record<string, { bg: string, text: string, border: string }> = { 
   CRITICA: { bg: "rgba(239, 68, 68, 0.1)", text: "#EF4444", border: "rgba(239, 68, 68, 0.2)" }, 
@@ -25,7 +26,7 @@ export default function OcorrenciasPage() {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState<"kanban" | "lista">("kanban");
+  const [vista, setVista] = useState<"lista">("lista");
   const [modalNova, setModalNova] = useState(false);
   const [ticketSelecionado, setTicketSelecionado] = useState<any>(null);
   
@@ -215,21 +216,6 @@ export default function OcorrenciasPage() {
               placeholder="Localizar evento..." 
             />
           </div>
-          
-          <div className="flex bg-[var(--bg-base)] p-1 rounded-2xl border border-[var(--border)]">
-            <button 
-              className={`px-5 py-2 rounded-xl text-[0.7rem] font-black uppercase transition-all ${vista === "kanban" ? "bg-white text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)]"}`} 
-              onClick={() => setVista("kanban")}
-            >
-              Kanban
-            </button>
-            <button 
-              className={`px-5 py-2 rounded-xl text-[0.7rem] font-black uppercase transition-all ${vista === "lista" ? "bg-white text-[var(--text-primary)] shadow-sm" : "text-[var(--text-muted)]"}`} 
-              onClick={() => setVista("lista")}
-            >
-              Lista
-            </button>
-          </div>
 
           <button className="btn-brand !h-12 px-6 shadow-lg shadow-[var(--brand)]/20" onClick={() => setModalNova(true)}>
             <Plus size={18} strokeWidth={3} /> Nova Ocorrência
@@ -377,86 +363,6 @@ export default function OcorrenciasPage() {
         <div className="flex flex-col items-center justify-center p-40 text-[var(--text-muted)] gap-4">
           <Loader className="animate-spin text-[var(--brand)]" size={40} />
           <span className="font-bold uppercase tracking-widest text-[10px]">Sincronizando Base de Dados...</span>
-        </div>
-      ) : vista === "kanban" ? (
-        <div className="flex gap-8 overflow-x-auto pb-8 snap-x">
-          {cols.map(col => {
-            const colTickets = tickets.filter(t => t.status === col.id);
-            const Icon = col.icon;
-            return (
-              <div key={col.id} className="flex-shrink-0 w-[380px] bg-[var(--bg-card)]/40 rounded-[2.5rem] border border-[var(--border)] p-6 snap-start backdrop-blur-sm">
-                <div className="flex items-center justify-between mb-8 px-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${col.cor}15`, color: col.cor }}>
-                      <Icon size={20} strokeWidth={2.5} />
-                    </div>
-                    <span className="font-black text-sm text-[var(--text-primary)] uppercase tracking-tight">{col.label}</span>
-                  </div>
-                  <span className="bg-white/50 text-[var(--text-primary)] text-[11px] font-black px-3 py-1 rounded-full border border-[var(--border)] shadow-sm">
-                    {colTickets.length}
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-5">
-                  {colTickets.map(t => (
-                    <div 
-                      key={t.id} 
-                      className="group relative bg-white rounded-[1.75rem] border border-[var(--border)] p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-[var(--brand)]/10 hover:-translate-y-1 cursor-pointer overflow-hidden"
-                      onClick={() => setTicketSelecionado(t)}
-                    >
-                      {/* Priority Strip */}
-                      <div className="absolute top-0 left-0 w-1.5 h-full" style={{ background: priorStyles[t.prioridade].text }}></div>
-
-                      <div className="flex justify-between items-start mb-4">
-                        <span className="text-[10px] font-black text-[var(--text-muted)] tracking-tighter opacity-50">{t.id}</span>
-                        <div 
-                          className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider"
-                          style={{ 
-                            background: priorStyles[t.prioridade].bg,
-                            color: priorStyles[t.prioridade].text,
-                            border: `1px solid ${priorStyles[t.prioridade].border}`
-                          }}
-                        >
-                          {t.prioridade}
-                        </div>
-                      </div>
-
-                      <h4 className="text-[0.95rem] font-black text-[var(--text-primary)] leading-[1.3] mb-4 group-hover:text-[var(--brand)] transition-colors line-clamp-2">
-                        {t.titulo}
-                      </h4>
-
-                      <div className="flex flex-col gap-2.5 mb-5">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-secondary)]">
-                          <MapPin size={12} className="text-[var(--brand)]" /> {t.unidade}
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)]">
-                          <User size={12} className="text-[var(--brand)]" /> <span className="truncate">{t.atribuido_a}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-[var(--bg-base)]">
-                        <div className="flex items-center gap-1.5 text-[10px] font-black text-[var(--text-muted)] uppercase">
-                          <Clock size={12} /> {t.abertura.split(',')[0]}
-                        </div>
-                        {t.sla === "VENCIDO" && (
-                          <div className="px-2 py-0.5 rounded-md bg-red-50 text-red-500 text-[8px] font-black uppercase tracking-widest border border-red-100">
-                            SLA Expirado
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {colTickets.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-[var(--border)] rounded-[2rem] opacity-30">
-                      <CheckCircle size={32} />
-                      <span className="text-[10px] font-bold uppercase mt-4">Nenhum Registro</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
         </div>
       ) : (
         <div className="card overflow-hidden !rounded-[2rem] border-[var(--border)] shadow-sm">
