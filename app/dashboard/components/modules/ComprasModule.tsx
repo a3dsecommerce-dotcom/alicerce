@@ -169,8 +169,11 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                             <tr key={prod.id} className="hover:bg-[var(--bg-base)]/40 transition-all">
                                 <td className="p-8 px-10">
                                   <div className="flex flex-col">
-                                      <span className="text-sm font-black text-[var(--text-primary)]">{prod.item}</span>
-                                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{prod.categoria}</span>
+                                      <div className="text-sm font-black whitespace-normal max-w-[400px]">
+                                         <span className="inline-block text-[10px] font-bold text-[var(--text-muted)] mr-2 bg-[var(--bg-base)] px-2 py-0.5 rounded-md border border-[var(--border)] tracking-widest">#{prod.id?.substring(0, 6).toUpperCase()}</span>
+                                         {prod.item}
+                                      </div>
+                                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 ml-1">{prod.categoria}</span>
                                   </div>
                                 </td>
                                 <td className="p-8 text-center text-xs font-black text-[var(--text-muted)]">{prod.unidade_medida}</td>

@@ -255,8 +255,11 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                   {estoque.filter(i => i.tipo_estoque === (activeTab === "ESTOQUE_EPI" ? "PROPRIO" : "CATALOGO")).filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
                       <td className="p-8 pl-10">
-                        <div className="text-sm font-black whitespace-normal max-w-[400px]">{item.item}</div>
-                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
+                        <div className="text-sm font-black whitespace-normal max-w-[400px]">
+                           <span className="inline-block text-[10px] font-bold text-[var(--text-muted)] mr-2 bg-[var(--bg-base)] px-2 py-0.5 rounded-md border border-[var(--border)] tracking-widest">#{item.id?.substring(0, 6).toUpperCase()}</span>
+                           {item.item}
+                        </div>
+                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 ml-1">{item.categoria}</div>
                       </td>
                       <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || '---'}</span></td>
                       <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>
