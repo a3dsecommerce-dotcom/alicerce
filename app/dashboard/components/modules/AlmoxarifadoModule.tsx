@@ -93,14 +93,34 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
     if (!targetTable) return alert("Categoria inválida.");
     
+    // Higienizar payload para evitar erros de colunas inexistentes em cada tabela
+    const { id: _, created_at: __, tipo_estoque: ___, ...raw } = formData;
+    let cleanPayload: any = {
+      codigo_registro: raw.codigo_registro,
+      item: raw.item,
+      categoria: raw.categoria,
+      unidade_medida: raw.unidade_medida,
+      tamanho: raw.tamanho
+    };
+
+    if (formData.categoria === 'EPI') {
+      cleanPayload.ca = raw.ca;
+      cleanPayload.quantidade = raw.quantidade;
+      cleanPayload.estoque_minimo = raw.estoque_minimo;
+    } else if (formData.categoria === 'SUPRIMENTO') {
+      cleanPayload.valor_unitario = raw.valor_unitario;
+      cleanPayload.coeficiente = raw.coeficiente;
+    } else if (formData.categoria === 'ESCRITORIO') {
+      cleanPayload.quantidade = raw.quantidade;
+      cleanPayload.estoque_minimo = raw.estoque_minimo;
+    }
+
     let error;
     if (formData.id) {
-      const { id, ...updateData } = formData;
-      const res = await supabase.from(targetTable).update(updateData).eq('id', id);
+      const res = await supabase.from(targetTable).update(cleanPayload).eq('id', formData.id);
       error = res.error;
     } else {
-      const { id, ...insertData } = formData;
-      const res = await supabase.from(targetTable).insert([insertData]);
+      const res = await supabase.from(targetTable).insert([cleanPayload]);
       error = res.error;
     }
     
