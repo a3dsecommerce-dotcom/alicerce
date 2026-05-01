@@ -5,7 +5,7 @@ import {
   TrendingDown, CheckCircle2, History, XCircle, Edit3, 
   FileText, Send, X, Ruler, ClipboardList, Info,
   UserCheck, AlertCircle, Save, Clock, AlertTriangle, MessageSquare,
-  Truck, User
+  Truck, User, ShoppingBag
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -20,9 +20,13 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [user, setUser] = useState<any>({});
   
   // --- Tabs ---
-  type TabType = "ESTOQUE" | "REQUISICOES" | "OCORRENCIAS";
+  type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "OCORRENCIAS";
   const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
   
+  // --- Estados de Nova Requisição ---
+  const [volumes, setVolumes] = useState<Record<string, number>>({});
+  const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
+
   // --- Modais ---
   const [modalAberto, setModalAberto] = useState<null | "cadastro" | "entrega" | "editar_req" | "ocorrencia" | "confirmar_entrega">(null);
   
@@ -50,7 +54,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   async function fetchTudo() {
     setLoading(true);
     
-    // Busca das 3 tabelas em paralelo
     const [epiRes, supRes, escRes] = await Promise.all([
       supabase.from('almox_epi').select('*'),
       supabase.from('almox_suprimentos').select('*'),
@@ -93,7 +96,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
     if (!targetTable) return alert("Categoria inválida.");
     
-    // Higienizar payload para evitar erros de colunas inexistentes em cada tabela
     const { id: _, created_at: __, tipo_estoque: ___, ...raw } = formData;
     let cleanPayload: any = {
       codigo_registro: raw.codigo_registro,
@@ -127,6 +129,47 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
     if (error) alert("Erro: " + error.message);
     else { setModalAberto(null); fetchTudo(); }
     setLoading(false);
+  };
+
+  const handleFinalizarPedido = async () => {
+    const todosItensId = Array.from(new Set([...Object.keys(volumes), ...Object.keys(volumesExtra)]));
+    const itensParaPedir = todosItensId.filter(id => (volumes[id] || 0) > 0 || (volumesExtra[id] || 0) > 0);
+    
+    if (itensParaPedir.length === 0) return alert("Selecione quantidades antes de finalizar.");
+    setLoading(true);
+
+    try {
+      const protocoloUnico = `REQ-ALMOX-${Math.floor(100000 + Math.random() * 900000)}`;
+      const payload = itensParaPedir.map(id => {
+        const item = estoque.find(c => String(c.id) === id);
+        return {
+          item_id: id,
+          solicitante: `ALMOXARIFADO (${user?.name || 'Central'})`,
+          unidade_destino: 'ALMOXARIFADO CENTRAL',
+          quantidade: volumes[id] || 0,
+          quantidade_extra: volumesExtra[id] || 0,
+          status: 'SOLICITADO',
+          item_nome: item?.item || 'Item',
+          unidade_medida: item?.unidade_medida || 'UN',
+          protocolo: protocoloUnico,
+          tipo_item: item?.categoria || 'GERAL',
+          data_solicitacao: new Date().toISOString(),
+        };
+      });
+
+      const { error } = await supabase.from('requisicoes').insert(payload);
+      if (error) throw error;
+
+      setVolumes({});
+      setVolumesExtra({});
+      setActiveTab("REQUISICOES");
+      fetchTudo();
+      alert(`✅ Requisição Interna ${protocoloUnico} gerada com sucesso.`);
+    } catch (err: any) {
+      alert('Erro: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleProcessarReq = async (id: string, status: 'APROVADO' | 'REPROVADO', qtdAprovada?: number) => {
@@ -182,7 +225,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
            </div>
            <div>
               <h2 className="text-2xl font-black text-[var(--text-primary)] italic">Almoxarifado Central</h2>
-              <p className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest mt-1">Controle de Fluxo: Pedido {'>'} Análise {'>'} Entrega</p>
+              <p className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest mt-1">Gestão de Estoque e Operação Logística</p>
            </div>
         </div>
 
@@ -197,7 +240,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               }); 
               setModalAberto("cadastro"); 
             }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
-             <Plus size={16} /> Cadastrar Material
+             <Plus size={16} /> Novo Cadastro
            </button>
         </div>
       </div>
@@ -208,6 +251,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
           {[
             { id: "ESTOQUE", label: "Estoque Geral", icon: Package },
             { id: "REQUISICOES", label: "Análise de Pedidos", icon: FileText },
+            { id: "FAZER_REQ", label: "Fazer Requisição", icon: ShoppingBag },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
               <tab.icon size={16} /> {tab.label}
@@ -215,22 +259,24 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
           ))}
         </div>
 
-        <div className="relative w-full md:w-80">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-          <input className="input-field !pl-12 !h-12 text-xs" placeholder="Pesquisar..." value={busca} onChange={e => setBusca(e.target.value)} />
-        </div>
+        {activeTab !== "FAZER_REQ" && (
+          <div className="relative w-full md:w-80">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input className="input-field !pl-12 !h-12 text-xs" placeholder="Pesquisar..." value={busca} onChange={e => setBusca(e.target.value)} />
+          </div>
+        )}
       </div>
 
-      {/* TABELA PRINCIPAL */}
+      {/* CONTEÚDO PRINCIPAL */}
       <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] overflow-hidden shadow-xl flex flex-col flex-1 min-h-[500px]">
           
-          {activeTab === "REQUISICOES" ? (
-            <div className="overflow-x-auto overflow-y-auto flex-1 max-h-[700px] relative border-b border-[var(--border)] scrollbar-thin">
-              <table className="w-full text-left border-separate border-spacing-0">
-                <thead className="bg-[var(--bg-base)]/90 backdrop-blur-md sticky top-0 z-20 border-b border-[var(--border)]">
+          {activeTab === "REQUISICOES" && (
+            <div className="overflow-x-auto flex-1 scrollbar-thin">
+              <table className="w-full text-left">
+                <thead className="bg-[var(--bg-base)]/90 border-b border-[var(--border)]">
                   <tr>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[120px] sticky left-0 z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Nº Req.</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px] sticky left-[120px] z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)] text-left">Descrição do Produto</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[120px]">Nº Req.</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-left">Descrição do Produto</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Pedido</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Aprovado</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Dias</th>
@@ -241,17 +287,13 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 <tbody className="divide-y divide-[var(--border)]">
                   {requisicoes.filter(r => r.protocolo?.toLowerCase().includes(busca.toLowerCase()) || r.item_nome?.toLowerCase().includes(busca.toLowerCase())).map(r => (
                     <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all group">
-                      <td className="px-6 py-6 text-center sticky left-0 z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)] font-black text-[var(--brand)]">{r.protocolo || '---'}</td>
-                      <td className="px-6 py-6 sticky left-[120px] z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)]">
+                      <td className="px-6 py-6 text-center font-black text-[var(--brand)]">{r.protocolo || '---'}</td>
+                      <td className="px-6 py-6">
                         <div className="text-sm font-black whitespace-normal max-w-[250px]">{r.item_nome || r.item}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{r.unidade_destino} | {new Date(r.data_solicitacao).toLocaleDateString()}</div>
                       </td>
-                      <td className="px-6 py-6 text-center">
-                        <span className="text-sm font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</span>
-                      </td>
-                      <td className="px-6 py-6 text-center">
-                        <span className="text-base font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</span>
-                      </td>
+                      <td className="px-6 py-6 text-center text-sm font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</td>
+                      <td className="px-6 py-6 text-center text-base font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</td>
                       <td className="px-6 py-6 text-center">
                          <div className="flex flex-col items-center gap-1">
                             <Clock size={12} className="text-orange-500" />
@@ -266,11 +308,9 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       <td className="px-6 py-6 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => { setReqEditando(r); setModalAberto("ocorrencia"); }} title="Ocorrência" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"><AlertTriangle size={14}/></button>
-                          
                           {r.status === 'SOLICITADO' && (
                             <button onClick={() => { setReqEditando({...r, quantidade_aprovada: r.quantidade + (r.quantidade_extra || 0)}); setModalAberto("editar_req"); }} className="px-4 py-2 bg-black text-white rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
                           )}
-                          
                           {r.status === 'APROVADO' && (
                              <button onClick={() => { setReqEditando(r); setModalAberto("confirmar_entrega"); }} className="px-4 py-2 bg-green-600 text-white rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2"><Truck size={12}/> Entregar</button>
                           )}
@@ -281,7 +321,9 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 </tbody>
               </table>
             </div>
-          ) : (
+          )}
+
+          {activeTab === "ESTOQUE" && (
             <div className="overflow-x-auto flex-1">
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
@@ -315,6 +357,54 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               </table>
             </div>
           )}
+
+          {activeTab === "FAZER_REQ" && (
+            <div className="flex flex-col flex-1">
+               <div className="p-8 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-base)]/5">
+                  <div>
+                    <h3 className="text-lg font-black uppercase">Gerador de Pedidos Almoxarifado</h3>
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1">Crie requisições internas de qualquer material para reposição ou uso</p>
+                  </div>
+                  <button onClick={handleFinalizarPedido} disabled={loading || (Object.values(volumes).every(v => v === 0) && Object.values(volumesExtra).every(v => v === 0))} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
+                    <Send size={18} /> Finalizar Pedido
+                  </button>
+               </div>
+               
+               <div className="flex-1 overflow-x-auto">
+                 <table className="w-full text-left">
+                    <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+                      <tr>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[100px]">Reg.</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-left">Descrição do Material</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[100px]">Estoque</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[150px]">Qtd. Pedir</th>
+                        <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[150px]">Extra/Obs</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {estoque.map(item => (
+                        <tr key={item.id} className="hover:bg-[var(--bg-base)]/10">
+                          <td className="px-6 py-4 text-center font-mono text-[var(--text-muted)] text-[10px]">{item.codigo_registro || '---'}</td>
+                          <td className="px-6 py-4">
+                            <p className="text-xs font-black text-[var(--text-primary)]">{item.item}</p>
+                            <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{item.categoria}</span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`text-[11px] font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-blue-600'}`}>{item.quantidade || 0} {item.unidade_medida}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <input type="number" min="0" value={volumes[item.id] || ''} onChange={e => setVolumes({...volumes, [item.id]: Number(e.target.value)})} className="w-24 h-10 px-2 mx-auto rounded-lg border-2 border-transparent bg-[var(--bg-base)] text-center text-xs font-black outline-none focus:border-blue-500 block" placeholder="0" />
+                          </td>
+                          <td className="px-6 py-4">
+                            <input type="number" min="0" value={volumesExtra[item.id] || ''} onChange={e => setVolumesExtra({...volumesExtra, [item.id]: Number(e.target.value)})} className="w-24 h-10 px-2 mx-auto rounded-lg border-2 border-orange-100 bg-orange-50/20 text-orange-600 text-center text-xs font-black outline-none focus:border-orange-500 block" placeholder="0" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                 </table>
+               </div>
+            </div>
+          )}
       </div>
 
       {/* MODAL ANALISE/APROVAÇÃO */}
@@ -335,7 +425,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                  <div>
                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Quantidade Real Aprovada</label>
                     <input type="number" className="input-field !h-16 text-2xl font-black text-center border-blue-200 text-blue-600" value={reqEditando.quantidade_aprovada} onChange={e => setReqEditando({...reqEditando, quantidade_aprovada: Number(e.target.value)})} />
-                    <p className="text-[9px] font-bold text-blue-400 mt-2 uppercase text-center italic">Você pode aumentar, diminuir ou manter conforme análise</p>
                  </div>
                  <div className="flex flex-col gap-3 justify-center">
                     <button onClick={() => handleProcessarReq(reqEditando.id, 'APROVADO', reqEditando.quantidade_aprovada)} className="h-16 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Aprovar com Ajustes</button>
@@ -354,7 +443,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                  <Truck size={40} />
               </div>
               <h3 className="text-lg font-black uppercase">Confirmar Recebimento</h3>
-              <p className="text-xs text-[var(--text-muted)] font-bold">O material já chegou na unidade ou foi retirado no balcão?</p>
               
               <div className="text-left mt-6">
                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome de Quem Recebeu *</label>
@@ -374,7 +462,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                  <AlertTriangle className="text-red-600 shrink-0" size={24}/>
                  <div>
                     <p className="text-xs font-black text-red-900 uppercase">Gestão de SLA e Prazos</p>
-                    <p className="text-[10px] font-bold text-red-700 uppercase leading-relaxed mt-1">Defina o prazo de solução. Se não cumprido, o status mudará para URGENTE com advertência automática.</p>
                  </div>
               </div>
               
@@ -406,50 +493,31 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
          <div className="p-8 space-y-6">
             <div>
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Categoria do Material *</label>
-               <select 
-                 className="input-field w-full font-black text-blue-600" 
-                 value={formData.categoria} 
-                 onChange={e => {
-                   const cat = e.target.value;
-                   setFormData({
-                     ...formData, 
-                     categoria: cat, 
-                     tipo_estoque: cat === 'EPI' ? 'PROPRIO' : 'CATALOGO',
-                     quantidade: formData.quantidade || 0,
-                     estoque_minimo: formData.estoque_minimo || 5,
-                     ca: formData.ca || '',
-                     tamanho: formData.tamanho || '',
-                     coeficiente: cat === 'SUPRIMENTO' ? (formData.coeficiente || 1.0) : 0
-                   });
-                 }}
-               >
+               <select className="input-field w-full font-black text-blue-600" value={formData.categoria} onChange={e => setFormData({...formData, categoria: e.target.value})}>
                   <option value="EPI">Equipamento de Proteção (EPI)</option>
                   <option value="SUPRIMENTO">Suprimentos (Limpeza, Copa, etc)</option>
                   <option value="ESCRITORIO">Materiais de Escritório</option>
                </select>
-               <p className="text-[9px] font-bold text-[var(--text-muted)] mt-2">
-                 {formData.categoria === 'EPI' ? 'EPIs são mantidos em estoque próprio e requerem CA e controle rígido.' : 'Suprimentos e Escritório vão para o catálogo das Secretarias e têm valor de referência.'}
-               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                <div className="col-span-2">
                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cód. Registro</label>
-                 <input type="text" className="input-field uppercase font-mono" value={formData.codigo_registro} onChange={e => setFormData({...formData, codigo_registro: e.target.value})} placeholder="Ex: COD-123 (Opcional)" />
+                 <input type="text" className="input-field uppercase font-mono" value={formData.codigo_registro} onChange={e => setFormData({...formData, codigo_registro: e.target.value})} placeholder="Ex: COD-123" />
                </div>
                <div className="col-span-2">
                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição *</label>
-                 <input type="text" className="input-field" value={formData.item} onChange={e => setFormData({...formData, item: e.target.value})} placeholder="Ex: Luva de Raspa G / Resma A4" />
+                 <input type="text" className="input-field" value={formData.item} onChange={e => setFormData({...formData, item: e.target.value})} />
                </div>
                
                <div>
                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Und. Medida *</label>
-                 <input type="text" className="input-field uppercase" value={formData.unidade_medida} onChange={e => setFormData({...formData, unidade_medida: e.target.value})} placeholder="UN, PAR, CX" />
+                 <input type="text" className="input-field uppercase" value={formData.unidade_medida} onChange={e => setFormData({...formData, unidade_medida: e.target.value})} />
                </div>
                
                <div>
                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Tamanho</label>
-                 <input type="text" className="input-field uppercase" value={formData.tamanho} onChange={e => setFormData({...formData, tamanho: e.target.value})} placeholder="G, 42, Único" />
+                 <input type="text" className="input-field uppercase" value={formData.tamanho} onChange={e => setFormData({...formData, tamanho: e.target.value})} />
                </div>
 
                {formData.categoria !== 'SUPRIMENTO' && (
@@ -467,21 +535,21 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
                 {formData.categoria === 'EPI' && (
                   <div className="col-span-2">
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CA (Certificado de Aprovação)</label>
-                    <input type="text" className="input-field" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Número do CA" />
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CA (Certificado)</label>
+                    <input type="text" className="input-field" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} />
                   </div>
                 )}
 
                {formData.categoria !== 'EPI' && (
                   <>
                     <div className={formData.categoria === 'ESCRITORIO' ? 'col-span-2' : ''}>
-                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref. (R$)</label>
-                      <input type="number" step="0.01" className="input-field" value={formData.valor_unitario} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)})} placeholder="0.00" />
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref.</label>
+                      <input type="number" step="0.01" className="input-field" value={formData.valor_unitario} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)})} />
                     </div>
                     {formData.categoria === 'SUPRIMENTO' && (
                       <div>
-                        <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Coeficiente / ASG</label>
-                        <input type="number" step="0.1" className="input-field text-blue-600" value={formData.coeficiente} onChange={e => setFormData({...formData, coeficiente: Number(e.target.value)})} placeholder="Ex: 1.5" />
+                        <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Coeficiente</label>
+                        <input type="number" step="0.1" className="input-field text-blue-600" value={formData.coeficiente} onChange={e => setFormData({...formData, coeficiente: Number(e.target.value)})} />
                       </div>
                     )}
                   </>
@@ -506,7 +574,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             </div>
             
             <div className="space-y-2 max-h-60 overflow-y-auto">
-               <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2">Selecione os EPIs (Estoque)</p>
                {estoque.filter(i => i.categoria === 'EPI' && i.quantidade > 0).map(i => (
                   <div key={i.id} className="flex justify-between items-center p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] cursor-pointer hover:border-orange-500 transition-colors" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
                      <span className="text-[11px] font-bold">{i.item} <span className="text-[9px] text-[var(--text-muted)]">({i.tamanho})</span></span>
@@ -517,7 +584,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
             {entregaData.itens.length > 0 && (
               <div className="space-y-2 border-t border-[var(--border)] pt-4">
-                 <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2">Itens para Entrega</p>
                  {entregaData.itens.map((it, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-orange-50 p-3 rounded-lg border border-orange-100">
                        <span className="text-[11px] font-black text-orange-900">{it.item}</span>
@@ -531,48 +597,11 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                        </div>
                     </div>
                  ))}
-                 <button onClick={() => {
-                    alert("Função de baixa em massa via NR-06. (Simulação)");
-                    setModalAberto(null);
-                    setEntregaData({ colaborador: "", itens: [] });
-                 }} className="h-14 w-full bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
+                 <button onClick={() => { alert("Simulando baixa NR-06."); setModalAberto(null); }} className="h-14 w-full bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
                     Confirmar e Imprimir Recibo
                  </button>
               </div>
             )}
-         </div>
-      </AdaptiveModal>
-
-      {/* MODAL ANALISAR REQUISIÇÃO */}
-      <AdaptiveModal isOpen={modalAberto === "editar_req"} onClose={() => setModalAberto(null)} title="Analisar Requisição">
-         <div className="p-8 space-y-6">
-            <div className="bg-[var(--bg-base)] p-4 rounded-xl border border-[var(--border)]">
-               <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest mb-1">Produto Requisitado</p>
-               <p className="text-sm font-black text-[var(--text-primary)]">{reqEditando?.item_nome}</p>
-               <div className="flex gap-6 mt-4">
-                  <div>
-                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Qtd Base</p>
-                    <p className="text-base font-black text-orange-500">{reqEditando?.quantidade}</p>
-                  </div>
-                  {reqEditando?.quantidade_extra > 0 && (
-                     <div>
-                       <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest">Extra Pedido</p>
-                       <p className="text-base font-black text-red-500">+{reqEditando?.quantidade_extra}</p>
-                     </div>
-                  )}
-               </div>
-            </div>
-
-            <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Quantidade Aprovada</label>
-               <input type="number" min="0" className="input-field text-blue-500 font-black text-xl text-center" value={reqEditando?.quantidade_aprovada || 0} onChange={e => setReqEditando({...reqEditando, quantidade_aprovada: Number(e.target.value)})} />
-               <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2 text-center">Ajuste a quantidade que será efetivamente entregue</p>
-            </div>
-
-            <div className="flex gap-4 pt-4 border-t border-[var(--border)]">
-               <button onClick={() => handleProcessarReq(reqEditando.id, 'REPROVADO', 0)} className="flex-1 py-4 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">Reprovar Total</button>
-               <button onClick={() => handleProcessarReq(reqEditando.id, 'APROVADO', reqEditando.quantidade_aprovada)} className="flex-[2] py-4 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase hover:scale-105 transition-all shadow-lg shadow-green-600/20">Aprovar & Confirmar</button>
-            </div>
          </div>
       </AdaptiveModal>
     </div>
