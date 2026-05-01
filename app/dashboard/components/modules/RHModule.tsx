@@ -306,8 +306,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                    )}
                 </div>
              </div>
-        </div>
-           </div>
+          </div>
         )}
 
         {/* VIEW: DOCS (PLACEHOLDER PREMIUM) */}
