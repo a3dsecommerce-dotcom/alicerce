@@ -233,6 +233,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
                     {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>
+                    {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Valor Ref.</th>}
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
                   </tr>
                 </thead>
@@ -246,6 +247,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>
                       {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span></td>}
                       <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>
+                      {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>}
                       <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>
                     </tr>
                   ))}
