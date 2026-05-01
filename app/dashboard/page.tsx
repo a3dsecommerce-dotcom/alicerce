@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  LayoutDashboard, Users, ShoppingCart, Megaphone, 
+  LayoutDashboard, Users, ShoppingBag, Megaphone, 
   Package, ShieldCheck, Activity, Bell, Settings
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
