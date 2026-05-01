@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS estoque_atual (
 
 ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS tipo_estoque TEXT DEFAULT 'PROPRIO';
 ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS ca TEXT;
+ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS tamanho TEXT;
 ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS coeficiente DECIMAL(10,2) DEFAULT 1.0;
 
 -- =================================================================================
