@@ -62,9 +62,21 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     const { data: catData } = await supabase.from('almox_suprimentos').select('*').order('item');
     if (catData) setCatalogo(catData);
 
-    // 2. Fetch Requisições do usuário logado
-    const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
-    if (reqData) setRequisicoesRaw(reqData);
+    // 2. Fetch Requisições da secretaria do usuário logado (Isolamento de Dados)
+    if (currentUser?.unidade_alocacao) {
+      const { data: reqData } = await supabase
+        .from('requisicoes')
+        .select('*')
+        .eq('unidade_destino', currentUser.unidade_alocacao)
+        .order('data_solicitacao', { ascending: false });
+      
+      if (reqData) setRequisicoesRaw(reqData);
+    } else {
+      // Se não houver unidade (ex: admin), busca tudo ou nada?
+      // O usuário solicitou que cada secretaria veja as suas.
+      const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
+      if (reqData) setRequisicoesRaw(reqData);
+    }
 
     // 3. Detectar ASGs da Secretaria de forma automática
     if (currentUser?.unidade_alocacao) {
@@ -124,7 +136,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
         return {
           item_id: id,
           solicitante: user?.name || 'Comprador',
-          unidade_destino: user?.email || 'Unidade',
+          unidade_destino: user?.unidade_alocacao || 'Unidade',
           quantidade: qtdNormal,
           quantidade_extra: qtdExtra,
           status: 'SOLICITADO',
