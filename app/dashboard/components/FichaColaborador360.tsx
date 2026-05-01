@@ -14,9 +14,10 @@ interface Ficha360Props {
   isOpen: boolean;
   onClose: () => void;
   canEdit?: boolean;
+  restrictLevel?: boolean;
 }
 
-export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit = false }: Ficha360Props) {
+export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit = false, restrictLevel = false }: Ficha360Props) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<"perfil" | "pessoal" | "financeiro" | "ponto" | "ocorrencias" | "audit">("perfil");
@@ -165,7 +166,12 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                       <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">{f.label}</label>
                       {editing ? (
                         f.type === "select" ? (
-                          <select className="input-field" value={editForm[f.key]} onChange={e => setEditForm({...editForm, [f.key]: e.target.value})}>
+                          <select 
+                            className={`input-field ${f.key === "nivel_acesso" && restrictLevel ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                            disabled={f.key === "nivel_acesso" && restrictLevel}
+                            value={editForm[f.key]} 
+                            onChange={e => setEditForm({...editForm, [f.key]: e.target.value})}
+                          >
                             {f.key === "nivel_acesso" ? (
                               <>
                                 <option value="1">1 - Sem Acesso ao Portal</option>
