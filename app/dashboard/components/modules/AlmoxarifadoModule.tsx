@@ -152,21 +152,21 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             <head>
               <title>Ficha EPI - ${entregaData.colaborador}</title>
               <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.5; }
-                .header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 30px; }
-                .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
-                .header p { margin: 5px 0; font-size: 11px; font-weight: bold; color: #555; }
-                .info-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
-                .info-item { border-bottom: 1px solid #eee; padding-bottom: 5px; }
-                .label { font-size: 9px; font-weight: 900; text-transform: uppercase; color: #888; display: block; margin-bottom: 2px; }
-                .value { font-size: 13px; font-weight: bold; color: #000; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                th { background: #000; color: #fff; font-size: 10px; text-transform: uppercase; padding: 12px; border: 1px solid #000; }
-                td { border: 1px solid #ccc; padding: 10px; font-size: 12px; text-align: center; }
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #1a1a1a; line-height: 1.3; }
+                .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; }
+                .header h1 { margin: 0; font-size: 18px; text-transform: uppercase; }
+                .header p { margin: 2px 0; font-size: 10px; font-weight: bold; color: #555; }
+                .info-box { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; background: #fdfdfd; padding: 12px; border: 1px solid #ddd; border-radius: 6px; }
+                .info-item { border-bottom: 1px solid #eee; padding-bottom: 2px; }
+                .label { font-size: 8px; font-weight: 900; text-transform: uppercase; color: #888; display: block; }
+                .value { font-size: 11px; font-weight: bold; color: #000; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                th { background: #000; color: #fff; font-size: 8px; text-transform: uppercase; padding: 8px; border: 1px solid #000; }
+                td { border: 1px solid #ccc; padding: 6px; font-size: 10px; text-align: center; }
                 .desc-td { text-align: left; font-weight: bold; }
-                .termo { font-size: 11px; text-align: justify; border: 2px solid #eee; padding: 20px; border-radius: 12px; margin-top: 30px; line-height: 1.8; }
-                .assinaturas { margin-top: 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
-                .ass-box { border-top: 1px solid #000; text-align: center; padding-top: 10px; font-size: 11px; font-weight: bold; }
+                .termo { font-size: 9px; text-align: justify; border: 1px solid #eee; padding: 12px; border-radius: 8px; margin-top: 10px; line-height: 1.5; background: #fafafa; }
+                .assinaturas { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; }
+                .ass-box { border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 9px; font-weight: bold; }
                 @media print { .no-print { display: none; } }
               </style>
             </head>
