@@ -213,9 +213,9 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px] sticky left-[120px] z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Descrição do Produto</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Pedido</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Aprovado</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Dias</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ação</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-muted tracking-widest text-center">Dias</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-muted tracking-widest text-center">Status</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-muted tracking-widest text-right">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -266,52 +266,28 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[100px]">Registro</th>
-                    <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px]">Descrição</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Categoria</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[100px]">Reg.</th>
+                    <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição Completa do Material</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo / Detalhes</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Categoria</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {estoque.filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
-                      <td className="p-8 text-center"><span className="text-xs font-black font-mono text-[var(--text-muted)]">{item.codigo_registro || '---'}</span></td>
+                      <td className="p-8 text-center font-mono text-[var(--text-muted)] text-xs">{item.codigo_registro || '---'}</td>
                       <td className="p-8 pl-10">
-                        <div className="flex flex-col">
-                           <span className="text-sm font-black whitespace-normal max-w-[400px]">{item.item}</span>
-                           {item.categoria === 'EPI' && item.ca && <span className="text-[9px] font-black text-orange-600 uppercase mt-1">CA: {item.ca}</span>}
-                        </div>
+                        <span className="text-sm font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors">{item.item}</span>
                       </td>
-                      <td className="p-8 text-center">
-                        <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                      <td className="p-8 text-center"><span className="text-xs font-bold text-[var(--text-muted)]">{item.unidade_medida || 'UN'}</span></td>
+                      <td className="p-8 text-right">
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                           item.categoria === 'EPI' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
                           item.categoria === 'SUPRIMENTO' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
                           'bg-purple-500/10 text-purple-600 border-purple-500/20'
                         }`}>
                           {item.categoria}
                         </span>
-                      </td>
-                      <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || 'UN'} {item.tamanho ? `(${item.tamanho})` : ''}</span></td>
-                      <td className="p-8 text-center">
-                         {item.categoria === 'SUPRIMENTO' ? (
-                           <div className="flex flex-col items-center">
-                             <span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-                             <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-0.5">{item.coeficiente} / ASG</span>
-                           </div>
-                         ) : (
-                           <span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span>
-                         )}
-                      </td>
-                      <td className="p-8 text-right">
-                        {item.categoria === 'SUPRIMENTO' ? (
-                           <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-500 text-white shadow-sm shadow-blue-500/20">Catálogo</span>
-                        ) : (
-                           <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
-                             {item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}
-                           </span>
-                        )}
                       </td>
                     </tr>
                   ))}
@@ -419,11 +395,11 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                      ...formData, 
                      categoria: cat, 
                      tipo_estoque: cat === 'EPI' ? 'PROPRIO' : 'CATALOGO',
-                     quantidade: 0,
-                     estoque_minimo: cat === 'EPI' ? 5 : 0,
-                     ca: '',
-                     tamanho: '',
-                     coeficiente: cat === 'SUPRIMENTO' ? 1.0 : 0
+                     quantidade: formData.quantidade || 0,
+                     estoque_minimo: formData.estoque_minimo || 5,
+                     ca: formData.ca || '',
+                     tamanho: formData.tamanho || '',
+                     coeficiente: cat === 'SUPRIMENTO' ? (formData.coeficiente || 1.0) : 0
                    });
                  }}
                >
@@ -456,33 +432,40 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                  <input type="text" className="input-field uppercase" value={formData.tamanho} onChange={e => setFormData({...formData, tamanho: e.target.value})} placeholder="G, 42, Único" />
                </div>
 
-               {formData.categoria === 'EPI' && (
-                 <>
-                   <div>
-                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CA (Certificado)</label>
-                     <input type="text" className="input-field" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Número CA" />
-                   </div>
-                   <div>
-                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Estoque Mínimo</label>
-                     <input type="number" className="input-field" value={formData.estoque_minimo} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
-                   </div>
-                 </>
-               )}
+               {formData.categoria !== 'SUPRIMENTO' && (
+                  <>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Saldo em Estoque</label>
+                      <input type="number" className="input-field font-black text-blue-600" value={formData.quantidade} onChange={e => setFormData({...formData, quantidade: Number(e.target.value)})} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Estoque Mínimo</label>
+                      <input type="number" className="input-field" value={formData.estoque_minimo} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
+                    </div>
+                  </>
+                )}
+
+                {formData.categoria === 'EPI' && (
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CA (Certificado de Aprovação)</label>
+                    <input type="text" className="input-field" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Número do CA" />
+                  </div>
+                )}
 
                {formData.categoria !== 'EPI' && (
-                 <>
-                   <div>
-                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref. (R$)</label>
-                     <input type="number" step="0.01" className="input-field" value={formData.valor_unitario} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)})} placeholder="0.00" />
-                   </div>
-                   {formData.categoria === 'SUPRIMENTO' && (
-                     <div>
-                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Coeficiente / ASG</label>
-                       <input type="number" step="0.1" className="input-field text-blue-600" value={formData.coeficiente} onChange={e => setFormData({...formData, coeficiente: Number(e.target.value)})} placeholder="Ex: 1.5" />
-                     </div>
-                   )}
-                 </>
-               )}
+                  <>
+                    <div className={formData.categoria === 'ESCRITORIO' ? 'col-span-2' : ''}>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref. (R$)</label>
+                      <input type="number" step="0.01" className="input-field" value={formData.valor_unitario} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)})} placeholder="0.00" />
+                    </div>
+                    {formData.categoria === 'SUPRIMENTO' && (
+                      <div>
+                        <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Coeficiente / ASG</label>
+                        <input type="number" step="0.1" className="input-field text-blue-600" value={formData.coeficiente} onChange={e => setFormData({...formData, coeficiente: Number(e.target.value)})} placeholder="Ex: 1.5" />
+                      </div>
+                    )}
+                  </>
+                )}
             </div>
 
             <button onClick={handleSalvarItem} className="h-14 w-full bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
@@ -504,7 +487,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             
             <div className="space-y-2 max-h-60 overflow-y-auto">
                <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2">Selecione os EPIs (Estoque)</p>
-               {estoque.filter(i => i.tipo_estoque === 'PROPRIO' && i.quantidade > 0).map(i => (
+               {estoque.filter(i => i.categoria === 'EPI' && i.quantidade > 0).map(i => (
                   <div key={i.id} className="flex justify-between items-center p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] cursor-pointer hover:border-orange-500 transition-colors" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
                      <span className="text-[11px] font-bold">{i.item} <span className="text-[9px] text-[var(--text-muted)]">({i.tamanho})</span></span>
                      <Plus size={14} className="text-[var(--brand)]"/>
