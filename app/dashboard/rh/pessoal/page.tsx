@@ -17,15 +17,9 @@ export default function RHPessoalPage() {
   const [user, setUser] = useState<any>(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
-  const [aba, setAba] = useState<"ativos" | "talentos" | "vagas" | "extras" | "volantes">("ativos");
+  const [aba, setAba] = useState<"ativos" | "talentos" | "extras" | "volantes">("ativos");
   const [horasExtras, setHorasExtras] = useState<any[]>([]);
   const [volantesReqs, setVolantesReqs] = useState<any[]>([]);
-  const [vagas, setVagas] = useState<any[]>([
-    { id: '1', unidade: 'SEMED', cargo: 'ASG', quantidade: 5, status: 'ABERTA' },
-    { id: '2', unidade: 'SEMSA', cargo: 'Porteiro', quantidade: 2, status: 'ABERTA' },
-    { id: '3', unidade: 'UBS Norte', cargo: 'Recepcionista', quantidade: 1, status: 'URGENTE' },
-    { id: '4', unidade: 'Hospital A', cargo: 'Zelador', quantidade: 3, status: 'ABERTA' }
-  ]);
   const [selecionado, setSelecionado] = useState<any>(null);
   const [novoStatus, setNovoStatus] = useState("");
   const [candidatos, setCandidatos] = useState<any[]>([]);
@@ -103,9 +97,7 @@ export default function RHPessoalPage() {
                 <button onClick={() => setAba("talentos")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "talentos" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "talentos" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
                   Banco de Talentos ({candidatos.length})
                 </button>
-                <button onClick={() => setAba("vagas")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "vagas" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "vagas" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
-                  Quadro de Vagas ({vagas.reduce((acc, v) => acc + v.quantidade, 0)})
-                </button>
+
                 <button onClick={() => setAba("extras")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "extras" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "extras" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
                   Horas Extras ({horasExtras.length})
                 </button>
@@ -211,31 +203,6 @@ export default function RHPessoalPage() {
                       <td style={{ padding: "0.875rem 1rem", display: "flex", gap: "0.5rem" }}>
                         <button className="btn-brand" onClick={() => alert("Recurso Desativado")} style={{ padding: "4px 8px", fontSize: "0.75rem", height: "auto" }}>Ver Detalhes</button>
                         <button className="btn-ghost" style={{ padding: "4px 8px", fontSize: "0.75rem", height: "auto" }}>Descartar</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : aba === "vagas" ? (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead style={{ position: "sticky", top: 0, background: "var(--bg-card)", zIndex: 10 }}>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Unidade", "Cargo", "Vagas Abertas", "Prioridade", "Ações"].map(h => (
-                      <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {vagas.map(v => (
-                    <tr key={v.id} className="table-row">
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>{v.unidade}</td>
-                      <td style={{ padding: "0.875rem 1rem" }}><span className={`badge ${cargoCores[v.cargo] || "badge-blue"}`}>{v.cargo}</span></td>
-                      <td style={{ padding: "0.875rem 1rem", fontSize: "0.95rem", fontWeight: 700, color: "var(--brand)" }}>{v.quantidade}</td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <span className={`badge ${v.status === 'URGENTE' ? 'badge-red' : 'badge-amber'}`}>{v.status}</span>
-                      </td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <button className="btn-ghost" onClick={() => alert("Gerenciar Vaga...")}>Gerenciar Vaga</button>
                       </td>
                     </tr>
                   ))}
