@@ -20,8 +20,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [user, setUser] = useState<any>({});
   
   // --- Tabs ---
-  type TabType = "EPI" | "SUPRIMENTOS" | "ESCRITORIO" | "REQUISICOES" | "OCORRENCIAS";
-  const [activeTab, setActiveTab] = useState<TabType>("EPI");
+  type TabType = "ESTOQUE" | "REQUISICOES" | "OCORRENCIAS";
+  const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
   
   // --- Modais ---
   const [modalAberto, setModalAberto] = useState<null | "cadastro" | "entrega" | "editar_req" | "ocorrencia" | "confirmar_entrega">(null);
@@ -50,16 +50,20 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   async function fetchTudo() {
     setLoading(true);
     
-    // Define qual tabela buscar baseado na aba ativa
-    let table = "";
-    if (activeTab === "EPI") table = "almox_epi";
-    if (activeTab === "SUPRIMENTOS") table = "almox_suprimentos";
-    if (activeTab === "ESCRITORIO") table = "almox_escritorio";
+    // Busca das 3 tabelas em paralelo
+    const [epiRes, supRes, escRes] = await Promise.all([
+      supabase.from('almox_epi').select('*'),
+      supabase.from('almox_suprimentos').select('*'),
+      supabase.from('almox_escritorio').select('*')
+    ]);
 
-    if (table) {
-      const { data: estData } = await supabase.from(table).select('*').order('item');
-      if (estData) setEstoque(estData);
-    }
+    const combined = [
+      ...(epiRes.data || []),
+      ...(supRes.data || []),
+      ...(escRes.data || [])
+    ].sort((a, b) => a.item.localeCompare(b.item));
+
+    setEstoque(combined);
 
     const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
     if (reqData) setRequisicoes(reqData);
@@ -167,12 +171,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
              <UserCheck size={16} /> Entrega Direta (EPI)
            </button>
             <button onClick={() => { 
-              let cat = "EPI";
-              if (activeTab === "SUPRIMENTOS") cat = "SUPRIMENTO";
-              else if (activeTab === "ESCRITORIO") cat = "ESCRITORIO";
-              
               setFormData({ 
-                id: "", item: "", codigo_registro: "", categoria: cat, unidade_medida: "UN", tamanho: "", ca: "", 
+                id: "", item: "", codigo_registro: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", 
                 quantidade: 0, estoque_minimo: 5, valor_unitario: 0, coeficiente: 1.0 
               }); 
               setModalAberto("cadastro"); 
@@ -186,9 +186,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md w-fit overflow-x-auto">
           {[
-            { id: "EPI", label: "Cadastro EPI", icon: ShieldCheck },
-            { id: "SUPRIMENTOS", label: "Cadastro Suprimentos", icon: ClipboardList },
-            { id: "ESCRITORIO", label: "Cadastro Escritório", icon: Ruler },
+            { id: "ESTOQUE", label: "Estoque Geral", icon: Package },
             { id: "REQUISICOES", label: "Análise de Pedidos", icon: FileText },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
@@ -270,13 +268,10 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                   <tr>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[100px]">Registro</th>
                     <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px]">Descrição</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Categoria</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
-                    {activeTab === "EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
-                    {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>}
-                    {activeTab === "SUPRIMENTOS" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Valor Ref.</th>}
-                    {activeTab === "SUPRIMENTOS" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Coeficiente</th>}
-                    {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>}
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo / Detalhes</th>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -284,16 +279,40 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
                       <td className="p-8 text-center"><span className="text-xs font-black font-mono text-[var(--text-muted)]">{item.codigo_registro || '---'}</span></td>
                       <td className="p-8 pl-10">
-                        <div className="text-sm font-black whitespace-normal max-w-[400px]">{item.item}</div>
-                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
+                        <div className="flex flex-col">
+                           <span className="text-sm font-black whitespace-normal max-w-[400px]">{item.item}</span>
+                           {item.categoria === 'EPI' && item.ca && <span className="text-[9px] font-black text-orange-600 uppercase mt-1">CA: {item.ca}</span>}
+                        </div>
                       </td>
-                      <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || '---'}</span></td>
-                      <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>
-                      {activeTab === "EPI" && <td className="p-8 text-center"><span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span></td>}
-                      {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>}
-                      {activeTab === "SUPRIMENTOS" && <td className="p-8 text-center"><span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>}
-                      {activeTab === "SUPRIMENTOS" && <td className="p-8 text-center"><span className="text-sm font-black text-blue-600">{item.coeficiente ? `${item.coeficiente} / ASG` : '---'}</span></td>}
-                      {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>}
+                      <td className="p-8 text-center">
+                        <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                          item.categoria === 'EPI' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                          item.categoria === 'SUPRIMENTO' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                          'bg-purple-500/10 text-purple-600 border-purple-500/20'
+                        }`}>
+                          {item.categoria}
+                        </span>
+                      </td>
+                      <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || 'UN'} {item.tamanho ? `(${item.tamanho})` : ''}</span></td>
+                      <td className="p-8 text-center">
+                         {item.categoria === 'SUPRIMENTO' ? (
+                           <div className="flex flex-col items-center">
+                             <span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                             <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-0.5">{item.coeficiente} / ASG</span>
+                           </div>
+                         ) : (
+                           <span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span>
+                         )}
+                      </td>
+                      <td className="p-8 text-right">
+                        {item.categoria === 'SUPRIMENTO' ? (
+                           <span className="px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-500 text-white shadow-sm shadow-blue-500/20">Catálogo</span>
+                        ) : (
+                           <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+                             {item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}
+                           </span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
