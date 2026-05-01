@@ -38,6 +38,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   });
 
   const [entregaData, setEntregaData] = useState({ colaborador: "", itens: [] as any[] });
+  const [buscaFuncionario, setBuscaFuncionario] = useState("");
+  
   const [reqEditando, setReqEditando] = useState<any>(null);
   const [ocorrenciaData, setOcorrenciaData] = useState({ reqId: "", desc: "", prioridade: "ALTA", dias_solucao: 1 });
   const [entregaConfirm, setEntregaConfirm] = useState({ recebedor: "" });
@@ -230,6 +232,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
       setModalAberto(null);
       setEntregaData({ colaborador: "", itens: [] });
+      setBuscaFuncionario("");
       fetchTudo();
     } catch (err: any) {
       alert("Erro: " + err.message);
@@ -337,7 +340,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-           <button onClick={() => setModalAberto("entrega")} className="h-12 px-6 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-orange-600/20">
+           <button onClick={() => { setEntregaData({ colaborador: "", itens: [] }); setBuscaFuncionario(""); setModalAberto("entrega"); }} className="h-12 px-6 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-orange-600/20">
              <UserCheck size={16} /> Entrega Direta (EPI)
            </button>
             <button onClick={() => { 
@@ -531,7 +534,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div>
                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Quantidade Real Aprovada</label>
-                    <input type="number" className="input-field !h-16 text-2xl font-black text-center border-blue-200 text-blue-600" value={reqEditando.quantidade_aprovada} onChange={e => setReqEditando({...reqEditando, quantidade_aprovada: Number(e.target.value)})} />
+                    <input type="number" className="input-field !h-16 text-2xl font-black text-center border-blue-200 text-blue-600" value={reqEditando.quantidade_aprovada} onChange={e => setReqEditando({...reqEditando, { quantidade_aprovada: Number(e.target.value) }})} />
                  </div>
                  <div className="flex flex-col gap-3 justify-center">
                     <button onClick={() => handleProcessarReq(reqEditando.id, 'APROVADO', reqEditando.quantidade_aprovada)} className="h-16 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Aprovar com Ajustes</button>
@@ -671,14 +674,40 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
       {/* MODAL ENTREGA DIRETA DE EPI */}
       <AdaptiveModal isOpen={modalAberto === "entrega"} onClose={() => setModalAberto(null)} title="Entrega de EPI (Ficha NR-06)">
-         <div className="p-8 space-y-8 max-h-[85vh] overflow-y-auto">
-            {/* Seção 1: Colaborador */}
-            <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)]">
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Colaborador Destinatário</label>
-               <select className="input-field w-full font-black text-orange-600" value={entregaData.colaborador} onChange={e => setEntregaData({...entregaData, colaborador: e.target.value})}>
-                  <option value="">Selecione na lista de usuários...</option>
-                  {usuarios.map(u => <option key={u.id} value={u.nome}>{u.nome} ({u.cargo})</option>)}
-               </select>
+         <div className="p-8 space-y-8 max-h-[85vh] overflow-y-auto overflow-x-hidden">
+            {/* Seção 1: Colaborador com Busca Rápida */}
+            <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)] relative">
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Pesquisar Colaborador (800+ cadastrados)</label>
+               <div className="relative">
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input className="input-field !pl-12 !h-14 font-black text-orange-600" placeholder="Digite o nome do funcionário..." value={buscaFuncionario} onChange={e => setBuscaFuncionario(e.target.value)} />
+               </div>
+               
+               {buscaFuncionario.length > 2 && (
+                 <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-[var(--border)] shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {usuarios.filter(u => u.nome.toLowerCase().includes(buscaFuncionario.toLowerCase())).map(u => (
+                       <div key={u.id} className="p-4 hover:bg-orange-50 cursor-pointer border-b border-[var(--border)] last:border-0 transition-colors" onClick={() => { setEntregaData({...entregaData, colaborador: u.nome}); setBuscaFuncionario(""); }}>
+                          <p className="text-sm font-black text-[var(--text-primary)]">{u.nome}</p>
+                          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{u.cargo}</p>
+                       </div>
+                    ))}
+                 </div>
+               )}
+
+               {entregaData.colaborador && (
+                 <div className="mt-4 p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20 flex items-center justify-between animate-fade-in">
+                    <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white">
+                          <User size={20} />
+                       </div>
+                       <div>
+                          <p className="text-xs font-black text-orange-900">{entregaData.colaborador}</p>
+                          <p className="text-[9px] font-bold text-orange-700/60 uppercase">Selecionado para Entrega</p>
+                       </div>
+                    </div>
+                    <button onClick={() => setEntregaData({...entregaData, colaborador: ""})} className="p-2 text-orange-600 hover:bg-white rounded-lg transition-all"><X size={16}/></button>
+                 </div>
+               )}
             </div>
             
             {/* Seção 2: Seleção de Itens */}
