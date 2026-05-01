@@ -45,12 +45,76 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
   }, []);
 
-  const NOTIFICACOES = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Centro de Comando', roles: ['ADMIN'] },
-    { text: "Estoque de Luva abaixo do mínimo", type: "warning", time: "5 min" },
-    { text: "Novo registro de ponto detectado", type: "success", time: "12 min" },
-    { text: "Relatório semanal disponível", type: "info", time: "1h" },
-  ];
+  const [notificacoes, setNotificacoes] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchNotifs() {
+       if (!user?.role) return;
+       const safeRole = String(user.role).toUpperCase();
+       const newNotifs: any[] = [];
+
+       try {
+         if (safeRole === 'COMPRADOR') {
+            // 1. Pedidos Aprovados ou com alteração de status
+            const { data: reqs } = await supabase
+              .from('requisicoes')
+              .select('protocolo, status, item_nome')
+              .eq('unidade_destino', (user as any).unidade_alocacao)
+              .neq('status', 'SOLICITADO')
+              .order('data_solicitacao', { ascending: false })
+              .limit(5);
+            
+            // Agrupar por protocolo para não poluir
+            const protosSet = new Set();
+            reqs?.forEach(r => {
+               if (!protosSet.has(r.protocolo)) {
+                  newNotifs.push({ 
+                    text: `Pedido ${r.protocolo}: Status atualizado para ${r.status}`, 
+                    type: r.status === 'ENTREGUE' ? 'success' : 'info', 
+                    time: 'Recente' 
+                  });
+                  protosSet.add(r.protocolo);
+               }
+            });
+
+            // 2. Reposição de Estoque (Novas Mercadorias)
+            const { data: reposicoes } = await supabase
+              .from('historico_gestao')
+              .select('*')
+              .eq('tipo_acao', 'REPOSICAO_ESTOQUE')
+              .order('created_at', { ascending: false })
+              .limit(2);
+            
+            reposicoes?.forEach(r => {
+               newNotifs.push({ text: `Estoque: Nova mercadoria chegou no Almoxarifado`, type: 'success', time: 'Agora' });
+            });
+         } else if (safeRole === 'ADMIN' || safeRole === 'DIRETORIA') {
+            newNotifs.push(
+               { text: "Estoque de Luva abaixo do mínimo", type: "warning", time: "5 min" },
+               { text: "Nova denúncia anônima recebida", type: "danger", time: "15 min" },
+               { text: "Relatório semanal de custos disponível", type: "info", time: "1h" }
+            );
+         } else {
+            newNotifs.push(
+               { text: "Sincronização de ponto concluída", type: "success", time: "10 min" },
+               { text: "Verifique seu quadro de avisos", type: "info", time: "2h" }
+            );
+         }
+       } catch (err) {
+         console.error("Erro ao carregar notificações", err);
+       }
+       
+       if (newNotifs.length === 0) {
+         newNotifs.push({ text: "Nenhuma notificação nova", type: "info", time: "--" });
+       }
+       setNotificacoes(newNotifs);
+    }
+    fetchNotifs();
+    
+    // Refresh a cada 2 minutos
+    const interval = setInterval(fetchNotifs, 120000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   return (
     <div className="flex h-screen overflow-hidden p-4 gap-4 relative z-10">
@@ -189,9 +253,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="w-10 h-10 flex items-center justify-center rounded-xl glass hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] relative transition-all"
               >
                 <Bell size={18} />
-                <span className="absolute -top-1 -right-1 bg-[var(--danger)] text-white text-[0.6rem] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-[var(--danger)]/30 animate-bounce">
-                  4
-                </span>
+                {notificacoes.length > 0 && notificacoes[0].time !== '--' && (
+                  <span className="absolute -top-1 -right-1 bg-[var(--danger)] text-white text-[0.6rem] font-black w-5 h-5 rounded-lg flex items-center justify-center shadow-lg shadow-[var(--danger)]/30 animate-bounce">
+                    {notificacoes.length}
+                  </span>
+                )}
               </button>
               
               {notifOpen && (
@@ -201,7 +267,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <span className="badge badge-red">Recentes</span>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto">
-                    {NOTIFICACOES.map((n, i) => (
+                    {notificacoes.map((n, i) => (
                       <div key={i} className="p-4 border-b border-[var(--border)] last:border-none flex gap-3 items-start hover:bg-[var(--bg-card-hover)] transition-colors cursor-pointer">
                         <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.type === 'danger' ? 'bg-[var(--danger)]' : n.type === 'warning' ? 'bg-[var(--warning)]' : 'bg-[var(--success)]'}`} />
                         <div>
