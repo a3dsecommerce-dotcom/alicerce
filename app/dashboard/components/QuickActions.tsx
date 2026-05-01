@@ -20,36 +20,12 @@ export default function QuickActions({ user }: QuickActionsProps) {
 
   const actions = [
     {
-      id: 'abrir-ocorrencia',
-      label: 'Abrir Ocorrência',
-      icon: AlertTriangle,
-      color: 'var(--danger)',
-      allowed: true, // Shared by all
-      onClick: () => setModalActive('abrir-ocorrencia')
-    },
-    {
       id: 'checkin-unidade',
       label: 'Check-in Unidade',
       icon: MapPin,
       color: 'var(--brand)',
       allowed: isEncarregado,
       onClick: () => setModalActive('checkin-unidade')
-    },
-    {
-      id: 'solicitar-reposicao',
-      label: 'Pedir Reposição',
-      icon: Truck,
-      color: 'var(--info)',
-      allowed: isEncarregado || isAlmoxarifado,
-      onClick: () => setModalActive('solicitar-reposicao')
-    },
-    {
-      id: 'entrega-epi',
-      label: 'Entrega de EPI',
-      icon: Shield,
-      color: 'var(--brand)',
-      allowed: user.role !== 'DIRETOR' && user.role !== 'COMPRADOR' && user.role !== 'RH_SECRETARIA', 
-      onClick: () => setModalActive('entregar-epi')
     },
     {
       id: 'informar-abono',
@@ -60,44 +36,12 @@ export default function QuickActions({ user }: QuickActionsProps) {
       onClick: () => setModalActive('informar-abono')
     },
     {
-      id: 'estoque-epi',
-      label: 'Estoque EPI',
-      icon: Package,
-      color: 'var(--info)',
-      allowed: isAlmoxarifado,
-      onClick: () => window.location.href = '/dashboard/almoxarifado'
-    },
-    {
-      id: 'aprovacao-req',
-      label: 'Aprovar Requisição',
-      icon: CheckCircle,
-      color: 'var(--success)',
-      allowed: isAlmoxarifado,
-      onClick: () => window.location.href = '/dashboard/compras'
-    },
-    {
-      id: 'informar-entrega',
-      label: 'Informar Entrega',
-      icon: Truck,
-      color: 'var(--brand)',
-      allowed: isAlmoxarifado,
-      onClick: () => window.location.href = '/dashboard/compras'
-    },
-    {
       id: 'admissao',
       label: 'Admissão Master',
       icon: UserPlus,
       color: 'var(--info)',
       allowed: isRH,
       onClick: () => setModalActive('admissao')
-    },
-    {
-      id: 'relatorios',
-      label: 'Relatórios',
-      icon: FileText,
-      color: 'var(--text-secondary)',
-      allowed: true,
-      onClick: () => window.location.href = '/dashboard/relatorios'
     }
   ];
 
