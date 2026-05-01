@@ -229,41 +229,41 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left border-separate border-spacing-0">
                 <thead className="bg-[var(--bg-base)]/90 backdrop-blur-md sticky top-0 z-20 border-b border-[var(--border)]">
                   <tr>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[120px] sticky left-0 z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Nº Req.</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px] sticky left-[120px] z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Descrição do Produto</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Pedido</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Aprovado</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-muted tracking-widest text-center">Dias</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-muted tracking-widest text-center">Status</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-muted tracking-widest text-right">Ação</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[120px] sticky left-0 z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)]">Nº Req.</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px] sticky left-[120px] z-30 bg-[var(--bg-card)] border-b border-r border-[var(--border)] text-left">Descrição do Produto</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Pedido</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Aprovado</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Dias</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-right">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {requisicoes.filter(r => r.protocolo?.toLowerCase().includes(busca.toLowerCase()) || r.item_nome?.toLowerCase().includes(busca.toLowerCase())).map(r => (
                     <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all group">
-                      <td className="p-8 text-center sticky left-0 z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)] font-black text-[var(--brand)]">{r.protocolo || '---'}</td>
-                      <td className="p-8 sticky left-[120px] z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)]">
+                      <td className="px-6 py-6 text-center sticky left-0 z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)] font-black text-[var(--brand)]">{r.protocolo || '---'}</td>
+                      <td className="px-6 py-6 sticky left-[120px] z-10 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)]/50 border-r border-[var(--border)]">
                         <div className="text-sm font-black whitespace-normal max-w-[250px]">{r.item_nome || r.item}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{r.unidade_destino} | {new Date(r.data_solicitacao).toLocaleDateString()}</div>
                       </td>
-                      <td className="p-8 text-center">
+                      <td className="px-6 py-6 text-center">
                         <span className="text-sm font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</span>
                       </td>
-                      <td className="p-8 text-center">
+                      <td className="px-6 py-6 text-center">
                         <span className="text-base font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</span>
                       </td>
-                      <td className="p-8 text-center">
+                      <td className="px-6 py-6 text-center">
                          <div className="flex flex-col items-center gap-1">
                             <Clock size={12} className="text-orange-500" />
                             <span className="text-[10px] font-black uppercase text-orange-600">{calcularDias(r.data_solicitacao)}</span>
                          </div>
                       </td>
-                      <td className="p-8 text-center">
+                      <td className="px-6 py-6 text-center">
                         <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${r.status === 'SOLICITADO' ? 'bg-orange-100 text-orange-700' : r.status === 'APROVADO' ? 'bg-blue-100 text-blue-700' : r.status === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                           {r.status}
                         </span>
                       </td>
-                      <td className="p-8 text-right">
+                      <td className="px-6 py-6 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => { setReqEditando(r); setModalAberto("ocorrencia"); }} title="Ocorrência" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"><AlertTriangle size={14}/></button>
                           
@@ -286,22 +286,22 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[100px]">Reg.</th>
-                    <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição Completa do Material</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
-                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Categoria</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[100px]">Reg.</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-left">Descrição do Material</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[100px]">Unidade</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[150px]">Categoria</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {estoque.filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
-                      <td className="p-8 text-center font-mono text-[var(--text-muted)] text-xs">{item.codigo_registro || '---'}</td>
-                      <td className="p-8 pl-10">
-                        <span className="text-sm font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors">{item.item}</span>
+                      <td className="px-6 py-6 text-center font-mono text-[var(--text-muted)] text-[11px]">{item.codigo_registro || '---'}</td>
+                      <td className="px-6 py-6">
+                        <span className="text-[13px] font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors">{item.item}</span>
                       </td>
-                      <td className="p-8 text-center"><span className="text-xs font-bold text-[var(--text-muted)]">{item.unidade_medida || 'UN'}</span></td>
-                      <td className="p-8 text-right">
-                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                      <td className="px-6 py-6 text-center"><span className="text-[11px] font-black text-[var(--text-muted)]">{item.unidade_medida || 'UN'}</span></td>
+                      <td className="px-6 py-6 text-center">
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border inline-block min-w-[100px] ${
                           item.categoria === 'EPI' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
                           item.categoria === 'SUPRIMENTO' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
                           'bg-purple-500/10 text-purple-600 border-purple-500/20'
