@@ -674,59 +674,76 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
       {/* MODAL ENTREGA DIRETA DE EPI */}
       <AdaptiveModal isOpen={modalAberto === "entrega"} onClose={() => setModalAberto(null)} title="Entrega de EPI (Ficha NR-06)">
-         <div className="p-8 space-y-8 max-h-[85vh] overflow-y-auto overflow-x-hidden">
+         <div className="p-12 space-y-12 max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-thin">
             {/* Seção 1: Colaborador com Busca Rápida */}
-            <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)] relative">
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Pesquisar Colaborador (800+ cadastrados)</label>
+            <div className="bg-[var(--bg-base)] p-10 rounded-[2.5rem] border border-[var(--border)] relative shadow-sm">
+               <label className="text-[11px] font-black uppercase text-[var(--text-muted)] mb-5 block tracking-widest">1. Identificação do Colaborador</label>
                <div className="relative">
-                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                  <input className="input-field !pl-12 !h-14 font-black text-orange-600" placeholder="Digite o nome do funcionário..." value={buscaFuncionario} onChange={e => setBuscaFuncionario(e.target.value)} />
+                  <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input className="input-field !pl-16 !h-16 text-sm font-black text-orange-600 !rounded-2xl" placeholder="Pesquisar por nome ou cargo..." value={buscaFuncionario} onChange={e => setBuscaFuncionario(e.target.value)} />
                </div>
                
+               {/* Dropdown de Resultados (melhorado) */}
                {buscaFuncionario.length > 2 && (
-                 <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-[var(--border)] shadow-2xl z-50 max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {usuarios.filter(u => u.nome.toLowerCase().includes(buscaFuncionario.toLowerCase())).map(u => (
-                       <div key={u.id} className="p-4 hover:bg-orange-50 cursor-pointer border-b border-[var(--border)] last:border-0 transition-colors" onClick={() => { setEntregaData({...entregaData, colaborador: u.nome}); setBuscaFuncionario(""); }}>
-                          <p className="text-sm font-black text-[var(--text-primary)]">{u.nome}</p>
-                          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{u.cargo}</p>
+                 <div className="absolute left-0 right-0 top-full mt-4 bg-white rounded-3xl border border-[var(--border)] shadow-2xl z-50 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-4 duration-300">
+                    {usuarios.filter(u => u.nome.toLowerCase().includes(buscaFuncionario.toLowerCase()) || u.cargo?.toLowerCase().includes(buscaFuncionario.toLowerCase())).map(u => (
+                       <div key={u.id} className="p-6 hover:bg-orange-50 cursor-pointer border-b border-[var(--border)] last:border-0 transition-all flex items-center gap-4" onClick={() => { setEntregaData({...entregaData, colaborador: u.nome}); setBuscaFuncionario(""); }}>
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-black text-xs">{u.nome[0]}</div>
+                          <div>
+                             <p className="text-sm font-black text-[var(--text-primary)]">{u.nome}</p>
+                             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{u.cargo}</p>
+                          </div>
                        </div>
                     ))}
                  </div>
                )}
 
                {entregaData.colaborador && (
-                 <div className="mt-4 p-4 bg-orange-500/10 rounded-2xl border border-orange-500/20 flex items-center justify-between animate-fade-in">
-                    <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white">
-                          <User size={20} />
+                 <div className="mt-8 p-6 bg-orange-600 text-white rounded-3xl flex items-center justify-between animate-fade-in shadow-lg shadow-orange-600/20">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md border border-white/20">
+                          <User size={24} />
                        </div>
                        <div>
-                          <p className="text-xs font-black text-orange-900">{entregaData.colaborador}</p>
-                          <p className="text-[9px] font-bold text-orange-700/60 uppercase">Selecionado para Entrega</p>
+                          <p className="text-sm font-black">{entregaData.colaborador}</p>
+                          <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Colaborador Selecionado</p>
                        </div>
                     </div>
-                    <button onClick={() => setEntregaData({...entregaData, colaborador: ""})} className="p-2 text-orange-600 hover:bg-white rounded-lg transition-all"><X size={16}/></button>
+                    <button onClick={() => setEntregaData({...entregaData, colaborador: ""})} className="p-3 hover:bg-black/10 rounded-2xl transition-all"><X size={20}/></button>
                  </div>
                )}
             </div>
             
             {/* Seção 2: Seleção de Itens */}
-            <div className="space-y-4">
-               <div className="flex justify-between items-center">
-                  <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Catálogo de EPIs Disponíveis</h4>
-                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase">Apenas Categoria EPI</span>
+            <div className="space-y-6">
+               <div className="flex justify-between items-end px-2">
+                  <div>
+                     <h4 className="text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest">2. Catálogo de EPIs</h4>
+                     <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-1">Selecione os itens para compor a ficha NR-06</p>
+                  </div>
+                  <span className="text-[9px] font-black text-blue-600 bg-blue-50 px-4 py-2 rounded-full border border-blue-100 uppercase tracking-tighter">Estoque Disponível</span>
                </div>
                
-               <div className="flex flex-col gap-2 max-h-60 overflow-y-auto p-1 scrollbar-thin">
+               <div className="flex flex-col gap-4 max-h-80 overflow-y-auto p-2 scrollbar-thin">
                   {estoque.filter(i => i.categoria === 'EPI' && i.quantidade > 0).map(i => (
-                     <div key={i.id} className="flex justify-between items-center p-4 bg-white rounded-2xl border border-[var(--border)] cursor-pointer hover:border-orange-500 hover:shadow-md transition-all group" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
-                        <div className="flex flex-col">
-                           <span className="text-xs font-black text-[var(--text-primary)] group-hover:text-orange-600 transition-colors">{i.item}</span>
-                           <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{i.tamanho || 'UN'} | CA: {i.ca || 'N/A'}</span>
+                     <div key={i.id} className="flex justify-between items-center p-6 bg-white rounded-[2rem] border border-[var(--border)] cursor-pointer hover:border-orange-500 hover:shadow-xl transition-all group" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
+                        <div className="flex items-center gap-5">
+                           <div className="w-14 h-14 bg-[var(--bg-base)] rounded-2xl flex items-center justify-center text-[var(--text-muted)] group-hover:text-orange-600 transition-all border border-[var(--border)]">
+                              <ShieldCheck size={26} />
+                           </div>
+                           <div className="flex flex-col">
+                              <span className="text-[15px] font-black text-[var(--text-primary)] group-hover:text-orange-600 transition-colors">{i.item}</span>
+                              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">TAM: {i.tamanho || 'UN'} | CA: {i.ca || 'N/A'}</span>
+                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                           <span className="text-[10px] font-black text-blue-600">Disp: {i.quantidade}</span>
-                           <Plus size={14} className="text-orange-500"/>
+                        <div className="flex items-center gap-8">
+                           <div className="text-right">
+                              <p className="text-base font-black text-blue-600">{i.quantidade}</p>
+                              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Qtd Disp.</p>
+                           </div>
+                           <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all shadow-sm border border-orange-100 group-hover:border-transparent">
+                              <Plus size={20}/>
+                           </div>
                         </div>
                      </div>
                   ))}
@@ -735,44 +752,47 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
             {/* Seção 3: Itens Selecionados para Entrega */}
             {entregaData.itens.length > 0 && (
-              <div className="space-y-4 pt-6 border-t border-[var(--border)] animate-fade-in">
-                 <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Itens na Ficha de Entrega</h4>
-                 <div className="space-y-3">
+              <div className="space-y-6 pt-12 border-t-2 border-dashed border-[var(--border)] animate-fade-in">
+                 <div className="flex justify-between items-center px-4">
+                    <h4 className="text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest">3. Resumo da Ficha de Saída</h4>
+                    <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-4 py-1.5 rounded-full">{entregaData.itens.length} {entregaData.itens.length === 1 ? 'item' : 'itens'}</span>
+                 </div>
+                 <div className="space-y-4">
                     {entregaData.itens.map((it, idx) => (
-                       <div key={idx} className="flex justify-between items-center bg-orange-50/50 p-4 rounded-2xl border border-orange-100/50">
-                          <div className="flex items-center gap-4">
-                             <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600">
-                                <ShieldCheck size={20} />
+                       <div key={idx} className="flex justify-between items-center bg-[var(--bg-base)]/30 p-8 rounded-[2.5rem] border border-[var(--border)] transition-all hover:bg-white hover:shadow-lg">
+                          <div className="flex items-center gap-6">
+                             <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-orange-600 shadow-sm border border-orange-50">
+                                <ShieldCheck size={32} />
                              </div>
                              <div>
-                                <p className="text-xs font-black text-orange-900">{it.item}</p>
-                                <p className="text-[9px] font-bold text-orange-700/60 uppercase">C.A. {it.ca}</p>
+                                <p className="text-base font-black text-[var(--text-primary)]">{it.item}</p>
+                                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Certificado C.A. {it.ca}</p>
                              </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                             <div className="flex items-center bg-white rounded-xl border border-orange-200 overflow-hidden shadow-sm">
-                                <button className="px-3 py-1 hover:bg-orange-50 text-orange-600 font-bold border-r border-orange-100" onClick={() => {
+                          <div className="flex items-center gap-8">
+                             <div className="flex items-center bg-white rounded-2xl border border-[var(--border)] overflow-hidden shadow-sm p-1.5">
+                                <button className="w-10 h-10 hover:bg-orange-50 text-orange-600 font-black rounded-xl transition-all hover:scale-110 active:scale-90" onClick={() => {
                                    const newItens = [...entregaData.itens];
                                    newItens[idx].qtd_entrega = Math.max(1, newItens[idx].qtd_entrega - 1);
                                    setEntregaData({...entregaData, itens: newItens});
                                 }}>-</button>
-                                <div className="w-10 h-10 flex items-center justify-center text-xs font-black text-orange-900 bg-transparent">
+                                <div className="w-14 h-10 flex items-center justify-center text-base font-black text-[var(--text-primary)]">
                                   {it.qtd_entrega}
                                 </div>
-                                <button className="px-3 py-1 hover:bg-orange-50 text-orange-600 font-bold border-l border-orange-100" onClick={() => {
+                                <button className="w-10 h-10 hover:bg-orange-50 text-orange-600 font-black rounded-xl transition-all hover:scale-110 active:scale-90" onClick={() => {
                                    const newItens = [...entregaData.itens];
                                    newItens[idx].qtd_entrega = Math.min(it.quantidade, newItens[idx].qtd_entrega + 1);
                                    setEntregaData({...entregaData, itens: newItens});
                                 }}>+</button>
                              </div>
-                             <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((_, i) => i !== idx)})} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><X size={18}/></button>
+                             <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((_, i) => i !== idx)})} className="p-4 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all hover:rotate-90"><X size={24}/></button>
                           </div>
                        </div>
                     ))}
                  </div>
                  
-                 <button onClick={handleConfirmarEntregaEPI} className="h-16 w-full bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-6">
-                    <Printer size={20}/> Confirmar e Gerar Ficha (PDF)
+                 <button onClick={handleConfirmarEntregaEPI} className="h-24 w-full bg-orange-600 text-white rounded-[2.5rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl shadow-orange-600/30 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-6 mt-12 group">
+                    <Printer size={28} className="group-hover:rotate-12 transition-transform" /> Confirmar e Gerar Ficha NR-06 (PDF)
                  </button>
               </div>
             )}
