@@ -28,7 +28,9 @@ export default function OcorrenciasPage() {
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState<"lista">("lista");
   const [modalNova, setModalNova] = useState(false);
+  const [modalResolucao, setModalResolucao] = useState(false);
   const [ticketSelecionado, setTicketSelecionado] = useState<any>(null);
+  const [solucaoTexto, setSolucaoTexto] = useState("");
   
   const [novaOcorrencia, setNovaOcorrencia] = useState({
     assunto: "",
@@ -58,7 +60,8 @@ export default function OcorrenciasPage() {
         realId: t.id,
         titulo: t.assunto || "Sem assunto",
         abertura: new Date(t.data_abertura).toLocaleString('pt-BR'),
-        sla: (t.status !== 'RESOLVIDO' && (new Date().getTime() - new Date(t.data_abertura).getTime()) / (1000 * 60 * 60) > 24) ? "VENCIDO" : "OK"
+        sla: (t.status !== 'RESOLVIDO' && (new Date().getTime() - new Date(t.data_abertura).getTime()) / (1000 * 60 * 60) > 24) ? "VENCIDO" : "OK",
+        tempoAberto: t.status === 'RESOLVIDO' ? 'RESOLVIDO' : calcularTempoAberto(t.data_abertura)
       })));
     }
 
@@ -75,7 +78,23 @@ export default function OcorrenciasPage() {
 
   useEffect(() => {
     loadData();
+    const timer = setInterval(loadData, 60000); // Auto-refresh a cada 1 min
+    return () => clearInterval(timer);
   }, []);
+
+  const calcularTempoAberto = (dataIso: string) => {
+    const inicio = new Date(dataIso);
+    const agora = new Date();
+    const diffMs = agora.getTime() - inicio.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMin = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (diffHrs > 24) {
+      const dias = Math.floor(diffHrs / 24);
+      return `${dias}d ${diffHrs % 24}h`;
+    }
+    return `${diffHrs}h ${diffMin}m`;
+  };
 
   const handleToggleSetor = (id: string) => {
     setNovaOcorrencia(prev => ({
@@ -147,29 +166,38 @@ export default function OcorrenciasPage() {
     setLoading(false);
   };
 
-  const handleResolver = async (ticket: any) => {
-    if (!confirm("Confirmar resolução desta ocorrência?")) return;
+    setLoading(false);
+  };
+
+  const handleFinalizarResolucao = async () => {
+    if (!solucaoTexto) return alert("Por favor, explique a solução para registro.");
     
     setLoading(true);
     const { error } = await supabase
       .from('tickets_sla')
-      .update({ status: 'RESOLVIDO' })
-      .eq('id', ticket.realId);
+      .update({ 
+        status: 'RESOLVIDO',
+        solucao_descricao: solucaoTexto,
+        data_fechamento: new Date().toISOString()
+      })
+      .eq('id', ticketSelecionado.realId);
 
     if (!error) {
-      const telefones = ticket.metadados?.telefones_whatsapp || [];
-      if (telefones.length > 0) {
-        await n8n.trigger('notificacao-ocorrencia', {
-          tipo: 'RESOLVIDO',
-          ticket_id: ticket.id,
-          assunto: ticket.titulo,
-          telefones: telefones
-        });
-      }
+      // Registrar no histórico de gestão para auditoria
+      await supabase.from('historico_gestao').insert([{
+         executor_tel: (await supabase.auth.getUser()).data.user?.phone || 'SISTEMA',
+         tipo_acao: 'RESOLUCAO_OCORRENCIA',
+         motivo: `Ticket ${ticketSelecionado.id} resolvido: ${solucaoTexto}`,
+         para: { ticket_id: ticketSelecionado.realId, status: 'RESOLVIDO' }
+      }]);
+
+      setModalResolucao(false);
       setTicketSelecionado(null);
-      loadData(); // Atualiza sem reload
+      setSolucaoTexto("");
+      loadData();
+      alert("✅ Ocorrência resolvida e registrada no log com sucesso.");
     } else {
-      alert("Erro ao resolver: " + error.message);
+      alert("Erro ao salvar resolução: " + error.message);
     }
     setLoading(false);
   };
@@ -344,12 +372,22 @@ export default function OcorrenciasPage() {
               </div>
             </div>
 
+            {ticketSelecionado.status === 'RESOLVIDO' && ticketSelecionado.solucao_descricao && (
+               <div className="mt-4">
+                  <label className="text-[10px] font-black text-green-600 uppercase mb-2 block tracking-widest">Solução Aplicada</label>
+                  <div className="p-5 bg-green-50 rounded-2xl border border-green-100 text-sm font-bold text-green-900 leading-relaxed">
+                     {ticketSelecionado.solucao_descricao}
+                     <div className="mt-3 text-[10px] opacity-60">Resolvido em: {new Date(ticketSelecionado.data_fechamento).toLocaleString()}</div>
+                  </div>
+               </div>
+            )}
+
             {ticketSelecionado.status !== 'RESOLVIDO' && (
               <div className="mt-4 flex gap-4">
                 <button className="flex-1 btn-ghost" onClick={() => setTicketSelecionado(null)}>Voltar</button>
                 <button 
                   className="flex-[2] btn-brand !bg-green-600 hover:!bg-green-700 shadow-lg shadow-green-600/20 !h-14 font-black uppercase tracking-wider"
-                  onClick={() => handleResolver(ticketSelecionado)}
+                  onClick={() => setModalResolucao(true)}
                 >
                   Confirmar Resolução <CheckCircle className="ml-2" size={18} />
                 </button>
@@ -357,6 +395,36 @@ export default function OcorrenciasPage() {
             )}
           </div>
         )}
+      </AdaptiveModal>
+
+      {/* Modal de Explicação da Solução */}
+      <AdaptiveModal
+        title="Relatório de Resolução"
+        isOpen={modalResolucao}
+        onClose={() => setModalResolucao(false)}
+        width="500px"
+      >
+         <div className="flex flex-col gap-6">
+            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-3">
+               <Activity size={20} className="text-blue-600 shrink-0" />
+               <p className="text-[10px] font-bold text-blue-800 uppercase leading-tight">Para encerrar este evento, descreva as ações tomadas. Isso gera um registro permanente de auditoria.</p>
+            </div>
+
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Descrição da Solução *</label>
+               <textarea 
+                  className="input-field !h-40 p-4 font-bold text-sm leading-relaxed" 
+                  placeholder="Explique detalhadamente o que foi feito..."
+                  value={solucaoTexto}
+                  onChange={e => setSolucaoTexto(e.target.value)}
+               />
+            </div>
+
+            <div className="flex gap-4">
+               <button className="flex-1 btn-ghost" onClick={() => setModalResolucao(false)}>Cancelar</button>
+               <button className="flex-[2] btn-brand !bg-green-600" onClick={handleFinalizarResolucao}>Salvar e Finalizar</button>
+            </div>
+         </div>
       </AdaptiveModal>
 
       {loading ? (
@@ -375,6 +443,7 @@ export default function OcorrenciasPage() {
                   <th className="p-6">Urgência</th>
                   <th className="p-6">Atribuição</th>
                   <th className="p-6">Unidade</th>
+                  <th className="p-6">Tempo Aberto</th>
                   <th className="p-6">Monitoramento</th>
                   <th className="p-6">Status Operacional</th>
                 </tr>
@@ -403,8 +472,19 @@ export default function OcorrenciasPage() {
                         {t.prioridade}
                       </span>
                     </td>
-                    <td className="p-6 text-xs font-bold text-[var(--text-secondary)]">{t.atribuido_a}</td>
+                    <td className="p-6">
+                       <div className="flex flex-col">
+                          <span className="text-xs font-black text-[var(--text-primary)]">{t.atribuido_a?.split(',')[0]}</span>
+                          <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Responsável</span>
+                       </div>
+                    </td>
                     <td className="p-6 text-xs font-bold text-[var(--text-secondary)]">{t.unidade}</td>
+                    <td className="p-6">
+                       <div className="flex items-center gap-2">
+                          <Clock size={12} className={t.status === 'RESOLVIDO' ? 'text-green-500' : 'text-orange-500'} />
+                          <span className={`text-[10px] font-black ${t.status === 'RESOLVIDO' ? 'text-green-600' : 'text-orange-600'}`}>{t.tempoAberto}</span>
+                       </div>
+                    </td>
                     <td className="p-6 text-[10px] font-black text-[var(--text-muted)] uppercase">{t.abertura}</td>
                     <td className="p-6">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${t.status === "RESOLVIDO" ? "bg-green-100 text-green-700" : t.status === "EM_ANDAMENTO" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
