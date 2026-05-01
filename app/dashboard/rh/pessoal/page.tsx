@@ -17,7 +17,8 @@ export default function RHPessoalPage() {
   const [user, setUser] = useState<any>(null);
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
-  const [aba, setAba] = useState<"ativos" | "talentos" | "vagas">("ativos");
+  const [aba, setAba] = useState<"ativos" | "talentos" | "vagas" | "extras">("ativos");
+  const [horasExtras, setHorasExtras] = useState<any[]>([]);
   const [vagas, setVagas] = useState<any[]>([
     { id: '1', unidade: 'SEMED', cargo: 'ASG', quantidade: 5, status: 'ABERTA' },
     { id: '2', unidade: 'SEMSA', cargo: 'Porteiro', quantidade: 2, status: 'ABERTA' },
@@ -55,6 +56,12 @@ export default function RHPessoalPage() {
       if (talentos) {
         setCandidatos(talentos);
       }
+
+      // Fetch Horas Extras
+      const { data: extras } = await supabase.from('horas_extras')
+        .select('*, usuarios(nome, cargo)')
+        .order('created_at', { ascending: false });
+      if (extras) setHorasExtras(extras);
       
       setLoading(false);
     }
@@ -91,6 +98,9 @@ export default function RHPessoalPage() {
                 </button>
                 <button onClick={() => setAba("vagas")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "vagas" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "vagas" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
                   Quadro de Vagas ({vagas.reduce((acc, v) => acc + v.quantidade, 0)})
+                </button>
+                <button onClick={() => setAba("extras")} style={{ background: "none", border: "none", cursor: "pointer", padding: "0 0 0.5rem", fontSize: "0.875rem", fontWeight: 600, color: aba === "extras" ? "var(--brand)" : "var(--text-muted)", borderBottom: aba === "extras" ? "2px solid var(--brand)" : "2px solid transparent", transition: "all 0.2s" }}>
+                  Horas Extras ({horasExtras.length})
                 </button>
               </div>
             </div>
@@ -216,6 +226,42 @@ export default function RHPessoalPage() {
                       </td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <button className="btn-ghost" onClick={() => alert("Gerenciar Vaga...")}>Gerenciar Vaga</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead style={{ position: "sticky", top: 0, background: "var(--bg-card)", zIndex: 10 }}>
+                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                    {["Colaborador", "Unidade / Motivo", "Data / Horário", "Total", "Status"].map(h => (
+                      <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {horasExtras.length === 0 ? (
+                    <tr><td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: "var(--text-muted)" }}>Nenhum registro de extra informado.</td></tr>
+                  ) : horasExtras.map(e => (
+                    <tr key={e.id} className="table-row">
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{e.usuarios?.nome}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{e.usuarios?.cargo}</div>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--brand)" }}>{e.unidade_alocacao}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.motivo}</div>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 600 }}>{new Date(e.data_referencia).toLocaleDateString()}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--info)" }}>{e.hora_inicio} - {e.hora_fim}</div>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 900, color: "var(--text-primary)" }}>{e.total_horas}h</span>
+                      </td>
+                      <td style={{ padding: "0.875rem 1rem" }}>
+                        <span className={`badge ${e.status === 'PENDENTE' ? 'badge-amber' : 'badge-green'}`}>{e.status}</span>
                       </td>
                     </tr>
                   ))}
