@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, Truck, Zap, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, Truck, Zap, AlertTriangle, Clock } from 'lucide-react';
 
 export type NavItem = {
   href?: string;
@@ -41,14 +41,18 @@ export const ALL_NAV: NavItem[] = [
     href: '/dashboard?module=COMPRAS'
   },
   {
-    label: 'RH',
+    label: 'RH Pessoal',
     icon: Users,
-    roles: ['RH_DP', 'RH_PESSOAL'],
+    roles: ['RH_DP', 'RH_PESSOAL', 'ADMIN'],
     subItems: [
-      { href: '/dashboard/rh/pessoal', label: 'Dep. Pessoal (DP)', roles: ['RH_DP'] },
-      { href: '/dashboard/rh/ponto', label: 'Ponto e Jornada', roles: ['RH_DP'] },
-      { href: '/dashboard/rh/beneficios', label: 'Vales e Benefícios', roles: ['RH_DP'] },
+      { href: '/dashboard/rh/pessoal', label: 'Dep. Pessoal (DP)', roles: ['RH_DP', 'ADMIN'] },
     ],
+  },
+  {
+    label: 'Gestão de Ponto',
+    icon: Clock,
+    roles: ['SUPERVISOR', 'GERENTE', 'ENCARREGADO', 'ADMIN', 'RH_DP'],
+    href: '/dashboard/rh/ponto'
   },
   {
     label: 'Almoxarifado',

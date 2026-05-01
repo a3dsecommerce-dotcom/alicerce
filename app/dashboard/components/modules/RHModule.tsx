@@ -14,7 +14,7 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-type MasterTab = "DP" | "PONTO" | "DOCS" | "BENEFICIOS";
+type MasterTab = "DP" | "DOCS";
 
 export default function RHModule({ user, isDirectorView = false }: { user: any, isDirectorView?: boolean }) {
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
@@ -164,13 +164,11 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
           <div className="flex flex-wrap gap-8 mt-6 border-b border-[var(--border)] pb-4">
             {[
               { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
-              { id: "PONTO", label: "Controle de Pontos", icon: Clock },
-              { id: "DOCS", label: "Documentos", icon: FileText },
-              { id: "BENEFICIOS", label: "Benefícios", icon: DollarSign }
+              { id: "DOCS", label: "Documentos", icon: FileText }
             ].map((t: any) => (
               <button 
                 key={t.id}
-                onClick={() => setMasterTab(t.id)} 
+                onClick={() => setMasterTab(t.id as any)} 
                 className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
               >
                 <t.icon size={16} />
@@ -308,88 +306,17 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                    )}
                 </div>
              </div>
-          </div>
-        )}
-
-        {/* VIEW: PONTO (CONTROLE DE PONTOS E BOT) */}
-        {masterTab === "PONTO" && (
-           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10 flex-1 overflow-hidden animate-fade-in">
-              <div className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] shadow-2xl flex flex-col overflow-hidden">
-                 <div className="p-10 border-b border-[var(--border)] bg-[var(--bg-base)]/5 flex justify-between items-center">
-                    <h3 className="text-base font-black uppercase tracking-widest flex items-center gap-3"><Clock size={20} className="text-[var(--brand)]" /> Fila de Regularização (WhatsApp Bot)</h3>
-                    <div className="flex gap-4">
-                       <span className="badge badge-amber px-4 py-2 text-[10px] font-black">12 PENDENTES</span>
-                       <span className="badge badge-green px-4 py-2 text-[10px] font-black">45 RESOLVIDOS</span>
-                    </div>
-                 </div>
-                 <div className="flex-1 overflow-auto custom-scrollbar p-6">
-                    <table className="w-full text-left">
-                       <thead className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border)]">
-                          <tr>
-                             <th className="p-6">Colaborador</th>
-                             <th className="p-6">Data Ref.</th>
-                             <th className="p-6">Motivo</th>
-                             <th className="p-6 text-center">Status Bot</th>
-                             <th className="p-6 text-right">Ação</th>
-                          </tr>
-                       </thead>
-                       <tbody className="divide-y divide-[var(--border)]">
-                          {ajustesPonto.map((a, i) => (
-                            <tr key={i} className="hover:bg-[var(--bg-base)]/50 transition-colors group">
-                               <td className="p-6">
-                                  <div className="text-sm font-black text-[var(--brand)]">{a.usuarios?.nome}</div>
-                                  <div className="text-[10px] font-bold text-[var(--text-muted)]">{a.usuarios?.unidade_alocacao}</div>
-                               </td>
-                               <td className="p-6 text-xs font-bold">{a.data_referencia}</td>
-                               <td className="p-6 text-xs text-[var(--text-secondary)]">{a.motivo || "Ajuste pendente"}</td>
-                               <td className="p-6 text-center">
-                                  <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black ${a.resolvido ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                                     {a.resolvido ? 'RESOLVIDO ✓' : 'COBRANDO...'}
-                                  </span>
-                               </td>
-                               <td className="p-6 text-right">
-                                  {!a.resolvido && <button className="px-4 py-2 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl text-[10px] font-black uppercase hover:bg-[var(--brand)] hover:text-white transition-all flex items-center gap-2 ml-auto"><Send size={12} /> Re-cobrar</button>}
-                               </td>
-                            </tr>
-                          ))}
-                       </tbody>
-                    </table>
-                 </div>
-              </div>
-
-              <div className="flex flex-col gap-8">
-                 <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 p-10 rounded-[2.5rem] border border-green-500/20 shadow-lg">
-                    <div className="flex items-center gap-4 mb-6">
-                       <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse shadow-[0_0_15px_#22c55e]" />
-                       <h4 className="text-sm font-black uppercase tracking-widest text-green-700">Status do Agente (Bot)</h4>
-                    </div>
-                    <p className="text-xs font-medium text-green-800/80 leading-relaxed">
-                       O Agente de Ponto está **Online**. Cobranças automáticas agendadas para **08:00, 14:00 e 18:00**.
-                    </p>
-                 </div>
-
-                 <div className="bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-xl flex-1 flex flex-col">
-                    <h3 className="text-sm font-black uppercase mb-10 flex items-center gap-3"><MessageSquare size={18} className="text-[var(--brand)]" /> Live Feed (WhatsApp)</h3>
-                    <div className="space-y-6 overflow-y-auto custom-scrollbar pr-2">
-                       {ajustesPonto.slice(0, 5).map((a, i) => (
-                         <div key={i} className="p-5 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]/50">
-                            <p className="text-[10px] font-black text-[var(--brand)] mb-1 uppercase">{a.usuarios?.nome}</p>
-                            <p className="text-[11px] font-medium text-[var(--text-secondary)]">{a.resolvido ? "Confirmou ajuste no Marponto ✓" : "Recebeu notificação de pendência via Bot."}</p>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-              </div>
+        </div>
            </div>
         )}
 
-        {/* VIEW: DOCS & BENEFICIOS (PLACEHOLDERS PREMIUM) */}
-        {(masterTab === "DOCS" || masterTab === "BENEFICIOS") && (
+        {/* VIEW: DOCS (PLACEHOLDER PREMIUM) */}
+        {masterTab === "DOCS" && (
            <div className="flex flex-col items-center justify-center flex-1 bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] shadow-xl border-dashed border-[var(--brand)]/20 animate-fade-in">
               <div className="w-24 h-24 bg-[var(--brand)]/5 rounded-full flex items-center justify-center mb-8">
-                 {masterTab === "DOCS" ? <FileText size={48} className="text-[var(--brand)] opacity-40" /> : <DollarSign size={48} className="text-[var(--brand)] opacity-40" />}
+                 <FileText size={48} className="text-[var(--brand)] opacity-40" />
               </div>
-              <h3 className="text-xl font-black italic mb-2">Central de {masterTab === "DOCS" ? "Documentos" : "Benefícios"}</h3>
+              <h3 className="text-xl font-black italic mb-2">Central de Documentos</h3>
               <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Sincronizando com a base de dados administrativa...</p>
            </div>
         )}
