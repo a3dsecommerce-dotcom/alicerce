@@ -503,10 +503,10 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                             <span className={`text-[11px] font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-blue-600'}`}>{item.quantidade || 0} {item.unidade_medida}</span>
                           </td>
                           <td className="px-6 py-4">
-                            <input type="number" min="0" value={volumes[item.id] || ''} onChange={e => setVolumes({...volumes, [item.id]: Number(e.target.value)})} className="w-24 h-10 px-2 mx-auto rounded-lg border-2 border-transparent bg-[var(--bg-base)] text-center text-xs font-black outline-none focus:border-blue-500 block" placeholder="0" />
+                            <input type="number" min="0" value={volumes[item.id] || ''} onChange={e => setVolumes({...volumes, [item.id]: Number(e.target.value)})} className="w-24 h-10 px-2 mx-auto rounded-lg border-2 border-transparent bg-[var(--bg-base)] text-center text-xs font-black outline-none focus:border-blue-500 block [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0" />
                           </td>
                           <td className="px-6 py-4">
-                            <input type="number" min="0" value={volumesExtra[item.id] || ''} onChange={e => setVolumesExtra({...volumesExtra, [item.id]: Number(e.target.value)})} className="w-24 h-10 px-2 mx-auto rounded-lg border-2 border-orange-100 bg-orange-50/20 text-orange-600 text-center text-xs font-black outline-none focus:border-orange-500 block" placeholder="0" />
+                            <input type="number" min="0" value={volumesExtra[item.id] || ''} onChange={e => setVolumesExtra({...volumesExtra, [item.id]: Number(e.target.value)})} className="w-24 h-10 px-2 mx-auto rounded-lg border-2 border-orange-100 bg-orange-50/20 text-orange-600 text-center text-xs font-black outline-none focus:border-orange-500 block [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="0" />
                           </td>
                         </tr>
                       ))}
