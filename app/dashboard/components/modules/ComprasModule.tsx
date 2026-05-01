@@ -15,6 +15,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   const [user, setUser] = useState<any>({});
   const [activeTab, setActiveTab] = useState<"CATALOGO" | "TRACKING">("CATALOGO");
   const [volumes, setVolumes] = useState<Record<string, number>>({});
+  const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
   const [catalogo, setCatalogo] = useState<any[]>([]);
@@ -60,19 +61,25 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   }, []);
 
   const handleFinalizarPedido = async () => {
-    const itensParaPedir = Object.entries(volumes).filter(([_, vol]) => vol > 0);
+    const todosItensId = Array.from(new Set([...Object.keys(volumes), ...Object.keys(volumesExtra)]));
+    const itensParaPedir = todosItensId.filter(id => (volumes[id] || 0) > 0 || (volumesExtra[id] || 0) > 0);
+    
     if (itensParaPedir.length === 0) return alert("Selecione volumes antes de finalizar.");
     setLoading(true);
 
     try {
       const protocoloUnico = `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
-      const payload = itensParaPedir.map(([id, qtd]) => {
+      const payload = itensParaPedir.map(id => {
         const item = catalogo.find(c => String(c.id) === id);
+        const qtdNormal = volumes[id] || 0;
+        const qtdExtra = volumesExtra[id] || 0;
+        
         return {
           item_id: id,
           solicitante: user?.name || 'Comprador',
           unidade_destino: user?.email || 'Unidade',
-          quantidade: qtd,
+          quantidade: qtdNormal,
+          quantidade_extra: qtdExtra,
           status: 'SOLICITADO',
           item_nome: item?.item || 'Item',
           unidade_medida: item?.unidade_medida || 'UN',
@@ -85,6 +92,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
       if (error) throw error;
 
       setVolumes({});
+      setVolumesExtra({});
       setActiveTab("TRACKING");
       fetchDados();
       alert(`✅ Pedido ${protocoloUnico} enviado para análise do Almoxarifado.`);
@@ -134,7 +142,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nº de Colaboradores ASG</label>
                          <input type="number" min="1" value={qtdAsg} onChange={e => setQtdAsg(Math.max(1, Number(e.target.value)))} className="input-field !h-10 !w-24 text-center font-black" />
                       </div>
-                      <button onClick={handleFinalizarPedido} disabled={loading || Object.values(volumes).every(v => v === 0)} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
+                      <button onClick={handleFinalizarPedido} disabled={loading || (Object.values(volumes).every(v => v === 0) && Object.values(volumesExtra).every(v => v === 0))} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
                          <Send size={18} /> Enviar Requisição
                       </button>
                    </div>
@@ -146,15 +154,16 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                         <tr>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição do Material</th>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
-                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Cota Máx. Permitida</th>
-                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Volume Desejado</th>
+                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Cota Máx.</th>
+                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Qtd. Cota</th>
+                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Extra (Análise)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
                         {catalogo.map((prod) => {
                           const cotaMaxima = Math.floor(qtdAsg * (prod.coeficiente || 1.0));
                           const volAtual = volumes[prod.id] || 0;
-                          const isExcedente = volAtual > cotaMaxima;
+                          const volExtra = volumesExtra[prod.id] || 0;
                           
                           return (
                             <tr key={prod.id} className="hover:bg-[var(--bg-base)]/40 transition-all">
@@ -168,14 +177,16 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                                 <td className="p-8 text-center">
                                   <span className="text-sm font-black text-blue-600">{cotaMaxima}</span>
                                 </td>
-                                <td className="p-8 px-10">
-                                  <div className="relative mx-auto w-fit">
-                                    <input type="number" min="0" max={cotaMaxima} value={volAtual || ''} onChange={(e) => {
-                                      const val = Math.min(Number(e.target.value), cotaMaxima);
-                                      setVolumes({...volumes, [prod.id]: val});
-                                    }} className={`w-32 h-12 px-5 rounded-xl border-2 text-center text-sm font-black outline-none transition-all block ${isExcedente ? 'border-orange-500 text-orange-600' : 'border-transparent bg-[var(--bg-base)] focus:border-[var(--brand)] text-[var(--text-primary)]'}`} placeholder="0" />
-                                    {isExcedente && <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black text-orange-500 uppercase whitespace-nowrap">Excede Cota</span>}
-                                  </div>
+                                <td className="p-8 px-5">
+                                  <input type="number" min="0" max={cotaMaxima} value={volAtual || ''} onChange={(e) => {
+                                    const val = Math.min(Number(e.target.value), cotaMaxima);
+                                    setVolumes({...volumes, [prod.id]: val});
+                                  }} className="w-24 h-12 px-2 mx-auto rounded-xl border-2 border-transparent bg-[var(--bg-base)] text-center text-sm font-black outline-none focus:border-blue-500 text-[var(--text-primary)] transition-all block" placeholder="0" />
+                                </td>
+                                <td className="p-8 px-5 border-l border-[var(--border)] bg-orange-50/30">
+                                  <input type="number" min="0" value={volExtra || ''} onChange={(e) => {
+                                    setVolumesExtra({...volumesExtra, [prod.id]: Number(e.target.value)});
+                                  }} className="w-24 h-12 px-2 mx-auto rounded-xl border-2 border-orange-200 bg-white text-orange-600 text-center text-sm font-black outline-none focus:border-orange-500 transition-all block shadow-sm shadow-orange-500/10" placeholder="0" />
                                 </td>
                             </tr>
                           );
@@ -249,7 +260,8 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                   <thead className="bg-[var(--bg-base)]/50">
                      <tr>
                         <th className="p-6 text-[10px] font-black uppercase tracking-widest">Produto</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Pedido</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Pedido Base</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Extra (Análise)</th>
                         <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Aprovado</th>
                         <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
                      </tr>
@@ -262,6 +274,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                               {it.data_entrega && <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mt-1">Entregue para: {it.recebedor_nome || 'Unidade'}</p>}
                            </td>
                            <td className="p-6 text-center text-xs font-bold text-[var(--text-muted)]">{it.quantidade}</td>
+                           <td className="p-6 text-center text-xs font-black text-orange-500">{it.quantidade_extra > 0 ? `+${it.quantidade_extra}` : '---'}</td>
                            <td className="p-6 text-center text-xs font-black text-blue-600">{it.quantidade_aprovada ?? '---'}</td>
                            <td className="p-6 text-center">
                               <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${it.status === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-orange-50 text-orange-600'}`}>{it.status}</span>

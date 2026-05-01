@@ -134,6 +134,7 @@ CREATE TABLE IF NOT EXISTS requisicoes (
 -- Adiciona colunas faltantes se a tabela já existir
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS protocolo TEXT;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_aprovada INTEGER;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_extra INTEGER DEFAULT 0;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS data_entrega TIMESTAMP WITH TIME ZONE;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS recebedor_nome TEXT;
 

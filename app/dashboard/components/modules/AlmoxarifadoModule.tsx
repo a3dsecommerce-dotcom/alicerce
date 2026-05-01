@@ -212,7 +212,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                           <button onClick={() => { setReqEditando(r); setModalAberto("ocorrencia"); }} title="Ocorrência" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"><AlertTriangle size={14}/></button>
                           
                           {r.status === 'SOLICITADO' && (
-                            <button onClick={() => { setReqEditando({...r, quantidade_aprovada: r.quantidade}); setModalAberto("editar_req"); }} className="px-4 py-2 bg-black text-white rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
+                            <button onClick={() => { setReqEditando({...r, quantidade_aprovada: r.quantidade + (r.quantidade_extra || 0)}); setModalAberto("editar_req"); }} className="px-4 py-2 bg-black text-white rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
                           )}
                           
                           {r.status === 'APROVADO' && (
@@ -471,6 +471,39 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                  </button>
               </div>
             )}
+         </div>
+      </AdaptiveModal>
+
+      {/* MODAL ANALISAR REQUISIÇÃO */}
+      <AdaptiveModal isOpen={modalAberto === "editar_req"} onClose={() => setModalAberto(null)} title="Analisar Requisição">
+         <div className="p-8 space-y-6">
+            <div className="bg-[var(--bg-base)] p-4 rounded-xl border border-[var(--border)]">
+               <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest mb-1">Produto Requisitado</p>
+               <p className="text-sm font-black text-[var(--text-primary)]">{reqEditando?.item_nome}</p>
+               <div className="flex gap-6 mt-4">
+                  <div>
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Qtd Base</p>
+                    <p className="text-base font-black text-orange-500">{reqEditando?.quantidade}</p>
+                  </div>
+                  {reqEditando?.quantidade_extra > 0 && (
+                     <div>
+                       <p className="text-[9px] font-bold text-red-500 uppercase tracking-widest">Extra Pedido</p>
+                       <p className="text-base font-black text-red-500">+{reqEditando?.quantidade_extra}</p>
+                     </div>
+                  )}
+               </div>
+            </div>
+
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Quantidade Aprovada</label>
+               <input type="number" min="0" className="input-field text-blue-500 font-black text-xl text-center" value={reqEditando?.quantidade_aprovada || 0} onChange={e => setReqEditando({...reqEditando, quantidade_aprovada: Number(e.target.value)})} />
+               <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2 text-center">Ajuste a quantidade que será efetivamente entregue</p>
+            </div>
+
+            <div className="flex gap-4 pt-4 border-t border-[var(--border)]">
+               <button onClick={() => handleProcessarReq(reqEditando.id, 'REPROVADO', 0)} className="flex-1 py-4 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase hover:bg-red-600 hover:text-white transition-all">Reprovar Total</button>
+               <button onClick={() => handleProcessarReq(reqEditando.id, 'APROVADO', reqEditando.quantidade_aprovada)} className="flex-[2] py-4 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase hover:scale-105 transition-all shadow-lg shadow-green-600/20">Aprovar & Confirmar</button>
+            </div>
          </div>
       </AdaptiveModal>
     </div>
