@@ -1,557 +1,578 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  Search, Truck, Package, Megaphone, Activity, ShoppingBag, ShieldCheck, ClipboardList,
+  Search, Truck, Package, Activity, ShoppingBag, ShieldCheck, ClipboardList,
   AlertTriangle, CheckCircle2, Send, Calendar, Filter, Plus,
   ArrowRight, Box, Clock, ChevronRight, TrendingDown, History as HistoryIcon,
-  AlertCircle, FileText, UserCheck, Download, X
+  AlertCircle, FileText, UserCheck, Download, X, ListChecks
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 export default function AlmoxarifadoPage() {
-  const [pedidos, setPedidos] = useState<any[]>([]);
+  // --- Estados Principais ---
+  const [estoque, setEstoque] = useState<any[]>([]);
+  const [requisicoes, setRequisicoes] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>({});
-  const [activeTab, setActiveTab] = useState<"ESTOQUE" | "REQUISICOES" | "RECEBER" | "ENTREGA">("ESTOQUE");
-  const [volumes, setVolumes] = useState<Record<number, number>>({});
-  const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
-  const [selectedReport, setSelectedReport] = useState<any>(null);
-  const [catalogo, setCatalogo] = useState<any[]>([]);
   
-  const catalogoMock = [
-    { id: 1, nome: "Papel A4 (Resma)", unidade: "UN", cota: 42, categoria: "Escritório" },
-    { id: 2, nome: "Copo Descartável 200ml", unidade: "CX", cota: 8, categoria: "Copa" },
-    { id: 3, nome: "Caneta Esferográfica Azul", unidade: "CX", cota: 4, categoria: "Escritório" },
-    { id: 4, nome: "Papel Higiênico (Fardo)", unidade: "FD", cota: 15, categoria: "Limpeza" },
-    { id: 5, nome: "Detergente Líquido 500ml", unidade: "FR", cota: 24, categoria: "Limpeza" },
-    { id: 6, nome: "Saco de Lixo 100L (Fardo)", unidade: "FD", cota: 10, categoria: "Limpeza" },
-    { id: 7, nome: "Água Mineral 500ml", unidade: "FD", cota: 12, categoria: "Copa" },
-  ];
+  // --- Tabs ---
+  type TabType = "PAINEL" | "ESTOQUE_PROPRIO" | "ESTOQUE_CATALOGO" | "RECEBER_CARGA" | "ENTREGA_EPI";
+  const [activeTab, setActiveTab] = useState<TabType>("PAINEL");
+  
+  // --- Filtros e Modais ---
+  const [busca, setBusca] = useState("");
+  const [modalAberto, setModalAberto] = useState<null | "cadastro" | "analise" | "recebimento" | "entrega">(null);
+  const [itemSelecionado, setItemSelecionado] = useState<any>(null);
+  
+  // --- Formulários ---
+  const [formData, setFormData] = useState({ 
+    item: "", categoria: "EPI", quantidade: 0, estoque_minimo: 5, 
+    unidade_medida: "UN", ca: "", tipo_estoque: "PROPRIO" 
+  });
+  
+  const [entregaData, setEntregaData] = useState({
+    colaborador: "",
+    itens: [] as any[]
+  });
 
-  const acompanhamentoMock = [
-    { 
-      id: 101, 
-      data: "26/04/2026", 
-      nf: "REQ-008821", 
-      status: "EM ANDAMENTO", 
-      recebedor: "Carlos Silva (Almox. 01)",
-      itens: [
-        { desc: "Papel A4 (Resma)", solicitado: 120, chegou: 45 },
-        { desc: "Caneta Esferográfica Azul", solicitado: 50, chegou: 50 }
-      ]
-    },
-    { 
-      id: 102, 
-      data: "24/04/2026", 
-      nf: "REQ-008790", 
-      status: "CONCLUÍDO", 
-      recebedor: "Mariana Costa (Almox. 02)",
-      itens: [
-        { desc: "Copo Descartável 200ml", solicitado: 200, chegou: 200 },
-        { desc: "Água Mineral 500ml", solicitado: 12, chegou: 12 }
-      ]
-    },
-    { 
-      id: 103, 
-      data: "22/04/2026", 
-      nf: "REQ-008655", 
-      status: "ATRASADO", 
-      recebedor: "Carlos Silva (Almox. 01)",
-      itens: [
-        { desc: "Papel Higiênico (Fardo)", solicitado: 15, chegou: 0 },
-        { desc: "Saco de Lixo 100L", solicitado: 10, chegou: 0 }
-      ]
-    },
-  ];
+  const [recebimentoData, setRecebimentoData] = useState({
+    requisicao_id: "",
+    itens_recebidos: [] as any[]
+  });
 
+  // --- Fetch Inicial ---
   useEffect(() => {
     try {
       const saved = localStorage.getItem("crm_user");
       if (saved) setUser(JSON.parse(saved));
     } catch (err) {}
 
-    async function fetchDados() {
-      setLoading(true);
-      
-      const { data: catData } = await supabase.from('estoque_atual').select('*').eq('tipo_estoque', 'CATALOGO').order('item');
-      if (catData && catData.length > 0) {
-        setCatalogo(catData.map(c => ({
-          id: c.id,
-          nome: c.item,
-          unidade: c.unidade_medida || "UN",
-          cota: c.quantidade || 0,
-          categoria: c.categoria || "Geral"
-        })));
-      } else {
-        setCatalogo(catalogoMock);
-      }
+    fetchTudo();
+  }, []);
 
-      const { data } = await supabase
-        .from('compras_processos')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (data && data.length > 0) {
-        setPedidos(data);
-      } else {
-        setPedidos(acompanhamentoMock);
-      }
-      setLoading(false);
-    }
-    fetchDados();
-  }, [filtroMes]);
-
-  const handleVolumeChange = (id: string | number, val: string) => {
-    const num = parseInt(val) || 0;
-    setVolumes(prev => ({ ...prev, [id]: num }));
-  };
-
-  const handleNovoEPI = async () => {
-    const itensParaPedir = Object.entries(volumes).filter(([_, vol]) => vol > 0);
-    if (itensParaPedir.length === 0) return alert("Selecione volumes antes de finalizar.");
+  async function fetchTudo() {
     setLoading(true);
+    
+    // 1. Estoque
+    const { data: estData } = await supabase.from('estoque_atual').select('*').order('item');
+    if (estData) setEstoque(estData);
 
-    try {
-      // Cria uma requisição no banco para CADA item selecionado
-      const requisicoes = itensParaPedir.map(([idStr, qtd]) => {
-        const item = catalogo.find(c => String(c.id) === idStr);
-        return {
-          item_id: isNaN(Number(idStr)) ? idStr : null, // Set if it is a UUID
-          solicitante: user?.name || 'Almoxarifado',
-          unidade_destino: user?.email || 'Não informado',
-          quantidade: qtd,
-          status: 'SOLICITADO',
-          item_nome: item?.nome || `Item #${idStr}`,
-          unidade_medida: item?.unidade || 'UN',
-          data_solicitacao: new Date().toISOString(),
-        };
-      });
+    // 2. Requisições
+    const { data: reqData } = await supabase.from('requisicoes')
+      .select('*')
+      .order('data_solicitacao', { ascending: false });
+    if (reqData) setRequisicoes(reqData);
 
-      const { error } = await supabase.from('requisicoes').insert(requisicoes);
-      
-      if (error) {
-        console.error('Erro ao criar requisição:', error);
-        alert('Erro ao salvar requisição. Tente novamente.');
-      } else {
-        setVolumes({});
-        setActiveTab("REQUISICOES");
-        alert(`✅ ${itensParaPedir.length} requisição(ões) criada(s) com sucesso! O Almoxarifado foi notificado.`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Erro inesperado. Verifique a conexão.');
-    } finally {
-      setLoading(false);
+    // 3. Usuários (para entrega de EPI)
+    const { data: usrData } = await supabase.from('usuarios').select('id, nome, cargo').order('nome');
+    if (usrData) setUsuarios(usrData);
+
+    setLoading(false);
+  }
+
+  // --- Handlers ---
+  const handleSalvarEstoque = async () => {
+    setLoading(true);
+    const { error } = await supabase.from('estoque_atual').upsert([formData]);
+    if (error) {
+      alert("Erro ao salvar: " + error.message);
+    } else {
+      setModalAberto(null);
+      fetchTudo();
     }
+    setLoading(false);
   };
 
-  const saudacao = new Date().getHours() < 12 ? 'Bom dia' : new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite';
-  
-  // Percentual Geral do Tracking
-  const calculateProgress = (req: any) => {
-    if (!req.itens || req.itens.length === 0) return { percent: 0, falta: 0, total: 0 };
-    let totalSolicitado = 0;
-    let totalChegou = 0;
-    req.itens.forEach((i: any) => {
-      totalSolicitado += (i.solicitado || 0);
-      totalChegou += (i.chegou || 0);
-    });
-    return {
-      percent: totalSolicitado > 0 ? Math.round((totalChegou / totalSolicitado) * 100) : 0,
-      falta: totalSolicitado - totalChegou,
-      total: totalSolicitado,
-      chegou: totalChegou
-    };
+  const handleAprovarRequisicao = async (id: string, status: 'APROVADO' | 'REPROVADO') => {
+    const { error } = await supabase.from('requisicoes').update({ status }).eq('id', id);
+    if (error) alert(error.message);
+    else fetchTudo();
   };
 
-  const percentagemGeral = (() => {
-    if (!pedidos || pedidos.length === 0) return 0;
-    let globalSolicitado = 0;
-    let globalChegou = 0;
-    pedidos.forEach(p => {
-      const prog = calculateProgress(p);
-      globalSolicitado += prog.total;
-      globalChegou += prog.chegou;
-    });
-    return globalSolicitado > 0 ? Math.round((globalChegou / globalSolicitado) * 100) : 0;
-  })();
+  const handleBaixaEntrega = async () => {
+    if (!entregaData.colaborador || entregaData.itens.length === 0) return alert("Selecione colaborador e itens.");
+    
+    setLoading(true);
+    try {
+      // Baixa no estoque
+      for (const item of entregaData.itens) {
+        const itemEstoque = estoque.find(e => e.id === item.id);
+        if (itemEstoque) {
+          const novaQtd = (itemEstoque.quantidade || 0) - item.qtd_entrega;
+          await supabase.from('estoque_atual').update({ quantidade: novaQtd }).eq('id', item.id);
+        }
+      }
+
+      // Histórico
+      await supabase.from('historico_gestao').insert([{
+        executor_tel: user.name || "Almoxarifado",
+        tipo_acao: "BAIXA_EPI",
+        motivo: `Entrega NR-06: ${entregaData.colaborador}`,
+        para: entregaData.itens.map(i => `${i.qtd_entrega}x ${i.item}`).join(", ")
+      }]);
+
+      alert("Baixa realizada com sucesso! Preparando Ficha NR-06...");
+      window.print(); // O CSS @media print cuidará de mostrar apenas o recibo
+      setEntregaData({ colaborador: "", itens: [] });
+      fetchTudo();
+    } catch (err: any) {
+      alert("Erro: " + err.message);
+    }
+    setLoading(false);
+  };
+
+  const itensCriticos = estoque.filter(i => (i.quantidade || 0) <= (i.estoque_minimo || 0));
 
   return (
-    <div className="flex flex-col gap-10 animate-fade-in pb-32 max-w-full px-4">
+    <div className="flex flex-col gap-10 animate-fade-in pb-32 max-w-full px-4 pt-6">
       
-      {/* 1. HEADER E SAUDAÇÃO */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+      {/* 1. HEADER */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 no-print">
         <div>
           <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">
-            {saudacao}, Sr(a). {user.name?.split(' ')[0] || 'Almoxarife'}!
+            Módulo de Almoxarifado
           </h2>
           <p className="text-[11px] font-black text-[var(--brand)] uppercase tracking-widest mt-1">
-            Controle Central de Suprimentos e EPIs
+            {activeTab.replace("_", " ")} • Alicerce Serviços e Gestão
           </p>
         </div>
 
-        {/* Filtro de Mês e Ano Superior */}
-        <div className="flex items-center gap-4 bg-[var(--bg-card)] px-6 py-3 rounded-2xl border border-[var(--border)] shadow-sm">
-          <Calendar size={18} className="text-[var(--brand)]" />
-          <div className="flex flex-col">
-            <span className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest">Período:</span>
-            <input 
-              type="month" 
-              value={filtroMes} 
-              onChange={(e) => setFiltroMes(e.target.value)}
-              className="bg-transparent border-none text-sm font-black uppercase outline-none cursor-pointer text-[var(--text-primary)] -mt-1 p-0"
-            />
-          </div>
+        <div className="flex items-center gap-4">
+           <div className="bg-[var(--bg-card)] px-6 py-3 rounded-2xl border border-[var(--border)] shadow-sm flex items-center gap-3">
+              <Activity size={18} className="text-green-500" />
+              <div className="flex flex-col">
+                 <span className="text-[9px] font-black uppercase text-[var(--text-muted)]">Status do Estoque</span>
+                 <span className="text-sm font-black">{estoque.length} Itens Cadastrados</span>
+              </div>
+           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8 no-print">
         
-        {/* COLUNA ESQUERDA - CONTEÚDO PRINCIPAL (OCUPA 3 COLUNAS) */}
+        {/* COLUNA ESQUERDA - CONTEÚDO PRINCIPAL */}
         <div className="xl:col-span-3 flex flex-col gap-8">
           
-          {/* TABS E FINALIZAR */}
-          <div className="flex flex-wrap justify-between items-center gap-8 px-2">
-            <div className="flex items-center gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md flex-1 lg:flex-none">
-                <button 
-                  onClick={() => setActiveTab("ESTOQUE")}
-                  className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "ESTOQUE" ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-                >
-                  <ShieldCheck size={16} /> Estoque EPI
-                </button>
-                <button 
-                  onClick={() => setActiveTab("REQUISICOES")}
-                  className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "REQUISICOES" ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-                >
-                  <ClipboardList size={16} /> Requisições
-                </button>
-
-                {/* BOTÃO ENVIAR PEDIDO AO LADO DAS ABAS */}
-                {activeTab === "ESTOQUE" && (
-                  <div className="hidden lg:flex items-center border-l border-[var(--border)] ml-2 pl-4">
-                      <button 
-                        onClick={handleNovoEPI}
-                        disabled={loading || Object.values(volumes).every(v => v === 0)}
-                        className="h-11 px-8 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-orange-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-orange-600/20 disabled:opacity-30"
-                      >
-                        <Send size={14} /> Novo EPI
-                      </button>
-                  </div>
-                )}
-            </div>
-
-            {/* BOTÃO ENVIAR PEDIDO MOBILE */}
-            {activeTab === "ESTOQUE" && (
-              <div className="lg:hidden w-full">
-                <button 
-                  onClick={handleNovoEPI}
-                  className="w-full h-14 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3"
-                >
-                    <Send size={16} /> Novo EPI
-                </button>
-              </div>
-            )}
+          {/* TABS MENU */}
+          <div className="flex overflow-x-auto gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md hide-scrollbar">
+            {[
+              { id: "PAINEL", label: "Painel", icon: Activity },
+              { id: "ESTOQUE_PROPRIO", label: "Estoque EPI", icon: ShieldCheck },
+              { id: "ESTOQUE_CATALOGO", label: "Catálogo", icon: Package },
+              { id: "RECEBER_CARGA", label: "Receber Carga", icon: Truck },
+              { id: "ENTREGA_EPI", label: "Entrega NR-06", icon: UserCheck },
+            ].map(tab => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              >
+                <tab.icon size={16} /> {tab.label}
+              </button>
+            ))}
           </div>
 
-          {/* VIEW: CATÁLOGO */}
-          {activeTab === "ESTOQUE" && (
-            <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
-                <div className="p-8 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-8 bg-[var(--bg-base)]/5">
-                  <h3 className="text-sm font-black uppercase tracking-widest">Estoque de EPIs e Uniformes</h3>
-                  <div className="relative w-full md:w-96">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-                    <input className="input-field !pl-12 !h-12 text-sm" placeholder="Buscar EPI ou Uniforme..." />
-                  </div>
+          {/* VIEW: PAINEL (REQUISIÇÕES) */}
+          {activeTab === "PAINEL" && (
+            <div className="flex flex-col gap-6 animate-fade-in">
+              <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl overflow-hidden">
+                <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-base)]/5 flex justify-between items-center">
+                  <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
+                    <ClipboardList className="text-[var(--brand)]" size={20} /> Requisições Pendentes
+                  </h3>
                 </div>
-
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
-                      <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
-                        <tr>
-                            <th className="p-6 text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">EPI / Descrição</th>
-                            <th className="p-6 text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Und.</th>
-                            <th className="p-6 text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo Atual</th>
-                            <th className="p-6 text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Qtd. Mínima</th>
+                    <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+                      <tr>
+                        <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Solicitante</th>
+                        <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Item</th>
+                        <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
+                        <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {requisicoes.filter(r => r.status === 'SOLICITADO').map(r => (
+                        <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                          <td className="p-6">
+                            <div className="text-sm font-black">{r.solicitante}</div>
+                            <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{r.unidade_destino}</div>
+                          </td>
+                          <td className="p-6">
+                            <div className="text-sm font-bold">{r.item_nome || r.item}</div>
+                            <div className="text-xs text-[var(--brand)] font-black">{r.quantidade} {r.unidade_medida}</div>
+                          </td>
+                          <td className="p-6 text-center">
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-[9px] font-black uppercase tracking-widest">Pendente</span>
+                          </td>
+                          <td className="p-6 text-right space-x-2">
+                            <button onClick={() => handleAprovarRequisicao(r.id, 'APROVADO')} className="px-4 py-2 bg-green-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-all">Aprovar</button>
+                            <button onClick={() => handleAprovarRequisicao(r.id, 'REPROVADO')} className="px-4 py-2 bg-red-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm hover:scale-105 transition-all">Recusar</button>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--border)]">
-                        {catalogo.map((prod) => {
-                            const vol = volumes[prod.id] || 0;
-                            const isExcedente = vol > prod.cota;
-                            return (
-                              <tr key={prod.id} className={`transition-all ${isExcedente ? 'bg-orange-50' : 'hover:bg-[var(--bg-base)]/40'}`}>
-                                  <td className="p-6 px-10 min-w-[250px]">
-                                    <div className="flex flex-col gap-1 text-center lg:text-left">
-                                        <span className="text-sm font-black text-[var(--text-primary)] leading-relaxed whitespace-normal">{prod.nome}</span>
-                                        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{prod.categoria}</span>
-                                    </div>
-                                  </td>
-                                  <td className="p-6 text-center">
-                                    <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black text-[var(--text-muted)] border border-[var(--border)]">{prod.unidade}</span>
-                                  </td>
-                                  <td className="p-6 text-center">
-                                    <span className="text-base font-black text-[var(--text-primary)]">{prod.cota}</span>
-                                  </td>
-                                  <td className="p-6 px-10">
-                                    <div className="relative max-w-[120px] mx-auto">
-                                        <input 
-                                          type="number" 
-                                          value={vol || ''}
-                                          onChange={(e) => handleVolumeChange(prod.id, e.target.value)}
-                                          className={`w-full h-12 px-5 rounded-xl border-2 text-sm font-black outline-none transition-all ${isExcedente ? 'border-orange-500 bg-white text-orange-600 shadow-lg shadow-orange-500/20' : 'border-transparent bg-[var(--bg-base)] focus:border-[var(--brand)] focus:bg-[var(--bg-card)]'}`}
-                                          placeholder="0"
-                                        />
-                                        {isExcedente && (
-                                          <div className="absolute -top-6 right-0 animate-bounce">
-                                              <span className="px-2 py-0.5 bg-orange-600 text-white text-[9px] font-black uppercase rounded-lg shadow-md">Acima da Cota</span>
-                                          </div>
-                                        )}
-                                    </div>
-                                  </td>
-                              </tr>
-                            );
-                        })}
-                      </tbody>
+                      ))}
+                      {requisicoes.filter(r => r.status === 'SOLICITADO').length === 0 && (
+                        <tr><td colSpan={4} className="p-10 text-center text-xs text-[var(--text-muted)]">Tudo em dia! Nenhuma requisição aguardando.</td></tr>
+                      )}
+                    </tbody>
                   </table>
                 </div>
+              </div>
             </div>
           )}
 
-          {/* VIEW: ACOMPANHAMENTO E INDICADORES */}
-          {activeTab === "REQUISICOES" && (
-            <div className="flex flex-col gap-6 animate-fade-in">
-              
-              {/* Box de Indicador Radial e Relatórios */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* Indicador Radial */}
-                <div className="bg-[var(--bg-card)] p-8 rounded-[1.5rem] border border-[var(--border)] shadow-md flex items-center justify-between">
-                  <div>
-                    <h4 className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)]">Progresso de Entregas</h4>
-                    <p className="text-sm font-black text-[var(--text-primary)] mt-1">Status Geral do Mês</p>
-                  </div>
-                  <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-[var(--bg-base)] shadow-inner">
-                    <div className="absolute inset-0 rounded-full" style={{ background: `conic-gradient(var(--brand) ${percentagemGeral}%, transparent 0)` }}></div>
-                    <div className="absolute inset-[4px] bg-[var(--bg-card)] rounded-full flex items-center justify-center">
-                      <span className="text-sm font-black text-[var(--text-primary)]">{percentagemGeral}%</span>
-                    </div>
-                  </div>
+          {/* VIEW: ESTOQUE (PROPRIO / EPI) */}
+          {(activeTab === "ESTOQUE_PROPRIO" || activeTab === "ESTOQUE_CATALOGO") && (
+            <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
+              <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-base)]/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="flex items-center gap-4 w-full md:w-96">
+                   <div className="relative w-full">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
+                      <input 
+                        className="input-field !pl-10 !h-10 text-xs" 
+                        placeholder="Buscar item..." 
+                        value={busca}
+                        onChange={e => setBusca(e.target.value)}
+                      />
+                   </div>
                 </div>
-
-                {/* Filtros e Relatórios Avançados */}
-                <div className="lg:col-span-2 bg-[var(--bg-card)] p-6 rounded-[1.5rem] border border-[var(--border)] shadow-md flex flex-col justify-center gap-4">
-                  <h4 className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-2"><Filter size={14}/> Relatórios Avançados</h4>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <input type="text" placeholder="Nº da Requisição" className="input-field flex-1 !h-10 text-xs" />
-                    <input type="date" className="input-field flex-1 !h-10 text-xs" />
-                    <input type="date" className="input-field flex-1 !h-10 text-xs" />
-                    <button className="h-10 px-6 bg-[var(--bg-base)] text-[var(--brand)] border border-[var(--border)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all shadow-sm">
-                      Gerar Relatório
-                    </button>
-                  </div>
-                </div>
+                <button 
+                  onClick={() => {
+                    setFormData({ 
+                      item: "", categoria: activeTab === "ESTOQUE_PROPRIO" ? "EPI" : "SUPRIMENTO", 
+                      quantidade: 0, estoque_minimo: 5, unidade_medida: "UN", ca: "", 
+                      tipo_estoque: activeTab === "ESTOQUE_PROPRIO" ? "PROPRIO" : "CATALOGO" 
+                    });
+                    setModalAberto("cadastro");
+                  }}
+                  className="h-10 px-6 bg-[var(--brand)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-md"
+                >
+                  <Plus size={14} /> Novo Item
+                </button>
               </div>
 
-              {/* Tabela de Acompanhamento */}
-              <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl overflow-hidden">
-                  <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-base)]/5 flex justify-between items-center">
-                    <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
-                        <HistoryIcon className="text-[var(--brand)]" size={20} /> Requisições em Andamento
-                    </h3>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
-                          <tr>
-                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Data / NF</th>
-                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Resumo da Requisição</th>
-                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status / Saldo</th>
-                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Progresso</th>
-                              <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Relatório</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--border)]">
-                          {loading ? (
-                              <tr><td colSpan={5} className="p-20 text-center text-xs italic text-[var(--text-muted)]">Sincronizando dados...</td></tr>
-                          ) : pedidos.map((p) => {
-                              const prog = calculateProgress(p);
-                              const emAberto = prog.percent < 100;
-                              const itemCount = p.itens?.length || 0;
-
-                              return (
-                                <tr key={p.id} onClick={() => setSelectedReport(p)} className={`transition-all cursor-pointer ${emAberto ? 'bg-blue-50/10' : 'hover:bg-[var(--bg-base)]/30'}`}>
-                                    <td className="p-6 text-center min-w-[120px]">
-                                      <div className="flex flex-col gap-1">
-                                          <span className="text-[11px] font-black text-[var(--text-primary)]">{p.data}</span>
-                                          <span className="text-[9px] font-bold text-[var(--brand)] uppercase tracking-widest">{p.nf}</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-6 px-10 min-w-[300px]">
-                                      <div className="flex flex-col gap-2">
-                                          <div className="flex items-center gap-3">
-                                            {emAberto && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse shrink-0 shadow-lg shadow-blue-500/50" />}
-                                            <span className="text-sm font-black text-[var(--text-primary)] leading-tight">Requisição de Materiais ({itemCount} {itemCount === 1 ? 'Item' : 'Itens'})</span>
-                                          </div>
-                                          <div className="flex items-center gap-2 text-[var(--text-muted)]">
-                                            <UserCheck size={12} className={emAberto ? "text-orange-500" : "text-green-600"} />
-                                            <span className="text-[9px] font-bold uppercase tracking-widest">Responsável: {p.recebedor || 'Pendente'}</span>
-                                          </div>
-                                      </div>
-                                    </td>
-                                    <td className="p-6 text-center min-w-[160px]">
-                                      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${emAberto ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-green-100 text-green-700 border-green-200'}`}>
-                                          {emAberto ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
-                                          <span className="text-[10px] font-black uppercase tracking-widest">
-                                            {emAberto ? p.status : 'Concluído'}
-                                          </span>
-                                      </div>
-                                    </td>
-                                    <td className="p-6">
-                                      <div className="flex items-center justify-center gap-4">
-                                          <div className="w-20 h-2 bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)] shadow-inner">
-                                            <div className={`h-full rounded-full ${prog.percent < 100 ? 'bg-orange-500' : 'bg-green-600'} shadow-lg`} style={{ width: `${prog.percent}%` }} />
-                                          </div>
-                                          <span className="text-[10px] font-black text-[var(--text-primary)] w-8 text-right">{prog.percent}%</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-6 text-right">
-                                      <button 
-                                        className="p-3 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl hover:bg-[var(--brand)] hover:text-white transition-all shadow-sm border border-[var(--border)]"
-                                      >
-                                          <FileText size={16} />
-                                      </button>
-                                    </td>
-                                </tr>
-                              );
-                          })}
-                        </tbody>
-                    </table>
-                  </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+                    <tr>
+                      <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Item / Categoria</th>
+                      <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>
+                      <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Mínimo</th>
+                      <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Und.</th>
+                      <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)]">
+                    {estoque
+                      .filter(i => i.tipo_estoque === (activeTab === "ESTOQUE_PROPRIO" ? "PROPRIO" : "CATALOGO"))
+                      .filter(i => i.item?.toLowerCase().includes(busca.toLowerCase()))
+                      .map(item => (
+                        <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                          <td className="p-6">
+                            <div className="text-sm font-black">{item.item}</div>
+                            <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria} {item.ca && `| CA: ${item.ca}`}</div>
+                          </td>
+                          <td className="p-6 text-center">
+                            <span className={`text-base font-black ${item.quantidade <= item.estoque_minimo ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>
+                              {item.quantidade || 0}
+                            </span>
+                          </td>
+                          <td className="p-6 text-center text-xs font-bold text-[var(--text-muted)]">{item.estoque_minimo}</td>
+                          <td className="p-6 text-center text-xs font-bold text-[var(--text-muted)]">{item.unidade_medida}</td>
+                          <td className="p-6 text-right">
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= item.estoque_minimo ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                              {item.quantidade <= item.estoque_minimo ? 'Crítico' : 'OK'}
+                            </span>
+                          </td>
+                        </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            </div>
+          )}
+
+          {/* VIEW: RECEBER CARGA (CROSS-DOCKING) */}
+          {activeTab === "RECEBER_CARGA" && (
+             <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl p-8 animate-fade-in">
+                <div className="flex items-center gap-4 mb-8">
+                   <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-600"><Truck size={24}/></div>
+                   <div>
+                      <h3 className="text-xl font-black text-[var(--text-primary)]">Conferência de Carga</h3>
+                      <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Vincular entrada de NF com Requisições Aprovadas</p>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">1. Selecione a Requisição Aprovada</label>
+                      <select 
+                        className="input-field w-full"
+                        onChange={(e) => {
+                          const req = requisicoes.find(r => r.id === e.target.value);
+                          setItemSelecionado(req);
+                        }}
+                      >
+                         <option value="">Selecione uma requisição...</option>
+                         {requisicoes.filter(r => r.status === 'APROVADO').map(r => (
+                            <option key={r.id} value={r.id}>#{r.id.substring(0,6)} - {r.item_nome || r.item} ({r.solicitante})</option>
+                         ))}
+                      </select>
+
+                      {itemSelecionado && (
+                        <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)] space-y-3">
+                           <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Quantidade Esperada:</span>
+                              <span className="text-lg font-black text-[var(--brand)]">{itemSelecionado.quantidade} {itemSelecionado.unidade_medida}</span>
+                           </div>
+                           <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Unidade Destino:</span>
+                              <span className="text-xs font-bold">{itemSelecionado.unidade_destino}</span>
+                           </div>
+                        </div>
+                      )}
+                   </div>
+
+                   <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] ml-2">2. Informe o que chegou</label>
+                      <input type="number" className="input-field w-full" placeholder="Qtd Recebida na NF" />
+                      <button className="w-full btn-brand !h-14 text-sm font-black uppercase tracking-widest">
+                         Confirmar Recebimento e Baixa
+                      </button>
+                      <p className="text-[9px] text-center text-[var(--text-muted)] uppercase font-bold tracking-widest italic mt-4">* O saldo será atualizado e a requisição passará para 'ENTREGUE'.</p>
+                   </div>
+                </div>
+             </div>
+          )}
+
+          {/* VIEW: ENTREGA EPI (NR-06) */}
+          {activeTab === "ENTREGA_EPI" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
+               <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl p-8 flex flex-col gap-6">
+                  <h3 className="text-xl font-black flex items-center gap-3"><UserCheck className="text-[var(--brand)]"/> 1. Identificar Colaborador</h3>
+                  <select 
+                    className="input-field w-full !h-14 font-black"
+                    value={entregaData.colaborador}
+                    onChange={e => setEntregaData({...entregaData, colaborador: e.target.value})}
+                  >
+                     <option value="">Selecione o Colaborador...</option>
+                     {usuarios.map(u => (
+                        <option key={u.id} value={u.nome}>{u.nome} ({u.cargo || 'Geral'})</option>
+                     ))}
+                  </select>
+                  
+                  <div className="relative mt-4">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
+                    <input className="input-field !pl-12 !h-12 text-xs w-full" placeholder="Buscar EPI no estoque..." />
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-2 mt-2 hide-scrollbar">
+                     {estoque.filter(i => i.tipo_estoque === 'PROPRIO' && i.quantidade > 0).map(i => (
+                        <div key={i.id} className="flex justify-between items-center p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] hover:border-[var(--brand)] cursor-pointer transition-all"
+                             onClick={() => {
+                               if(!entregaData.itens.find(it => it.id === i.id)) {
+                                 setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]});
+                               }
+                             }}>
+                           <span className="text-xs font-bold">{i.item}</span>
+                           <span className="text-[10px] font-black text-[var(--brand)] bg-white px-2 py-1 rounded-lg">Saldo: {i.quantidade}</span>
+                        </div>
+                     ))}
+                  </div>
+               </div>
+
+               <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-xl p-8 flex flex-col gap-6">
+                  <h3 className="text-xl font-black flex items-center gap-3"><ShieldCheck className="text-[var(--brand)]"/> 2. Cesta de Entrega</h3>
+                  
+                  <div className="flex-1 space-y-4 border-2 border-dashed border-[var(--border)] rounded-2xl p-4 bg-[var(--bg-base)]/30 min-h-[200px]">
+                     {entregaData.itens.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm">
+                           <div className="flex flex-col">
+                              <span className="text-xs font-black">{item.item}</span>
+                              <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">CA: {item.ca || 'N/A'}</span>
+                           </div>
+                           <div className="flex items-center gap-3">
+                              <input 
+                                type="number" 
+                                className="w-12 h-8 text-center bg-[var(--bg-base)] rounded-lg text-xs font-black outline-none border border-[var(--border)]"
+                                value={item.qtd_entrega}
+                                onChange={e => {
+                                  const newItens = [...entregaData.itens];
+                                  newItens[idx].qtd_entrega = Number(e.target.value);
+                                  setEntregaData({...entregaData, itens: newItens});
+                                }}
+                              />
+                              <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((_, i) => i !== idx)})} className="text-red-500 hover:scale-110 transition-all"><X size={16}/></button>
+                           </div>
+                        </div>
+                     ))}
+                     {entregaData.itens.length === 0 && (
+                        <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] opacity-50 gap-2">
+                           <ShoppingBag size={32} />
+                           <span className="text-[10px] font-black uppercase tracking-widest">Cesta Vazia</span>
+                        </div>
+                     )}
+                  </div>
+
+                  <button 
+                    disabled={loading || !entregaData.colaborador || entregaData.itens.length === 0}
+                    onClick={handleBaixaEntrega}
+                    className="w-full btn-brand !h-16 text-sm font-black uppercase tracking-widest flex items-center justify-center gap-4 disabled:opacity-30"
+                  >
+                     <Send size={20} /> Finalizar e Imprimir Ficha
+                  </button>
+               </div>
             </div>
           )}
 
         </div>
 
-        {/* COLUNA DIREITA - SIDEBAR (OCUPA 1 COLUNA) */}
-        <div className="xl:col-span-1 flex flex-col gap-6">
+        {/* COLUNA DIREITA - SIDEBAR */}
+        <div className="xl:col-span-1 flex flex-col gap-6 no-print">
           
           {/* Identificação do Almoxarife */}
           <div className="bg-[var(--bg-card)] p-8 rounded-[1.5rem] border border-[var(--border)] shadow-xl flex flex-col items-center text-center">
-            <div className="w-24 h-24 bg-orange-500/10 border-4 border-[var(--bg-card)] shadow-[0_0_0_2px_var(--border)] rounded-full flex items-center justify-center text-orange-600 mb-6 overflow-hidden">
-              <img 
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'Almoxarife')}&background=EA580C&color=fff&size=128`} 
-                alt="Foto do Almoxarife" 
-                className="w-full h-full object-cover" 
-              />
+            <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-600 mb-4 border-2 border-[var(--border)] shadow-sm">
+               <UserCheck size={32} />
             </div>
-            <h3 className="font-black text-[var(--text-primary)] text-lg tracking-tight">{user.name || 'Diogo F.'}</h3>
-            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 bg-[var(--bg-base)] px-3 py-1 rounded-full">{user.role || 'Almoxarife'}</p>
+            <h3 className="font-black text-[var(--text-primary)] text-lg">{user.name || 'Setor Logístico'}</h3>
+            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest mt-1">Status: Logado</p>
+          </div>
+
+          {/* Estoque Crítico Alerta */}
+          <div className="bg-gradient-to-br from-red-600 to-orange-500 p-8 rounded-[1.5rem] shadow-xl text-white relative overflow-hidden">
+            <AlertTriangle className="absolute top-4 right-4 text-white/20" size={80} />
+            <h4 className="relative z-10 font-black uppercase tracking-widest text-[10px] mb-6 flex items-center gap-2">
+              <AlertTriangle size={14} /> Alerta de Reposição
+            </h4>
             
-            <div className="w-full mt-6 space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] text-left">
-                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-600"><UserCheck size={14}/></div>
-                <div>
-                  <div className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest">Setor</div>
-                  <div className="text-xs font-bold text-[var(--text-primary)] truncate max-w-[150px]">Almoxarifado Central</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] text-left">
-                <div className="p-2 bg-green-500/10 rounded-lg text-green-600"><AlertTriangle size={14}/></div>
-                <div>
-                  <div className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest">Contato</div>
-                  <div className="text-xs font-bold text-[var(--text-primary)] truncate max-w-[150px]">{user.email || 'Não informado'}</div>
-                </div>
-              </div>
+            <div className="relative z-10 space-y-3">
+               {itensCriticos.slice(0, 5).map((item, idx) => (
+                  <div key={idx} className="bg-black/20 p-3 rounded-xl border border-white/10 flex justify-between items-center shadow-inner">
+                     <span className="text-[11px] font-bold truncate max-w-[140px]">{item.item}</span>
+                     <span className="px-2 py-1 bg-white text-red-600 rounded-lg text-[10px] font-black">{item.quantidade} {item.unidade_medida}</span>
+                  </div>
+               ))}
+               {itensCriticos.length === 0 && <p className="text-xs font-bold opacity-80 italic">Nenhum item abaixo do mínimo.</p>}
             </div>
           </div>
 
-          {/* Estoque Crítico */}
-          <div className="bg-gradient-to-br from-orange-500 to-red-600 p-8 rounded-[1.5rem] shadow-xl text-white relative overflow-hidden">
-            <Megaphone className="absolute top-4 right-4 text-white/10" size={80} />
-            <h4 className="relative z-10 font-black uppercase tracking-widest text-xs mb-6 flex items-center gap-2 drop-shadow-md">
-              <Megaphone size={16} /> Estoque Crítico
-            </h4>
-            
-            <div className="relative z-10 space-y-4">
-              <div className="bg-black/20 backdrop-blur-md p-5 rounded-2xl border border-white/20 shadow-inner">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-200">Cota Adicional Permitida</p>
-                <div className="flex items-center gap-3 mt-2 mb-3">
-                  <div className="p-2 bg-white/20 rounded-lg"><Box size={16} /></div>
-                  <p className="text-sm font-black">Notebook Corporativo</p>
-                </div>
-                <div className="w-full h-px bg-white/20 my-3"></div>
-                <p className="text-[11px] font-medium opacity-90 leading-relaxed italic">
-                  "Liberado temporariamente 2 unidades extras por requisição devido à expansão da secretaria. Prazo até o final do mês."
-                </p>
-                <div className="mt-3 flex items-center gap-2 text-[9px] font-black text-orange-200 uppercase tracking-widest">
-                  <CheckCircle2 size={12} /> Analista Logístico
-                </div>
-              </div>
-            </div>
+          {/* Links Rápidos */}
+          <div className="bg-[var(--bg-card)] p-6 rounded-[1.5rem] border border-[var(--border)] shadow-md flex flex-col gap-3">
+             <button className="flex items-center gap-3 p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] hover:border-[var(--brand)] transition-all text-left">
+                <FileText size={16} className="text-blue-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Norma NR-06</span>
+             </button>
+             <button className="flex items-center gap-3 p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] hover:border-[var(--brand)] transition-all text-left">
+                <ListChecks size={16} className="text-green-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Inventário Semanal</span>
+             </button>
           </div>
 
         </div>
 
       </div>
 
-      <AdaptiveModal isOpen={!!selectedReport} onClose={() => setSelectedReport(null)} title="Relatório de Entrega da Requisição">
-         <div className="p-10 space-y-8">
-            <div className="flex justify-between items-start border-b border-[var(--border)] pb-8">
+      {/* --- MODAIS --- */}
+
+      {/* MODAL: CADASTRO ITEM */}
+      <AdaptiveModal isOpen={modalAberto === "cadastro"} onClose={() => setModalAberto(null)} title={formData.tipo_estoque === "PROPRIO" ? "Cadastrar Novo EPI / Uniforme" : "Novo Item para Catálogo"}>
+         <div className="p-8 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="md:col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block ml-2">Nome do Item</label>
+                  <input className="input-field" value={formData.item} onChange={e => setFormData({...formData, item: e.target.value})} placeholder="Ex: Luva de Raspa G" />
+               </div>
                <div>
-                  <h4 className="text-2xl font-black text-[var(--text-primary)] italic">Relatório de Conferência</h4>
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-1">Protocolo: {selectedReport?.nf || '---'}</p>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block ml-2">Categoria</label>
+                  <input className="input-field" value={formData.categoria} onChange={e => setFormData({...formData, categoria: e.target.value})} placeholder="Ex: Proteção das Mãos" />
                </div>
-               <div className="text-right">
-                  <p className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data da Solicitação</p>
-                  <p className="text-sm font-black">{selectedReport?.data}</p>
+               <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block ml-2">Saldo Inicial</label>
+                  <input type="number" className="input-field" value={formData.quantidade} onChange={e => setFormData({...formData, quantidade: Number(e.target.value)})} />
                </div>
-            </div>
-
-            <div className="space-y-6">
-               <div className="flex items-center gap-3 p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                  <UserCheck className="text-green-600" size={20} />
-                  <div>
-                     <p className="text-[10px] font-black uppercase text-[var(--text-muted)]">Responsável pelo Recebimento</p>
-                     <p className="text-xs font-black">{selectedReport?.recebedor}</p>
-                  </div>
-               </div>
-
-               <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden">
-                  <table className="w-full text-left">
-                     <thead className="bg-[var(--bg-base)]/50">
-                        <tr>
-                           <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Material Solicitado</th>
-                           <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">Pedido</th>
-                           <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-center">Entregue</th>
-                           <th className="p-4 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-right">Saldo</th>
-                        </tr>
-                     </thead>
-                     <tbody className="divide-y divide-[var(--border)]">
-                        {selectedReport?.itens?.map((item: any, idx: number) => {
-                          const itemFalta = (item.solicitado || 0) - (item.chegou || 0);
-                          return (
-                            <tr key={idx} className="hover:bg-[var(--bg-base)]/50">
-                               <td className="p-4 text-xs font-bold text-[var(--text-primary)]">{item.desc}</td>
-                               <td className="p-4 text-center font-black text-xs text-[var(--text-muted)]">{item.solicitado}</td>
-                               <td className="p-4 text-center font-black text-xs text-green-600">{item.chegou}</td>
-                               <td className={`p-4 text-right font-black text-xs ${itemFalta > 0 ? 'text-orange-500' : 'text-[var(--text-muted)]'}`}>
-                                  {itemFalta > 0 ? `${itemFalta} Faltantes` : 'OK'}
-                               </td>
-                            </tr>
-                          );
-                        })}
-                     </tbody>
-                  </table>
+               {formData.tipo_estoque === "PROPRIO" && (
+                 <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block ml-2">Certificado de Aprovação (CA)</label>
+                    <input className="input-field" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Nº do CA" />
+                 </div>
+               )}
+               <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2 block ml-2">Estoque Mínimo</label>
+                  <input type="number" className="input-field" value={formData.estoque_minimo} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
                </div>
             </div>
-
-            <div className="flex justify-end gap-4">
-               <button onClick={() => setSelectedReport(null)} className="h-14 px-12 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-xl text-xs font-black uppercase tracking-widest border border-[var(--border)] hover:bg-[var(--bg-card)] transition-colors">
-                  Fechar Relatório
-               </button>
+            <div className="flex justify-end pt-4 border-t border-[var(--border)]">
+               <button onClick={handleSalvarEstoque} className="btn-brand px-12 !h-14 text-xs">Salvar Item no Estoque</button>
             </div>
+         </div>
+      </AdaptiveModal>
+
+      {/* SEÇÃO OCULTA: FICHA NR-06 PARA IMPRESSÃO */}
+      <div id="ficha-impressao" className="hidden print:block fixed inset-0 bg-white text-black p-12 font-serif z-[9999]">
+         <div className="text-center border-b-2 border-black pb-6 mb-8">
+            <h1 className="text-2xl font-black uppercase tracking-tighter">ALICERCE SERVIÇOS E GESTÃO LTDA</h1>
+            <p className="text-lg font-bold uppercase mt-2">Ficha de Controle de Entrega de EPI (NR-06)</p>
+         </div>
+
+         <div className="border border-black p-4 mb-8 text-sm space-y-2">
+            <div><strong>COLABORADOR:</strong> <span className="uppercase">{entregaData.colaborador}</span></div>
+            <div className="flex justify-between">
+               <div><strong>DATA DE ENTREGA:</strong> {new Date().toLocaleDateString('pt-BR')}</div>
+               <div><strong>SETOR:</strong> Operacional</div>
+            </div>
+         </div>
+
+         <table className="w-full text-left border-collapse border border-black mb-10">
+            <thead>
+               <tr className="bg-gray-100 text-[10px] uppercase">
+                  <th className="p-2 border border-black">Equipamento (EPI)</th>
+                  <th className="p-2 border border-black text-center">Qtd</th>
+                  <th className="p-2 border border-black text-center">CA MTE</th>
+                  <th className="p-2 border border-black text-center">Assinatura / Visto</th>
+               </tr>
+            </thead>
+            <tbody>
+               {entregaData.itens.map((item, i) => (
+                  <tr key={i} className="text-xs">
+                     <td className="p-2 border border-black uppercase font-bold">{item.item}</td>
+                     <td className="p-2 border border-black text-center font-black">{item.qtd_entrega}</td>
+                     <td className="p-2 border border-black text-center font-mono">{item.ca || '---'}</td>
+                     <td className="p-2 border border-black w-32"></td>
+                  </tr>
+               ))}
+               {[...Array(5 - entregaData.itens.length)].map((_, i) => (
+                  <tr key={`empty-${i}`} className="h-8">
+                     <td className="p-2 border border-black"></td>
+                     <td className="p-2 border border-black"></td>
+                     <td className="p-2 border border-black"></td>
+                     <td className="p-2 border border-black"></td>
+                  </tr>
+               ))}
+            </tbody>
+         </table>
+
+         <div className="text-[10px] text-justify space-y-4 mb-20 italic bg-gray-50 p-4 border border-gray-200">
+            <p><strong>DECLARAÇÃO:</strong> Declaro para os devidos fins de direito, que recebi da empresa ALICERCE SERVIÇOS E GESTÃO LTDA, a título de empréstimo para meu uso exclusivo no trabalho, os equipamentos de proteção individual (EPIs) acima relacionados, em perfeitas condições de uso, obrigando-me a: </p>
+            <p>1. Usá-los apenas para a finalidade a que se destinam; 2. Responsabilizar-me pela sua guarda e conservação; 3. Comunicar à empresa qualquer alteração que o torne impróprio para uso; 4. Devolvê-lo à empresa por ocasião da rescisão do contrato de trabalho ou quando solicitado.</p>
+         </div>
+
+         <div className="flex justify-around mt-10">
+            <div className="w-64 border-t border-black text-center pt-2">
+               <span className="text-[10px] font-bold uppercase">Assinatura da Empresa</span>
+            </div>
+            <div className="w-64 border-t border-black text-center pt-2">
+               <span className="text-[10px] font-bold uppercase">Assinatura do Colaborador</span>
+            </div>
+         </div>
+      </div>
+
+    </div>
+  );
+}
+        </div>
          </div>
       </AdaptiveModal>
 
