@@ -237,15 +237,7 @@ export default function RHPessoalPage() {
           </div>
         </div>
 
-        {/* Lado Direito: Inteligência Operacional & Efetivo */}
-        <div className="flex flex-col gap-6 w-[350px] overflow-y-auto pr-2 custom-scrollbar no-print">
-          <TicketHub />
-          <ColaboradoresSharedTable />
-          <div className="card p-6 bg-orange-500/5 border-orange-500/20">
-            <h4 className="text-xs font-black text-orange-500 uppercase mb-4">Meta de Contratação</h4>
-            <p className="text-[10px] text-[var(--text-muted)] font-medium">Filtre por cargo acima para ver o déficit por unidade.</p>
-          </div>
-        </div>
+
       </div>
 
       {/* Ficha 360 Arrastável */}
