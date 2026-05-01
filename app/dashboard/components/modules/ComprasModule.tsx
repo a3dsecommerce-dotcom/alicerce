@@ -100,6 +100,11 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     return acc;
   }, []);
 
+  const ultimaReq = requisicoesAgrupadas[0];
+  const totalItensUltima = ultimaReq?.itens.length || 0;
+  const itensEntreguesUltima = ultimaReq?.itens.filter((it: any) => it.status === 'ENTREGUE').length || 0;
+  const porcentagemEntrega = totalItensUltima > 0 ? Math.round((itensEntreguesUltima / totalItensUltima) * 100) : 0;
+
   const handleFinalizarPedido = async () => {
     const todosItensId = Array.from(new Set([...Object.keys(volumes), ...Object.keys(volumesExtra)]));
     const itensParaPedir = todosItensId.filter(id => (volumes[id] || 0) > 0 || (volumesExtra[id] || 0) > 0);
@@ -149,28 +154,66 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     <div className="flex flex-col gap-10 animate-fade-in pb-32 max-w-full px-4">
       
       {/* HEADER */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-[var(--text-primary)] italic tracking-tight">
-            Painel de Compras Operacionais
-          </h2>
-          <p className="text-[11px] font-black text-[var(--brand)] uppercase tracking-widest mt-1">
-            Status: {requisicoesRaw.length} Requisições Geradas este mês
-          </p>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl">
+        <div className="flex items-center gap-6">
+           <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 border border-orange-200 shadow-inner">
+              <User size={32} />
+           </div>
+           <div>
+              <h2 className="text-2xl font-black text-[var(--text-primary)] italic tracking-tight flex items-center gap-3">
+                {user.name || 'Setor Admin'} 
+                <span className="text-[10px] not-italic font-black bg-[var(--brand)] text-white px-3 py-1 rounded-full uppercase tracking-widest">{user.unidade_alocacao || 'Unidade'}</span>
+              </h2>
+              <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1 flex items-center gap-2">
+                <Package size={14} className="text-[var(--brand)]" /> {requisicoesRaw.length} Requisições Geradas • Período: {new Date().toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'})}
+              </p>
+           </div>
         </div>
 
-        <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md">
-          <button onClick={() => setActiveTab("CATALOGO")} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "CATALOGO" ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
+        <div className="flex gap-2 p-1.5 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
+          <button onClick={() => setActiveTab("CATALOGO")} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "CATALOGO" ? 'bg-white text-[var(--brand)] shadow-md border border-[var(--border)]' : 'text-[var(--text-muted)] hover:bg-white/50'}`}>
             <ShoppingBag size={16} /> Catálogo
           </button>
-          <button onClick={() => setActiveTab("TRACKING")} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "TRACKING" ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
+          <button onClick={() => setActiveTab("TRACKING")} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "TRACKING" ? 'bg-white text-[var(--brand)] shadow-md border border-[var(--border)]' : 'text-[var(--text-muted)] hover:bg-white/50'}`}>
             <Truck size={16} /> Acompanhamento
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-        <div className="xl:col-span-3 flex flex-col gap-8">
+      <div className="flex flex-col gap-8">
+        {/* INDICADORES DE PERFORMANCE DA ÚLTIMA REQUISIÇÃO */}
+        {requisicoesAgrupadas.length > 0 && (
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+              <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-lg flex items-center gap-4">
+                 <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm"><Box size={24} /></div>
+                 <div>
+                    <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Último Protocolo</p>
+                    <h4 className="text-base font-black text-[var(--brand)]">{ultimaReq.protocolo}</h4>
+                 </div>
+              </div>
+              <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-lg flex items-center gap-4 md:col-span-2">
+                 <div className="w-12 h-12 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center border border-green-100 shadow-sm"><Activity size={24} /></div>
+                 <div className="flex-1">
+                    <div className="flex justify-between items-center mb-2">
+                       <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Status de Entrega</p>
+                       <span className="text-xs font-black text-green-600">{porcentagemEntrega}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)]">
+                       <div className="h-full bg-green-500 shadow-lg transition-all duration-1000" style={{ width: `${porcentagemEntrega}%` }} />
+                    </div>
+                 </div>
+              </div>
+              <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-lg flex items-center gap-4">
+                 <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center border border-orange-100 shadow-sm"><Clock size={24} /></div>
+                 <div>
+                    <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Tempo Decorrido</p>
+                    <h4 className="text-base font-black">{getTempoAberto(ultimaReq.data_raw)}</h4>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        <div className="flex flex-col gap-8">
           
           {activeTab === "CATALOGO" ? (
             <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
@@ -305,17 +348,6 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
             </div>
           )}
 
-        </div>
-
-        {/* SIDEBAR */}
-        <div className="xl:col-span-1 space-y-6">
-           <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl text-center">
-              <div className="w-24 h-24 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 text-orange-600 border-4 border-white shadow-lg">
-                 <User size={40} />
-              </div>
-              <h4 className="text-lg font-black uppercase">{user.name || 'Setor Admin'}</h4>
-              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{user.role || 'Colaborador'}</p>
-           </div>
         </div>
       </div>
 
