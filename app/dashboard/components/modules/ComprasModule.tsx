@@ -216,7 +216,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
         <div className="flex flex-col gap-8">
           
           {activeTab === "CATALOGO" ? (
-            <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
                 <div className="p-10 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-base)]/5">
                    <div>
                       <h3 className="text-xl font-black uppercase italic">Solicitação de Materiais</h3>
@@ -289,7 +289,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                 </div>
             </div>
           ) : (
-            <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-xl overflow-hidden animate-fade-in">
                <div className="p-10 border-b border-[var(--border)] bg-[var(--bg-base)]/5">
                   <h3 className="text-xl font-black uppercase italic">Evolução dos Pedidos</h3>
                   <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Acompanhe a análise do almoxarifado e o status de entrega</p>
