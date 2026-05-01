@@ -33,19 +33,31 @@ export default function LoginPage() {
     setError("");
     const telLimpo = telefone.replace(/\D/g, "");
     if (telLimpo.length < 10) { setError("Telefone inválido."); setLoading(false); return; }
-    const senhaCorreta = telLimpo.slice(-4);
-    if (senha !== senhaCorreta) { setError("Senha incorreta — use os 4 últimos dígitos."); setLoading(false); return; }
+    
     try {
       const telCom55 = telLimpo.startsWith("55") ? telLimpo : `55${telLimpo}`;
       const telSem55 = telLimpo.startsWith("55") ? telLimpo.slice(2) : telLimpo;
+      
       const { data: user, error: userError } = await supabase.from('usuarios').select('*')
         .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telCom55}@s.whatsapp.net,telefone.eq.${telSem55}@s.whatsapp.net`)
         .single();
+        
       if (userError || !user) { setError("Usuário não encontrado."); setLoading(false); return; }
+
+      // Validação de Senha (Suporta senha customizada ou legado de 4 dígitos)
+      const senhaPadrao = telLimpo.slice(-4);
+      const senhaCorreta = user.senha || senhaPadrao;
+      
+      if (senha !== senhaCorreta) { 
+        setError(user.senha ? "Senha incorreta." : "Senha incorreta — use os 4 últimos dígitos."); 
+        setLoading(false); 
+        return; 
+      }
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
       const rawCargo = user.cargo ? String(user.cargo).toUpperCase() : null;
       const cargoResolvido = rawCargo || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
       localStorage.setItem("crm_user", JSON.stringify({ 
+        id: user.id,
         email: user.telefone, 
         role: cargoResolvido, 
         name: user.nome, 

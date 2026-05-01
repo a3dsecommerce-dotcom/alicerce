@@ -15,6 +15,7 @@ import RHModule from "./components/modules/RHModule";
 import ComprasModule from "./components/modules/ComprasModule";
 import ComunicacaoModule from "./components/modules/ComunicacaoModule";
 import AlmoxarifadoModule from "./components/modules/AlmoxarifadoModule";
+import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
 
 export default function UnifiedCockpitPage() {
   return (
@@ -58,9 +59,10 @@ function CockpitContent() {
   const modules = [
     { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE"] },
     { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
-    { id: "COMPRAS", label: "Compras", icon: ShoppingCart, roles: ["COMPRADOR"] },
+    { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["COMPRADOR"] },
     { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
     { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
+    { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR"] },
   ];
 
   // Regra de Negócio: nivel_acesso >= 3 = Gestor/Admin → vê o Painel Consolidado
@@ -119,6 +121,7 @@ function CockpitContent() {
             {activeModule === "RH" && <RHModule user={user} />}
             {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
             {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
+            {activeModule === "SETTINGS" && <ConfiguracoesModule user={user} />}
           </>
         ) : (
           <div className="flex items-center justify-center h-64 flex-col gap-4">
