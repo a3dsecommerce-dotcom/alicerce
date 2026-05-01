@@ -359,8 +359,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md w-fit overflow-x-auto">
           {[
-            { id: "ESTOQUE", label: "Estoque Geral", icon: Package },
-            { id: "REQUISICOES", label: "Análise de Pedidos", icon: FileText },
+            { id: "ESTOQUE", label: "Cadastro Geral", icon: Package },
+            { id: "REQUISICOES", label: "Requisições", icon: FileText },
             { id: "FAZER_REQ", label: "Fazer Requisição", icon: ShoppingBag },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
