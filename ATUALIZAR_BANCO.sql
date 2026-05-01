@@ -122,15 +122,19 @@ ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS valor_unitario NUMERIC DEFAUL
 -- =================================================================================
 CREATE TABLE IF NOT EXISTS requisicoes (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    item_id UUID REFERENCES estoque_atual(id),
-    item_nome TEXT, -- nome do item para quando não há FK
+    item_id UUID, -- Removido FK rígida para permitir múltiplos catálogos (EPI, Suprimentos, etc)
+    item_nome TEXT,
     solicitante TEXT,
     unidade_destino TEXT,
     quantidade INTEGER NOT NULL,
     unidade_medida TEXT DEFAULT 'UN',
-    status TEXT DEFAULT 'SOLICITADO', -- SOLICITADO, EM_ROTA, ENTREGUE
-    data_solicitacao TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+    status TEXT DEFAULT 'SOLICITADO',
+    data_solicitacao TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+    tipo_item TEXT -- Identifica de qual catálogo o item pertence
 );
+
+-- Remove a constraint caso ela já exista para evitar o erro de FK
+ALTER TABLE requisicoes DROP CONSTRAINT IF EXISTS requisicoes_item_id_fkey;
 
 -- Adiciona colunas faltantes se a tabela já existir
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS protocolo TEXT;
@@ -138,6 +142,7 @@ ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_aprovada INTEGER;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_extra INTEGER DEFAULT 0;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS data_entrega TIMESTAMP WITH TIME ZONE;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS recebedor_nome TEXT;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS tipo_item TEXT;
 
 -- =================================================================================
 -- TABELA DE PROCESSOS DE COMPRAS (TRACKING DE REMESSAS)
