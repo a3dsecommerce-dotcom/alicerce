@@ -572,10 +572,3 @@ export default function AlmoxarifadoPage() {
     </div>
   );
 }
-        </div>
-         </div>
-      </AdaptiveModal>
-
-    </div>
-  );
-}
