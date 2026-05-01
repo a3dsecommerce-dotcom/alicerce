@@ -241,7 +241,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
-                    <th className="py-8 pl-4 pr-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px]">Descrição</th>
+                    <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px]">Descrição</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
                     {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
@@ -254,7 +254,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 <tbody className="divide-y divide-[var(--border)]">
                   {estoque.filter(i => i.tipo_estoque === (activeTab === "ESTOQUE_EPI" ? "PROPRIO" : "CATALOGO")).filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
-                      <td className="py-8 pl-4 pr-8">
+                      <td className="p-8 pl-10">
                         <div className="text-sm font-black whitespace-normal max-w-[400px]">{item.item}</div>
                         <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
                       </td>
