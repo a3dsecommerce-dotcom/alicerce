@@ -7,30 +7,14 @@
    ============================================================ */
 
 :root {
-  /* Brand - Laranja Alicerce */
+  /* Brand - Laranja Alicerce (Compartilhado) */
   --brand: #ea580c;
   --brand-hover: #c2410c;
   --brand-light: #fb923c;
   --brand-alpha: rgba(234, 88, 12, 0.12);
   --brand-glow: rgba(234, 88, 12, 0.35);
 
-  /* Fundo escuro — idêntico ao login */
-  --bg-base: #0f1117;
-  --bg-surface: rgba(255, 255, 255, 0.04);
-  --bg-card: rgba(255, 255, 255, 0.06);
-  --bg-card-hover: rgba(255, 255, 255, 0.09);
-
-  /* Texto */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.38);
-
-  /* Bordas */
-  --border: rgba(255, 255, 255, 0.1);
-  --border-light: rgba(255, 255, 255, 0.06);
-  --border-brand: rgba(234, 88, 12, 0.4);
-
-  /* Semânticos */
+  /* Semânticos (Compartilhados) */
   --success: #10b981;
   --success-alpha: rgba(16, 185, 129, 0.12);
   --warning: #f59e0b;
@@ -39,17 +23,56 @@
   --danger-alpha: rgba(239, 68, 68, 0.12);
   --info: #3b82f6;
   --info-alpha: rgba(59, 130, 246, 0.12);
+}
 
-  /* Sombras */
+/* TEMA ESCURO (Padrão) */
+[data-theme='dark'], :root:not([data-theme='light']) {
+  --bg-base: #0f1117;
+  --bg-surface: rgba(255, 255, 255, 0.04);
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --bg-card-hover: rgba(255, 255, 255, 0.09);
+
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.38);
+
+  --border: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.06);
+  --border-brand: rgba(234, 88, 12, 0.4);
+
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
   --shadow-brand: 0 8px 25px rgba(234, 88, 12, 0.35);
 
-  /* Glassmorphism */
   --glass-bg: rgba(255, 255, 255, 0.06);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(20px);
+}
+
+/* TEMA CLARO */
+[data-theme='light'] {
+  --bg-base: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-brand: rgba(234, 88, 12, 0.3);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1);
+  --shadow-brand: 0 8px 20px rgba(234, 88, 12, 0.2);
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --glass-blur: blur(12px);
 }
 
 /* ============================================================
@@ -79,10 +102,12 @@ body::before {
   background: #ea580c;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.07;
+  opacity: 0.1;
   pointer-events: none;
   z-index: 0;
 }
+
+[data-theme='light'] body::before { opacity: 0.05; }
 
 body::after {
   content: '';
@@ -94,10 +119,12 @@ body::after {
   background: #c2410c;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.06;
+  opacity: 0.08;
   pointer-events: none;
   z-index: 0;
 }
+
+[data-theme='light'] body::after { opacity: 0.04; }
 
 /* ============================================================
    GLASS UTILITY
@@ -413,26 +440,39 @@ select.input-field option { background: #1a1f2e; color: white; }
 }
 
 /* ============================================================
-   DARK MODE OVERRIDES (Corrige visibilidade de indicadores antigos)
+   DARK MODE OVERRIDES (Apenas quando explicitamente escuro)
    ============================================================ */
-/* Cores de Fundo (Light para Translúcido) */
-.bg-white { background-color: rgba(255,255,255,0.06) !important; }
-.bg-green-50, .bg-green-100 { background-color: rgba(16,185,129,0.1) !important; }
-.bg-red-50, .bg-red-100 { background-color: rgba(239,68,68,0.1) !important; }
-.bg-orange-50, .bg-orange-100 { background-color: rgba(249,115,22,0.1) !important; }
-.bg-amber-50, .bg-amber-100 { background-color: rgba(245,158,11,0.1) !important; }
-.bg-blue-50, .bg-blue-100 { background-color: rgba(59,130,246,0.1) !important; }
-.bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-gray-200 { background-color: rgba(255,255,255,0.08) !important; }
+[data-theme='dark'] {
+  /* Cores de Fundo (Translúcido para Dark) */
+  .bg-white { background-color: rgba(255,255,255,0.06) !important; }
+  .bg-green-50, .bg-green-100 { background-color: rgba(16,185,129,0.1) !important; }
+  .bg-red-50, .bg-red-100 { background-color: rgba(239,68,68,0.1) !important; }
+  .bg-orange-50, .bg-orange-100 { background-color: rgba(249,115,22,0.1) !important; }
+  .bg-amber-50, .bg-amber-100 { background-color: rgba(245,158,11,0.1) !important; }
+  .bg-blue-50, .bg-blue-100 { background-color: rgba(59,130,246,0.1) !important; }
+  .bg-slate-50, .bg-slate-100, .bg-gray-50, .bg-gray-100, .bg-gray-200 { background-color: rgba(255,255,255,0.08) !important; }
 
-/* Cores de Texto (Escuro para Claro) */
-.text-green-600, .text-green-700 { color: #34d399 !important; }
-.text-red-600, .text-red-700 { color: #f87171 !important; }
-.text-orange-600, .text-orange-700 { color: #fb923c !important; }
-.text-amber-600, .text-amber-700 { color: #fbbf24 !important; }
-.text-blue-600, .text-blue-700 { color: #60a5fa !important; }
-.text-slate-600, .text-slate-700, .text-gray-500, .text-gray-600, .text-gray-700 { color: rgba(255,255,255,0.7) !important; }
-.text-black { color: #ffffff !important; }
+  /* Cores de Texto (Claro para Dark) */
+  .text-green-600, .text-green-700 { color: #34d399 !important; }
+  .text-red-600, .text-red-700 { color: #f87171 !important; }
+  .text-orange-600, .text-orange-700 { color: #fb923c !important; }
+  .text-amber-600, .text-amber-700 { color: #fbbf24 !important; }
+  .text-blue-600, .text-blue-700 { color: #60a5fa !important; }
+  .text-slate-600, .text-slate-700, .text-gray-500, .text-gray-600, .text-gray-700 { color: rgba(255,255,255,0.7) !important; }
+  .text-black { color: #ffffff !important; }
 
-/* Correção de Hover que usa bg-white */
-.hover\:bg-white:hover { background-color: rgba(234,88,12,0.15) !important; }
-.group-hover\:bg-white:hover { background-color: rgba(234,88,12,0.15) !important; }
+  /* Correção de Hover que usa bg-white */
+  .hover\:bg-white:hover { background-color: rgba(234,88,12,0.15) !important; }
+  .group-hover\:bg-white:hover { background-color: rgba(234,88,12,0.15) !important; }
+}
+
+/* Estilos específicos para o Tema Claro */
+[data-theme='light'] {
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); }
+  .glass, .glass-bg { border-color: rgba(0,0,0,0.05); }
+  .input-field { background: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+  .input-field:focus { background: #ffffff; }
+  .card, .kpi-card { background: #ffffff; border-color: #e2e8f0; }
+  .sidebar-link { color: #64748b; }
+  .sidebar-link:hover { background: #f1f5f9; color: var(--brand); }
+}
