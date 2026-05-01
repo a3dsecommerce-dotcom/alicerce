@@ -360,32 +360,53 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                <div className="text-right text-[10px] font-black uppercase"><p className="text-[var(--text-muted)]">Status do Pedido</p><p className="text-orange-600 text-sm">{selectedProtocol?.status_geral}</p></div>
             </div>
 
-            <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] overflow-hidden">
+            <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden shadow-2xl">
                <table className="w-full text-left">
-                  <thead className="bg-[var(--bg-base)]/50">
+                  <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
                      <tr>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-widest">Produto</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Pedido Base</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Extra (Análise)</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Aprovado</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-widest text-center">Status</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)]">Produto</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Solicitado</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Aprovado</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Entregue</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-red-600 text-center">Falta</th>
+                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Status</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)]">
-                     {selectedProtocol?.itens.map((it: any, idx: number) => (
-                        <tr key={idx} className="hover:bg-[var(--bg-base)]/50">
-                           <td className="p-6">
-                              <p className="text-xs font-black">{it.item_nome}</p>
-                              {it.data_entrega && <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mt-1">Entregue para: {it.recebedor_nome || 'Unidade'}</p>}
-                           </td>
-                           <td className="p-6 text-center text-xs font-bold text-[var(--text-muted)]">{it.quantidade}</td>
-                           <td className="p-6 text-center text-xs font-black text-orange-500">{it.quantidade_extra > 0 ? `+${it.quantidade_extra}` : '---'}</td>
-                           <td className="p-6 text-center text-xs font-black text-blue-600">{it.quantidade_aprovada ?? '---'}</td>
-                           <td className="p-6 text-center">
-                              <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase ${it.status === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-orange-50 text-orange-600'}`}>{it.status}</span>
-                           </td>
-                        </tr>
-                     ))}
+                     {selectedProtocol?.itens.map((it: any, idx: number) => {
+                        const totalSolicitado = (it.quantidade || 0) + (it.quantidade_extra || 0);
+                        const aprovado = it.quantidade_aprovada || 0;
+                        const entregue = it.quantidade_entregue || 0;
+                        const falta = Math.max(0, aprovado - entregue);
+                        
+                        return (
+                           <tr key={idx} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                              <td className="p-6">
+                                 <div className="flex flex-col">
+                                    <p className="text-xs font-black text-[var(--text-primary)]">{it.item_nome}</p>
+                                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-1">{it.tipo_item}</p>
+                                 </div>
+                              </td>
+                              <td className="p-6 text-center">
+                                 <div className="text-xs font-black text-[var(--text-muted)]">{totalSolicitado}</div>
+                              </td>
+                              <td className="p-6 text-center">
+                                 <div className={`text-xs font-black ${aprovado > 0 ? 'text-blue-600' : 'text-slate-400'}`}>{aprovado || '---'}</div>
+                              </td>
+                              <td className="p-6 text-center">
+                                 <div className={`text-xs font-black ${entregue > 0 ? 'text-green-600' : 'text-slate-400'}`}>{entregue}</div>
+                              </td>
+                              <td className="p-6 text-center bg-red-50/30">
+                                 <div className={`text-xs font-black ${falta > 0 ? 'text-red-600' : 'text-slate-300'}`}>{falta > 0 ? falta : 'OK'}</div>
+                              </td>
+                              <td className="p-6 text-center">
+                                 <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${it.status === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-orange-50 text-orange-600'}`}>
+                                    {it.status}
+                                 </span>
+                              </td>
+                           </tr>
+                        );
+                     })}
                   </tbody>
                </table>
             </div>
