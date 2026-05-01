@@ -424,24 +424,24 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/90 border-b border-[var(--border)]">
                   <tr>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[100px]">Nº Req.</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-left">Descrição</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[70px]">Pedido</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[70px]">Aprov.</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[100px]">Tipo</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[60px]">Dias</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[100px]">Status</th>
-                    <th className="px-4 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[130px]">Ação</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-right w-[120px]">Progresso</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[80px]">Nº Req.</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-left w-[150px]">Descrição</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[60px]">Ped.</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[60px]">Apr.</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[90px]">Tipo</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[50px]">D.</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[90px]">Status</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[120px]">Ação</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-right w-[110px]">Progresso</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {requisicoes.filter(r => r.protocolo?.toLowerCase().includes(busca.toLowerCase()) || r.item_nome?.toLowerCase().includes(busca.toLowerCase())).map(r => (
                     <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all group">
-                      <td className="px-4 py-4 text-center font-black text-[var(--brand)] text-[11px]">{r.protocolo || '---'}</td>
+                      <td className="px-4 py-4 text-center font-black text-[var(--brand)] text-[10px]">{r.protocolo || '---'}</td>
                       <td className="px-4 py-4">
-                        <div className="text-xs font-black whitespace-normal max-w-[200px] leading-tight">{r.item_nome || r.item}</div>
-                        <div className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 opacity-70">{r.unidade_destino}</div>
+                        <div className="text-[11px] font-black whitespace-normal w-[150px] leading-tight line-clamp-2">{r.item_nome || r.item}</div>
+                        <div className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5 opacity-70 truncate w-[150px]">{r.unidade_destino}</div>
                       </td>
                       <td className="px-4 py-4 text-center text-[10px] font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</td>
                       <td className="px-4 py-4 text-center text-xs font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</td>
