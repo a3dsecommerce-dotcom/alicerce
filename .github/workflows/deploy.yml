@@ -1,0 +1,43 @@
+name: 🚀 Deploy para Easypanel
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Build & Deploy no Easypanel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout do código
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📦 Instalar dependências
+        run: npm ci
+
+      - name: 🔍 Lint
+        run: npm run lint --if-present
+        continue-on-error: true
+
+      - name: 🏗️ Build da aplicação
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: 🚀 Trigger Deploy no Easypanel
+        run: |
+          echo "Disparando deploy no Easypanel..."
+          curl -k -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            "${{ secrets.EASYPANEL_WEBHOOK_URL }}" \
+            | grep -q "200\|201\|204" \
+            && echo "✅ Deploy disparado com sucesso!" \
+            || echo "⚠️ Resposta fora do esperado - verifique o painel"

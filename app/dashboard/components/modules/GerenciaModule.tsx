@@ -114,15 +114,15 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
                   { label: "Performance", value: "94.2%", icon: Activity, color: "text-green-500", detail: "+2.1% este mês" },
                   { label: "Orçamento", value: "68%", icon: DollarSign, color: "text-orange-500", detail: "R$ 1.2M disponíveis" },
                   { label: "SLA Operacional", value: "96%", icon: ShieldCheck, color: "text-blue-500", detail: "Metas batidas" },
-                  { label: "Suplementos", value: "03", icon: AlertTriangle, color: "text-orange-600", bg: "bg-orange-50", detail: "Aprovações pendentes" },
-                  { id: "tickets", label: "Novas Vagas", value: "05", icon: UserPlus, color: "text-blue-600", bg: "bg-blue-50", detail: "Triagem em andamento" },
-                  { id: "security", label: "Denúncias", value: "02", icon: ShieldAlert, color: "text-red-600", bg: "bg-red-50", detail: "Ethics Channel" },
+                  { label: "Suplementos", value: "03", icon: AlertTriangle, color: "text-orange-500", bg: "bg-orange-500/10", detail: "Aprovações pendentes" },
+                  { id: "tickets", label: "Novas Vagas", value: "05", icon: UserPlus, color: "text-blue-500", bg: "bg-blue-500/10", detail: "Triagem em andamento" },
+                  { id: "security", label: "Denúncias", value: "02", icon: ShieldAlert, color: "text-red-500", bg: "bg-red-500/10", detail: "Ethics Channel" },
                 ].map((s, i) => (
                   <div key={i} className={`p-6 rounded-[2.5rem] border border-[var(--border)] shadow-sm ${s.bg || 'bg-[var(--bg-card)]'} group hover:scale-105 transition-all cursor-pointer relative overflow-hidden`}>
                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-2 text-center tracking-widest">{s.label}</p>
                      <div className="flex flex-col items-center gap-2">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-md ${s.color} group-hover:rotate-6 transition-transform`}><s.icon size={22} /></div>
-                        <h4 className="text-2xl font-black tracking-tighter">{s.value}</h4>
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] shadow-md ${s.color} group-hover:rotate-6 transition-transform`}><s.icon size={22} /></div>
+                        <h4 className={`text-2xl font-black tracking-tighter ${s.bg ? s.color : 'text-[var(--text-primary)]'}`}>{s.value}</h4>
                         <p className="text-[8px] font-bold opacity-60 uppercase">{s.detail}</p>
                      </div>
                   </div>
