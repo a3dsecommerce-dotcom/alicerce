@@ -353,7 +353,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
         </div>
       </div>
 
-      <AdaptiveModal isOpen={!!selectedProtocol} onClose={() => setSelectedProtocol(null)} title="Detalhamento da Requisição">
+      <AdaptiveModal isOpen={!!selectedProtocol} onClose={() => setSelectedProtocol(null)} title="Detalhamento da Requisição" width="1200px">
          <div className="p-10 space-y-8">
             <div className="flex justify-between border-b border-[var(--border)] pb-8">
                <div><h4 className="text-2xl font-black italic">Protocolo {selectedProtocol?.protocolo}</h4><p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Solicitado em: {selectedProtocol?.data}</p></div>
@@ -364,12 +364,12 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                <table className="w-full text-left">
                   <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
                      <tr>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)]">Produto</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Solicitado</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Aprovado</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Entregue</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-red-600 text-center">Falta</th>
-                        <th className="p-6 text-[10px] font-black uppercase tracking-[0.1em] text-[var(--text-muted)] text-center">Status</th>
+                        <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Produto</th>
+                        <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Solicitado</th>
+                        <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Aprovado</th>
+                        <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Entregue</th>
+                        <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-red-600 text-center">Falta</th>
+                        <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Status</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)]">
@@ -381,25 +381,25 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                         
                         return (
                            <tr key={idx} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                              <td className="p-6">
+                              <td className="px-10 py-8">
                                  <div className="flex flex-col">
                                     <p className="text-xs font-black text-[var(--text-primary)]">{it.item_nome}</p>
                                     <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-1">{it.tipo_item}</p>
                                  </div>
                               </td>
-                              <td className="p-6 text-center">
+                              <td className="px-10 py-8 text-center">
                                  <div className="text-xs font-black text-[var(--text-muted)]">{totalSolicitado}</div>
                               </td>
-                              <td className="p-6 text-center">
+                              <td className="px-10 py-8 text-center">
                                  <div className={`text-xs font-black ${aprovado > 0 ? 'text-blue-600' : 'text-slate-400'}`}>{aprovado || '---'}</div>
                               </td>
-                              <td className="p-6 text-center">
+                              <td className="px-10 py-8 text-center">
                                  <div className={`text-xs font-black ${entregue > 0 ? 'text-green-600' : 'text-slate-400'}`}>{entregue}</div>
                               </td>
-                              <td className="p-6 text-center bg-red-50/30">
+                              <td className="px-10 py-8 text-center bg-red-50/10">
                                  <div className={`text-xs font-black ${falta > 0 ? 'text-red-600' : 'text-slate-300'}`}>{falta > 0 ? falta : 'OK'}</div>
                               </td>
-                              <td className="p-6 text-center">
+                              <td className="px-10 py-8 text-center">
                                  <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${it.status === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-orange-50 text-orange-600'}`}>
                                     {it.status}
                                  </span>
