@@ -28,9 +28,9 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Prefeitura',
     icon: Building2,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'DIRETOR', 'RH_SECRETARIA'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'DIRETOR', 'RH_SECRETARIA'],
     subItems: [
-      { href: '/dashboard/rh/prefeitura', label: 'Indicadores RH PMG', roles: ['ADMIN', 'DIRETORIA', 'RH_DP', 'RH_SECRETARIA'] },
+      { href: '/dashboard/rh/prefeitura', label: 'Indicadores RH PMG', roles: ['ADMIN', 'DIRETORIA', 'RH_SECRETARIA'] },
       { href: '/dashboard/unidade', label: 'Portal do Diretor', roles: ['ADMIN', 'DIRETOR', 'RH_SECRETARIA'] },
     ],
   },
