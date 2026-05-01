@@ -40,6 +40,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [entregaData, setEntregaData] = useState({ colaborador: "", itens: [] as any[] });
   const [buscaFuncionario, setBuscaFuncionario] = useState("");
   const [tipoPedidoGeral, setTipoPedidoGeral] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
+  const [entregaParcialQtd, setEntregaParcialQtd] = useState(0);
   
   const [reqEditando, setReqEditando] = useState<any>(null);
   const [ocorrenciaData, setOcorrenciaData] = useState({ reqId: "", desc: "", prioridade: "ALTA", dias_solucao: 1 });
@@ -298,14 +299,45 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const handleConfirmarEntregaTotal = async () => {
     if (!entregaConfirm.recebedor) return alert("Informe quem recebeu.");
     setLoading(true);
+    
+    // Calcula o que falta para completar a entrega total
+    const totalAprovado = reqEditando.quantidade_aprovada || (reqEditando.quantidade + (reqEditando.quantidade_extra || 0));
+    
     const { error } = await supabase.from('requisicoes').update({ 
       status: 'ENTREGUE', 
+      quantidade_entregue: totalAprovado,
       data_entrega: new Date().toISOString(),
       recebedor_nome: entregaConfirm.recebedor
     }).eq('id', reqEditando.id);
     
     if (error) alert(error.message);
     else { setModalAberto(null); fetchTudo(); }
+    setLoading(false);
+  };
+
+  const handleConfirmarEntregaParcial = async () => {
+    if (!entregaConfirm.recebedor) return alert("Informe quem recebeu.");
+    if (entregaParcialQtd <= 0) return alert("Informe uma quantidade válida.");
+    
+    setLoading(true);
+    const novaQtdEntregue = (reqEditando.quantidade_entregue || 0) + entregaParcialQtd;
+    const totalAprovado = reqEditando.quantidade_aprovada || (reqEditando.quantidade + (reqEditando.quantidade_extra || 0));
+    
+    const novoStatus = novaQtdEntregue >= totalAprovado ? 'ENTREGUE' : 'PARCIAL';
+
+    const { error } = await supabase.from('requisicoes').update({ 
+      status: novoStatus, 
+      quantidade_entregue: novaQtdEntregue,
+      data_entrega: new Date().toISOString(),
+      recebedor_nome: entregaConfirm.recebedor
+    }).eq('id', reqEditando.id);
+    
+    if (error) alert(error.message);
+    else { 
+      setModalAberto(null); 
+      setEntregaParcialQtd(0);
+      fetchTudo(); 
+    }
     setLoading(false);
   };
 
@@ -321,6 +353,11 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
       criado_por: user.name || 'Almoxarifado',
       status: 'PENDENTE'
     }]);
+
+    if (!error) {
+       await supabase.from('requisicoes').update({ tem_ocorrencia: true }).eq('id', reqEditando.id);
+    }
+
     if (error) alert(error.message);
     else { alert("Ocorrência registrada."); setModalAberto(null); fetchTudo(); }
     setLoading(false);
@@ -394,7 +431,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tipo</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Dias</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-right">Ação</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Ação</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-right">Progresso</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -423,16 +461,27 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                           {r.status}
                         </span>
                       </td>
-                      <td className="px-6 py-6 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => { setReqEditando(r); setModalAberto("ocorrencia"); }} title="Ocorrência" className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all"><AlertTriangle size={14}/></button>
-                          {r.status === 'SOLICITADO' && (
-                            <button onClick={() => { setReqEditando({...r, quantidade_aprovada: r.quantidade + (r.quantidade_extra || 0)}); setModalAberto("editar_req"); }} className="px-4 py-2 bg-black text-white rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
-                          )}
-                          {r.status === 'APROVADO' && (
-                             <button onClick={() => { setReqEditando(r); setModalAberto("confirmar_entrega"); }} className="px-4 py-2 bg-green-600 text-white rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2"><Truck size={12}/> Entregar</button>
+                      <td className="px-6 py-6 text-center">
+                        <div className="flex justify-center gap-2">
+                          {r.status === 'SOLICITADO' ? (
+                            <button onClick={() => { setReqEditando({...r, quantidade_aprovada: r.quantidade + (r.quantidade_extra || 0)}); setModalAberto("editar_req"); }} className="px-6 py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
+                          ) : (
+                            <button onClick={() => { setReqEditando(r); setEntregaConfirm({recebedor: r.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2 ${r.status === 'ENTREGUE' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-green-600 text-white shadow-lg shadow-green-600/20'}`} disabled={r.status === 'ENTREGUE'}>
+                               <Truck size={14}/> Gerenciar
+                            </button>
                           )}
                         </div>
+                      </td>
+                      <td className="px-6 py-6 text-right">
+                         <div className="flex flex-col items-end gap-1">
+                            <div className="text-[10px] font-black text-[var(--text-primary)]">
+                               {r.quantidade_entregue || 0} / {r.quantidade_aprovada || r.quantidade}
+                            </div>
+                            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                               <div className={`h-full transition-all ${r.tem_ocorrencia ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, ((r.quantidade_entregue || 0) / (r.quantidade_aprovada || r.quantidade)) * 100)}%` }}></div>
+                            </div>
+                            {r.tem_ocorrencia && <span className="text-[8px] font-black text-red-600 uppercase mt-1">Ocorrência Ativa</span>}
+                         </div>
                       </td>
                     </tr>
                   ))}
@@ -560,21 +609,59 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
          )}
       </AdaptiveModal>
 
-      {/* MODAL CONFIRMAR ENTREGA */}
-      <AdaptiveModal isOpen={modalAberto === "confirmar_entrega"} onClose={() => setModalAberto(null)} title="Finalizar Entrega Logística">
+      {/* MODAL GESTÃO DE ENTREGA (PARCIAL/TOTAL/OCORRENCIA) */}
+      <AdaptiveModal isOpen={modalAberto === "confirmar_entrega"} onClose={() => setModalAberto(null)} title="Gestão de Entrega / Logística">
          {reqEditando && (
-           <div className="p-10 space-y-6 text-center">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-green-600 mx-auto mb-4">
-                 <Truck size={40} />
-              </div>
-              <h3 className="text-lg font-black uppercase">Confirmar Recebimento</h3>
-              
-              <div className="text-left mt-6">
-                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome de Quem Recebeu *</label>
-                 <input className="input-field !h-14 font-black" value={entregaConfirm.recebedor} onChange={e => setEntregaConfirm({recebedor: e.target.value})} placeholder="Ex: Maria Silva (Secretária)" />
+           <div className="p-10 space-y-10">
+              <div className="flex items-center justify-between p-8 bg-[var(--bg-base)] rounded-[2.5rem] border border-[var(--border)]">
+                 <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-orange-600 shadow-sm">
+                       <Truck size={32} />
+                    </div>
+                    <div>
+                       <h4 className="text-lg font-black uppercase text-[var(--text-primary)]">{reqEditando.item_nome || reqEditando.item}</h4>
+                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Protocolo: {reqEditando.protocolo}</p>
+                    </div>
+                 </div>
+                 <div className="text-right">
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-1">Status Atual</p>
+                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${reqEditando.status === 'APROVADO' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
+                       {reqEditando.status}
+                    </span>
+                 </div>
               </div>
 
-              <button onClick={handleConfirmarEntregaTotal} className="w-full h-16 bg-green-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl mt-4 hover:scale-[1.02] transition-all">Finalizar e Registrar Data</button>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                 <div className="space-y-6">
+                    <div>
+                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block tracking-widest">Responsável pelo Recebimento *</label>
+                       <input className="input-field !h-14 font-black" value={entregaConfirm.recebedor} onChange={e => setEntregaConfirm({recebedor: e.target.value})} placeholder="Ex: João da Silva (Unidade X)" />
+                    </div>
+                    <div>
+                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block tracking-widest">Data de Entrega</label>
+                       <input type="text" disabled className="input-field !h-14 font-black bg-gray-50 opacity-60" value={new Date().toLocaleDateString()} />
+                    </div>
+                 </div>
+
+                 <div className="bg-orange-50/30 p-8 rounded-[2.5rem] border border-orange-100/50 flex flex-col justify-center gap-4">
+                    <p className="text-[10px] font-black uppercase text-orange-600 tracking-widest text-center mb-2">Opções de Movimentação</p>
+                    <div className="grid grid-cols-1 gap-3">
+                       <button onClick={handleConfirmarEntregaTotal} className="h-14 bg-green-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Confirmar Entrega Total</button>
+                       <div className="flex gap-2">
+                          <input type="number" className="w-1/3 input-field !h-14 text-center font-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" placeholder="Qtd" value={entregaParcialQtd || ''} onChange={e => setEntregaParcialQtd(Number(e.target.value))} />
+                          <button onClick={handleConfirmarEntregaParcial} className="flex-1 h-14 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Entrega Parcial</button>
+                       </div>
+                       <button onClick={() => setModalAberto("ocorrencia")} className="h-12 bg-white text-red-600 border border-red-100 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-50 transition-all">
+                          <AlertTriangle size={14}/> Registrar Ocorrência
+                       </button>
+                    </div>
+                 </div>
+              </div>
+
+              <div className="pt-6 border-t border-[var(--border)] flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                 <span>Pendente: {(reqEditando.quantidade_aprovada || reqEditando.quantidade) - (reqEditando.quantidade_entregue || 0)} unidades</span>
+                 <span>Total: {reqEditando.quantidade_aprovada || reqEditando.quantidade} {reqEditando.unidade_medida}</span>
+              </div>
            </div>
          )}
       </AdaptiveModal>

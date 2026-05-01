@@ -144,6 +144,8 @@ ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS data_entrega TIMESTAMP WITH TIM
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS recebedor_nome TEXT;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS tipo_item TEXT;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS tipo_pedido TEXT DEFAULT 'MENSAL';
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_entregue INTEGER DEFAULT 0;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS tem_ocorrencia BOOLEAN DEFAULT FALSE;
 
 -- =================================================================================
 -- TABELA DE PROCESSOS DE COMPRAS (TRACKING DE REMESSAS)
