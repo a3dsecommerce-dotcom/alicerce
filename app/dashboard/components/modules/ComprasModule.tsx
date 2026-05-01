@@ -25,6 +25,8 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   const getMesReferencia = (dataStr: string) => {
     const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const d = new Date(dataStr);
+    // As requisições são feitas em um mês para serem usadas no próximo
+    d.setMonth(d.getMonth() + 1);
     return `${meses[d.getMonth()]}/${d.getFullYear()}`;
   };
 
