@@ -461,5 +461,6 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             )}
          </div>
       </AdaptiveModal>
+    </div>
   );
 }
