@@ -143,6 +143,7 @@ ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS quantidade_extra INTEGER DEFAUL
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS data_entrega TIMESTAMP WITH TIME ZONE;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS recebedor_nome TEXT;
 ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS tipo_item TEXT;
+ALTER TABLE requisicoes ADD COLUMN IF NOT EXISTS tipo_pedido TEXT DEFAULT 'MENSAL';
 
 -- =================================================================================
 -- TABELA DE PROCESSOS DE COMPRAS (TRACKING DE REMESSAS)

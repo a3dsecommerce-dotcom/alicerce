@@ -39,6 +39,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
   const [entregaData, setEntregaData] = useState({ colaborador: "", itens: [] as any[] });
   const [buscaFuncionario, setBuscaFuncionario] = useState("");
+  const [tipoPedidoGeral, setTipoPedidoGeral] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
   
   const [reqEditando, setReqEditando] = useState<any>(null);
   const [ocorrenciaData, setOcorrenciaData] = useState({ reqId: "", desc: "", prioridade: "ALTA", dias_solucao: 1 });
@@ -263,6 +264,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
           unidade_medida: item?.unidade_medida || 'UN',
           protocolo: protocoloUnico,
           tipo_item: item?.categoria || 'GERAL',
+          tipo_pedido: tipoPedidoGeral,
           data_solicitacao: new Date().toISOString(),
         };
       });
@@ -389,6 +391,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-left">Descrição do Produto</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Pedido</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Aprovado</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tipo</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Dias</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center">Status</th>
                     <th className="px-6 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-right">Ação</th>
@@ -404,6 +407,11 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       </td>
                       <td className="px-6 py-6 text-center text-sm font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</td>
                       <td className="px-6 py-6 text-center text-base font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</td>
+                      <td className="px-6 py-6 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${r.tipo_pedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-blue-50 text-blue-600'}`}>
+                          {r.tipo_pedido || 'MENSAL'}
+                        </span>
+                      </td>
                       <td className="px-6 py-6 text-center">
                          <div className="flex flex-col items-center gap-1">
                             <Clock size={12} className="text-orange-500" />
@@ -471,9 +479,16 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
           {activeTab === "FAZER_REQ" && (
             <div className="flex flex-col flex-1">
                <div className="p-8 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-base)]/5">
-                  <div>
-                    <h3 className="text-lg font-black uppercase">Gerador de Pedidos Almoxarifado</h3>
-                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1">Crie requisições internas de qualquer material para reposição ou uso</p>
+                  <div className="flex items-center gap-8">
+                    <div>
+                      <h3 className="text-lg font-black uppercase">Gerador de Pedidos Almoxarifado</h3>
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1">Crie requisições internas de qualquer material para reposição ou uso</p>
+                    </div>
+                    
+                    <div className="flex gap-2 p-1 bg-white rounded-2xl border border-[var(--border)] shadow-sm">
+                       <button onClick={() => setTipoPedidoGeral("MENSAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedidoGeral === 'MENSAL' ? 'bg-blue-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-blue-50'}`}>Mensal</button>
+                       <button onClick={() => setTipoPedidoGeral("EMERGENCIAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedidoGeral === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-red-50'}`}>Emergencial</button>
+                    </div>
                   </div>
                   <button onClick={handleFinalizarPedido} disabled={loading || (Object.values(volumes).every(v => v === 0) && Object.values(volumesExtra).every(v => v === 0))} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
                     <Send size={18} /> Finalizar Pedido
