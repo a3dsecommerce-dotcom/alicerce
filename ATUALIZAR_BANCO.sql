@@ -114,6 +114,7 @@ ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS tipo_estoque TEXT DEFAULT 'PR
 ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS ca TEXT;
 ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS tamanho TEXT;
 ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS coeficiente DECIMAL(10,2) DEFAULT 1.0;
+ALTER TABLE estoque_atual ADD COLUMN IF NOT EXISTS valor_unitario NUMERIC DEFAULT 0;
 
 -- =================================================================================
 -- TABELA DE REQUISIÇÕES (PEDIDOS)

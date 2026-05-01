@@ -71,8 +71,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const handleSalvarItem = async () => {
     if (!formData.item) return alert("A descrição é obrigatória.");
     setLoading(true);
-    const payload = { ...formData, tipo_estoque: activeTab === "CATALOGO" ? "CATALOGO" : "PROPRIO", categoria: activeTab === "CATALOGO" ? "SUPRIMENTO" : "EPI" };
-    const { error } = await supabase.from('estoque_atual').insert([payload]);
+    const { error } = await supabase.from('estoque_atual').insert([formData]);
     if (error) alert("Erro: " + error.message);
     else { setModalAberto(null); fetchTudo(); }
     setLoading(false);
@@ -340,7 +339,125 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
          )}
       </AdaptiveModal>
 
-      {/* OUTROS MODAIS (CADASTRO E ENTREGA DIRETA) ... (mantidos conforme versão anterior) */}
-    </div>
+      {/* MODAL NOVO ITEM (EPI, SUPRIMENTO, ESCRITÓRIO) */}
+      <AdaptiveModal isOpen={modalAberto === "cadastro"} onClose={() => setModalAberto(null)} title="Cadastrar Material">
+         <div className="p-8 space-y-6">
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Categoria do Material *</label>
+               <select 
+                 className="input-field w-full font-black text-blue-600" 
+                 value={formData.categoria} 
+                 onChange={e => {
+                   const cat = e.target.value;
+                   setFormData({
+                     ...formData, 
+                     categoria: cat, 
+                     tipo_estoque: cat === 'EPI' ? 'PROPRIO' : 'CATALOGO',
+                     quantidade: 0,
+                     estoque_minimo: cat === 'EPI' ? 5 : 0,
+                     ca: '',
+                     tamanho: ''
+                   });
+                 }}
+               >
+                  <option value="EPI">Equipamento de Proteção (EPI)</option>
+                  <option value="SUPRIMENTO">Suprimentos (Limpeza, Copa, etc)</option>
+                  <option value="ESCRITORIO">Materiais de Escritório</option>
+               </select>
+               <p className="text-[9px] font-bold text-[var(--text-muted)] mt-2">
+                 {formData.categoria === 'EPI' ? 'EPIs são mantidos em estoque próprio e requerem CA e controle rígido.' : 'Suprimentos e Escritório vão para o catálogo das Secretarias e têm valor de referência.'}
+               </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div className="col-span-2">
+                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição *</label>
+                 <input type="text" className="input-field" value={formData.item} onChange={e => setFormData({...formData, item: e.target.value})} placeholder="Ex: Luva de Raspa G / Resma A4" />
+               </div>
+               
+               <div>
+                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Und. Medida *</label>
+                 <input type="text" className="input-field uppercase" value={formData.unidade_medida} onChange={e => setFormData({...formData, unidade_medida: e.target.value})} placeholder="UN, PAR, CX" />
+               </div>
+
+               {formData.categoria === 'EPI' && (
+                 <>
+                   <div>
+                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Tamanho</label>
+                     <input type="text" className="input-field uppercase" value={formData.tamanho} onChange={e => setFormData({...formData, tamanho: e.target.value})} placeholder="G, 42, Único" />
+                   </div>
+                   <div>
+                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CA (Certificado)</label>
+                     <input type="text" className="input-field" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Número CA" />
+                   </div>
+                   <div>
+                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Estoque Mínimo</label>
+                     <input type="number" className="input-field" value={formData.estoque_minimo} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
+                   </div>
+                 </>
+               )}
+
+               {formData.categoria !== 'EPI' && (
+                 <div>
+                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref. (R$)</label>
+                   <input type="number" step="0.01" className="input-field" value={(formData as any).valor_unitario || 0} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)} as any)} placeholder="0.00" />
+                 </div>
+               )}
+            </div>
+
+            <button onClick={handleSalvarItem} className="h-14 w-full bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
+              Salvar Material
+            </button>
+         </div>
+      </AdaptiveModal>
+
+      {/* MODAL ENTREGA DIRETA DE EPI */}
+      <AdaptiveModal isOpen={modalAberto === "entrega"} onClose={() => setModalAberto(null)} title="Entrega de EPI (Ficha NR-06)">
+         <div className="p-8 space-y-6">
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Colaborador</label>
+               <select className="input-field w-full font-black" value={entregaData.colaborador} onChange={e => setEntregaData({...entregaData, colaborador: e.target.value})}>
+                  <option value="">Selecione na lista...</option>
+                  {usuarios.map(u => <option key={u.id} value={u.nome}>{u.nome}</option>)}
+               </select>
+            </div>
+            
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+               <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2">Selecione os EPIs (Estoque)</p>
+               {estoque.filter(i => i.tipo_estoque === 'PROPRIO' && i.quantidade > 0).map(i => (
+                  <div key={i.id} className="flex justify-between items-center p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] cursor-pointer hover:border-orange-500 transition-colors" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
+                     <span className="text-[11px] font-bold">{i.item} <span className="text-[9px] text-[var(--text-muted)]">({i.tamanho})</span></span>
+                     <Plus size={14} className="text-[var(--brand)]"/>
+                  </div>
+               ))}
+            </div>
+
+            {entregaData.itens.length > 0 && (
+              <div className="space-y-2 border-t border-[var(--border)] pt-4">
+                 <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2">Itens para Entrega</p>
+                 {entregaData.itens.map((it, idx) => (
+                    <div key={idx} className="flex justify-between items-center bg-orange-50 p-3 rounded-lg border border-orange-100">
+                       <span className="text-[11px] font-black text-orange-900">{it.item}</span>
+                       <div className="flex items-center gap-3">
+                          <input type="number" min="1" max={it.quantidade} className="w-16 h-8 text-center text-xs font-black rounded-md border border-orange-200" value={it.qtd_entrega} onChange={e => {
+                             const newItens = [...entregaData.itens];
+                             newItens[idx].qtd_entrega = Number(e.target.value);
+                             setEntregaData({...entregaData, itens: newItens});
+                          }}/>
+                          <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((_, i) => i !== idx)})} className="text-red-500 hover:scale-110 transition-all"><X size={16}/></button>
+                       </div>
+                    </div>
+                 ))}
+                 <button onClick={() => {
+                    alert("Função de baixa em massa via NR-06. (Simulação)");
+                    setModalAberto(null);
+                    setEntregaData({ colaborador: "", itens: [] });
+                 }} className="h-14 w-full bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
+                    Confirmar e Imprimir Recibo
+                 </button>
+              </div>
+            )}
+         </div>
+      </AdaptiveModal>
   );
 }
