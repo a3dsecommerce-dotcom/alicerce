@@ -4,7 +4,7 @@ import {
   Search, Truck, Package, Megaphone, Activity, ShoppingBag, 
   AlertTriangle, CheckCircle2, Send, Calendar, Filter, 
   ArrowRight, Box, Clock, ChevronRight, TrendingDown, History as HistoryIcon,
-  AlertCircle, FileText, UserCheck, Download, X, Eye
+  AlertCircle, FileText, UserCheck, Download, X, Eye, User
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
