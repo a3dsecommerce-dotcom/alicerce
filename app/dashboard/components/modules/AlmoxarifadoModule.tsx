@@ -28,7 +28,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   
   // --- Formulários ---
   const [formData, setFormData] = useState<any>({ 
-    id: "", item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", 
+    id: "", item: "", codigo_registro: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", 
     quantidade: 0, estoque_minimo: 5, tipo_estoque: "PROPRIO",
     valor_unitario: 0, coeficiente: 1.0
   });
@@ -150,7 +150,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
            <button onClick={() => setModalAberto("entrega")} className="h-12 px-6 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-orange-600/20">
              <UserCheck size={16} /> Entrega Direta (EPI)
            </button>
-           <button onClick={() => { setFormData({ id: "", item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", quantidade: 0, estoque_minimo: 5, tipo_estoque: activeTab === "CATALOGO" ? "CATALOGO" : "PROPRIO", valor_unitario: 0, coeficiente: 1.0 }); setModalAberto("cadastro"); }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
+           <button onClick={() => { setFormData({ id: "", item: "", codigo_registro: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", quantidade: 0, estoque_minimo: 5, tipo_estoque: activeTab === "CATALOGO" ? "CATALOGO" : "PROPRIO", valor_unitario: 0, coeficiente: 1.0 }); setModalAberto("cadastro"); }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
              <Plus size={16} /> Cadastrar Material
            </button>
         </div>
@@ -241,6 +241,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
               <table className="w-full text-left">
                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
+                    <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center min-w-[100px]">Registro</th>
                     <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px]">Descrição</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
@@ -254,12 +255,10 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 <tbody className="divide-y divide-[var(--border)]">
                   {estoque.filter(i => i.tipo_estoque === (activeTab === "ESTOQUE_EPI" ? "PROPRIO" : "CATALOGO")).filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
+                      <td className="p-8 text-center"><span className="text-xs font-black font-mono text-[var(--text-muted)]">{item.codigo_registro || '---'}</span></td>
                       <td className="p-8 pl-10">
-                        <div className="text-sm font-black whitespace-normal max-w-[400px]">
-                           <span className="inline-block text-[10px] font-bold text-[var(--text-muted)] mr-2 bg-[var(--bg-base)] px-2 py-0.5 rounded-md border border-[var(--border)] tracking-widest">#{item.id?.substring(0, 6).toUpperCase()}</span>
-                           {item.item}
-                        </div>
-                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 ml-1">{item.categoria}</div>
+                        <div className="text-sm font-black whitespace-normal max-w-[400px]">{item.item}</div>
+                        <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{item.categoria}</div>
                       </td>
                       <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || '---'}</span></td>
                       <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>
@@ -392,6 +391,10 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+               <div className="col-span-2">
+                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cód. Registro</label>
+                 <input type="text" className="input-field uppercase font-mono" value={formData.codigo_registro} onChange={e => setFormData({...formData, codigo_registro: e.target.value})} placeholder="Ex: COD-123 (Opcional)" />
+               </div>
                <div className="col-span-2">
                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição *</label>
                  <input type="text" className="input-field" value={formData.item} onChange={e => setFormData({...formData, item: e.target.value})} placeholder="Ex: Luva de Raspa G / Resma A4" />

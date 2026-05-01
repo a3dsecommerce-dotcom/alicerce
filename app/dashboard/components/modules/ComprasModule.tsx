@@ -152,6 +152,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                   <table className="w-full text-left">
                       <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                         <tr>
+                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Registro</th>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição do Material</th>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Cota Máx.</th>
@@ -167,10 +168,10 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                           
                           return (
                             <tr key={prod.id} className="hover:bg-[var(--bg-base)]/40 transition-all">
+                                <td className="p-8 text-center text-xs font-bold font-mono text-[var(--text-muted)]">{prod.codigo_registro || '---'}</td>
                                 <td className="p-8 px-10">
                                   <div className="flex flex-col">
                                       <div className="text-sm font-black whitespace-normal max-w-[400px]">
-                                         <span className="inline-block text-[10px] font-bold text-[var(--text-muted)] mr-2 bg-[var(--bg-base)] px-2 py-0.5 rounded-md border border-[var(--border)] tracking-widest">#{prod.id?.substring(0, 6).toUpperCase()}</span>
                                          {prod.item}
                                       </div>
                                       <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1 ml-1">{prod.categoria}</span>
