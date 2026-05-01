@@ -241,7 +241,7 @@ export default function RHPessoalPage() {
                   ))}
                 </tbody>
               </table>
-            ) : (
+            ) : aba === "extras" ? (
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ position: "sticky", top: 0, background: "var(--bg-card)", zIndex: 10 }}>
                   <tr style={{ borderBottom: "1px solid var(--border)" }}>
