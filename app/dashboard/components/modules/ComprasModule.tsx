@@ -31,8 +31,8 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
 
   async function fetchDados() {
     setLoading(true);
-    // 1. Fetch Catálogo
-    const { data: catData } = await supabase.from('estoque_atual').select('*').eq('tipo_estoque', 'CATALOGO').order('item');
+    // 1. Fetch Catálogo (Suprimentos)
+    const { data: catData } = await supabase.from('almox_suprimentos').select('*').order('item');
     if (catData) setCatalogo(catData);
 
     // 2. Fetch Requisições do usuário logado
@@ -84,6 +84,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
           item_nome: item?.item || 'Item',
           unidade_medida: item?.unidade_medida || 'UN',
           protocolo: protocoloUnico,
+          tipo_item: item?.categoria || 'SUPRIMENTO',
           data_solicitacao: new Date().toISOString(),
         };
       });

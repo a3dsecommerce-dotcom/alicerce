@@ -20,8 +20,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const [user, setUser] = useState<any>({});
   
   // --- Tabs ---
-  type TabType = "ESTOQUE_EPI" | "CATALOGO" | "REQUISICOES" | "OCORRENCIAS";
-  const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE_EPI");
+  type TabType = "EPI" | "SUPRIMENTOS" | "ESCRITORIO" | "REQUISICOES" | "OCORRENCIAS";
+  const [activeTab, setActiveTab] = useState<TabType>("EPI");
   
   // --- Modais ---
   const [modalAberto, setModalAberto] = useState<null | "cadastro" | "entrega" | "editar_req" | "ocorrencia" | "confirmar_entrega">(null);
@@ -49,8 +49,17 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
   async function fetchTudo() {
     setLoading(true);
-    const { data: estData } = await supabase.from('estoque_atual').select('*').order('item');
-    if (estData) setEstoque(estData);
+    
+    // Define qual tabela buscar baseado na aba ativa
+    let table = "";
+    if (activeTab === "EPI") table = "almox_epi";
+    if (activeTab === "SUPRIMENTOS") table = "almox_suprimentos";
+    if (activeTab === "ESCRITORIO") table = "almox_escritorio";
+
+    if (table) {
+      const { data: estData } = await supabase.from(table).select('*').order('item');
+      if (estData) setEstoque(estData);
+    }
 
     const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
     if (reqData) setRequisicoes(reqData);
@@ -72,15 +81,22 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   const handleSalvarItem = async () => {
     if (!formData.item) return alert("A descrição é obrigatória.");
     setLoading(true);
+
+    let targetTable = "";
+    if (formData.categoria === 'EPI') targetTable = 'almox_epi';
+    else if (formData.categoria === 'SUPRIMENTO') targetTable = 'almox_suprimentos';
+    else if (formData.categoria === 'ESCRITORIO') targetTable = 'almox_escritorio';
+
+    if (!targetTable) return alert("Categoria inválida.");
     
     let error;
     if (formData.id) {
       const { id, ...updateData } = formData;
-      const res = await supabase.from('estoque_atual').update(updateData).eq('id', id);
+      const res = await supabase.from(targetTable).update(updateData).eq('id', id);
       error = res.error;
     } else {
       const { id, ...insertData } = formData;
-      const res = await supabase.from('estoque_atual').insert([insertData]);
+      const res = await supabase.from(targetTable).insert([insertData]);
       error = res.error;
     }
     
@@ -150,7 +166,17 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
            <button onClick={() => setModalAberto("entrega")} className="h-12 px-6 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg shadow-orange-600/20">
              <UserCheck size={16} /> Entrega Direta (EPI)
            </button>
-           <button onClick={() => { setFormData({ id: "", item: "", codigo_registro: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", quantidade: 0, estoque_minimo: 5, tipo_estoque: activeTab === "CATALOGO" ? "CATALOGO" : "PROPRIO", valor_unitario: 0, coeficiente: 1.0 }); setModalAberto("cadastro"); }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
+            <button onClick={() => { 
+              let cat = "EPI";
+              if (activeTab === "SUPRIMENTOS") cat = "SUPRIMENTO";
+              else if (activeTab === "ESCRITORIO") cat = "ESCRITORIO";
+              
+              setFormData({ 
+                id: "", item: "", codigo_registro: "", categoria: cat, unidade_medida: "UN", tamanho: "", ca: "", 
+                quantidade: 0, estoque_minimo: 5, valor_unitario: 0, coeficiente: 1.0 
+              }); 
+              setModalAberto("cadastro"); 
+            }} className="h-12 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-lg">
              <Plus size={16} /> Cadastrar Material
            </button>
         </div>
@@ -158,13 +184,14 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
 
       {/* ABAS */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md w-fit">
+        <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-md w-fit overflow-x-auto">
           {[
-            { id: "ESTOQUE_EPI", label: "Estoque EPI", icon: ShieldCheck },
-            { id: "CATALOGO", label: "Catálogo", icon: ClipboardList },
+            { id: "EPI", label: "Cadastro EPI", icon: ShieldCheck },
+            { id: "SUPRIMENTOS", label: "Cadastro Suprimentos", icon: ClipboardList },
+            { id: "ESCRITORIO", label: "Cadastro Escritório", icon: Ruler },
             { id: "REQUISICOES", label: "Análise de Pedidos", icon: FileText },
           ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
               <tab.icon size={16} /> {tab.label}
             </button>
           ))}
@@ -245,15 +272,15 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     <th className="p-8 pl-10 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest min-w-[300px]">Descrição</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Tamanho</th>
-                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
-                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>}
-                    {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Valor Ref.</th>}
-                    {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Coeficiente</th>}
-                    {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>}
+                    {activeTab === "EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
+                    {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>}
+                    {activeTab === "SUPRIMENTOS" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Valor Ref.</th>}
+                    {activeTab === "SUPRIMENTOS" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Coeficiente</th>}
+                    {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
-                  {estoque.filter(i => i.tipo_estoque === (activeTab === "ESTOQUE_EPI" ? "PROPRIO" : "CATALOGO")).filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
+                  {estoque.filter(i => i.item?.toLowerCase().includes(busca.toLowerCase())).map(item => (
                     <tr key={item.id} className="hover:bg-[var(--bg-base)]/30 transition-all cursor-pointer" onClick={() => { setFormData(item); setModalAberto("cadastro"); }}>
                       <td className="p-8 text-center"><span className="text-xs font-black font-mono text-[var(--text-muted)]">{item.codigo_registro || '---'}</span></td>
                       <td className="p-8 pl-10">
@@ -262,11 +289,11 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       </td>
                       <td className="p-8 text-center"><span className="text-xs font-black text-[var(--text-muted)]">{item.unidade_medida || '---'}</span></td>
                       <td className="p-8 text-center"><span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[10px] font-black">{item.tamanho || '---'}</span></td>
-                      {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span></td>}
-                      {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>}
-                      {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>}
-                      {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-blue-600">{item.coeficiente ? `${item.coeficiente} / ASG` : '---'}</span></td>}
-                      {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>}
+                      {activeTab === "EPI" && <td className="p-8 text-center"><span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span></td>}
+                      {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>}
+                      {activeTab === "SUPRIMENTOS" && <td className="p-8 text-center"><span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>}
+                      {activeTab === "SUPRIMENTOS" && <td className="p-8 text-center"><span className="text-sm font-black text-blue-600">{item.coeficiente ? `${item.coeficiente} / ASG` : '---'}</span></td>}
+                      {(activeTab === "EPI" || activeTab === "ESCRITORIO") && <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>}
                     </tr>
                   ))}
                 </tbody>
