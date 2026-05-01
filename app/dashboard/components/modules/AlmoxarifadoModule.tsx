@@ -5,7 +5,7 @@ import {
   TrendingDown, CheckCircle2, History, XCircle, Edit3, 
   FileText, Send, X, Ruler, ClipboardList, Info,
   UserCheck, AlertCircle, Save, Clock, AlertTriangle, MessageSquare,
-  Truck, User, ShoppingBag
+  Truck, User, ShoppingBag, Printer
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -129,6 +129,113 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
     if (error) alert("Erro: " + error.message);
     else { setModalAberto(null); fetchTudo(); }
     setLoading(false);
+  };
+
+  const handleConfirmarEntregaEPI = async () => {
+    if (!entregaData.colaborador) return alert("Selecione um colaborador.");
+    if (entregaData.itens.length === 0) return alert("Adicione ao menos um item.");
+    
+    setLoading(true);
+    try {
+      // 1. Atualizar estoque
+      for (const item of entregaData.itens) {
+        const novaQtd = Math.max(0, item.quantidade - item.qtd_entrega);
+        await supabase.from('almox_epi').update({ quantidade: novaQtd }).eq('id', item.id);
+      }
+      
+      // 2. Gerar PDF de Impressão (NR-06)
+      const colaborador = usuarios.find(u => u.nome === entregaData.colaborador);
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write(`
+          <html>
+            <head>
+              <title>Ficha EPI - ${entregaData.colaborador}</title>
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1a1a1a; line-height: 1.5; }
+                .header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 30px; }
+                .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
+                .header p { margin: 5px 0; font-size: 11px; font-weight: bold; color: #555; }
+                .info-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+                .info-item { border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                .label { font-size: 9px; font-weight: 900; text-transform: uppercase; color: #888; display: block; margin-bottom: 2px; }
+                .value { font-size: 13px; font-weight: bold; color: #000; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                th { background: #000; color: #fff; font-size: 10px; text-transform: uppercase; padding: 12px; border: 1px solid #000; }
+                td { border: 1px solid #ccc; padding: 10px; font-size: 12px; text-align: center; }
+                .desc-td { text-align: left; font-weight: bold; }
+                .termo { font-size: 11px; text-align: justify; border: 2px solid #eee; padding: 20px; border-radius: 12px; margin-top: 30px; line-height: 1.8; }
+                .assinaturas { margin-top: 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; }
+                .ass-box { border-top: 1px solid #000; text-align: center; padding-top: 10px; font-size: 11px; font-weight: bold; }
+                @media print { .no-print { display: none; } }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>Ficha de Controle de Entrega de EPI</h1>
+                <p>Em conformidade com a Norma Regulamentadora NR-06 do Ministério do Trabalho</p>
+              </div>
+
+              <div class="info-box">
+                <div class="info-item"><span class="label">Funcionário</span><span class="value">${entregaData.colaborador}</span></div>
+                <div class="info-item"><span class="label">Cargo/Função</span><span class="value">${colaborador?.cargo || '---'}</span></div>
+                <div class="info-item"><span class="label">Data da Entrega</span><span class="value">${new Date().toLocaleDateString('pt-BR')}</span></div>
+                <div class="info-item"><span class="label">Unidade / Obra</span><span class="value">Alicerce ERP - Central</span></div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 50%;">Descrição do EPI</th>
+                    <th>UND</th>
+                    <th>TAM</th>
+                    <th>C.A.</th>
+                    <th>QTD</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${entregaData.itens.map(it => `
+                    <tr>
+                      <td class="desc-td">${it.item}</td>
+                      <td>${it.unidade_medida}</td>
+                      <td>${it.tamanho || 'UN'}</td>
+                      <td>${it.ca || '---'}</td>
+                      <td>${it.qtd_entrega}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <div class="termo">
+                <strong>TERMO DE RESPONSABILIDADE:</strong><br>
+                Recebi da empresa os Equipamentos de Proteção Individual (EPI) acima relacionados, novos e em perfeitas condições de uso, adequados ao risco da minha atividade. Comprometo-me a:
+                1. Usar o EPI apenas para a finalidade a que se destina; 
+                2. Responsabilizar-me pela guarda e conservação; 
+                3. Comunicar à empresa qualquer alteração que o torne impróprio para uso; 
+                4. Cumprir as determinações da empresa sobre o uso adequado. 
+                Declaro estar ciente de que o não uso dos mesmos constitui ato de insubordinação, sujeito às penalidades previstas na CLT e regulamentos internos.
+              </div>
+
+              <div class="assinaturas">
+                <div class="ass-box">ASSINATURA DO COLABORADOR</div>
+                <div class="ass-box">RESPONSÁVEL PELA ENTREGA</div>
+              </div>
+              
+              <script>window.onload = () => { window.print(); window.onafterprint = () => { window.close(); }; }</script>
+            </body>
+          </html>
+        `);
+        win.document.close();
+      }
+
+      setModalAberto(null);
+      setEntregaData({ colaborador: "", itens: [] });
+      fetchTudo();
+    } catch (err: any) {
+      alert("Erro: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFinalizarPedido = async () => {
@@ -578,19 +685,19 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
             <div className="space-y-4">
                <div className="flex justify-between items-center">
                   <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Catálogo de EPIs Disponíveis</h4>
-                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase">Apenas Itens com Estoque</span>
+                  <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase">Apenas Categoria EPI</span>
                </div>
                
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1 scrollbar-thin">
+               <div className="flex flex-col gap-2 max-h-60 overflow-y-auto p-1 scrollbar-thin">
                   {estoque.filter(i => i.categoria === 'EPI' && i.quantidade > 0).map(i => (
-                     <div key={i.id} className="flex flex-col p-4 bg-white rounded-2xl border border-[var(--border)] cursor-pointer hover:border-orange-500 hover:shadow-md transition-all group" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
-                        <div className="flex justify-between items-start mb-2">
+                     <div key={i.id} className="flex justify-between items-center p-4 bg-white rounded-2xl border border-[var(--border)] cursor-pointer hover:border-orange-500 hover:shadow-md transition-all group" onClick={() => { if(!entregaData.itens.find(it => it.id === i.id)) setEntregaData({...entregaData, itens: [...entregaData.itens, {...i, qtd_entrega: 1}]}); }}>
+                        <div className="flex flex-col">
                            <span className="text-xs font-black text-[var(--text-primary)] group-hover:text-orange-600 transition-colors">{i.item}</span>
-                           <Plus size={14} className="text-orange-500"/>
+                           <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{i.tamanho || 'UN'} | CA: {i.ca || 'N/A'}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                           <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{i.tamanho || 'Tam. Único'} | {i.unidade_medida}</span>
-                           <span className="text-[9px] font-black text-blue-600">Stock: {i.quantidade}</span>
+                        <div className="flex items-center gap-3">
+                           <span className="text-[10px] font-black text-blue-600">Disp: {i.quantidade}</span>
+                           <Plus size={14} className="text-orange-500"/>
                         </div>
                      </div>
                   ))}
@@ -610,7 +717,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                              </div>
                              <div>
                                 <p className="text-xs font-black text-orange-900">{it.item}</p>
-                                <p className="text-[9px] font-bold text-orange-700/60 uppercase">{it.tamanho}</p>
+                                <p className="text-[9px] font-bold text-orange-700/60 uppercase">C.A. {it.ca}</p>
                              </div>
                           </div>
                           <div className="flex items-center gap-4">
@@ -635,8 +742,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     ))}
                  </div>
                  
-                 <button onClick={() => { alert("Finalizando entrega via Ficha NR-06."); setModalAberto(null); }} className="h-16 w-full bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-6">
-                    <UserCheck size={20}/> Confirmar Entrega e Gerar Comprovante
+                 <button onClick={handleConfirmarEntregaEPI} className="h-16 w-full bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 mt-6">
+                    <Printer size={20}/> Confirmar e Gerar Ficha (PDF)
                  </button>
               </div>
             )}
