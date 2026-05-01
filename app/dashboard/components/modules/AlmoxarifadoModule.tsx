@@ -29,7 +29,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
   // --- Formulários ---
   const [formData, setFormData] = useState({ 
     item: "", categoria: "EPI", unidade_medida: "UN", tamanho: "", ca: "", 
-    quantidade: 0, estoque_minimo: 5, tipo_estoque: "PROPRIO" 
+    quantidade: 0, estoque_minimo: 5, tipo_estoque: "PROPRIO",
+    valor_unitario: 0, coeficiente: 1.0
   });
 
   const [entregaData, setEntregaData] = useState({ colaborador: "", itens: [] as any[] });
@@ -234,6 +235,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     {activeTab === "ESTOQUE_EPI" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">CA</th>}
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Saldo</th>
                     {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Valor Ref.</th>}
+                    {activeTab === "CATALOGO" && <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Coeficiente</th>}
                     <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Status</th>
                   </tr>
                 </thead>
@@ -248,6 +250,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       {activeTab === "ESTOQUE_EPI" && <td className="p-8 text-center"><span className="font-mono text-xs font-black text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border border-orange-100">{item.ca || '---'}</span></td>}
                       <td className="p-8 text-center"><span className={`text-base font-black ${item.quantidade <= (item.estoque_minimo || 0) ? 'text-red-600' : 'text-[var(--text-primary)]'}`}>{item.quantidade}</span></td>
                       {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-green-600">{Number(item.valor_unitario || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span></td>}
+                      {activeTab === "CATALOGO" && <td className="p-8 text-center"><span className="text-sm font-black text-blue-600">{item.coeficiente ? `${item.coeficiente} / ASG` : '---'}</span></td>}
                       <td className="p-8 text-right"><span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.quantidade <= (item.estoque_minimo || 0) ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>{item.quantidade <= (item.estoque_minimo || 0) ? 'Crítico' : 'OK'}</span></td>
                     </tr>
                   ))}
@@ -358,7 +361,8 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                      quantidade: 0,
                      estoque_minimo: cat === 'EPI' ? 5 : 0,
                      ca: '',
-                     tamanho: ''
+                     tamanho: '',
+                     coeficiente: cat === 'SUPRIMENTO' ? 1.0 : 0
                    });
                  }}
                >
@@ -400,10 +404,18 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                )}
 
                {formData.categoria !== 'EPI' && (
-                 <div>
-                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref. (R$)</label>
-                   <input type="number" step="0.01" className="input-field" value={(formData as any).valor_unitario || 0} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)} as any)} placeholder="0.00" />
-                 </div>
+                 <>
+                   <div>
+                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Valor Unitário Ref. (R$)</label>
+                     <input type="number" step="0.01" className="input-field" value={formData.valor_unitario} onChange={e => setFormData({...formData, valor_unitario: Number(e.target.value)})} placeholder="0.00" />
+                   </div>
+                   {formData.categoria === 'SUPRIMENTO' && (
+                     <div>
+                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Coeficiente / ASG</label>
+                       <input type="number" step="0.1" className="input-field text-blue-600" value={formData.coeficiente} onChange={e => setFormData({...formData, coeficiente: Number(e.target.value)})} placeholder="Ex: 1.5" />
+                     </div>
+                   )}
+                 </>
                )}
             </div>
 

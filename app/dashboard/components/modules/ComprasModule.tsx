@@ -18,6 +18,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   const [filtroMes, setFiltroMes] = useState(new Date().toISOString().substring(0, 7));
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
   const [catalogo, setCatalogo] = useState<any[]>([]);
+  const [qtdAsg, setQtdAsg] = useState<number>(1);
 
   useEffect(() => {
     try {
@@ -126,11 +127,17 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                 <div className="p-10 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-base)]/5">
                    <div>
                       <h3 className="text-xl font-black uppercase italic">Solicitação de Materiais</h3>
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Selecione os itens e quantidades para o seu setor</p>
+                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Selecione os itens e quantidades limitados pelo coeficiente</p>
                    </div>
-                   <button onClick={handleFinalizarPedido} disabled={loading || Object.values(volumes).every(v => v === 0)} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
-                      <Send size={18} /> Enviar Requisição
-                   </button>
+                   <div className="flex items-center gap-6">
+                      <div className="flex flex-col text-right">
+                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nº de Colaboradores ASG</label>
+                         <input type="number" min="1" value={qtdAsg} onChange={e => setQtdAsg(Math.max(1, Number(e.target.value)))} className="input-field !h-10 !w-24 text-center font-black" />
+                      </div>
+                      <button onClick={handleFinalizarPedido} disabled={loading || Object.values(volumes).every(v => v === 0)} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
+                         <Send size={18} /> Enviar Requisição
+                      </button>
+                   </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -139,24 +146,40 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                         <tr>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Descrição do Material</th>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Unidade</th>
+                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Cota Máx. Permitida</th>
                             <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Volume Desejado</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
-                        {catalogo.map((prod) => (
-                          <tr key={prod.id} className="hover:bg-[var(--bg-base)]/40 transition-all">
-                              <td className="p-8 px-10">
-                                <div className="flex flex-col">
-                                    <span className="text-sm font-black text-[var(--text-primary)]">{prod.item}</span>
-                                    <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{prod.categoria}</span>
-                                </div>
-                              </td>
-                              <td className="p-8 text-center text-xs font-black text-[var(--text-muted)]">{prod.unidade_medida}</td>
-                              <td className="p-8 px-10">
-                                <input type="number" value={volumes[prod.id] || ''} onChange={(e) => setVolumes({...volumes, [prod.id]: Number(e.target.value)})} className="w-32 h-12 px-5 rounded-xl border-2 border-transparent bg-[var(--bg-base)] text-center text-sm font-black outline-none focus:border-[var(--brand)] transition-all mx-auto block" placeholder="0" />
-                              </td>
-                          </tr>
-                        ))}
+                        {catalogo.map((prod) => {
+                          const cotaMaxima = Math.floor(qtdAsg * (prod.coeficiente || 1.0));
+                          const volAtual = volumes[prod.id] || 0;
+                          const isExcedente = volAtual > cotaMaxima;
+                          
+                          return (
+                            <tr key={prod.id} className="hover:bg-[var(--bg-base)]/40 transition-all">
+                                <td className="p-8 px-10">
+                                  <div className="flex flex-col">
+                                      <span className="text-sm font-black text-[var(--text-primary)]">{prod.item}</span>
+                                      <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{prod.categoria}</span>
+                                  </div>
+                                </td>
+                                <td className="p-8 text-center text-xs font-black text-[var(--text-muted)]">{prod.unidade_medida}</td>
+                                <td className="p-8 text-center">
+                                  <span className="text-sm font-black text-blue-600">{cotaMaxima}</span>
+                                </td>
+                                <td className="p-8 px-10">
+                                  <div className="relative mx-auto w-fit">
+                                    <input type="number" min="0" max={cotaMaxima} value={volAtual || ''} onChange={(e) => {
+                                      const val = Math.min(Number(e.target.value), cotaMaxima);
+                                      setVolumes({...volumes, [prod.id]: val});
+                                    }} className={`w-32 h-12 px-5 rounded-xl border-2 text-center text-sm font-black outline-none transition-all block ${isExcedente ? 'border-orange-500 text-orange-600' : 'border-transparent bg-[var(--bg-base)] focus:border-[var(--brand)] text-[var(--text-primary)]'}`} placeholder="0" />
+                                    {isExcedente && <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[9px] font-black text-orange-500 uppercase whitespace-nowrap">Excede Cota</span>}
+                                  </div>
+                                </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                   </table>
                 </div>
