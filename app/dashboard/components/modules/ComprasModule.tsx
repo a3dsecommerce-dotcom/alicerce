@@ -47,6 +47,15 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
 
   async function fetchDados() {
     setLoading(true);
+    
+    let currentUser = user;
+    if (!currentUser?.unidade_alocacao) {
+      try {
+        const saved = localStorage.getItem("crm_user");
+        if (saved) currentUser = JSON.parse(saved);
+      } catch(e) {}
+    }
+
     // 1. Fetch Catálogo (Suprimentos)
     const { data: catData } = await supabase.from('almox_suprimentos').select('*').order('item');
     if (catData) setCatalogo(catData);
@@ -54,6 +63,19 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     // 2. Fetch Requisições do usuário logado
     const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
     if (reqData) setRequisicoesRaw(reqData);
+
+    // 3. Detectar ASGs da Secretaria de forma automática
+    if (currentUser?.unidade_alocacao) {
+       const { count } = await supabase
+         .from('usuarios')
+         .select('*', { count: 'exact', head: true })
+         .eq('unidade_alocacao', currentUser.unidade_alocacao)
+         .eq('cargo', 'ASG')
+         .eq('status', 'ATIVO');
+       
+       if (count !== null) setQtdAsg(count > 0 ? count : 1);
+    }
+
     setLoading(false);
   }
 
@@ -163,8 +185,8 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                          <button onClick={() => setTipoPedido("EMERGENCIAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-red-50'}`}>Emergencial</button>
                       </div>
                       <div className="flex flex-col text-right">
-                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nº ASG</label>
-                         <input type="number" min="1" value={qtdAsg} onChange={e => setQtdAsg(Math.max(1, Number(e.target.value)))} className="input-field !h-10 !w-16 text-center font-black" />
+                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nº ASG ({user?.unidade_alocacao || 'Setor'})</label>
+                         <input type="number" readOnly value={qtdAsg} className="input-field !h-10 !w-16 text-center font-black bg-[var(--bg-base)]/50 opacity-70 cursor-not-allowed" />
                       </div>
                       <button onClick={handleFinalizarPedido} disabled={loading || (Object.values(volumes).every(v => v === 0) && Object.values(volumesExtra).every(v => v === 0))} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
                          <Send size={18} /> Enviar Requisição

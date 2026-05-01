@@ -45,7 +45,13 @@ export default function LoginPage() {
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
       const rawCargo = user.cargo ? String(user.cargo).toUpperCase() : null;
       const cargoResolvido = rawCargo || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
-      localStorage.setItem("crm_user", JSON.stringify({ email: user.telefone, role: cargoResolvido, name: user.nome, nivel: user.nivel_acesso || 1 }));
+      localStorage.setItem("crm_user", JSON.stringify({ 
+        email: user.telefone, 
+        role: cargoResolvido, 
+        name: user.nome, 
+        nivel: user.nivel_acesso || 1,
+        unidade_alocacao: user.unidade_alocacao 
+      }));
       let dest = "/dashboard";
       if (rawCargo === "COMPRADOR") dest = "/dashboard?module=COMPRAS";
       else if (rawCargo === "ALMOXARIFADO" || rawCargo === "ALMOXARIFE") dest = "/dashboard?module=ALMOXARIFADO";
