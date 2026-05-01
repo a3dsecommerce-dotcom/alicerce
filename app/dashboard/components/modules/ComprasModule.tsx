@@ -20,6 +20,22 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
   const [catalogo, setCatalogo] = useState<any[]>([]);
   const [qtdAsg, setQtdAsg] = useState<number>(1);
+  const [tipoPedido, setTipoPedido] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
+
+  const getMesReferencia = (dataStr: string) => {
+    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const d = new Date(dataStr);
+    return `${meses[d.getMonth()]}/${d.getFullYear()}`;
+  };
+
+  const getTempoAberto = (dataStr: string) => {
+    const d = new Date(dataStr);
+    const agora = new Date();
+    const diff = agora.getTime() - d.getTime();
+    const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (dias === 0) return "Hoje";
+    return `${dias}d`;
+  };
 
   useEffect(() => {
     try {
@@ -49,7 +65,9 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
       group = { 
         protocolo: proto, 
         data: new Date(current.data_solicitacao).toLocaleDateString(),
+        data_raw: current.data_solicitacao,
         status_geral: current.status,
+        tipo_pedido: current.tipo_pedido || 'MENSAL',
         itens: [] 
       };
       acc.push(group);
@@ -85,6 +103,7 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
           unidade_medida: item?.unidade_medida || 'UN',
           protocolo: protocoloUnico,
           tipo_item: item?.categoria || 'SUPRIMENTO',
+          tipo_pedido: tipoPedido,
           data_solicitacao: new Date().toISOString(),
         };
       });
@@ -139,9 +158,13 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Selecione os itens e quantidades limitados pelo coeficiente</p>
                    </div>
                    <div className="flex items-center gap-6">
+                      <div className="flex gap-2 p-1 bg-white rounded-2xl border border-[var(--border)] shadow-sm">
+                         <button onClick={() => setTipoPedido("MENSAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedido === 'MENSAL' ? 'bg-blue-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-blue-50'}`}>Mensal</button>
+                         <button onClick={() => setTipoPedido("EMERGENCIAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-red-50'}`}>Emergencial</button>
+                      </div>
                       <div className="flex flex-col text-right">
-                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nº de Colaboradores ASG</label>
-                         <input type="number" min="1" value={qtdAsg} onChange={e => setQtdAsg(Math.max(1, Number(e.target.value)))} className="input-field !h-10 !w-24 text-center font-black" />
+                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nº ASG</label>
+                         <input type="number" min="1" value={qtdAsg} onChange={e => setQtdAsg(Math.max(1, Number(e.target.value)))} className="input-field !h-10 !w-16 text-center font-black" />
                       </div>
                       <button onClick={handleFinalizarPedido} disabled={loading || (Object.values(volumes).every(v => v === 0) && Object.values(volumesExtra).every(v => v === 0))} className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30">
                          <Send size={18} /> Enviar Requisição
@@ -211,8 +234,9 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                      <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                         <tr>
                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Protocolo</th>
-                           <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Data</th>
+                           <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Referência</th>
                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Resumo</th>
+                           <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Prioridade</th>
                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
                            <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ação</th>
                         </tr>
@@ -220,11 +244,31 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
                      <tbody className="divide-y divide-[var(--border)]">
                         {requisicoesAgrupadas.map((g, i) => (
                            <tr key={i} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                              <td className="p-8 text-center"><span className="text-sm font-black text-[var(--brand)]">{g.protocolo}</span></td>
-                              <td className="p-8 text-center text-xs font-bold text-[var(--text-muted)]">{g.data}</td>
-                              <td className="p-8"><div className="text-xs font-black">{g.itens.length} {g.itens.length === 1 ? 'Item Solicitado' : 'Itens Solicitados'}</div></td>
                               <td className="p-8 text-center">
-                                 <span className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${g.status_geral === 'SOLICITADO' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
+                                 <div className="flex flex-col items-center">
+                                    <span className="text-sm font-black text-[var(--brand)]">{g.protocolo}</span>
+                                    <div className="flex items-center gap-1 text-[8px] font-bold text-orange-500 uppercase mt-1">
+                                       <Clock size={10} /> {getTempoAberto(g.data_raw)}
+                                    </div>
+                                 </div>
+                              </td>
+                              <td className="p-8 text-center">
+                                 <div className="text-xs font-black text-[var(--text-primary)]">
+                                    {g.tipo_pedido === 'MENSAL' ? getMesReferencia(g.data_raw) : '---'}
+                                 </div>
+                                 <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">{g.data}</div>
+                              </td>
+                              <td className="p-8">
+                                 <div className="text-xs font-black">{g.itens.length} {g.itens.length === 1 ? 'Item' : 'Itens'}</div>
+                                 <div className="text-[9px] text-[var(--text-muted)] font-bold uppercase truncate max-w-[150px]">{g.itens.map((it:any) => it.item_nome).join(", ")}</div>
+                              </td>
+                              <td className="p-8 text-center">
+                                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${g.tipo_pedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-blue-50 text-blue-600'}`}>
+                                    {g.tipo_pedido}
+                                 </span>
+                              </td>
+                              <td className="p-8 text-center">
+                                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${g.status_geral === 'SOLICITADO' ? 'bg-orange-100 text-orange-700' : 'bg-green-100 text-green-700'}`}>
                                     {g.status_geral}
                                  </span>
                               </td>
