@@ -21,24 +21,14 @@ const priorStyles: Record<string, { bg: string, text: string, border: string }> 
   NORMAL: { bg: "rgba(148, 163, 184, 0.1)", text: "#64748B", border: "rgba(148, 163, 184, 0.2)" } 
 };
 
-export default function OcorrenciasPage() {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [usuarios, setUsuarios] = useState<any[]>([]);
-  const [unidades, setUnidades] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState<"lista">("lista");
-  const [modalNova, setModalNova] = useState(false);
-  const [modalResolucao, setModalResolucao] = useState(false);
-  const [ticketSelecionado, setTicketSelecionado] = useState<any>(null);
-  const [solucaoTexto, setSolucaoTexto] = useState("");
-  
+  const [user, setUser] = useState<any>(null);
   const [novaOcorrencia, setNovaOcorrencia] = useState({
     assunto: "",
     unidade_id: "",
     prioridade: "NORMAL",
     descricao: "",
-    setores: [] as string[],
-    responsavel_id: ""
+    setor_destino: "OPERACIONAL",
+    responsavel_citado: ""
   });
 
   const departamentos = [
@@ -49,10 +39,32 @@ export default function OcorrenciasPage() {
     { id: "ENCARREGADOS", label: "Encarregado da Rota" },
   ];
 
-  const loadData = async () => {
-    setLoading(true);
     // Tickets
-    const { data: ticketData } = await supabase.from('tickets_sla').select('*').order('data_abertura', { ascending: false });
+    let query = supabase.from('tickets_sla').select('*');
+    
+    // Filtro por Setor (Hierarquia Operacional)
+    const savedUser = localStorage.getItem("crm_user");
+    if (savedUser) {
+      const u = JSON.parse(savedUser);
+      setUser(u);
+      
+      const role = u.role || "";
+      if (role.startsWith("RH")) {
+        query = query.eq('setor_destino', 'RH');
+      } else if (role === "ALMOXARIFE") {
+        query = query.eq('setor_destino', 'ALMOXARIFADO');
+      } else if (role === "TI") {
+        query = query.eq('setor_destino', 'TI');
+      } else if (role === "FINANCEIRO") {
+        query = query.eq('setor_destino', 'FINANCEIRO');
+      } else if (role === "ENCARREGADO" || role === "DIRETOR") {
+        // Encarregados vêem o operacional ou onde foram citados
+        query = query.or(`setor_destino.eq.OPERACIONAL,responsavel_citado.ilike.%${u.nome}%`);
+      }
+      // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
+    }
+
+    const { data: ticketData } = await query.order('data_abertura', { ascending: false });
     if (ticketData) {
       setTickets(ticketData.map(t => ({
         ...t,
@@ -106,60 +118,46 @@ export default function OcorrenciasPage() {
   };
 
   const handleSalvarOcorrencia = async () => {
-    if (!novaOcorrencia.assunto || (novaOcorrencia.setores.length === 0 && !novaOcorrencia.responsavel_id)) {
-      alert("Informe o assunto e selecione ao menos um setor ou responsável.");
+    if (!novaOcorrencia.assunto || !novaOcorrencia.setor_destino) {
+      alert("Informe o assunto e o setor responsável.");
       return;
     }
 
     setLoading(true);
     
     const unidadeObj = unidades.find(u => u.id === novaOcorrencia.unidade_id);
-    const responsavelObj = usuarios.find(u => u.id === novaOcorrencia.responsavel_id);
     
-    // Identificar telefone para notificação WhatsApp
-    let telefonesNotificar: string[] = [];
-    if (responsavelObj?.telefone) telefonesNotificar.push(responsavelObj.telefone);
-    
-    if (novaOcorrencia.setores.includes("ENCARREGADOS") && unidadeObj) {
-      const encarregadoObj = usuarios.find(u => u.nome === unidadeObj.encarregado_nome);
-      if (encarregadoObj?.telefone) telefonesNotificar.push(encarregadoObj.telefone);
-    }
-
-    const setoresNomes = novaOcorrencia.setores.map(s => departamentos.find(d => d.id === s)?.label).filter(Boolean);
-    const atribuicaoFinal = [...setoresNomes, responsavelObj?.nome].filter(Boolean).join(', ');
-
     const ticketInsert = {
       assunto: novaOcorrencia.assunto,
       unidade: unidadeObj?.nome || "Geral",
       prioridade: novaOcorrencia.prioridade,
       descricao: novaOcorrencia.descricao,
-      atribuido_a: atribuicaoFinal,
+      setor_destino: novaOcorrencia.setor_destino,
+      responsavel_citado: novaOcorrencia.responsavel_citado,
+      atribuido_a: novaOcorrencia.setor_destino + (novaOcorrencia.responsavel_citado ? ` (${novaOcorrencia.responsavel_citado})` : ""),
       status: 'PENDENTE',
-      metadados: {
-        telefones_whatsapp: telefonesNotificar,
-        unidade_id: novaOcorrencia.unidade_id
-      }
+      criado_por: user?.nome || "Usuário Portal"
     };
 
     const { data: inserted, error } = await supabase.from('tickets_sla').insert([ticketInsert]).select();
 
     if (!error && inserted) {
       try {
-        if (telefonesNotificar.length > 0) {
-          await n8n.trigger('notificacao-ocorrencia', {
-            tipo: 'RECEBIDO',
-            ticket_id: inserted[0].id,
-            assunto: novaOcorrencia.assunto,
-            descricao: novaOcorrencia.descricao,
-            telefones: telefonesNotificar
-          });
-        }
+        await n8n.trigger('notificacao-ocorrencia', {
+          tipo: 'NOVA_OCORRENCIA_SETORIAL',
+          ticket_id: inserted[0].id,
+          setor: novaOcorrencia.setor_destino,
+          assunto: novaOcorrencia.assunto,
+          solicitante: user?.nome
+        });
       } catch (n8nError) {
-        console.error("Falha ao notificar n8n, mas ticket foi criado:", n8nError);
+        console.warn("Falha n8n");
       }
 
       setModalNova(false);
-      loadData(); // Atualiza sem reload
+      setNovaOcorrencia({ assunto: "", unidade_id: "", prioridade: "NORMAL", descricao: "", setor_destino: "OPERACIONAL", responsavel_citado: "" });
+      loadData();
+      alert("Ocorrência aberta e direcionada ao setor com sucesso!");
     } else {
       alert("Erro ao salvar: " + error.message);
     }
@@ -174,18 +172,27 @@ export default function OcorrenciasPage() {
       .from('tickets_sla')
       .update({ 
         status: 'RESOLVIDO',
-        solucao_descricao: solucaoTexto,
+        justificativa_solucao: solucaoTexto,
         data_fechamento: new Date().toISOString()
       })
       .eq('id', ticketSelecionado.realId);
 
     if (!error) {
+      try {
+        await n8n.trigger('notificacao-ocorrencia', {
+          tipo: 'OCORRENCIA_FINALIZADA',
+          ticket_id: ticketSelecionado.id,
+          solicitante: ticketSelecionado.criado_por,
+          justificativa: solucaoTexto
+        });
+      } catch (e) { console.warn("n8n off"); }
+
       // Registrar no histórico de gestão para auditoria
       await supabase.from('historico_gestao').insert([{
-         executor_tel: (await supabase.auth.getUser()).data.user?.phone || 'SISTEMA',
+         executor_tel: user?.telefone || 'SISTEMA',
          tipo_acao: 'RESOLUCAO_OCORRENCIA',
          motivo: `Ticket ${ticketSelecionado.id} resolvido: ${solucaoTexto}`,
-         para: { ticket_id: ticketSelecionado.realId, status: 'RESOLVIDO' }
+         para: JSON.stringify({ ticket_id: ticketSelecionado.realId, status: 'RESOLVIDO' })
       }]);
 
       setModalResolucao(false);
@@ -284,27 +291,22 @@ export default function OcorrenciasPage() {
             </div>
           </div>
 
-          <div>
-            <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-2 block">Setores Notificados</label>
-            <div className="grid grid-cols-2 gap-2">
-              {departamentos.map(dept => (
-                <button
-                  key={dept.id}
-                  onClick={() => handleToggleSetor(dept.id)}
-                  className={`p-3 rounded-xl border text-[10px] font-bold text-left transition-all ${novaOcorrencia.setores.includes(dept.id) ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-muted)]"}`}
-                >
-                  {novaOcorrencia.setores.includes(dept.id) ? "✓ " : ""}{dept.label}
-                </button>
-              ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Setor Destino</label>
+              <select className="input-field" value={novaOcorrencia.setor_destino} onChange={e => setNovaOcorrencia({...novaOcorrencia, setor_destino: e.target.value})}>
+                <option value="OPERACIONAL">Operacional</option>
+                <option value="RH">Recursos Humanos (RH)</option>
+                <option value="TI">TI / Sistemas</option>
+                <option value="ALMOXARIFADO">Almoxarifado</option>
+                <option value="FINANCEIRO">Financeiro</option>
+                <option value="DIRETORIA">Diretoria</option>
+              </select>
             </div>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Responsável Direto</label>
-            <select className="input-field" value={novaOcorrencia.responsavel_id} onChange={e => setNovaOcorrencia({...novaOcorrencia, responsavel_id: e.target.value})}>
-              <option value="">Nenhum específico</option>
-              {usuarios.map(u => <option key={u.id} value={u.id}>{u.nome} ({u.cargo})</option>)}
-            </select>
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Responsável Citado (Se houver)</label>
+              <input className="input-field" placeholder="Nome do colaborador..." value={novaOcorrencia.responsavel_citado} onChange={e => setNovaOcorrencia({...novaOcorrencia, responsavel_citado: e.target.value})} />
+            </div>
           </div>
 
           <div>
@@ -369,11 +371,11 @@ export default function OcorrenciasPage() {
               </div>
             </div>
 
-            {ticketSelecionado.status === 'RESOLVIDO' && ticketSelecionado.solucao_descricao && (
+            {ticketSelecionado.status === 'RESOLVIDO' && ticketSelecionado.justificativa_solucao && (
                <div className="mt-4">
-                  <label className="text-[10px] font-black text-green-600 uppercase mb-2 block tracking-widest">Solução Aplicada</label>
+                  <label className="text-[10px] font-black text-green-600 uppercase mb-2 block tracking-widest">Solução Justificada</label>
                   <div className="p-5 bg-green-50 rounded-2xl border border-green-100 text-sm font-bold text-green-900 leading-relaxed">
-                     {ticketSelecionado.solucao_descricao}
+                     {ticketSelecionado.justificativa_solucao}
                      <div className="mt-3 text-[10px] opacity-60">Resolvido em: {new Date(ticketSelecionado.data_fechamento).toLocaleString()}</div>
                   </div>
                </div>

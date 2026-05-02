@@ -15,7 +15,7 @@ export default function GlobalActionsModals({ modalActive, onClose, user }: Glob
   const [loading, setLoading] = useState(false);
   
   // Ocorrência State
-  const [ocorrencia, setOcorrencia] = useState({ assunto: '', unidade: '', descricao: '', prioridade: 'NORMAL' });
+  const [ocorrencia, setOcorrencia] = useState({ assunto: '', unidade: '', descricao: '', prioridade: 'NORMAL', setor_destino: 'OPERACIONAL', responsavel_citado: '' });
   
   // EPI State (Step-by-Step)
   const [epiStep, setEpiStep] = useState(1);
@@ -96,6 +96,32 @@ export default function GlobalActionsModals({ modalActive, onClose, user }: Glob
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label-sm">Setor Responsável</label>
+              <select 
+                className="input-field w-full"
+                value={ocorrencia.setor_destino}
+                onChange={e => setOcorrencia({...ocorrencia, setor_destino: e.target.value})}
+              >
+                <option value="OPERACIONAL">Operacional</option>
+                <option value="RH">Recursos Humanos (RH)</option>
+                <option value="TI">TI / Sistemas</option>
+                <option value="FINANCEIRO">Financeiro</option>
+                <option value="DIRETORIA">Diretoria</option>
+              </select>
+            </div>
+            <div>
+              <label className="label-sm">Responsável Citado (Se souber)</label>
+              <input 
+                className="input-field w-full" 
+                placeholder="Nome do colaborador..." 
+                value={ocorrencia.responsavel_citado}
+                onChange={e => setOcorrencia({...ocorrencia, responsavel_citado: e.target.value})}
+              />
+            </div>
+          </div>
+
           <div>
             <label className="label-sm">Descrição Detalhada</label>
             <textarea 
@@ -105,6 +131,10 @@ export default function GlobalActionsModals({ modalActive, onClose, user }: Glob
               onChange={e => setOcorrencia({...ocorrencia, descricao: e.target.value})}
             />
           </div>
+
+          <button className="btn-brand w-full h-12" onClick={handleSalvarOcorrencia} disabled={loading}>
+            {loading ? <Loader className="animate-spin" /> : "Registrar Ocorrência Setorial"}
+          </button>
 
           </div>
         </AdaptiveModal>
