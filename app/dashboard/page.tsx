@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, Users, ShoppingBag, Megaphone, 
   Package, ShieldCheck, Activity, Bell, Settings
@@ -9,14 +9,26 @@ import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import QuickActions from "./components/QuickActions";
 
-// Importando Módulos Unificados
-import GerenciaModule from "./components/modules/GerenciaModule";
-import RHModule from "./components/modules/RHModule";
-import ComprasModule from "./components/modules/ComprasModule";
-import ComunicacaoModule from "./components/modules/ComunicacaoModule";
-import AlmoxarifadoModule from "./components/modules/AlmoxarifadoModule";
-import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
-import EncarregadoModule from "./components/modules/EncarregadoModule";
+import dynamic from "next/dynamic";
+
+// Carregamento Dinâmico dos Módulos (Evita erros de inicialização e melhora performance)
+const GerenciaModule = dynamic(() => import("./components/modules/GerenciaModule"), { ssr: false });
+const RHModule = dynamic(() => import("./components/modules/RHModule"), { ssr: false });
+const ComprasModule = dynamic(() => import("./components/modules/ComprasModule"), { ssr: false });
+const ComunicacaoModule = dynamic(() => import("./components/modules/ComunicacaoModule"), { ssr: false });
+const AlmoxarifadoModule = dynamic(() => import("./components/modules/AlmoxarifadoModule"), { ssr: false });
+const ConfiguracoesModule = dynamic(() => import("./components/modules/ConfiguracoesModule"), { ssr: false });
+const EncarregadoModule = dynamic(() => import("./components/modules/EncarregadoModule"), { ssr: false });
+
+// Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
+const ALL_MODULES = [
+  { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "ENCARREGADO"] },
+  { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
+  { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["COMPRADOR"] },
+  { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
+  { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
+  { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
+];
 
 export default function UnifiedCockpitPage() {
   return (
@@ -49,29 +61,19 @@ function CockpitContent() {
     }
   }, []);
 
-  // Definição dos Módulos do Sistema e suas permissões (RBAC)
-  const modules = [
-    { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "ENCARREGADO"] },
-    { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
-    { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["COMPRADOR"] },
-    { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
-    { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
-    { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
-  ];
+  // Lógica de Filtragem de Módulos (RBAC)
+  const filteredModules = useMemo(() => {
+    const nivel = user?.nivel || 0;
+    const safeRole = user?.role ? String(user.role).toUpperCase() : "";
+    const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
+    const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
+    
+    return isManager
+      ? ALL_MODULES
+      : ALL_MODULES.filter(m => m.roles.includes(safeRole)) || [ALL_MODULES[0]];
+  }, [user]);
 
-  // Regra de Negócio: nivel_acesso >= 3 = Gestor/Admin → vê o Painel Consolidado
-  // Exceção: Roles restritas (COMPRADOR, ALMOXARIFE) devem ver APENAS o próprio módulo
-  const nivel = user?.nivel || 0;
   const safeRole = user?.role ? String(user.role).toUpperCase() : "";
-  const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
-  const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
-  
-  // Se for gestor: mostra o painel de controle completo
-  // Se for colaborador de área: mostra módulo do seu cargo
-  // Fallback: se não tem role/nivel definido, mostra COMMAND (evita tela em branco)
-  const filteredModules = isManager
-    ? modules
-    : modules.filter(m => m.roles.includes(safeRole)) || [modules[0]];
 
   // Sincroniza o módulo ativo caso venha um parâmetro via URL ou baseando-se nas permissões
   useEffect(() => {
