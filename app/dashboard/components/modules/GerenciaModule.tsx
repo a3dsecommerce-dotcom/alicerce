@@ -62,8 +62,8 @@ const almoxarifadoValores = [
 
 const COLORS = ['#00d2ff', '#00ff87', '#ff9d00', '#ff007a', '#a855f7'];
 
-export default function GerenciaModule({ user: propUser }: { user?: any }) {
-  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA">("OVERVIEW");
+export default function GerenciaModule({ user: propUser, initialTab }: { user?: any, initialTab?: "OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA" }) {
+  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA">(initialTab || "OVERVIEW");
   const [user, setUser] = useState<any>(propUser || null);
   const [counts, setCounts] = useState({ colabs: 0, ativos: 0, afastados: 0, ocorrenciasMes: 0 });
 
@@ -74,6 +74,12 @@ export default function GerenciaModule({ user: propUser }: { user?: any }) {
     }
     fetchRealCounts();
   }, [propUser]);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const fetchRealCounts = async () => {
     const { count: total } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
