@@ -11,45 +11,45 @@ export type NavItem = {
 
 export const ALL_NAV: NavItem[] = [
   {
-    label: 'Dashboard',
+    label: 'Visão Geral',
     icon: LayoutDashboard,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
     href: '/dashboard?module=COMMAND&tab=OVERVIEW'
+  },
+  {
+    label: 'Operacional',
+    icon: Truck,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO'],
+    href: '/dashboard?module=COMMAND&tab=OPERACIONAL'
+  },
+  {
+    label: 'Almoxarifado',
+    icon: Package,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ALMOXARIFE'],
+    href: '/dashboard?module=COMMAND&tab=ALMOXARIFADO'
+  },
+  {
+    label: 'Recursos Humanos',
+    icon: Users,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP'],
+    href: '/dashboard?module=COMMAND&tab=RH'
+  },
+  {
+    label: 'Auditoria & Seg.',
+    icon: ShieldAlert,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
+    href: '/dashboard?module=COMMAND&tab=AUDITORIA'
+  },
+  {
+    label: 'Central de Ocorrências',
+    icon: AlertTriangle,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR'],
+    href: '/dashboard/ocorrencias'
   },
   {
     label: 'Gestão de Ponto',
     icon: Clock,
     roles: ['SUPERVISOR', 'GERENTE', 'ENCARREGADO', 'ADMIN', 'DIRETORIA'],
     href: '/dashboard/ponto'
-  },
-  {
-    label: 'Central de Ocorrências',
-    icon: AlertTriangle,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR', 'RH_SECRETARIA'],
-    href: '/dashboard/ocorrencias'
-  },
-  {
-    label: 'Canal de Ética',
-    icon: ShieldAlert,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    href: '/dashboard?module=COMMAND&tab=ETHICS'
-  },
-  {
-    label: 'Gestão de Campo',
-    icon: Truck,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    href: '/dashboard?module=COMMAND&tab=OPERACIONAL'
-  },
-  {
-    label: 'Recursos Humanos',
-    icon: Users,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'RH_PESSOAL'],
-    href: '/dashboard?module=COMMAND&tab=RH_FULL'
-  },
-  {
-    label: 'Configurações',
-    icon: Settings,
-    roles: ['ADMIN', 'DIRETORIA'],
-    href: '/dashboard?module=SETTINGS'
   }
 ];

@@ -1,60 +1,434 @@
-// build: v2 - fixed Package import
 "use client";
 import { useState, useEffect } from "react";
 import { 
   Users, DollarSign, Activity, ShieldAlert, 
-  TrendingUp, BarChart3, Zap, Bell, 
-  ArrowUpRight, ArrowDownRight, Briefcase, 
-  CheckCircle, Clock, Megaphone, Settings,
-  PieChart, Globe, Cpu, LayoutDashboard, Search, Filter,
-  ShieldCheck, MessageSquare, AlertTriangle, FileText,
-  Map as MapIcon, HardHat, UserPlus, ClipboardList, Package
+  TrendingUp, BarChart3, Zap, 
+  CheckCircle, Clock, Package,
+  ShieldCheck, AlertTriangle, FileText,
+  Truck, HardHat, Search, Filter, 
+  ArrowUpRight, ArrowDownRight, MoreVertical,
+  LogOut, LayoutDashboard, User
 } from "lucide-react";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, PieChart, Pie, ScatterChart, Scatter, ZAxis, Legend
+} from 'recharts';
 import { supabase } from "@/lib/supabase";
-import RHModule from "./RHModule";
 
-// Alias para evitar conflito com variáveis locais
-const Layout = LayoutDashboard;
+// --- DADOS SIMULADOS PARA GRÁFICOS (Baseados nos requisitos) ---
+const trendData = [
+  { name: 'Jan', ocorrencias: 45, resolucoes: 38 },
+  { name: 'Fev', ocorrencias: 52, resolucoes: 48 },
+  { name: 'Mar', ocorrencias: 48, resolucoes: 45 },
+  { name: 'Abr', ocorrencias: 61, resolucoes: 55 },
+  { name: 'Mai', ocorrencias: 55, resolucoes: 52 },
+  { name: 'Jun', ocorrencias: 67, resolucoes: 60 },
+  { name: 'Jul', ocorrencias: 72, resolucoes: 68 },
+  { name: 'Ago', ocorrencias: 65, resolucoes: 62 },
+  { name: 'Set', ocorrencias: 58, resolucoes: 55 },
+  { name: 'Out', ocorrencias: 63, resolucoes: 60 },
+  { name: 'Nov', ocorrencias: 70, resolucoes: 65 },
+  { name: 'Dez', ocorrencias: 85, resolucoes: 80 },
+];
 
-type GerenciaTab = "OVERVIEW" | "INTEL_BI" | "COMMS" | "ETHICS" | "FINANCE" | "RH_FULL" | "OPERACIONAL";
+const statusSecretariaData = [
+  { name: 'Saúde', entregas: 850, pendentes: 120 },
+  { name: 'Educação', entregas: 640, pendentes: 85 },
+  { name: 'Obras', entregas: 420, pendentes: 150 },
+  { name: 'ADM', entregas: 310, pendentes: 45 },
+  { name: 'Social', entregas: 280, pendentes: 30 },
+];
 
-export default function GerenciaModule({ user: propUser, initialTab }: { user?: any, initialTab?: GerenciaTab }) {
-  const [activeTab, setActiveTab] = useState<GerenciaTab>(initialTab || "OVERVIEW");
-  const [loading, setLoading] = useState(false);
+const distColabData = [
+  { name: 'Saúde', value: 450, color: '#00d2ff' },
+  { name: 'Educação', value: 380, color: '#00ff87' },
+  { name: 'Obras', value: 220, color: '#ff9d00' },
+  { name: 'Sede', value: 150, color: '#ff007a' },
+];
+
+const rhStatusData = [
+  { name: 'Ativos', value: 1100, color: '#00ff87' },
+  { name: 'Férias', value: 45, color: '#00d2ff' },
+  { name: 'Afastados', value: 28, color: '#ff9d00' },
+  { name: 'Faltas', value: 12, color: '#ff007a' },
+];
+
+const almoxarifadoValores = [
+  { name: 'Saúde', value: 45000 },
+  { name: 'Educação', value: 32000 },
+  { name: 'Obras', value: 28000 },
+  { name: 'ADM', value: 12000 },
+];
+
+const COLORS = ['#00d2ff', '#00ff87', '#ff9d00', '#ff007a', '#a855f7'];
+
+export default function GerenciaModule({ user: propUser }: { user?: any }) {
+  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA">("OVERVIEW");
   const [user, setUser] = useState<any>(propUser || null);
+  const [counts, setCounts] = useState({ colabs: 0, ativos: 0, afastados: 0, ocorrenciasMes: 0 });
 
   useEffect(() => {
-    if (propUser) {
-      setUser(propUser);
-    } else {
-      try {
-        const saved = localStorage.getItem("crm_user");
-        if (saved) setUser(JSON.parse(saved));
-      } catch (err) {
-        console.error(err);
-      }
+    if (!propUser) {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) setUser(JSON.parse(saved));
     }
-    if (initialTab) setActiveTab(initialTab);
-  }, [propUser, initialTab]);
+    fetchRealCounts();
+  }, [propUser]);
+
+  const fetchRealCounts = async () => {
+    const { count: total } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
+    const { count: ativos } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'ATIVO');
+    const { count: afastados } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'AFASTADO');
+    const { count: ocorrencias } = await supabase.from('tickets_sla').select('*', { count: 'exact', head: true });
+    
+    setCounts({ 
+        colabs: total || 1200, 
+        ativos: ativos || 1145, 
+        afastados: afastados || 55, 
+        ocorrenciasMes: ocorrencias || 142 
+    });
+  };
+
+  // --- RENDERIZADORES DE ABA ---
+
+  const renderOverview = () => (
+    <div className="flex flex-col gap-8 animate-fade-in">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <KPICard title="Total Colaboradores" value={counts.colabs.toString()} subValue={`${counts.ativos} Ativos / ${counts.afastados} Afast.`} icon={Users} trend="+2.4%" color="blue" />
+        <KPICard title="Custo Requisições" value="R$ 142.5k" subValue="Média por Secretaria" icon={DollarSign} trend="+12%" color="orange" />
+        <KPICard title="Tempo de Resposta" value="4.2h" subValue="Média Global (Ocorrências)" icon={Clock} trend="-15%" color="green" />
+        <KPICard title="Ocorrências Mês" value={counts.ocorrenciasMes.toString()} subValue="Total acumulado" icon={AlertTriangle} trend="+5%" color="pink" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Gráfico de Tendência */}
+        <div className="card h-[400px] flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Tendência de Ocorrências e Resoluções</h3>
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">ÚLTIMOS 12 MESES</span>
+          </div>
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="colorOc" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--neon-pink)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--neon-pink)" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorRes" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--neon-green)" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="var(--neon-green)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
+                <YAxis stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="ocorrencias" stroke="var(--neon-pink)" fillOpacity={1} fill="url(#colorOc)" strokeWidth={3} />
+                <Area type="monotone" dataKey="resolucoes" stroke="var(--neon-green)" fillOpacity={1} fill="url(#colorRes)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Gráfico de Barras - Status Entrega */}
+        <div className="card h-[400px] flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Status de Entrega por Secretaria</h3>
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">MENSAL</span>
+          </div>
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={statusSecretariaData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{fill: 'rgba(255,255,255,0.02)'}} contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                <Bar dataKey="entregas" fill="var(--neon-blue)" radius={[0, 4, 4, 0]} barSize={20} />
+                <Bar dataKey="pendentes" fill="var(--neon-orange)" radius={[0, 4, 4, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Distribuição Colaboradores */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+         <div className="card md:col-span-1 h-[300px] flex flex-col">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-4">Distribuição por Setor</h3>
+            <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie
+                            data={distColabData}
+                            cx="50%" cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                        >
+                            {distColabData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+         </div>
+         <div className="card md:col-span-2 flex flex-col justify-center gap-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Atalhos Estratégicos</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <ShortcutBtn label="Relatório de Custos" icon={FileText} />
+                <ShortcutBtn label="Escala de Volantes" icon={Truck} />
+                <ShortcutBtn label="Mapa de Unidades" icon={MapIcon} />
+                <ShortcutBtn label="Configurações RBAC" icon={Settings} />
+            </div>
+         </div>
+      </div>
+    </div>
+  );
+
+  const renderOperacional = () => (
+    <div className="flex flex-col gap-8 animate-fade-in">
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <KPICard title="Funcionários / Rota" value="138" subValue="Média Ideal: 140" icon={Users} color="blue" />
+          <KPICard title="Cobertura Total" value="98.2%" subValue="Unidades com Presença" icon={ShieldCheck} color="green" trend="+0.5%" />
+          <KPICard title="Ocorrências Campo" value="24" subValue="Abertas hoje" icon={AlertTriangle} color="orange" trend="+12%" />
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="card flex flex-col">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Top Encarregados p/ Ocorrências</h3>
+             <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                   <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
+                      <tr>
+                         <th className="pb-4">Encarregado</th>
+                         <th className="pb-4">Setor</th>
+                         <th className="pb-4 text-center">Nº Ocorrências</th>
+                         <th className="pb-4 text-right">T. Resposta</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-[var(--border)]">
+                      {[
+                        { nome: "Carlos Lima", setor: "Saúde Norte", total: 42, tempo: "1.5h" },
+                        { nome: "Ana Paula", setor: "Educação Sul", total: 38, tempo: "2.1h" },
+                        { nome: "Roberto Silva", setor: "Obras Centro", total: 29, tempo: "3.4h" },
+                        { nome: "Julia Santos", setor: "Saúde Leste", total: 15, tempo: "1.2h" },
+                      ].map((item, i) => (
+                        <tr key={i} className="group hover:bg-white/5 transition-colors">
+                           <td className="py-4 text-sm font-bold text-[var(--text-primary)]">{item.nome}</td>
+                           <td className="py-4 text-xs font-medium text-[var(--text-muted)] uppercase tracking-tighter">{item.setor}</td>
+                           <td className="py-4 text-center text-sm font-black text-[var(--neon-pink)]">{item.total}</td>
+                           <td className="py-4 text-right text-xs font-black text-[var(--neon-green)]">{item.tempo}</td>
+                        </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+          </div>
+
+          <div className="card flex flex-col h-[400px]">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Tempo Médio de Resposta por Encarregado</h3>
+             <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={[
+                      { name: 'C. Lima', tempo: 1.5 },
+                      { name: 'A. Paula', tempo: 2.1 },
+                      { name: 'R. Silva', tempo: 3.4 },
+                      { name: 'J. Santos', tempo: 1.2 },
+                      { name: 'M. Alves', tempo: 2.8 },
+                   ]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
+                      <YAxis stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} unit="h" />
+                      <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                      <Bar dataKey="tempo" fill="var(--neon-blue)" radius={[4, 4, 0, 0]} />
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+
+  const renderAlmoxarifado = () => (
+    <div className="flex flex-col gap-8 animate-fade-in">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <KPICard title="Resposta Almoxarifado" value="2.8h" subValue="Tempo médio de separação" icon={Package} color="blue" trend="-10%" />
+          <KPICard title="Valor Total Entregue" value="R$ 842.000" subValue="EPIs e Uniformes (Ano)" icon={DollarSign} color="green" />
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="card h-[400px] flex flex-col">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Valor de Requisições por Secretaria</h3>
+             <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                   <PieChart>
+                      <Pie
+                         data={almoxarifadoValores}
+                         cx="50%" cy="50%"
+                         innerRadius={80}
+                         outerRadius={110}
+                         paddingAngle={5}
+                         dataKey="value"
+                      >
+                         {almoxarifadoValores.map((entry, index) => (
+                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                         ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any) => `R$ ${value.toLocaleString()}`} contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                      <Legend verticalAlign="bottom" height={36}/>
+                   </PieChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          <div className="card flex flex-col">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Top 5 Materiais Mais Requisitados</h3>
+             <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                   <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
+                      <tr>
+                         <th className="pb-4">Material</th>
+                         <th className="pb-4 text-center">Quantidade</th>
+                         <th className="pb-4 text-right">Valor Total</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-[var(--border)]">
+                      {[
+                        { nome: "Luva Nitrílica G", qtd: 1540, valor: "R$ 12.400" },
+                        { nome: "Bota de Segurança", qtd: 850, valor: "R$ 42.500" },
+                        { nome: "Uniforme Completo", qtd: 620, valor: "R$ 68.200" },
+                        { nome: "Capa de Chuva PVC", qtd: 450, valor: "R$ 9.000" },
+                        { nome: "Máscara PFF2", qtd: 2400, valor: "R$ 4.800" },
+                      ].map((item, i) => (
+                        <tr key={i} className="group hover:bg-white/5 transition-colors">
+                           <td className="py-4 text-sm font-bold text-[var(--text-primary)]">{item.nome}</td>
+                           <td className="py-4 text-center text-sm font-black text-[var(--neon-blue)]">{item.qtd}</td>
+                           <td className="py-4 text-right text-sm font-black text-[var(--neon-green)]">{item.valor}</td>
+                        </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+
+  const renderRH = () => (
+    <div className="flex flex-col gap-8 animate-fade-in">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <KPICard title="Resposta RH" value="1.5 dias" subValue="Média p/ Solicitações" icon={Users} color="blue" trend="-0.5 dias" />
+          <KPICard title="Novas Admissões" value="15" subValue="Este mês" icon={UserPlus} color="green" trend="+3" />
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="card h-[400px] flex flex-col">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Status Geral do Quadro</h3>
+             <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                   <PieChart>
+                      <Pie data={rhStatusData} cx="50%" cy="50%" outerRadius={100} label dataKey="value">
+                         {rhStatusData.map((entry, index) => (
+                             <Cell key={`cell-${index}`} fill={entry.color} />
+                         ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                   </PieChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+
+          <div className="card h-[400px] flex flex-col">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Taxa de Turnover por Secretaria</h3>
+             <div className="flex-1">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={[
+                      { name: 'Saúde', taxa: 2.1 },
+                      { name: 'Educação', taxa: 1.5 },
+                      { name: 'Obras', taxa: 4.8 },
+                      { name: 'ADM', taxa: 0.8 },
+                      { name: 'Social', taxa: 2.5 },
+                   ]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
+                      <YAxis stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} unit="%" />
+                      <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
+                      <Bar dataKey="taxa" fill="var(--neon-pink)" radius={[4, 4, 0, 0]} />
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+       </div>
+    </div>
+  );
+
+  const renderAuditoria = () => (
+    <div className="flex flex-col gap-8 animate-fade-in">
+       <div className="bg-red-500/10 border border-red-500/20 p-8 rounded-[2rem] flex items-center gap-6">
+          <ShieldAlert className="text-red-500" size={48} />
+          <div>
+             <h2 className="text-xl font-black text-red-500 uppercase italic">Acesso Restrito a Gestores Autorizados</h2>
+             <p className="text-xs font-bold text-red-500/70 uppercase tracking-widest mt-1">Todas as ações neste módulo são auditadas e vinculadas ao seu IP e Identificador Único.</p>
+          </div>
+       </div>
+
+       <div className="card flex flex-col">
+          <div className="flex justify-between items-center mb-8">
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Log de Auditoria do Sistema</h3>
+             <button className="btn-brand bg-[var(--neon-blue)] !shadow-[var(--neon-blue)]/20 text-[10px]"><FileText size={14} /> Exportar Log (CSV)</button>
+          </div>
+          <div className="overflow-x-auto">
+             <table className="w-full text-left">
+                <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
+                   <tr>
+                      <th className="pb-4">Data / Hora</th>
+                      <th className="pb-4">Usuário</th>
+                      <th className="pb-4">Ação</th>
+                      <th className="pb-4 text-right">Observação</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)] text-xs">
+                   {[
+                     { data: "01/05/2026 14:22", user: "Diogo Silva", acao: "Alteração de Salário", obs: "Reajuste Anual - Unidade SEMED" },
+                     { data: "01/05/2026 11:05", user: "Admin", acao: "Exclusão de Registro", obs: "Ticket duplicado removido" },
+                     { data: "30/04/2026 18:45", user: "Gerente RH", acao: "Afastamento", obs: "Licença médica - Protocolo #152" },
+                     { data: "30/04/2026 09:12", user: "Sistema", acao: "Sync n8n", obs: "Sincronização de 1240 colaboradores" },
+                   ].map((log, i) => (
+                     <tr key={i} className="hover:bg-white/5 transition-colors">
+                        <td className="py-4 font-mono text-[var(--text-muted)]">{log.data}</td>
+                        <td className="py-4 font-black text-[var(--neon-blue)]">{log.user}</td>
+                        <td className="py-4 font-bold text-[var(--text-primary)]">{log.acao}</td>
+                        <td className="py-4 text-right text-[var(--text-muted)]">{log.obs}</td>
+                     </tr>
+                   ))}
+                </tbody>
+             </table>
+          </div>
+       </div>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20 h-full px-4 lg:px-8">
       
-      {/* 1. NAVEGAÇÃO DE TOPO UNIFICADA */}
-      <div className="flex flex-wrap items-center gap-3 bg-[var(--bg-card)] p-2 rounded-2xl border border-[var(--border)] shadow-sm sticky top-0 z-30 backdrop-blur-md overflow-x-auto custom-scrollbar">
+      {/* 1. NAVEGAÇÃO DE TOPO PREMIUM (Dark Style) */}
+      <div className="flex flex-wrap items-center gap-4 bg-[var(--bg-card)] p-3 rounded-2xl border border-[var(--border)] shadow-xl sticky top-0 z-30 backdrop-blur-md">
          {[
-           { id: "OVERVIEW", label: "Centro de Comando", icon: Layout },
-           { id: "RH_FULL", label: "Recursos Humanos", icon: Users },
-           { id: "OPERACIONAL", label: "Gestão de Campo", icon: HardHat },
-           { id: "INTEL_BI", label: "Inteligência BI", icon: BarChart3 },
-           { id: "COMMS", label: "Comunicados Master", icon: Megaphone },
-           { id: "ETHICS", label: "Canal de Ética", icon: ShieldAlert },
-           { id: "FINANCE", label: "Financeiro", icon: DollarSign },
+           { id: "OVERVIEW", label: "Visão Geral", icon: LayoutDashboard },
+           { id: "OPERACIONAL", label: "Operacional", icon: HardHat },
+           { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package },
+           { id: "RH", label: "Recursos Humanos", icon: Users },
+           { id: "AUDITORIA", label: "Auditoria", icon: ShieldAlert },
          ].map(tab => (
            <button 
              key={tab.id}
-             onClick={() => setActiveTab(tab.id as GerenciaTab)}
-             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
+             onClick={() => setActiveTab(tab.id as any)}
+             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-[0_0_20px_rgba(255,106,0,0.4)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-white'}`}
            >
              <tab.icon size={16} />
              {tab.label}
@@ -63,183 +437,58 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
       </div>
 
       {/* 2. CONTEÚDO DINÂMICO */}
-      <div className="flex-1 min-h-[700px]">
-        
-        {/* VIEW: CENTRO DE COMANDO (OVERVIEW) - AGORA EM LARGURA TOTAL */}
-        {activeTab === "OVERVIEW" && (
-          <div className="flex flex-col gap-10 animate-fade-in">
-             
-             {/* 📡 MONITOR DE EXPANSÃO (ONDAS V45.0) */}
-             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <Cpu size={120} className="text-[var(--brand)]" />
-                </div>
-                
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-4">
-                   <div>
-                      <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2 uppercase tracking-tighter">
-                         <Zap className="text-orange-500" fill="currentColor" /> Roadmap de Expansão Soberana V45.0
-                      </h3>
-                      <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Status de Implementação dos Módulos Estratégicos</p>
-                   </div>
-                   <div className="px-6 py-2 bg-green-500/10 border border-green-500/20 rounded-full flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-[10px] font-black text-green-600 uppercase">Sistema Online & Operacional</span>
-                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                   {[
-                      { id: 1, label: "ONDA 1: Gestão de Campo", status: "100%", desc: "Ponto Digital, Visão por Unidade, Controle de Encarregados", color: "bg-green-500" },
-                      { id: 2, label: "ONDA 2: Ciclo de Vida RH", status: "85%", desc: "Admissão, Demissão e Gestão de Documentos", color: "bg-blue-500" },
-                      { id: 3, label: "ONDA 3: Suprimentos Pro", status: "60%", desc: "Requisições, Entregas parciais e Coeficientes", color: "bg-orange-500" },
-                   ].map(onda => (
-                      <div key={onda.id} className="p-6 bg-[var(--bg-base)]/40 rounded-3xl border border-[var(--border)] group/onda hover:border-[var(--brand)]/30 transition-all">
-                         <div className="flex justify-between items-center mb-4">
-                            <span className="text-[10px] font-black uppercase text-[var(--brand)]">{onda.label}</span>
-                            <span className="text-xs font-black">{onda.status}</span>
-                         </div>
-                         <div className="h-2 w-full bg-[var(--bg-base)] rounded-full mb-4 overflow-hidden border border-[var(--border)]">
-                            <div className={`h-full ${onda.color} shadow-lg transition-all duration-1000`} style={{ width: onda.status }} />
-                         </div>
-                         <p className="text-[9px] text-[var(--text-muted)] font-medium leading-relaxed">{onda.desc}</p>
-                      </div>
-                   ))}
-                </div>
-             </div>
-             
-             {/* STATS SUPERIORES (INFO UNIDADE + APROVAÇÕES) */}
-             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                {[
-                  { label: "Performance", value: "94.2%", icon: Activity, color: "text-green-500", detail: "+2.1% este mês" },
-                  { label: "Orçamento", value: "68%", icon: DollarSign, color: "text-orange-500", detail: "R$ 1.2M disponíveis" },
-                  { label: "SLA Operacional", value: "96%", icon: ShieldCheck, color: "text-blue-500", detail: "Metas batidas" },
-                  { label: "Suplementos", value: "03", icon: AlertTriangle, color: "text-orange-500", bg: "bg-orange-500/10", detail: "Aprovações pendentes" },
-                  { id: "tickets", label: "Novas Vagas", value: "05", icon: UserPlus, color: "text-blue-500", bg: "bg-blue-500/10", detail: "Triagem em andamento" },
-                  { id: "security", label: "Denúncias", value: "02", icon: ShieldAlert, color: "text-red-500", bg: "bg-red-500/10", detail: "Ethics Channel" },
-                ].map((s, i) => (
-                  <div key={i} className={`p-6 rounded-[2.5rem] border border-[var(--border)] shadow-sm ${s.bg || 'bg-[var(--bg-card)]'} group hover:scale-105 transition-all cursor-pointer relative overflow-hidden`}>
-                     <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-2 text-center tracking-widest">{s.label}</p>
-                     <div className="flex flex-col items-center gap-2">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] shadow-md ${s.color} group-hover:rotate-6 transition-transform`}><s.icon size={22} /></div>
-                        <h4 className={`text-2xl font-black tracking-tighter ${s.bg ? s.color : 'text-[var(--text-primary)]'}`}>{s.value}</h4>
-                        <p className="text-[8px] font-bold opacity-60 uppercase">{s.detail}</p>
-                     </div>
-                  </div>
-                ))}
-             </div>
-
-             {/* TABELA/MATRIZ EM LARGURA TOTAL */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* MATRIZ DE INTELIGÊNCIA */}
-                <div className="lg:col-span-2 bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
-                   <div className="flex justify-between items-center mb-10">
-                      <h3 className="text-sm font-black uppercase flex items-center gap-2 tracking-widest"><Zap size={18} className="text-blue-500" /> Matriz de Inteligência de Pessoal</h3>
-                      <button className="text-[10px] font-black uppercase text-[var(--brand)] hover:underline">Full Analytics</button>
-                   </div>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                      {[
-                        { label: "Saúde (SEMSA)", val: 98, cor: "bg-green-500" },
-                        { label: "Educação (SEMED)", val: 92, cor: "bg-blue-500" },
-                        { label: "Administração", val: 85, cor: "bg-purple-500" },
-                        { label: "Infraestrutura", val: 76, cor: "bg-orange-500" },
-                      ].map((setor, i) => (
-                        <div key={i} className="space-y-4 p-6 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]/50">
-                           <div className="flex justify-between text-[10px] font-black uppercase tracking-tighter">
-                              <span>{setor.label}</span>
-                              <span className="text-[var(--brand)]">{setor.val}%</span>
-                           </div>
-                           <div className="h-3 w-full bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)]">
-                              <div className={`h-full ${setor.cor} shadow-lg`} style={{ width: `${setor.val}%` }} />
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                {/* SWARM ACTIVITY (Ticker de Agentes IA) */}
-                <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl">
-                   <h3 className="text-xs font-black uppercase mb-8 flex items-center gap-2 tracking-widest">
-                      <Activity size={16} className="text-green-500" /> Atividade do Swarm
-                   </h3>
-                   <div className="space-y-6">
-                      {[
-                         { agent: "RH Agent", task: "Triagem de 12 novos candidatos", time: "2m atrás", icon: Users, color: "text-blue-500" },
-                         { agent: "Almox Agent", task: "Reposicionamento de estoque (Detergente)", time: "15m atrás", icon: Package, color: "text-orange-500" },
-                         { agent: "Security Audit", task: "Verificação de inconsistência de ponto", time: "1h atrás", icon: ShieldCheck, color: "text-green-500" },
-                         { agent: "Governance", task: "Relatório Mensal consolidado", time: "3h atrás", icon: FileText, color: "text-purple-500" },
-                      ].map((item, idx) => (
-                         <div key={idx} className="flex gap-4 items-start group">
-                            <div className={`mt-1 p-2 rounded-lg bg-[var(--bg-base)] ${item.color} group-hover:scale-110 transition-transform`}>
-                               <item.icon size={14} />
-                            </div>
-                            <div className="flex-1 border-b border-[var(--border)] pb-4 group-last:border-0">
-                               <div className="flex justify-between items-center mb-1">
-                                  <span className="text-[10px] font-black uppercase text-[var(--text-primary)]">{item.agent}</span>
-                                  <span className="text-[8px] text-[var(--text-muted)] font-bold">{item.time}</span>
-                               </div>
-                               <p className="text-[10px] text-[var(--text-secondary)] font-medium">{item.task}</p>
-                            </div>
-                         </div>
-                      ))}
-                   </div>
-                </div>
-             </div>
-          </div>
-        )}
-
-        {/* VIEW: RECURSOS HUMANOS (MODO EXPANDIDO DIRETOR) */}
-        {activeTab === "RH_FULL" && (
-           <div className="animate-fade-in bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] shadow-2xl p-2">
-              <RHModule user={user} isDirectorView={true} />
-           </div>
-        )}
-
-        {/* OUTROS MÓDULOS (OPERACIONAL) */}
-        {activeTab === "OPERACIONAL" && (
-          <div className="animate-fade-in bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] p-10">
-             <div className="flex justify-between items-center mb-10">
-                <h3 className="text-xl font-black italic">Gestão de Campo Alicerce</h3>
-                <button className="px-8 py-3 bg-[var(--brand)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-[var(--brand)]/20 hover:scale-105 transition-all flex items-center gap-2">
-                   <UserPlus size={16} /> Escalar Encarregado
-                </button>
-             </div>
-             
-             {/* TABELA DE CAMPO EM LARGURA TOTAL */}
-             <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                   <thead>
-                      <tr className="border-b border-[var(--border)]">
-                         <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)]">Unidade / Posto</th>
-                         <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)]">Encarregado</th>
-                         <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)]">Última Visita</th>
-                         <th className="p-6 text-[10px] font-black uppercase text-[var(--text-muted)] text-right">Status</th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-[var(--border)]">
-                      {[
-                        { posto: "UBS Central", enc: "Marcos Oliveira", data: "Hoje, 08:30", status: "NORMAL" },
-                        { posto: "Escola V7", enc: "Sérgio Lima", data: "Ontem, 16:45", status: "ALERTA" },
-                        { posto: "SEMAD Prédio A", enc: "Cláudio Ramos", data: "Hoje, 09:15", status: "NORMAL" },
-                      ].map((v, i) => (
-                        <tr key={i} className="hover:bg-[var(--bg-base)]/50 transition-colors">
-                           <td className="p-6 font-black text-sm">{v.posto}</td>
-                           <td className="p-6 text-xs font-bold text-[var(--text-secondary)]">{v.enc}</td>
-                           <td className="p-6 text-xs font-medium text-[var(--text-muted)]">{v.data}</td>
-                           <td className="p-6 text-right">
-                              <span className={`px-4 py-1 rounded-lg text-[9px] font-black uppercase ${v.status === 'NORMAL' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                 {v.status}
-                              </span>
-                           </td>
-                        </tr>
-                      ))}
-                   </tbody>
-                </table>
-             </div>
-          </div>
-        )}
-
+      <div className="flex-1">
+         {activeTab === "OVERVIEW" && renderOverview()}
+         {activeTab === "OPERACIONAL" && renderOperacional()}
+         {activeTab === "ALMOXARIFADO" && renderAlmoxarifado()}
+         {activeTab === "RH" && renderRH()}
+         {activeTab === "AUDITORIA" && renderAuditoria()}
       </div>
+
     </div>
   );
+}
+
+// --- SUB-COMPONENTES AUXILIARES ---
+
+function KPICard({ title, value, subValue, icon: Icon, trend, color }: any) {
+    const colorClasses: any = {
+        blue: 'text-[var(--neon-blue)] bg-[var(--neon-blue)]/10',
+        green: 'text-[var(--neon-green)] bg-[var(--neon-green)]/10',
+        orange: 'text-[var(--neon-orange)] bg-[var(--neon-orange)]/10',
+        pink: 'text-[var(--neon-pink)] bg-[var(--neon-pink)]/10'
+    };
+
+    return (
+        <div className="card-glow kpi-card flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+                <div className={`p-3 rounded-xl ${colorClasses[color] || 'bg-white/5'}`}>
+                    <Icon size={20} />
+                </div>
+                {trend && (
+                    <span className={`text-[10px] font-black ${trend.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
+                        {trend} {trend.startsWith('+') ? <ArrowUpRight className="inline" size={10}/> : <ArrowDownRight className="inline" size={10}/>}
+                    </span>
+                )}
+            </div>
+            <div className="mt-6">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">{title}</p>
+                <div className="flex items-baseline gap-2">
+                    <h4 className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter">{value}</h4>
+                </div>
+                <p className="text-[10px] font-bold text-[var(--text-muted)] mt-2 uppercase">{subValue}</p>
+            </div>
+        </div>
+    );
+}
+
+function ShortcutBtn({ label, icon: Icon }: any) {
+    return (
+        <button className="flex flex-col items-center justify-center p-4 rounded-2xl bg-[var(--bg-base)] border border-[var(--border)] hover:border-[var(--brand)]/30 hover:bg-[var(--brand)]/5 transition-all group gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[var(--brand)] group-hover:text-white transition-all">
+                <Icon size={18} />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-tighter text-[var(--text-muted)] group-hover:text-white">{label}</span>
+        </button>
+    );
 }

@@ -2,52 +2,59 @@
 @import "tailwindcss";
 
 /* ============================================================
-   ALICERCE DESIGN SYSTEM — Dark Edition (v1.0)
-   Baseado na identidade visual da tela de login aprovada
+   ALICERCE DESIGN SYSTEM — Ultra Dark Edition (v2.0)
+   Especialmente desenhado para a Gerência Estratégica
    ============================================================ */
 
 :root {
-  /* Brand - Laranja Alicerce (Compartilhado) */
-  --brand: #ea580c;
-  --brand-hover: #c2410c;
-  --brand-light: #fb923c;
-  --brand-alpha: rgba(234, 88, 12, 0.12);
-  --brand-glow: rgba(234, 88, 12, 0.35);
+  /* Brand - Laranja Neon Alicerce */
+  --brand: #ff6a00;
+  --brand-hover: #e65c00;
+  --brand-light: #ff8533;
+  --brand-alpha: rgba(255, 106, 0, 0.15);
+  --brand-glow: rgba(255, 106, 0, 0.4);
 
-  /* Semânticos (Compartilhados) */
-  --success: #10b981;
-  --success-alpha: rgba(16, 185, 129, 0.12);
-  --warning: #f59e0b;
-  --warning-alpha: rgba(245, 158, 11, 0.12);
-  --danger: #ef4444;
-  --danger-alpha: rgba(239, 68, 68, 0.12);
-  --info: #3b82f6;
-  --info-alpha: rgba(59, 130, 246, 0.12);
+  /* Neon Palette para Gráficos */
+  --neon-blue: #00d2ff;
+  --neon-green: #00ff87;
+  --neon-pink: #ff007a;
+  --neon-orange: #ff9d00;
+  --neon-emerald: #10b981;
+
+  /* Semânticos Premium */
+  --success: var(--neon-emerald);
+  --success-alpha: rgba(16, 185, 129, 0.15);
+  --warning: var(--neon-orange);
+  --warning-alpha: rgba(255, 157, 0, 0.15);
+  --danger: #ff4d4d;
+  --danger-alpha: rgba(255, 77, 77, 0.15);
+  --info: var(--neon-blue);
+  --info-alpha: rgba(0, 210, 255, 0.15);
 }
 
-/* TEMA ESCURO (Padrão) */
+/* TEMA ESCURO PREMIUM (Obrigatório para Gerência) */
 [data-theme='dark'], :root:not([data-theme='light']) {
-  --bg-base: #0f1117;
-  --bg-surface: rgba(255, 255, 255, 0.04);
-  --bg-card: rgba(255, 255, 255, 0.06);
-  --bg-card-hover: rgba(255, 255, 255, 0.09);
+  --bg-base: #151521;
+  --bg-surface: #1e1e2d;
+  --bg-card: #1e1e2d;
+  --bg-card-hover: #232336;
 
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.38);
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
 
-  --border: rgba(255, 255, 255, 0.1);
-  --border-light: rgba(255, 255, 255, 0.06);
-  --border-brand: rgba(234, 88, 12, 0.4);
+  --border: rgba(255, 255, 255, 0.05);
+  --border-light: rgba(255, 255, 255, 0.03);
+  --border-brand: rgba(255, 106, 0, 0.3);
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5);
-  --shadow-brand: 0 8px 25px rgba(234, 88, 12, 0.35);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.8);
+  --shadow-brand: 0 0 30px rgba(255, 106, 0, 0.2);
 
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-blur: blur(20px);
+  --glass-bg: rgba(30, 30, 45, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(24px);
 }
 
 /* TEMA CLARO */
