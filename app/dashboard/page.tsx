@@ -36,10 +36,16 @@ function CockpitContent() {
   
   // Sincroniza o módulo ativo caso venha um parâmetro via URL
   useEffect(() => {
-    if (modParam && ["COMMAND", "RH", "COMPRAS", "ALMOXARIFADO", "SST"].includes(modParam)) {
+    if (modParam) {
       setActiveModule(modParam);
+    } else if (filteredModules.length > 0 && activeModule === "COMMAND") {
+      // Se não houver parâmetro, e o usuário não tiver acesso ao COMMAND, muda para o primeiro disponível
+      const hasAccessToCommand = filteredModules.some(m => m.id === "COMMAND");
+      if (!hasAccessToCommand) {
+        setActiveModule(filteredModules[0].id);
+      }
     }
-  }, [modParam]);
+  }, [modParam, filteredModules]);
 
   const [user, setUser] = useState<any>(null);
   const [reducaoGeral, setReducaoGeral] = useState(20);
@@ -118,7 +124,7 @@ function CockpitContent() {
       <main className="flex-1 overflow-hidden min-h-[600px]">
         {user ? (
           <>
-            {(activeModule === "COMMAND" || !activeModule) && (
+            {(activeModule === "COMMAND" || !activeModule) && filteredModules.some(m => m.id === "COMMAND") && (
               safeRole === 'ENCARREGADO' 
                 ? <EncarregadoModule user={user} />
                 : <GerenciaModule user={user} initialTab={tabParam as any} />
