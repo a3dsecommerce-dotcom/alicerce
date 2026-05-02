@@ -8,7 +8,7 @@ import {
   Truck, HardHat, Search, Filter, 
   ArrowUpRight, ArrowDownRight, MoreVertical,
   LogOut, LayoutDashboard, User, Map as MapIcon,
-  Settings, UserPlus, MapPin
+  Settings, UserPlus, MapPin, Building2
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { supabase } from "@/lib/supabase";
 
-// --- DADOS SIMULADOS PARA GRÁFICOS (Baseados nos requisitos) ---
+// --- DADOS SIMULADOS PARA GRÁFICOS ---
 const trendData = [
   { name: 'Jan', ocorrencias: 45, resolucoes: 38 },
   { name: 'Fev', ocorrencias: 52, resolucoes: 48 },
@@ -80,6 +80,26 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
     fetchRotasData();
   }, [propUser]);
 
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  const fetchRealCounts = async () => {
+    const { count: total } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
+    const { count: ativos } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'ATIVO');
+    const { count: afastados } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'AFASTADO');
+    const { count: ocorrencias } = await supabase.from('tickets_sla').select('*', { count: 'exact', head: true });
+    
+    setCounts({ 
+        colabs: total || 1200, 
+        ativos: ativos || 1145, 
+        afastados: afastados || 55, 
+        ocorrenciasMes: ocorrencias || 142 
+    });
+  };
+
   const fetchRotasData = async () => {
     // 1. Busca Encarregados
     const { data: encs } = await supabase.from('usuarios').select('id, nome').eq('role', 'ENCARREGADO');
@@ -121,31 +141,10 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
     if (!error) fetchRotasData();
   };
 
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
-
-  const fetchRealCounts = async () => {
-    const { count: total } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
-    const { count: ativos } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'ATIVO');
-    const { count: afastados } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'AFASTADO');
-    const { count: ocorrencias } = await supabase.from('tickets_sla').select('*', { count: 'exact', head: true });
-    
-    setCounts({ 
-        colabs: total || 1200, 
-        ativos: ativos || 1145, 
-        afastados: afastados || 55, 
-        ocorrenciasMes: ocorrencias || 142 
-    });
-  };
-
   // --- RENDERIZADORES DE ABA ---
 
   const renderOverview = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard title="Total Colaboradores" value={counts.colabs.toString()} subValue={`${counts.ativos} Ativos / ${counts.afastados} Afast.`} icon={Users} trend="+2.4%" color="blue" />
         <KPICard title="Custo Requisições" value="R$ 142.5k" subValue="Média por Secretaria" icon={DollarSign} trend="+12%" color="orange" />
@@ -154,7 +153,6 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Gráfico de Tendência */}
         <div className="card h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Tendência de Ocorrências e Resoluções</h3>
@@ -184,7 +182,6 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
           </div>
         </div>
 
-        {/* Gráfico de Barras - Status Entrega */}
         <div className="card h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Status de Entrega por Secretaria</h3>
@@ -205,7 +202,6 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
         </div>
       </div>
 
-      {/* Distribuição Colaboradores */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
          <div className="card md:col-span-1 h-[300px] flex flex-col">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-4">Distribuição por Setor</h3>
@@ -465,43 +461,6 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
     </div>
   );
 
-  return (
-    <div className="flex flex-col gap-8 animate-fade-in pb-20 h-full px-4 lg:px-8">
-      
-      {/* 1. NAVEGAÇÃO DE TOPO PREMIUM (Dark Style) */}
-      <div className="flex flex-wrap items-center gap-4 bg-[var(--bg-card)] p-3 rounded-2xl border border-[var(--border)] shadow-xl sticky top-0 z-30 backdrop-blur-md">
-         {[
-           { id: "OVERVIEW", label: "Visão Geral", icon: LayoutDashboard },
-           { id: "OPERACIONAL", label: "Operacional", icon: HardHat },
-           { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package },
-           { id: "RH", label: "Recursos Humanos", icon: Users },
-           { id: "AUDITORIA", label: "Auditoria", icon: ShieldAlert },
-           { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
-         ].map(tab => (
-           <button 
-             key={tab.id}
-             onClick={() => setActiveTab(tab.id as any)}
-             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-[0_0_20px_rgba(255,106,0,0.4)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-white'}`}
-           >
-             <tab.icon size={16} />
-             {tab.label}
-           </button>
-         ))}
-      </div>
-
-      {/* 2. CONTEÚDO DINÂMICO */}
-      <div className="flex-1">
-         {activeTab === "OVERVIEW" && renderOverview()}
-         {activeTab === "OPERACIONAL" && renderOperacional()}
-         {activeTab === "ALMOXARIFADO" && renderAlmoxarifado()}
-         {activeTab === "RH" && renderRH()}
-         {activeTab === "AUDITORIA" && renderAuditoria()}
-         {activeTab === "ROTAS" && renderRotas()}
-      </div>
-
-    </div>
-  );
-
   const renderRotas = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
        <div className="card flex flex-col">
@@ -564,6 +523,43 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
              </table>
           </div>
        </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-8 animate-fade-in pb-20 h-full px-4 lg:px-8">
+      
+      {/* 1. NAVEGAÇÃO DE TOPO PREMIUM (Dark Style) */}
+      <div className="flex flex-wrap items-center gap-4 bg-[var(--bg-card)] p-3 rounded-2xl border border-[var(--border)] shadow-xl sticky top-0 z-30 backdrop-blur-md">
+         {[
+           { id: "OVERVIEW", label: "Visão Geral", icon: LayoutDashboard },
+           { id: "OPERACIONAL", label: "Operacional", icon: HardHat },
+           { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package },
+           { id: "RH", label: "Recursos Humanos", icon: Users },
+           { id: "AUDITORIA", label: "Auditoria", icon: ShieldAlert },
+           { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
+         ].map(tab => (
+           <button 
+             key={tab.id}
+             onClick={() => setActiveTab(tab.id as any)}
+             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-[0_0_20px_rgba(255,106,0,0.4)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-white'}`}
+           >
+             <tab.icon size={16} />
+             {tab.label}
+           </button>
+         ))}
+      </div>
+
+      {/* 2. CONTEÚDO DINÂMICO */}
+      <div className="flex-1">
+         {activeTab === "OVERVIEW" && renderOverview()}
+         {activeTab === "OPERACIONAL" && renderOperacional()}
+         {activeTab === "ALMOXARIFADO" && renderAlmoxarifado()}
+         {activeTab === "RH" && renderRH()}
+         {activeTab === "AUDITORIA" && renderAuditoria()}
+         {activeTab === "ROTAS" && renderRotas()}
+      </div>
+
     </div>
   );
 }
