@@ -60,58 +60,27 @@ export default function OcorrenciasPage() {
   const loadData = async () => {
     setLoading(true);
     // Tickets
-    let query = supabase.from('tickets_sla').select('*');
+    // Busca Simplificada: Carrega todos os tickets e filtra no cliente para evitar erros de query/colunas
+    const { data: ticketData, error: ticketError } = await supabase
+      .from('tickets_sla')
+      .select('*')
+      .order('data_abertura', { ascending: false });
     
-    // Filtro por Setor (Hierarquia Operacional)
-    const savedUser = localStorage.getItem("crm_user");
-    if (savedUser) {
-      const u = JSON.parse(savedUser);
-      // setUser já é feito no useEffect de montagem
-      
-      const role = u.role || "";
-      const isSetorial = ["RH", "ALMOXARIFE", "TI", "FINANCEIRO", "ENCARREGADO", "DIRETOR"].some(r => role.startsWith(r));
-      
-      if (isSetorial && role !== "ADMIN" && role !== "DIRETORIA") {
-        let setor = "OPERACIONAL";
-        if (role.startsWith("RH")) setor = "RH";
-        else if (role === "ALMOXARIFE") setor = "ALMOXARIFADO";
-        else if (role === "TI") setor = "TI";
-        else if (role === "FINANCEIRO") setor = "FINANCEIRO";
-        
-        // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei (pelo meu ID/Tel ou Nome) OU onde fui citado
-        const filterOr = [
-          `setor_destino.eq.${setor}`,
-          `responsavel_citado.ilike."%${u.nome}%"`
-        ];
-        
-        if (u.telefone) filterOr.push(`solicitante_tel.eq.${u.telefone}`);
-        if (u.nome) filterOr.push(`criado_por.eq.${u.nome}`);
-        
-        query = query.or(filterOr.join(','));
-      }
-      // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
-    }
-
-    const { data: ticketData, error: ticketError } = await query.order('data_abertura', { ascending: false });
-    
-    let finalData = ticketData;
+    let finalData = ticketData || [];
     
     if (ticketError) {
-      console.warn("Database sync error (probably missing columns):", ticketError);
-      // Fallback: Busca simplificada se o banco estiver desatualizado
-      const { data: fallbackData } = await supabase.from('tickets_sla').select('*').order('data_abertura', { ascending: false });
-      finalData = fallbackData;
+      console.warn("Database sync error:", ticketError);
     }
 
     if (finalData) {
       setTickets(finalData.map(t => ({
         ...t,
-        id: `#${t.sequencial || t.id.substring(0, 4)}`,
+        id: `#${t.sequencial || (t.id ? t.id.substring(0, 4) : '---')}`,
         realId: t.id,
         titulo: t.assunto || "Sem assunto",
-        abertura: new Date(t.data_abertura).toLocaleString('pt-BR'),
-        sla: (t.status !== 'RESOLVIDO' && (new Date().getTime() - new Date(t.data_abertura).getTime()) / (1000 * 60 * 60) > 24) ? "VENCIDO" : "OK",
-        tempoAberto: t.status === 'RESOLVIDO' ? 'RESOLVIDO' : calcularTempoAberto(t.data_abertura)
+        abertura: t.data_abertura ? new Date(t.data_abertura).toLocaleString('pt-BR') : 'Data N/A',
+        sla: (t.status !== 'RESOLVIDO' && t.data_abertura && (new Date().getTime() - new Date(t.data_abertura).getTime()) / (1000 * 60 * 60) > 24) ? "VENCIDO" : "OK",
+        tempoAberto: t.status === 'RESOLVIDO' ? 'RESOLVIDO' : calcularTempoAberto(t.data_abertura || new Date().toISOString())
       })));
     }
 
