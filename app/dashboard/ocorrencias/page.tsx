@@ -30,6 +30,7 @@ export default function OcorrenciasPage() {
   const [modalResolucao, setModalResolucao] = useState(false);
   const [ticketSelecionado, setTicketSelecionado] = useState<any>(null);
   const [solucaoTexto, setSolucaoTexto] = useState("");
+  const [aba, setAba] = useState<"demandas" | "solicitacoes">("demandas");
   
   const [user, setUser] = useState<any>(null);
   const [novaOcorrencia, setNovaOcorrencia] = useState({
@@ -267,6 +268,22 @@ export default function OcorrenciasPage() {
         </div>
       </div>
 
+      {/* Tabs de Navegação */}
+      <div className="flex gap-8 border-b border-[var(--border)] px-4">
+        <button 
+          onClick={() => setAba("demandas")}
+          className={`pb-4 text-xs font-black uppercase tracking-widest transition-all ${aba === "demandas" ? "text-[var(--brand)] border-b-2 border-[var(--brand)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+        >
+          Minhas Demandas ({tickets.filter(t => t.setor_destino === (user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL") || t.responsavel_citado?.includes(user?.nome)).length})
+        </button>
+        <button 
+          onClick={() => setAba("solicitacoes")}
+          className={`pb-4 text-xs font-black uppercase tracking-widest transition-all ${aba === "solicitacoes" ? "text-[var(--brand)] border-b-2 border-[var(--brand)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+        >
+          Minhas Solicitações ({tickets.filter(t => t.criado_por === user?.nome).length})
+        </button>
+      </div>
+
       {/* Modal Nova Ocorrência Arrastável */}
       <AdaptiveModal 
         title="Lançar Novo Evento Operacional" 
@@ -460,7 +477,14 @@ export default function OcorrenciasPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {tickets.map(t => (
+                {tickets
+                  .filter(t => {
+                    if (aba === "solicitacoes") return t.criado_por === user?.nome;
+                    // Demandas: Para meu setor ou citado, mas que NÃO fui eu que criei (para evitar duplicidade visual)
+                    const meuSetor = user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
+                    return (t.setor_destino === meuSetor || t.responsavel_citado?.includes(user?.nome)) && t.criado_por !== user?.nome;
+                  })
+                  .map(t => (
                   <tr 
                     key={t.id} 
                     className="hover:bg-[var(--bg-card-hover)] transition-all cursor-pointer group"
