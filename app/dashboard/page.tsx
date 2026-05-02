@@ -34,19 +34,6 @@ function CockpitContent() {
   // Estado que controla qual módulo funcional está visível (ex: Gerência, RH, Compras)
   const [activeModule, setActiveModule] = useState("COMMAND");
   
-  // Sincroniza o módulo ativo caso venha um parâmetro via URL
-  useEffect(() => {
-    if (modParam) {
-      setActiveModule(modParam);
-    } else if (filteredModules.length > 0 && activeModule === "COMMAND") {
-      // Se não houver parâmetro, e o usuário não tiver acesso ao COMMAND, muda para o primeiro disponível
-      const hasAccessToCommand = filteredModules.some(m => m.id === "COMMAND");
-      if (!hasAccessToCommand) {
-        setActiveModule(filteredModules[0].id);
-      }
-    }
-  }, [modParam, filteredModules]);
-
   const [user, setUser] = useState<any>(null);
   const [reducaoGeral, setReducaoGeral] = useState(20);
   const [loading, setLoading] = useState(true);
@@ -85,6 +72,19 @@ function CockpitContent() {
   const filteredModules = isManager
     ? modules
     : modules.filter(m => m.roles.includes(safeRole)) || [modules[0]];
+
+  // Sincroniza o módulo ativo caso venha um parâmetro via URL ou baseando-se nas permissões
+  useEffect(() => {
+    if (modParam) {
+      setActiveModule(modParam);
+    } else if (filteredModules.length > 0 && activeModule === "COMMAND") {
+      // Se não houver parâmetro, e o usuário não tiver acesso ao COMMAND, muda para o primeiro disponível
+      const hasAccessToCommand = filteredModules.some(m => m.id === "COMMAND");
+      if (!hasAccessToCommand) {
+        setActiveModule(filteredModules[0].id);
+      }
+    }
+  }, [modParam, filteredModules, activeModule]);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">
