@@ -40,29 +40,33 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
 
   useEffect(() => {
     async function fetchData() {
-      // 1. Fetch DP Data
-      const { data: users } = await supabase.from('usuarios').select('*').order('nome');
-      if (users) {
-        setColaboradores(users.map(u => ({
-          id: u.id,
-          nome: u.nome || "Sem Nome",
-          cargo: u.cargo || "Não definido",
-          unidade: u.unidade_alocacao || "Não alocado",
-          status: u.status || "INATIVO",
-          avatar: (u.nome || "??").substring(0, 2).toUpperCase(),
-          cpf: u.cpf || "---",
-          telefone: u.telefone || "---",
-          admissao: u.data_admissao || "---"
-        })));
+      try {
+        // 1. Fetch DP Data
+        const { data: users } = await supabase.from('usuarios').select('*').order('nome');
+        if (users) {
+          setColaboradores(users.map(u => ({
+            id: u.id,
+            nome: u.nome || "Sem Nome",
+            cargo: u.cargo || "Não definido",
+            unidade: u.unidade_alocacao || "Não alocado",
+            status: u.status || "INATIVO",
+            avatar: (u.nome || "??").substring(0, 2).toUpperCase(),
+            cpf: u.cpf || "---",
+            telefone: u.telefone || "---",
+            admissao: u.data_admissao || "---"
+          })));
+        }
+
+        const { data: talentos } = await supabase.from('candidatos').select('*').order('created_at', { ascending: false });
+        if (talentos) setCandidatos(talentos);
+
+        const { data: vagasDb } = await supabase.from('vagas').select('*').order('created_at', { ascending: false });
+        if (vagasDb) setVagas(vagasDb);
+      } catch (err) {
+        console.error("Erro no carregamento do RH:", err);
+      } finally {
+        setLoading(false);
       }
-
-      const { data: talentos } = await supabase.from('candidatos').select('*').order('created_at', { ascending: false });
-      if (talentos) setCandidatos(talentos);
-
-      const { data: vagasDb } = await supabase.from('vagas').select('*').order('created_at', { ascending: false });
-      if (vagasDb) setVagas(vagasDb);
-
-      setLoading(false);
     }
     fetchData();
   }, []);

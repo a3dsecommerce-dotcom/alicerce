@@ -129,9 +129,16 @@ function CockpitContent() {
       {activeModule !== "COMPRAS" && <QuickActions user={user || { role: 'ADMIN' }} />}
 
       {/* 3. Área de Conteúdo Dinâmico */}
-      <main className="flex-1 overflow-hidden min-h-[600px]">
+      <main className="flex-1 overflow-hidden min-h-[600px] relative">
         {user ? (
-          <>
+          <Suspense fallback={
+            <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-black/50 backdrop-blur-sm z-50 rounded-[3rem]">
+              <div className="flex flex-col items-center gap-4">
+                <Loader className="animate-spin text-[var(--brand)]" size={32} />
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--brand)]">Carregando Módulo...</p>
+              </div>
+            </div>
+          }>
             {(activeModule === "COMMAND" || !activeModule) && filteredModules.some(m => m.id === "COMMAND") && (
               safeRole === 'ENCARREGADO' 
                 ? <EncarregadoModule user={user} />
@@ -141,18 +148,18 @@ function CockpitContent() {
             {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
             {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
             {activeModule === "SETTINGS" && <ConfiguracoesModule user={user} />}
-          </>
+            
+            {activeModule === "SST" && (
+              <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
+                <Settings size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
+                <h3 className="text-lg font-black text-[var(--text-primary)]">Módulo SST em Sincronização</h3>
+              </div>
+            )}
+          </Suspense>
         ) : (
           <div className="flex items-center justify-center h-64 flex-col gap-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--brand)]"></div>
             <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Carregando sessão...</p>
-          </div>
-        )}
-        
-        {activeModule === "SST" && (
-          <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
-            <Settings size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
-            <h3 className="text-lg font-black text-[var(--text-primary)]">Módulo SST em Sincronização</h3>
           </div>
         )}
       </main>
