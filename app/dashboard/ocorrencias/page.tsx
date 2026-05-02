@@ -143,8 +143,8 @@ export default function OcorrenciasPage() {
       responsavel_citado: novaOcorrencia.responsavel_citado,
       atribuido_a: novaOcorrencia.setor_destino + (novaOcorrencia.responsavel_citado ? ` (${novaOcorrencia.responsavel_citado})` : ""),
       status: 'PENDENTE',
-      criado_por: user?.nome || "Usuário Portal",
-      solicitante_tel: user?.telefone || "000"
+      criado_por: user?.nome || user?.name || "Usuário Portal",
+      solicitante_tel: user?.telefone || user?.tel || "000"
     };
 
     const { data: inserted, error } = await supabase.from('tickets_sla').insert([ticketInsert]).select();
@@ -287,11 +287,13 @@ export default function OcorrenciasPage() {
             const myName = clean(user?.nome || user?.name);
             const myPhone = phone(user?.telefone || user?.tel);
             const myEmail = clean(user?.email);
+            const role = user?.role || "";
             
             const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
                                  (clean(t.criado_por) && myName && (clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por)))) ||
                                  (clean(t.unidade) && myName && clean(t.unidade).includes(myName)) ||
-                                 (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail)));
+                                 (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail))) ||
+                                 ((clean(t.criado_por) === "usuário portal" || !t.criado_por) && role === "ADMIN");
             return isSolicitante;
           }).length})
         </button>
@@ -497,13 +499,14 @@ export default function OcorrenciasPage() {
                     const myName = clean(user?.nome || user?.name);
                     const myPhone = phone(user?.telefone || user?.tel);
                     const myEmail = clean(user?.email);
+                    const role = user?.role || "";
                     
                     const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
                                          (clean(t.criado_por) && myName && (clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por)))) ||
                                          (clean(t.unidade) && myName && clean(t.unidade).includes(myName)) ||
-                                         (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail)));
+                                         (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail))) ||
+                                         ((clean(t.criado_por) === "usuário portal" || !t.criado_por) && role === "ADMIN");
                                          
-                    const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
                     const isResponsavel = t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName));
 
@@ -562,15 +565,16 @@ export default function OcorrenciasPage() {
                     const myName = clean(user?.nome || user?.name);
                     const myPhone = phone(user?.telefone || user?.tel);
                     const myEmail = clean(user?.email);
+                    const role = user?.role || "";
                     
                     const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
                                          (clean(t.criado_por) && myName && (clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por)))) ||
                                          (clean(t.unidade) && myName && clean(t.unidade).includes(myName)) ||
-                                         (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail)));
+                                         (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail))) ||
+                                         ((clean(t.criado_por) === "usuário portal" || !t.criado_por) && role === "ADMIN");
                                          
                     if (aba === "solicitacoes") return isSolicitante;
                     
-                    const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
                     return (t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName))) && !isSolicitante;
                 }).length === 0 && (
