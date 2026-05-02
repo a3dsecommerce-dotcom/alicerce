@@ -88,7 +88,18 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
       const { error } = await supabase.from('usuarios').update(editForm).eq('id', colabId);
       
       if (!error) {
-        alert("Dados atualizados e auditados com sucesso!");
+        if (restrictLevel) {
+          await supabase.from('tickets_sla').insert([{
+            assunto: "ALTERAÇÃO CADASTRO RH",
+            unidade: data.unidade_alocacao || "DP",
+            descricao: `O RH alterou dados do colaborador ${data.nome}. Motivo: ${motivoAlt}. Campos: ${changes.join(', ')}`,
+            prioridade: "NORMAL",
+            status: "PENDENTE",
+            criado_por: "DP_PORTAL"
+          }]);
+        }
+
+        alert("Dados atualizados e auditados com sucesso! Uma ocorrência de notificação foi gerada para a gerência.");
         setEditing(false);
         setMotivoAlt("");
         loadFullData();
@@ -158,7 +169,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                   {[
                     { key: "cargo", label: "Cargo Operacional", type: "select", options: ["ASG", "Porteiro", "Encarregado", "Zelador", "Recepcionista"] },
                     { key: "unidade_alocacao", label: "Unidade de Trabalho", type: "text" },
-                    { key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] },
+                    ...(restrictLevel ? [] : [{ key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] }]),
                     { key: "insalubridade", label: "Insalubridade (%)", type: "select", options: [0, 20, 40] },
                     { key: "data_admissao", label: "Data de Admissão", type: "date" },
                   ].map(f => (

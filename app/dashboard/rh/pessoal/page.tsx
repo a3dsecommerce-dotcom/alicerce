@@ -128,7 +128,7 @@ export default function RHPessoalPage() {
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead style={{ position: "sticky", top: 0, background: "var(--bg-card)", zIndex: 10 }}>
                   <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    {["Colaborador / Cargo", "CPF / Telefone", "Unidade", "Admissão", "Nível", "Status", "Ações"].map(h => (
+                    {["Colaborador / Cargo", "CPF / Telefone", "Unidade", "Admissão", ...(user?.role === "RH_DP" || user?.role === "RH_PESSOAL" ? [] : ["Nível"]), "Status", "Ações"].map(h => (
                       <th key={h} style={{ padding: "0.75rem 1rem", textAlign: h === "Ações" ? "right" : "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
@@ -155,11 +155,13 @@ export default function RHPessoalPage() {
                       </td>
                       <td style={{ padding: "0.875rem 1rem", fontSize: "0.82rem", color: "var(--text-secondary)" }}>{c.unidade}</td>
                       <td style={{ padding: "0.875rem 1rem", fontSize: "0.82rem", color: "var(--text-muted)" }}>{c.admissao}</td>
-                      <td style={{ padding: "0.875rem 1rem" }}>
-                        <div className={`px-2 py-1 rounded text-[9px] font-black inline-block ${c.nivel === 1 ? "bg-gray-100 text-gray-500" : "bg-[var(--brand-alpha)] text-[var(--brand)]"}`}>
-                          NÍVEL {c.nivel}
-                        </div>
-                      </td>
+                      {!(user?.role === "RH_DP" || user?.role === "RH_PESSOAL") && (
+                        <td style={{ padding: "0.875rem 1rem" }}>
+                          <div className={`px-2 py-1 rounded text-[9px] font-black inline-block ${c.nivel === 1 ? "bg-gray-100 text-gray-500" : "bg-[var(--brand-alpha)] text-[var(--brand)]"}`}>
+                            NÍVEL {c.nivel}
+                          </div>
+                        </td>
+                      )}
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <span className={`badge ${c.status === "ATIVO" ? "badge-green" : "badge-amber"}`}>
                           <span>● </span>{c.status}
@@ -297,7 +299,8 @@ export default function RHPessoalPage() {
         colabId={selecionado?.id} 
         isOpen={!!selecionado} 
         onClose={() => setSelecionado(null)} 
-        canEdit={user?.role === "GERENTE" || user?.role === "RH_PESSOAL" || user?.role === "ADMIN"}
+        canEdit={user?.role === "GERENTE" || user?.role === "RH_DP" || user?.role === "RH_PESSOAL" || user?.role === "ADMIN"}
+        restrictLevel={user?.role === "RH_DP" || user?.role === "RH_PESSOAL"}
       />
     </div>
   );
