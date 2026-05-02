@@ -45,7 +45,7 @@ function CockpitContent() {
   const tabParam = searchParams.get("tab");
   
   // Estado que controla qual módulo funcional está visível (ex: Gerência, RH, Compras)
-  const [activeModule, setActiveModule] = useState("COMMAND");
+  const [activeModule, setActiveModule] = useState<string | null>(null);
   
   const [user, setUser] = useState<any>(null);
   const [reducaoGeral, setReducaoGeral] = useState(20);
@@ -71,9 +71,11 @@ function CockpitContent() {
     const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
     const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
     
+    if (!user) return [];
+    
     return isManager
       ? ALL_MODULES
-      : ALL_MODULES.filter(m => m.roles.includes(safeRole)) || [ALL_MODULES[0]];
+      : ALL_MODULES.filter(m => m.roles.includes(safeRole));
   }, [user]);
 
   const safeRole = user?.role ? String(user.role).toUpperCase() : "";
@@ -82,10 +84,12 @@ function CockpitContent() {
   useEffect(() => {
     if (modParam) {
       setActiveModule(modParam);
-    } else if (filteredModules.length > 0 && activeModule === "COMMAND") {
-      // Se não houver parâmetro, e o usuário não tiver acesso ao COMMAND, muda para o primeiro disponível
-      const hasAccessToCommand = filteredModules.some(m => m.id === "COMMAND");
-      if (!hasAccessToCommand) {
+    } else if (filteredModules.length > 0) {
+      if (!activeModule) {
+        // Se não houver módulo ativo, define o primeiro disponível
+        setActiveModule(filteredModules[0].id);
+      } else if (activeModule === "COMMAND" && !filteredModules.some(m => m.id === "COMMAND")) {
+        // Se estiver no COMMAND mas não tiver acesso, muda para o primeiro disponível
         setActiveModule(filteredModules[0].id);
       }
     }
