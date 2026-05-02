@@ -32,13 +32,13 @@ export default function OcorrenciasPage() {
   const [solucaoTexto, setSolucaoTexto] = useState("");
   const [aba, setAba] = useState<"demandas" | "solicitacoes">("demandas");
   
-  const [user, setUser] = useState<any>(null);
-  
-  // Efeito para carregar usuário imediatamente
-  useEffect(() => {
-    const savedUser = localStorage.getItem("crm_user");
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
+  const [user, setUser] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("crm_user");
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
 
   const [novaOcorrencia, setNovaOcorrencia] = useState({
     assunto: "",
@@ -486,14 +486,17 @@ export default function OcorrenciasPage() {
               <tbody className="divide-y divide-[var(--border)]">
                 {tickets
                   .filter(t => {
-                    const isSolicitante = t.criado_por === user?.nome;
-                    const meuSetor = user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    const isResponsavel = t.setor_destino === meuSetor || t.responsavel_citado?.includes(user?.nome);
+                    const userName = user?.nome?.trim().toLowerCase();
+                    const creatorName = t.criado_por?.trim().toLowerCase();
+                    const isSolicitante = creatorName === userName;
+                    
+                    const role = user?.role || "";
+                    const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
+                    const isResponsavel = t.setor_destino === meuSetor || t.responsavel_citado?.toLowerCase().includes(userName || "");
 
                     if (aba === "solicitacoes") return isSolicitante;
                     
                     // Demandas: Sou o responsável MAS não fui eu que criei
-                    // Se eu criei para o meu próprio setor, fica apenas em Solicitações para não duplicar
                     return isResponsavel && !isSolicitante;
                   })
                   .map(t => (
@@ -540,6 +543,23 @@ export default function OcorrenciasPage() {
                     </td>
                   </tr>
                 ))}
+                {tickets.filter(t => {
+                    const userName = user?.nome?.trim().toLowerCase();
+                    const creatorName = t.criado_por?.trim().toLowerCase();
+                    if (aba === "solicitacoes") return creatorName === userName;
+                    const role = user?.role || "";
+                    const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
+                    return (t.setor_destino === meuSetor || t.responsavel_citado?.toLowerCase().includes(userName || "")) && creatorName !== userName;
+                }).length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="p-20 text-center">
+                       <div className="flex flex-col items-center gap-3 text-[var(--text-muted)]">
+                          <Activity size={40} className="opacity-20" />
+                          <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma ocorrência encontrada nesta aba</p>
+                       </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

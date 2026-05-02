@@ -5,13 +5,16 @@ import { supabase } from '@/lib/supabase';
 import { n8n } from '@/lib/n8n';
 import { Loader, Send, AlertTriangle, Package, User, CheckCircle2, ChevronRight, ChevronLeft, MapPin, Truck, ShieldCheck } from 'lucide-react';
 
-interface GlobalActionsModalsProps {
-  modalActive: string | null;
-  onClose: () => void;
-  user: any;
-}
+export default function GlobalActionsModals({ isOpen, onClose, modalActive, user: propUser }: any) {
+  const [user, setUser] = useState<any>(propUser);
+  
+  useEffect(() => {
+    if (!user) {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) setUser(JSON.parse(saved));
+    }
+  }, [user]);
 
-export default function GlobalActionsModals({ modalActive, onClose, user }: GlobalActionsModalsProps) {
   const [loading, setLoading] = useState(false);
   
   // Ocorrência State
