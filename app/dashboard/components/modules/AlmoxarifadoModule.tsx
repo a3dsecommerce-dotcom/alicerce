@@ -141,6 +141,28 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
     setLoading(false);
   };
 
+  const handleExcluirItem = async () => {
+    if (!formData.id) return;
+    if (!window.confirm(`Deseja realmente EXCLUIR o item "${formData.item}"? Esta ação não pode ser desfeita.`)) return;
+    
+    setLoading(true);
+    let targetTable = "";
+    if (formData.categoria === 'EPI') targetTable = 'almox_epi';
+    else if (formData.categoria === 'SUPRIMENTO') targetTable = 'almox_suprimentos';
+    else if (formData.categoria === 'ESCRITORIO') targetTable = 'almox_escritorio';
+
+    if (!targetTable) return alert("Categoria inválida.");
+
+    const { error } = await supabase.from(targetTable).delete().eq('id', formData.id);
+    
+    if (error) alert("Erro ao excluir: " + error.message);
+    else {
+      setModalAberto(null);
+      fetchTudo();
+    }
+    setLoading(false);
+  };
+
   const handleConfirmarEntregaEPI = async () => {
     if (!entregaData.colaborador) return alert("Selecione um colaborador.");
     if (entregaData.itens.length === 0) return alert("Adicione ao menos um item.");
@@ -823,9 +845,16 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                 )}
             </div>
 
-            <button onClick={handleSalvarItem} className="h-14 w-full bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all mt-4">
-              {formData.id ? "Atualizar Material" : "Salvar Material"}
-            </button>
+            <div className="flex gap-4 mt-6">
+               {formData.id && (
+                  <button onClick={handleExcluirItem} className="h-14 px-6 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-100 hover:bg-red-600 hover:text-white transition-all">
+                    Excluir Item
+                  </button>
+               )}
+               <button onClick={handleSalvarItem} className="h-14 flex-1 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-[1.02] transition-all">
+                 {formData.id ? "Atualizar Material" : "Salvar Material"}
+               </button>
+            </div>
          </div>
       </AdaptiveModal>
 
