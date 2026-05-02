@@ -160,7 +160,8 @@ function CockpitContent() {
               <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
                 <Settings size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
                 <h3 className="text-lg font-black text-[var(--text-primary)]">Módulo SST em Sincronização</h3>
-              </div>
+            )}
+            
             {/* Fallback caso nenhum módulo esteja ativo mas haja permissão */}
             {!activeModule && filteredModules.length > 0 && (
                <div className="flex flex-col items-center justify-center h-full opacity-50">
