@@ -58,6 +58,8 @@ function CockpitContent() {
     } catch (err) {
       console.error(err);
       localStorage.removeItem("crm_user");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -88,18 +90,22 @@ function CockpitContent() {
     }
   }, [modParam, filteredModules, activeModule]);
 
+  const activeModuleData = useMemo(() => {
+    return ALL_MODULES.find(m => m.id === activeModule) || ALL_MODULES[0];
+  }, [activeModule]);
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">
       
-      {/* 1. Header: PAINEL DE CONTROLE (PT-BR) */}
+      {/* 1. Header Dinâmico */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-[var(--bg-card)] p-6 rounded-[2rem] border border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-[var(--brand)] rounded-2xl flex items-center justify-center text-white shadow-lg shadow-[var(--brand)]/20">
-            <Activity size={24} />
+            {activeModuleData.icon ? <activeModuleData.icon size={24} /> : <Activity size={24} />}
           </div>
           <div>
-            <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">Painel de Controle</h1>
-            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Gestão Soberana Alicerce</p>
+            <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">{activeModuleData.label}</h1>
+            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce</p>
           </div>
         </div>
 
