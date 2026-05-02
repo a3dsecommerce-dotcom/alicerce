@@ -35,6 +35,7 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
     const { error } = await supabase.from('tickets_sla').insert([{
       ...ocorrencia,
       criado_por: user?.nome || 'Usuário Portal',
+      solicitante_tel: user?.telefone || '000',
       status: 'PENDENTE'
     }]);
 

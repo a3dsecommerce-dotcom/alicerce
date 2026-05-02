@@ -78,8 +78,8 @@ export default function OcorrenciasPage() {
         else if (role === "TI") setor = "TI";
         else if (role === "FINANCEIRO") setor = "FINANCEIRO";
         
-        // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei OU onde fui citado
-        query = query.or(`setor_destino.eq.${setor},criado_por.eq."${u.nome}",responsavel_citado.ilike."%${u.nome}%"`);
+        // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei (pelo meu ID/Tel) OU onde fui citado
+        query = query.or(`setor_destino.eq.${setor},solicitante_tel.eq.${u.telefone},responsavel_citado.ilike."%${u.nome}%"`);
       }
       // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
     }
@@ -156,7 +156,8 @@ export default function OcorrenciasPage() {
       responsavel_citado: novaOcorrencia.responsavel_citado,
       atribuido_a: novaOcorrencia.setor_destino + (novaOcorrencia.responsavel_citado ? ` (${novaOcorrencia.responsavel_citado})` : ""),
       status: 'PENDENTE',
-      criado_por: user?.nome || "Usuário Portal"
+      criado_por: user?.nome || "Usuário Portal",
+      solicitante_tel: user?.telefone || "000"
     };
 
     const { data: inserted, error } = await supabase.from('tickets_sla').insert([ticketInsert]).select();
@@ -486,9 +487,8 @@ export default function OcorrenciasPage() {
               <tbody className="divide-y divide-[var(--border)]">
                 {tickets
                   .filter(t => {
+                    const isSolicitante = t.solicitante_tel === user?.telefone;
                     const userName = user?.nome?.trim().toLowerCase();
-                    const creatorName = t.criado_por?.trim().toLowerCase();
-                    const isSolicitante = creatorName === userName;
                     
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
@@ -544,12 +544,13 @@ export default function OcorrenciasPage() {
                   </tr>
                 ))}
                 {tickets.filter(t => {
+                    const isSolicitante = t.solicitante_tel === user?.telefone;
+                    if (aba === "solicitacoes") return isSolicitante;
+                    
                     const userName = user?.nome?.trim().toLowerCase();
-                    const creatorName = t.criado_por?.trim().toLowerCase();
-                    if (aba === "solicitacoes") return creatorName === userName;
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    return (t.setor_destino === meuSetor || t.responsavel_citado?.toLowerCase().includes(userName || "")) && creatorName !== userName;
+                    return (t.setor_destino === meuSetor || t.responsavel_citado?.toLowerCase().includes(userName || "")) && !isSolicitante;
                 }).length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-20 text-center">
