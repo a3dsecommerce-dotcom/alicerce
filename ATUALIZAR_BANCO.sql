@@ -89,6 +89,9 @@ CREATE TABLE IF NOT EXISTS tickets_sla (
     status TEXT DEFAULT 'PENDENTE',
     criado_por TEXT,
     atribuido_a TEXT,
+    setor_destino TEXT,
+    responsavel_citado TEXT,
+    justificativa_solucao TEXT,
     data_abertura TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     data_recebimento TIMESTAMP WITH TIME ZONE,
     data_fechamento TIMESTAMP WITH TIME ZONE,
@@ -96,6 +99,11 @@ CREATE TABLE IF NOT EXISTS tickets_sla (
     prazo_prometido TIMESTAMP WITH TIME ZONE,
     solucao_descricao TEXT
 );
+
+-- Garante colunas em bases já existentes
+ALTER TABLE tickets_sla ADD COLUMN IF NOT EXISTS setor_destino TEXT;
+ALTER TABLE tickets_sla ADD COLUMN IF NOT EXISTS responsavel_citado TEXT;
+ALTER TABLE tickets_sla ADD COLUMN IF NOT EXISTS justificativa_solucao TEXT;
 
 -- =================================================================================
 -- TABELA DE ESTOQUE (ALMOXARIFADO)
