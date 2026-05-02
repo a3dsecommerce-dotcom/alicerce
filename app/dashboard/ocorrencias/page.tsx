@@ -33,6 +33,13 @@ export default function OcorrenciasPage() {
   const [aba, setAba] = useState<"demandas" | "solicitacoes">("demandas");
   
   const [user, setUser] = useState<any>(null);
+  
+  // Efeito para carregar usuário imediatamente
+  useEffect(() => {
+    const savedUser = localStorage.getItem("crm_user");
+    if (savedUser) setUser(JSON.parse(savedUser));
+  }, []);
+
   const [novaOcorrencia, setNovaOcorrencia] = useState({
     assunto: "",
     unidade_id: "",
@@ -59,7 +66,7 @@ export default function OcorrenciasPage() {
     const savedUser = localStorage.getItem("crm_user");
     if (savedUser) {
       const u = JSON.parse(savedUser);
-      setUser(u);
+      // setUser já é feito no useEffect de montagem
       
       const role = u.role || "";
       const isSetorial = ["RH", "ALMOXARIFE", "TI", "FINANCEIRO", "ENCARREGADO", "DIRETOR"].some(r => role.startsWith(r));
@@ -479,10 +486,15 @@ export default function OcorrenciasPage() {
               <tbody className="divide-y divide-[var(--border)]">
                 {tickets
                   .filter(t => {
-                    if (aba === "solicitacoes") return t.criado_por === user?.nome;
-                    // Demandas: Para meu setor ou citado, mas que NÃO fui eu que criei (para evitar duplicidade visual)
+                    const isSolicitante = t.criado_por === user?.nome;
                     const meuSetor = user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    return (t.setor_destino === meuSetor || t.responsavel_citado?.includes(user?.nome)) && t.criado_por !== user?.nome;
+                    const isResponsavel = t.setor_destino === meuSetor || t.responsavel_citado?.includes(user?.nome);
+
+                    if (aba === "solicitacoes") return isSolicitante;
+                    
+                    // Demandas: Sou o responsável MAS não fui eu que criei
+                    // Se eu criei para o meu próprio setor, fica apenas em Solicitações para não duplicar
+                    return isResponsavel && !isSolicitante;
                   })
                   .map(t => (
                   <tr 
