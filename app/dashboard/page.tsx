@@ -12,9 +12,9 @@ import QuickActions from "./components/QuickActions";
 
 import dynamic from "next/dynamic";
 
-// Carregamento Dinâmico dos Módulos (Evita erros de inicialização e melhora performance)
+// Módulos Unificados (RH estático para evitar falhas de inicialização, outros dinâmicos)
+import RHModule from "./components/modules/RHModule";
 const GerenciaModule = dynamic(() => import("./components/modules/GerenciaModule"), { ssr: false });
-const RHModule = dynamic(() => import("./components/modules/RHModule"), { ssr: false });
 const ComprasModule = dynamic(() => import("./components/modules/ComprasModule"), { ssr: false });
 const ComunicacaoModule = dynamic(() => import("./components/modules/ComunicacaoModule"), { ssr: false });
 const AlmoxarifadoModule = dynamic(() => import("./components/modules/AlmoxarifadoModule"), { ssr: false });
@@ -159,6 +159,12 @@ function CockpitContent() {
                 <Settings size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
                 <h3 className="text-lg font-black text-[var(--text-primary)]">Módulo SST em Sincronização</h3>
               </div>
+            {/* Fallback caso nenhum módulo esteja ativo mas haja permissão */}
+            {!activeModule && filteredModules.length > 0 && (
+               <div className="flex flex-col items-center justify-center h-full opacity-50">
+                  <Activity size={48} className="animate-pulse mb-4" />
+                  <p className="text-xs font-black uppercase tracking-widest">Sincronizando Módulo Operacional...</p>
+               </div>
             )}
           </Suspense>
         ) : (
