@@ -317,8 +317,12 @@ export default function OcorrenciasPage() {
             const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
             const myName = clean(user?.nome || user?.name);
             const myPhone = phone(user?.telefone || user?.tel);
+            const myEmail = clean(user?.email);
+            
             const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
-                                 (clean(t.criado_por) && myName && (clean(t.criado_por) === myName || clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por))));
+                                 (clean(t.criado_por) && myName && (clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por)))) ||
+                                 (clean(t.unidade) && myName && clean(t.unidade).includes(myName)) ||
+                                 (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail)));
             return isSolicitante;
           }).length})
         </button>
@@ -523,9 +527,12 @@ export default function OcorrenciasPage() {
                     const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
                     const myName = clean(user?.nome || user?.name);
                     const myPhone = phone(user?.telefone || user?.tel);
+                    const myEmail = clean(user?.email);
                     
                     const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
-                                         (clean(t.criado_por) && myName && (clean(t.criado_por) === myName || clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por))));
+                                         (clean(t.criado_por) && myName && (clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por)))) ||
+                                         (clean(t.unidade) && myName && clean(t.unidade).includes(myName)) ||
+                                         (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail)));
                                          
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
@@ -585,9 +592,12 @@ export default function OcorrenciasPage() {
                     const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
                     const myName = clean(user?.nome || user?.name);
                     const myPhone = phone(user?.telefone || user?.tel);
+                    const myEmail = clean(user?.email);
                     
                     const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
-                                         (clean(t.criado_por) && myName && (clean(t.criado_por) === myName || clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por))));
+                                         (clean(t.criado_por) && myName && (clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por)))) ||
+                                         (clean(t.unidade) && myName && clean(t.unidade).includes(myName)) ||
+                                         (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail)));
                                          
                     if (aba === "solicitacoes") return isSolicitante;
                     
