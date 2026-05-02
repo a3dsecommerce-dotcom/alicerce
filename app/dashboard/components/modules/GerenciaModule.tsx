@@ -7,7 +7,7 @@ import {
   ShieldCheck, AlertTriangle, FileText,
   Truck, HardHat, Search, Filter, 
   ArrowUpRight, ArrowDownRight, MoreVertical,
-  LogOut, LayoutDashboard, User
+  LogOut, LayoutDashboard, User, Map as MapIcon
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
