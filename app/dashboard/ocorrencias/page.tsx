@@ -300,7 +300,13 @@ export default function OcorrenciasPage() {
           onClick={() => setAba("demandas")}
           className={`pb-4 text-xs font-black uppercase tracking-widest transition-all ${aba === "demandas" ? "text-[var(--brand)] border-b-2 border-[var(--brand)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
         >
-          Minhas Demandas ({tickets.filter(t => t.setor_destino === (user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL") || t.responsavel_citado?.includes(user?.nome)).length})
+          Minhas Demandas ({tickets.filter(t => {
+            const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
+            const myName = clean(user?.nome || user?.name);
+            const isResponsavel = t.setor_destino === (user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL") || 
+                                 (t.responsavel_citado && myName && clean(t.responsavel_citado).includes(myName));
+            return isResponsavel;
+          }).length})
         </button>
         <button 
           onClick={() => setAba("solicitacoes")}
@@ -309,8 +315,10 @@ export default function OcorrenciasPage() {
           Minhas Solicitações ({tickets.filter(t => {
             const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
             const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
-            const isSolicitante = (phone(t.solicitante_tel) && phone(user?.telefone) && phone(t.solicitante_tel) === phone(user?.telefone)) || 
-                                 (clean(t.criado_por) === clean(user?.nome));
+            const myName = clean(user?.nome || user?.name);
+            const myPhone = phone(user?.telefone || user?.tel);
+            const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
+                                 (clean(t.criado_por) && myName && (clean(t.criado_por) === myName || clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por))));
             return isSolicitante;
           }).length})
         </button>
@@ -513,13 +521,15 @@ export default function OcorrenciasPage() {
                   .filter(t => {
                     const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
                     const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
+                    const myName = clean(user?.nome || user?.name);
+                    const myPhone = phone(user?.telefone || user?.tel);
                     
-                    const isSolicitante = (phone(t.solicitante_tel) && phone(user?.telefone) && phone(t.solicitante_tel) === phone(user?.telefone)) || 
-                                         (clean(t.criado_por) === clean(user?.nome));
+                    const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
+                                         (clean(t.criado_por) && myName && (clean(t.criado_por) === myName || clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por))));
                                          
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    const isResponsavel = t.setor_destino === meuSetor || clean(t.responsavel_citado).includes(clean(user?.nome));
+                    const isResponsavel = t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName));
 
                     if (aba === "solicitacoes") return isSolicitante;
                     
@@ -573,14 +583,17 @@ export default function OcorrenciasPage() {
                 {tickets.filter(t => {
                     const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
                     const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
+                    const myName = clean(user?.nome || user?.name);
+                    const myPhone = phone(user?.telefone || user?.tel);
                     
-                    const isSolicitante = (phone(t.solicitante_tel) && phone(user?.telefone) && phone(t.solicitante_tel) === phone(user?.telefone)) || 
-                                         (clean(t.criado_por) === clean(user?.nome));
+                    const isSolicitante = (phone(t.solicitante_tel) && myPhone && phone(t.solicitante_tel) === myPhone) || 
+                                         (clean(t.criado_por) && myName && (clean(t.criado_por) === myName || clean(t.criado_por).includes(myName) || myName.includes(clean(t.criado_por))));
+                                         
                     if (aba === "solicitacoes") return isSolicitante;
                     
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    return (t.setor_destino === meuSetor || clean(t.responsavel_citado).includes(clean(user?.nome))) && !isSolicitante;
+                    return (t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName))) && !isSolicitante;
                 }).length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-20 text-center">
