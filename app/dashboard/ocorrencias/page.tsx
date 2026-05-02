@@ -306,7 +306,13 @@ export default function OcorrenciasPage() {
           onClick={() => setAba("solicitacoes")}
           className={`pb-4 text-xs font-black uppercase tracking-widest transition-all ${aba === "solicitacoes" ? "text-[var(--brand)] border-b-2 border-[var(--brand)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
         >
-          Minhas Solicitações ({tickets.filter(t => (t.solicitante_tel && user?.telefone && t.solicitante_tel === user?.telefone) || (t.criado_por === user?.nome)).length})
+          Minhas Solicitações ({tickets.filter(t => {
+            const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
+            const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
+            const isSolicitante = (phone(t.solicitante_tel) && phone(user?.telefone) && phone(t.solicitante_tel) === phone(user?.telefone)) || 
+                                 (clean(t.criado_por) === clean(user?.nome));
+            return isSolicitante;
+          }).length})
         </button>
       </div>
 
@@ -505,13 +511,15 @@ export default function OcorrenciasPage() {
               <tbody className="divide-y divide-[var(--border)]">
                 {tickets
                   .filter(t => {
-                    const isSolicitante = (t.solicitante_tel && user?.telefone && t.solicitante_tel === user?.telefone) || 
-                                         (t.criado_por === user?.nome);
-                    const userName = user?.nome?.trim().toLowerCase();
+                    const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
+                    const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
                     
+                    const isSolicitante = (phone(t.solicitante_tel) && phone(user?.telefone) && phone(t.solicitante_tel) === phone(user?.telefone)) || 
+                                         (clean(t.criado_por) === clean(user?.nome));
+                                         
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    const isResponsavel = t.setor_destino === meuSetor || t.responsavel_citado?.toLowerCase().includes(userName || "");
+                    const isResponsavel = t.setor_destino === meuSetor || clean(t.responsavel_citado).includes(clean(user?.nome));
 
                     if (aba === "solicitacoes") return isSolicitante;
                     
@@ -563,14 +571,16 @@ export default function OcorrenciasPage() {
                   </tr>
                 ))}
                 {tickets.filter(t => {
-                    const isSolicitante = (t.solicitante_tel && user?.telefone && t.solicitante_tel === user?.telefone) || 
-                                         (t.criado_por === user?.nome);
+                    const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
+                    const phone = (s: any) => s?.toString().replace(/\D/g, '') || "";
+                    
+                    const isSolicitante = (phone(t.solicitante_tel) && phone(user?.telefone) && phone(t.solicitante_tel) === phone(user?.telefone)) || 
+                                         (clean(t.criado_por) === clean(user?.nome));
                     if (aba === "solicitacoes") return isSolicitante;
                     
-                    const userName = user?.nome?.trim().toLowerCase();
                     const role = user?.role || "";
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    return (t.setor_destino === meuSetor || t.responsavel_citado?.toLowerCase().includes(userName || "")) && !isSolicitante;
+                    return (t.setor_destino === meuSetor || clean(t.responsavel_citado).includes(clean(user?.nome))) && !isSolicitante;
                 }).length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-20 text-center">
