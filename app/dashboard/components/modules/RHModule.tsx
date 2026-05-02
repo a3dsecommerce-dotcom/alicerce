@@ -209,7 +209,8 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                    </div>
                 </div>
 
-                <div className="flex-1 overflow-auto custom-                   {dpAba === "ativos" || dpAba === "arquivo" ? (
+                <div className="flex-1 overflow-auto custom-scrollbar p-8">
+                   {dpAba === "ativos" || dpAba === "arquivo" ? (
                      <table className="w-full text-left">
                         <thead className="border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                            <tr>
