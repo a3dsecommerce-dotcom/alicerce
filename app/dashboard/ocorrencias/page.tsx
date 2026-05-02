@@ -20,7 +20,17 @@ const priorStyles: Record<string, { bg: string, text: string, border: string }> 
   BAIXA: { bg: "rgba(16, 185, 129, 0.1)", text: "#10B981", border: "rgba(16, 185, 129, 0.2)" }, 
   NORMAL: { bg: "rgba(148, 163, 184, 0.1)", text: "#64748B", border: "rgba(148, 163, 184, 0.2)" } 
 };
-
+export default function OcorrenciasPage() {
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [unidades, setUnidades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [vista, setVista] = useState<"lista">("lista");
+  const [modalNova, setModalNova] = useState(false);
+  const [modalResolucao, setModalResolucao] = useState(false);
+  const [ticketSelecionado, setTicketSelecionado] = useState<any>(null);
+  const [solucaoTexto, setSolucaoTexto] = useState("");
+  
   const [user, setUser] = useState<any>(null);
   const [novaOcorrencia, setNovaOcorrencia] = useState({
     assunto: "",
@@ -39,6 +49,8 @@ const priorStyles: Record<string, { bg: string, text: string, border: string }> 
     { id: "ENCARREGADOS", label: "Encarregado da Rota" },
   ];
 
+  const loadData = async () => {
+    setLoading(true);
     // Tickets
     let query = supabase.from('tickets_sla').select('*');
     
