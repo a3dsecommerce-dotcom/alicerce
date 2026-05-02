@@ -61,17 +61,17 @@ export default function OcorrenciasPage() {
       setUser(u);
       
       const role = u.role || "";
-      if (role.startsWith("RH")) {
-        query = query.eq('setor_destino', 'RH');
-      } else if (role === "ALMOXARIFE") {
-        query = query.eq('setor_destino', 'ALMOXARIFADO');
-      } else if (role === "TI") {
-        query = query.eq('setor_destino', 'TI');
-      } else if (role === "FINANCEIRO") {
-        query = query.eq('setor_destino', 'FINANCEIRO');
-      } else if (role === "ENCARREGADO" || role === "DIRETOR") {
-        // Encarregados vêem o operacional ou onde foram citados
-        query = query.or(`setor_destino.eq.OPERACIONAL,responsavel_citado.ilike.%${u.nome}%`);
+      const isSetorial = ["RH", "ALMOXARIFE", "TI", "FINANCEIRO", "ENCARREGADO", "DIRETOR"].some(r => role.startsWith(r));
+      
+      if (isSetorial && role !== "ADMIN" && role !== "DIRETORIA") {
+        let setor = "OPERACIONAL";
+        if (role.startsWith("RH")) setor = "RH";
+        else if (role === "ALMOXARIFE") setor = "ALMOXARIFADO";
+        else if (role === "TI") setor = "TI";
+        else if (role === "FINANCEIRO") setor = "FINANCEIRO";
+        
+        // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei OU onde fui citado
+        query = query.or(`setor_destino.eq.${setor},criado_por.eq.${u.nome},responsavel_citado.ilike.%${u.nome}%`);
       }
       // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
     }
