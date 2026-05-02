@@ -350,7 +350,8 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                              </div>
                           )}
                        </div>
-                    ) : <div className="flex flex-col items-center justify-center p-20 opacity-50">
+                    ) : (
+                       <div className="flex flex-col items-center justify-center p-20 opacity-50">
                          <FileText size={48} className="mb-4" />
                          <p className="text-sm font-black uppercase tracking-widest">Módulo em Sincronização...</p>
                       </div>
