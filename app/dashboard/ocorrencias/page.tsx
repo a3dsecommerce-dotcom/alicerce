@@ -71,7 +71,7 @@ export default function OcorrenciasPage() {
         else if (role === "FINANCEIRO") setor = "FINANCEIRO";
         
         // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei OU onde fui citado
-        query = query.or(`setor_destino.eq.${setor},criado_por.eq.${u.nome},responsavel_citado.ilike.%${u.nome}%`);
+        query = query.or(`setor_destino.eq.${setor},criado_por.eq."${u.nome}",responsavel_citado.ilike."%${u.nome}%"`);
       }
       // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
     }
