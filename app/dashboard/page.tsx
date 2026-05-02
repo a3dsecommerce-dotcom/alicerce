@@ -16,6 +16,7 @@ import ComprasModule from "./components/modules/ComprasModule";
 import ComunicacaoModule from "./components/modules/ComunicacaoModule";
 import AlmoxarifadoModule from "./components/modules/AlmoxarifadoModule";
 import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
+import EncarregadoModule from "./components/modules/EncarregadoModule";
 
 export default function UnifiedCockpitPage() {
   return (
@@ -57,12 +58,12 @@ function CockpitContent() {
 
   // Definição dos Módulos do Sistema e suas permissões (RBAC)
   const modules = [
-    { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE"] },
+    { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "ENCARREGADO"] },
     { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
     { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["COMPRADOR"] },
     { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
     { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
-    { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR"] },
+    { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
   ];
 
   // Regra de Negócio: nivel_acesso >= 3 = Gestor/Admin → vê o Painel Consolidado
@@ -117,7 +118,11 @@ function CockpitContent() {
       <main className="flex-1 overflow-hidden min-h-[600px]">
         {user ? (
           <>
-            {(activeModule === "COMMAND" || !activeModule) && <GerenciaModule user={user} initialTab={tabParam as any} />}
+            {(activeModule === "COMMAND" || !activeModule) && (
+              safeRole === 'ENCARREGADO' 
+                ? <EncarregadoModule user={user} />
+                : <GerenciaModule user={user} initialTab={tabParam as any} />
+            )}
             {activeModule === "RH" && <RHModule user={user} />}
             {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
             {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
