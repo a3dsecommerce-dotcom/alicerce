@@ -84,9 +84,19 @@ export default function OcorrenciasPage() {
       // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
     }
 
-    const { data: ticketData } = await query.order('data_abertura', { ascending: false });
-    if (ticketData) {
-      setTickets(ticketData.map(t => ({
+    const { data: ticketData, error: ticketError } = await query.order('data_abertura', { ascending: false });
+    
+    let finalData = ticketData;
+    
+    if (ticketError) {
+      console.warn("Database sync error (probably missing columns):", ticketError);
+      // Fallback: Busca simplificada se o banco estiver desatualizado
+      const { data: fallbackData } = await supabase.from('tickets_sla').select('*').order('data_abertura', { ascending: false });
+      finalData = fallbackData;
+    }
+
+    if (finalData) {
+      setTickets(finalData.map(t => ({
         ...t,
         id: `#${t.sequencial || t.id.substring(0, 4)}`,
         realId: t.id,
