@@ -59,7 +59,8 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
       const { data: talentos } = await supabase.from('candidatos').select('*').order('created_at', { ascending: false });
       if (talentos) setCandidatos(talentos);
 
-
+      const { data: vagasDb } = await supabase.from('vagas').select('*').order('created_at', { ascending: false });
+      if (vagasDb) setVagas(vagasDb);
 
       setLoading(false);
     }
@@ -208,8 +209,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                    </div>
                 </div>
 
-                <div className="flex-1 overflow-auto custom-scrollbar p-8">
-                   {dpAba === "ativos" || dpAba === "arquivo" ? (
+                <div className="flex-1 overflow-auto custom-                   {dpAba === "ativos" || dpAba === "arquivo" ? (
                      <table className="w-full text-left">
                         <thead className="border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                            <tr>
@@ -241,7 +241,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                                   <div className="flex flex-col gap-1 items-center">
                                      <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${c.status === 'ATIVO' ? 'bg-green-100 text-green-700' : c.status === 'AFASTADO' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>{c.status}</span>
                                      {dpAba === 'ativos' && (
-                                        <select className="text-[8px] font-black border-none bg-transparent text-[var(--text-muted)] focus:ring-0 cursor-pointer" value={c.status} onChange={(e) => handleUpdateStatus(c.id, e.target.value)}>
+                                        <select className="text-[8px] font-black border-none bg-transparent text-[var(--text-muted)] focus:ring-0 cursor-pointer" value={c.status} onClick={(e) => e.stopPropagation()} onChange={(e) => handleUpdateStatus(c.id, e.target.value)}>
                                            <option value="ATIVO">Ativar</option>
                                            <option value="AFASTADO">Afastar</option>
                                            <option value="INATIVO">Inativar</option>
@@ -253,7 +253,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                                 <td className="p-6 text-right">
                                    <div className="flex justify-end gap-3">
                                       {dpAba === 'arquivo' && (
-                                         <button onClick={() => handleGerarPDFHistorico(c)} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all flex items-center gap-2 text-[10px] font-black uppercase"><FileText size={14} /> PDF</button>
+                                         <button onClick={(e) => { e.stopPropagation(); handleGerarPDFHistorico(c); }} className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all flex items-center gap-2 text-[10px] font-black uppercase"><FileText size={14} /> PDF</button>
                                       )}
                                       <button className="p-3 bg-[var(--bg-base)] text-[var(--text-muted)] rounded-xl group-hover:text-[var(--brand)] group-hover:bg-white transition-all"><ChevronRight size={18} /></button>
                                    </div>
@@ -262,11 +262,76 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                            ))}
                         </tbody>
                      </table>
+                   ) : dpAba === "talentos" ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
+                         {candidatos.map(can => (
+                            <div key={can.id} className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)] hover:border-[var(--brand)]/30 transition-all group">
+                               <div className="flex justify-between items-start mb-4">
+                                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[var(--brand)] font-black shadow-sm">{can.nome.substring(0,2).toUpperCase()}</div>
+                                  <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${can.status_candidato === 'NOVO' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>{can.status_candidato}</span>
+                               </div>
+                               <h4 className="text-sm font-black text-[var(--text-primary)] mb-1">{can.nome}</h4>
+                               <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-widest mb-4">{can.cargo_pretendido || can.cargo}</p>
+                               
+                               <div className="space-y-2 mb-6">
+                                  <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] font-bold"><MapPin size={12}/> {can.cidade || 'Manaus'} - {can.bairro || 'N/A'}</div>
+                                  <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] font-bold"><Clock size={12}/> Inscrito em {new Date(can.created_at).toLocaleDateString()}</div>
+                               </div>
+
+                               <div className="flex gap-2">
+                                  <button onClick={() => window.open(can.link_curriculo, '_blank')} className="flex-1 h-10 bg-white text-[var(--text-primary)] rounded-xl text-[9px] font-black uppercase border border-[var(--border)] hover:bg-slate-50 transition-all flex items-center justify-center gap-2"><FileText size={14}/> Currículo</button>
+                                  <button onClick={() => {
+                                     // Lógica de Admissão
+                                     if(confirm(`Deseja iniciar o processo de admissão para ${can.nome}?`)) {
+                                        // Aqui abriria um modal de contratação
+                                        alert("Iniciando contratação...");
+                                     }
+                                  }} className="h-10 px-4 bg-[var(--brand)] text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-[var(--brand)]/20 hover:scale-[1.02] transition-all"><UserPlus size={14}/></button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   ) : dpAba === "vagas" ? (
+                      <div className="p-8 space-y-6">
+                         <div className="flex justify-between items-center bg-[var(--bg-base)] p-6 rounded-[2rem] border border-[var(--border)]">
+                            <div>
+                               <h3 className="text-sm font-black italic">Gestão de Oportunidades</h3>
+                               <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Controle dinâmico de postos de trabalho em aberto</p>
+                            </div>
+                            <button className="h-12 px-8 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-[var(--brand)]/30"><Plus size={18}/> Nova Vaga</button>
+                         </div>
+
+                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {vagas.map(v => (
+                               <div key={v.id} className="bg-white p-6 rounded-[2rem] border border-[var(--border)] shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
+                                  <div className="absolute top-0 right-0 p-4">
+                                     <div className={`w-3 h-3 rounded-full ${v.status === 'ABERTA' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                                  </div>
+                                  <p className="text-[9px] font-black text-[var(--brand)] uppercase tracking-widest mb-1">{v.unidade}</p>
+                                  <h4 className="text-base font-black text-[var(--text-primary)] mb-4">{v.cargo}</h4>
+                                  
+                                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
+                                     <div className="text-center">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase">Vagas</p>
+                                        <p className="text-lg font-black text-slate-700">{v.quantidade}</p>
+                                     </div>
+                                     <div className="h-8 w-[1px] bg-slate-200" />
+                                     <div className="text-center">
+                                        <p className="text-[8px] font-black text-slate-400 uppercase">Status</p>
+                                        <p className="text-[10px] font-black text-green-600">{v.status}</p>
+                                     </div>
+                                  </div>
+
+                                  <button className="w-full h-10 bg-[var(--bg-base)] text-[var(--text-muted)] rounded-xl text-[9px] font-black uppercase hover:text-[var(--brand)] transition-all">Ver Detalhes</button>
+                               </div>
+                            ))}
+                         </div>
+                      </div>
                    ) : (
-                     <div className="flex flex-col items-center justify-center p-20 opacity-50">
-                        <FileText size={48} className="mb-4" />
-                        <p className="text-sm font-black uppercase tracking-widest">Módulo em Sincronização...</p>
-                     </div>
+                      <div className="flex flex-col items-center justify-center p-20 opacity-50">
+                         <FileText size={48} className="mb-4" />
+                         <p className="text-sm font-black uppercase tracking-widest">Módulo em Sincronização...</p>
+                      </div>
                    )}
                 </div>
              </div>
