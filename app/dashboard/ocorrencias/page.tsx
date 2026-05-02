@@ -272,8 +272,9 @@ export default function OcorrenciasPage() {
           Minhas Demandas ({tickets.filter(t => {
             const clean = (s: any) => s?.toString().trim().toLowerCase() || "";
             const myName = clean(user?.nome || user?.name);
-            const isResponsavel = t.setor_destino === (user?.role?.startsWith("RH") ? "RH" : user?.role === "ALMOXARIFE" ? "ALMOXARIFADO" : user?.role === "TI" ? "TI" : user?.role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL") || 
-                                 (t.responsavel_citado && myName && clean(t.responsavel_citado).includes(myName));
+            const role = user?.role || "";
+            const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
+            const isResponsavel = t.setor_destino === meuSetor || (t.responsavel_citado && myName && clean(t.responsavel_citado).includes(myName));
             return isResponsavel;
           }).length})
         </button>
@@ -512,8 +513,7 @@ export default function OcorrenciasPage() {
 
                     if (aba === "solicitacoes") return isSolicitante;
                     
-                    // Demandas: Sou o responsável MAS não fui eu que criei
-                    return isResponsavel && !isSolicitante;
+                    return isResponsavel;
                   })
                   .map(t => (
                   <tr 
@@ -576,7 +576,7 @@ export default function OcorrenciasPage() {
                     if (aba === "solicitacoes") return isSolicitante;
                     
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    return (t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName))) && !isSolicitante;
+                    return (t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName)));
                 }).length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-20 text-center">
