@@ -8,7 +8,7 @@ import {
   Truck, HardHat, Search, Filter, 
   ArrowUpRight, ArrowDownRight, MoreVertical,
   LogOut, LayoutDashboard, User, Map as MapIcon,
-  Settings, UserPlus
+  Settings, UserPlus, MapPin
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -63,10 +63,13 @@ const almoxarifadoValores = [
 
 const COLORS = ['#00d2ff', '#00ff87', '#ff9d00', '#ff007a', '#a855f7'];
 
-export default function GerenciaModule({ user: propUser, initialTab }: { user?: any, initialTab?: "OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA" }) {
-  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA">(initialTab || "OVERVIEW");
+export default function GerenciaModule({ user: propUser, initialTab }: { user?: any, initialTab?: "OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA" | "ROTAS" }) {
+  const [activeTab, setActiveTab] = useState<"OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA" | "ROTAS">(initialTab || "OVERVIEW");
   const [user, setUser] = useState<any>(propUser || null);
   const [counts, setCounts] = useState({ colabs: 0, ativos: 0, afastados: 0, ocorrenciasMes: 0 });
+  const [rotas, setRotas] = useState<any[]>([]);
+  const [encarregados, setEncarregados] = useState<any[]>([]);
+  const [unidades, setUnidades] = useState<string[]>([]);
 
   useEffect(() => {
     if (!propUser) {
@@ -74,7 +77,49 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
       if (saved) setUser(JSON.parse(saved));
     }
     fetchRealCounts();
+    fetchRotasData();
   }, [propUser]);
+
+  const fetchRotasData = async () => {
+    // 1. Busca Encarregados
+    const { data: encs } = await supabase.from('usuarios').select('id, nome').eq('role', 'ENCARREGADO');
+    setEncarregados(encs || []);
+
+    // 2. Busca Unidades Únicas
+    const { data: users } = await supabase.from('usuarios').select('unidade_alocacao');
+    const uniqueUnits = Array.from(new Set(users?.map(u => u.unidade_alocacao).filter(Boolean)));
+    setUnidades(uniqueUnits as string[]);
+
+    // 3. Busca Mapeamento de Rotas
+    const { data: routeData } = await supabase.from('gestao_rotas').select('*');
+    
+    // Cruzar com contagem de colabs
+    const finalRotas = await Promise.all((uniqueUnits as string[]).map(async (unit) => {
+        const mapping = routeData?.find(r => r.unidade_nome === unit);
+        const { count } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('unidade_alocacao', unit);
+        return {
+            unidade: unit,
+            encarregadoId: mapping?.encarregado_id || "",
+            encarregadoNome: mapping?.encarregado_nome || "NÃO ATRIBUÍDO",
+            totalColabs: count || 0
+        };
+    }));
+    setRotas(finalRotas);
+  };
+
+  const handleSaveRota = async (unidade: string, encId: string) => {
+    const enc = encarregados.find(e => e.id === encId);
+    if (!enc) return;
+
+    const { error } = await supabase.from('gestao_rotas').upsert({
+        unidade_nome: unidade,
+        encarregado_id: encId,
+        encarregado_nome: enc.nome,
+        updated_at: new Date().toISOString()
+    }, { onConflict: 'unidade_nome' });
+
+    if (!error) fetchRotasData();
+  };
 
   useEffect(() => {
     if (initialTab) {
@@ -431,6 +476,7 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
            { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package },
            { id: "RH", label: "Recursos Humanos", icon: Users },
            { id: "AUDITORIA", label: "Auditoria", icon: ShieldAlert },
+           { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
          ].map(tab => (
            <button 
              key={tab.id}
@@ -450,8 +496,74 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
          {activeTab === "ALMOXARIFADO" && renderAlmoxarifado()}
          {activeTab === "RH" && renderRH()}
          {activeTab === "AUDITORIA" && renderAuditoria()}
+         {activeTab === "ROTAS" && renderRotas()}
       </div>
 
+    </div>
+  );
+
+  const renderRotas = () => (
+    <div className="flex flex-col gap-8 animate-fade-in">
+       <div className="card flex flex-col">
+          <div className="flex justify-between items-center mb-8">
+             <div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Gestão Estratégica de Rotas</h3>
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Vínculo de Unidades, Encarregados e Contingente</p>
+             </div>
+             <button onClick={fetchRotasData} className="btn-ghost !h-10 text-[9px] font-black uppercase"><Clock size={14} /> Atualizar Dados</button>
+          </div>
+
+          <div className="overflow-x-auto">
+             <table className="w-full text-left">
+                <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
+                   <tr>
+                      <th className="p-6">Unidade Operacional</th>
+                      <th className="p-6">Encarregado Responsável</th>
+                      <th className="p-6 text-center">Colaboradores Alocados</th>
+                      <th className="p-6 text-right">Ações</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                   {rotas.map((r, i) => (
+                     <tr key={i} className="hover:bg-white/5 transition-colors group">
+                        <td className="p-6">
+                           <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+                                 <Building2 size={18} />
+                              </div>
+                              <div>
+                                 <div className="text-sm font-black text-[var(--text-primary)] uppercase tracking-tighter">{r.unidade}</div>
+                                 <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Unidade Atendida</div>
+                              </div>
+                           </div>
+                        </td>
+                        <td className="p-6">
+                           <select 
+                              className="input-field !h-10 !py-0 !text-xs font-black uppercase tracking-tighter max-w-[250px]"
+                              value={r.encarregadoId}
+                              onChange={(e) => handleSaveRota(r.unidade, e.target.value)}
+                           >
+                              <option value="">SELECIONAR ENCARREGADO</option>
+                              {encarregados.map(e => (
+                                 <option key={e.id} value={e.id}>{e.nome}</option>
+                              ))}
+                           </select>
+                        </td>
+                        <td className="p-6 text-center">
+                           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--neon-blue)]/10 text-[var(--neon-blue)] border border-[var(--neon-blue)]/20">
+                              <Users size={12} />
+                              <span className="text-xs font-black">{r.totalColabs}</span>
+                           </div>
+                        </td>
+                        <td className="p-6 text-right">
+                           <span className="text-[10px] font-black uppercase text-[var(--text-muted)] italic">Vínculo Automático Ativo</span>
+                        </td>
+                     </tr>
+                   ))}
+                </tbody>
+             </table>
+          </div>
+       </div>
     </div>
   );
 }

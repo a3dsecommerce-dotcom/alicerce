@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, Truck, Zap, AlertTriangle, Clock, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, Truck, Zap, AlertTriangle, Clock, Settings, MapPin } from 'lucide-react';
 
 export type NavItem = {
   href?: string;
@@ -39,6 +39,12 @@ export const ALL_NAV: NavItem[] = [
     icon: ShieldAlert,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
     href: '/dashboard?module=COMMAND&tab=AUDITORIA'
+  },
+  {
+    label: 'Gestão de Rotas',
+    icon: MapPin,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
+    href: '/dashboard?module=COMMAND&tab=ROTAS'
   },
   {
     label: 'Central de Ocorrências',
