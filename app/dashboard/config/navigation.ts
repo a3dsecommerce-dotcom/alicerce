@@ -26,13 +26,13 @@ export const ALL_NAV: NavItem[] = [
     label: 'Almoxarifado',
     icon: Package,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ALMOXARIFE'],
-    href: '/dashboard?module=COMMAND&tab=ALMOXARIFADO'
+    href: '/dashboard?module=ALMOXARIFADO'
   },
   {
     label: 'Recursos Humanos',
     icon: Users,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP'],
-    href: '/dashboard?module=COMMAND&tab=RH'
+    href: '/dashboard?module=RH'
   },
   {
     label: 'Auditoria & Seg.',

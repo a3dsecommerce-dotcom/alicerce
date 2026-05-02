@@ -82,14 +82,16 @@ function CockpitContent() {
 
   // Sincroniza o módulo ativo caso venha um parâmetro via URL ou baseando-se nas permissões
   useEffect(() => {
-    if (modParam) {
+    // 1. Prioridade: Parâmetro da URL (Validado contra permissões)
+    if (modParam && filteredModules.some(m => m.id === modParam)) {
       setActiveModule(modParam);
-    } else if (filteredModules.length > 0) {
+    } 
+    // 2. Se o parâmetro for COMMAND mas não tem acesso (ou se não houver parâmetro)
+    else if (filteredModules.length > 0) {
       if (!activeModule) {
-        // Se não houver módulo ativo, define o primeiro disponível
         setActiveModule(filteredModules[0].id);
-      } else if (activeModule === "COMMAND" && !filteredModules.some(m => m.id === "COMMAND")) {
-        // Se estiver no COMMAND mas não tiver acesso, muda para o primeiro disponível
+      } else if (!filteredModules.some(m => m.id === activeModule)) {
+        // Se o módulo ativo atual não for permitido para este usuário, volta para o primeiro disponível
         setActiveModule(filteredModules[0].id);
       }
     }
