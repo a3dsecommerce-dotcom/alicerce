@@ -22,7 +22,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
   
   // ESTADOS DP
   const [colaboradores, setColaboradores] = useState<any[]>([]);
-  const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "vagas" | "arquivo">("ativos");
+  const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "arquivo">("ativos");
   const [modalAfastamento, setModalAfastamento] = useState<any>(null);
   const [afastamentoData, setAfastamentoData] = useState({ motivo: "", tempo: "" });
   const [modalOcorrenciaGeral, setModalOcorrenciaGeral] = useState(false);
@@ -31,10 +31,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
   const [filtro, setFiltro] = useState("TODOS");
   const [selecionado, setSelecionado] = useState<any>(null);
   const [candidatos, setCandidatos] = useState<any[]>([]);
-  const [vagas, setVagas] = useState<any[]>([
-    { id: '1', unidade: 'SEMED', cargo: 'ASG', quantidade: 5, status: 'ABERTA' },
-    { id: '2', unidade: 'SEMSA', cargo: 'Porteiro', quantidade: 2, status: 'ABERTA' }
-  ]);
+  const [vagas, setVagas] = useState<any[]>([]);
 
 
 
@@ -186,7 +183,6 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                     {[
                       { id: "ativos", label: "Colaboradores Ativos", count: colaboradores.filter(c => c.status !== 'DESLIGADO').length },
                       { id: "talentos", label: "Banco de Talentos", count: candidatos.length },
-                      { id: "vagas", label: "Quadro de Vagas", count: 5 },
                       { id: "arquivo", label: "Arquivo Morto", count: colaboradores.filter(c => c.status === 'DESLIGADO').length }
                     ].map((t: any) => (
                       <button 
@@ -295,42 +291,6 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                                </div>
                             </div>
                          ))}
-                      </div>
-                   ) : dpAba === "vagas" ? (
-                      <div className="p-8 space-y-6">
-                         <div className="flex justify-between items-center bg-[var(--bg-base)] p-6 rounded-[2rem] border border-[var(--border)]">
-                            <div>
-                               <h3 className="text-sm font-black italic">Gestão de Oportunidades</h3>
-                               <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Controle dinâmico de postos de trabalho em aberto</p>
-                            </div>
-                            <button className="h-12 px-8 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-[var(--brand)]/30"><Plus size={18}/> Nova Vaga</button>
-                         </div>
-
-                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {vagas.map(v => (
-                               <div key={v.id} className="bg-white p-6 rounded-[2rem] border border-[var(--border)] shadow-sm hover:shadow-xl transition-all relative overflow-hidden group">
-                                  <div className="absolute top-0 right-0 p-4">
-                                     <div className={`w-3 h-3 rounded-full ${v.status === 'ABERTA' ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                                  </div>
-                                  <p className="text-[9px] font-black text-[var(--brand)] uppercase tracking-widest mb-1">{v.unidade}</p>
-                                  <h4 className="text-base font-black text-[var(--text-primary)] mb-4">{v.cargo}</h4>
-                                  
-                                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mb-6">
-                                     <div className="text-center">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase">Vagas</p>
-                                        <p className="text-lg font-black text-slate-700">{v.quantidade}</p>
-                                     </div>
-                                     <div className="h-8 w-[1px] bg-slate-200" />
-                                     <div className="text-center">
-                                        <p className="text-[8px] font-black text-slate-400 uppercase">Status</p>
-                                        <p className="text-[10px] font-black text-green-600">{v.status}</p>
-                                     </div>
-                                  </div>
-
-                                  <button className="w-full h-10 bg-[var(--bg-base)] text-[var(--text-muted)] rounded-xl text-[9px] font-black uppercase hover:text-[var(--brand)] transition-all">Ver Detalhes</button>
-                               </div>
-                            ))}
-                         </div>
                       </div>
                    ) : (
                       <div className="flex flex-col items-center justify-center p-20 opacity-50">
