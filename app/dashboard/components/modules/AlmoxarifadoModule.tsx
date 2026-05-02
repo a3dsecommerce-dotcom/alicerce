@@ -379,6 +379,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
       prazo_estipulado_dias: ocorrenciaData.dias_solucao,
       unidade: reqEditando?.unidade_destino,
       criado_por: user.name || 'Almoxarifado',
+      solicitante_tel: user.telefone || 'SISTEMA',
       status: 'PENDENTE'
     }]);
 

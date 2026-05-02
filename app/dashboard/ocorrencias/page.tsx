@@ -78,8 +78,16 @@ export default function OcorrenciasPage() {
         else if (role === "TI") setor = "TI";
         else if (role === "FINANCEIRO") setor = "FINANCEIRO";
         
-        // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei (pelo meu ID/Tel) OU onde fui citado
-        query = query.or(`setor_destino.eq.${setor},solicitante_tel.eq.${u.telefone},responsavel_citado.ilike."%${u.nome}%"`);
+        // Regra de Ouro: Vejo o que é do meu setor OU o que EU criei (pelo meu ID/Tel ou Nome) OU onde fui citado
+        const filterOr = [
+          `setor_destino.eq.${setor}`,
+          `responsavel_citado.ilike."%${u.nome}%"`
+        ];
+        
+        if (u.telefone) filterOr.push(`solicitante_tel.eq.${u.telefone}`);
+        if (u.nome) filterOr.push(`criado_por.eq.${u.nome}`);
+        
+        query = query.or(filterOr.join(','));
       }
       // ADMIN e DIRETORIA vêem tudo (sem filtro adicional)
     }
@@ -298,7 +306,7 @@ export default function OcorrenciasPage() {
           onClick={() => setAba("solicitacoes")}
           className={`pb-4 text-xs font-black uppercase tracking-widest transition-all ${aba === "solicitacoes" ? "text-[var(--brand)] border-b-2 border-[var(--brand)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
         >
-          Minhas Solicitações ({tickets.filter(t => t.criado_por === user?.nome).length})
+          Minhas Solicitações ({tickets.filter(t => (t.solicitante_tel && user?.telefone && t.solicitante_tel === user?.telefone) || (t.criado_por === user?.nome)).length})
         </button>
       </div>
 
@@ -497,7 +505,8 @@ export default function OcorrenciasPage() {
               <tbody className="divide-y divide-[var(--border)]">
                 {tickets
                   .filter(t => {
-                    const isSolicitante = t.solicitante_tel === user?.telefone;
+                    const isSolicitante = (t.solicitante_tel && user?.telefone && t.solicitante_tel === user?.telefone) || 
+                                         (t.criado_por === user?.nome);
                     const userName = user?.nome?.trim().toLowerCase();
                     
                     const role = user?.role || "";
@@ -554,7 +563,8 @@ export default function OcorrenciasPage() {
                   </tr>
                 ))}
                 {tickets.filter(t => {
-                    const isSolicitante = t.solicitante_tel === user?.telefone;
+                    const isSolicitante = (t.solicitante_tel && user?.telefone && t.solicitante_tel === user?.telefone) || 
+                                         (t.criado_por === user?.nome);
                     if (aba === "solicitacoes") return isSolicitante;
                     
                     const userName = user?.nome?.trim().toLowerCase();
