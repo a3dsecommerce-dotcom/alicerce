@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, Users, ShoppingBag, Megaphone, 
-  Package, ShieldCheck, Activity, Bell, Settings
+  Package, ShieldCheck, Activity, Bell, Settings,
+  Loader
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
