@@ -22,7 +22,9 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
   
   // ESTADOS DP
   const [colaboradores, setColaboradores] = useState<any[]>([]);
-  const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "arquivo">("ativos");
+  const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
+  const [modalAdmissao, setModalAdmissao] = useState<any>(null);
+  const [admissaoForm, setAdmissaoForm] = useState({ unidade: "", cargo: "", data: new Date().toISOString().split('T')[0] });
   const [modalAfastamento, setModalAfastamento] = useState<any>(null);
   const [afastamentoData, setAfastamentoData] = useState({ motivo: "", tempo: "" });
   const [modalOcorrenciaGeral, setModalOcorrenciaGeral] = useState(false);
@@ -148,6 +150,40 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
     setLoading(false);
   };
 
+  const handleAdmissaoFinal = async () => {
+    if (!admissaoForm.unidade || !admissaoForm.cargo) {
+      alert("Preencha todos os campos para admissão.");
+      return;
+    }
+
+    // 1. Criar Usuário
+    const { error: userError } = await supabase.from('usuarios').insert({
+      nome: modalAdmissao.nome,
+      email: modalAdmissao.email || `${modalAdmissao.nome.toLowerCase().replace(/\s+/g, '.')}@alicerce.com`,
+      role: 'COLABORADOR',
+      nivel: 1,
+      status: 'ATIVO',
+      unidade_alocacao: admissaoForm.unidade,
+      cargo: admissaoForm.cargo,
+      data_admissao: admissaoForm.data,
+      cpf: modalAdmissao.cpf || "000.000.000-00",
+      telefone: modalAdmissao.telefone || modalAdmissao.whatsapp || "---"
+    });
+
+    if (userError) {
+      alert("Erro ao criar colaborador: " + userError.message);
+      return;
+    }
+
+    // 2. Atualizar Candidato
+    await supabase.from('candidatos').update({ status_candidato: 'CONTRATADO' }).eq('id', modalAdmissao.id);
+
+    setModalAdmissao(null);
+    loadData();
+    setDpAba("ativos");
+    alert(`${modalAdmissao.nome} admitido com sucesso!`);
+  };
+
   return (
     <div className="flex flex-col gap-10 animate-fade-in h-full px-4 lg:px-20 py-10">
       
@@ -182,7 +218,8 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                  <div className="flex gap-6 bg-[var(--bg-base)]/30 p-1.5 rounded-2xl w-fit border border-[var(--border)]/50">
                     {[
                       { id: "ativos", label: "Colaboradores Ativos", count: colaboradores.filter(c => c.status !== 'DESLIGADO').length },
-                      { id: "talentos", label: "Banco de Talentos", count: candidatos.length },
+                      { id: "talentos", label: "Banco de Talentos", count: candidatos.filter(c => c.status_candidato !== 'CONTRATADO').length },
+                      { id: "contratacao", label: "Admissão", count: candidatos.filter(c => c.status_candidato === 'CONTRATADO').length },
                       { id: "arquivo", label: "Arquivo Morto", count: colaboradores.filter(c => c.status === 'DESLIGADO').length }
                     ].map((t: any) => (
                       <button 
@@ -280,20 +317,40 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                                </div>
 
                                <div className="flex gap-2">
-                                  <button onClick={() => window.open(can.link_curriculo, '_blank')} className="flex-1 h-10 bg-white text-[var(--text-primary)] rounded-xl text-[9px] font-black uppercase border border-[var(--border)] hover:bg-slate-50 transition-all flex items-center justify-center gap-2"><FileText size={14}/> Currículo</button>
+                                  {can.link_curriculo ? (
+                                    <button onClick={() => window.open(can.link_curriculo, '_blank')} className="flex-1 h-10 bg-white text-[var(--text-primary)] rounded-xl text-[9px] font-black uppercase border border-[var(--border)] hover:bg-slate-50 transition-all flex items-center justify-center gap-2"><FileText size={14}/> Currículo</button>
+                                  ) : (
+                                    <div className="flex-1 h-10 flex items-center justify-center text-[8px] font-black uppercase text-slate-300 border border-dashed border-slate-200 rounded-xl">Sem CV Anexo</div>
+                                  )}
                                   <button onClick={() => {
-                                     // Lógica de Admissão
-                                     if(confirm(`Deseja iniciar o processo de admissão para ${can.nome}?`)) {
-                                        // Aqui abriria um modal de contratação
-                                        alert("Iniciando contratação...");
-                                     }
+                                     setAdmissaoForm({ ...admissaoForm, cargo: can.cargo_pretendido || can.cargo || "" });
+                                     setModalAdmissao(can);
                                   }} className="h-10 px-4 bg-[var(--brand)] text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-[var(--brand)]/20 hover:scale-[1.02] transition-all"><UserPlus size={14}/></button>
                                </div>
                             </div>
                          ))}
                       </div>
-                   ) : (
-                      <div className="flex flex-col items-center justify-center p-20 opacity-50">
+                   ) : dpAba === "contratacao" ? (
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8">
+                          {candidatos.filter(c => c.status_candidato === 'CONTRATADO').map(can => (
+                             <div key={can.id} className="bg-green-50/30 p-6 rounded-3xl border border-green-100 hover:border-green-200 transition-all group">
+                                <div className="flex justify-between items-start mb-4">
+                                   <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-green-600 font-black shadow-sm"><CheckCircle size={24}/></div>
+                                   <span className="px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest bg-green-100 text-green-600">CONTRATADO</span>
+                                </div>
+                                <h4 className="text-sm font-black text-[var(--text-primary)] mb-1">{can.nome}</h4>
+                                <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-4">Processo de Admissão Finalizado</p>
+                                <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] font-bold"><Calendar size={12}/> Candidato movido para a base de ativos.</div>
+                             </div>
+                          ))}
+                          {candidatos.filter(c => c.status_candidato === 'CONTRATADO').length === 0 && (
+                             <div className="col-span-full py-20 flex flex-col items-center justify-center text-slate-300">
+                                <UserPlus size={48} className="mb-4 opacity-20" />
+                                <p className="text-xs font-black uppercase tracking-widest">Nenhuma admissão recente</p>
+                             </div>
+                          )}
+                       </div>
+                    ) : <div className="flex flex-col items-center justify-center p-20 opacity-50">
                          <FileText size={48} className="mb-4" />
                          <p className="text-sm font-black uppercase tracking-widest">Módulo em Sincronização...</p>
                       </div>
@@ -383,7 +440,45 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
              <button className="w-full h-14 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest mt-6 shadow-xl shadow-[var(--brand)]/30">Enviar Requisição ao Compras</button>
           </div>
        </AdaptiveModal>
-      
+        {/* MODAL DE ADMISSÃO FINAL */}
+        <AdaptiveModal title={`Admissão: ${modalAdmissao?.nome}`} isOpen={!!modalAdmissao} onClose={() => setModalAdmissao(null)} width="500px">
+           <div className="p-10 space-y-6">
+              <div className="bg-[var(--brand)]/5 p-6 rounded-2xl border border-[var(--brand)]/10 flex items-start gap-4">
+                 <UserPlus className="text-[var(--brand)] shrink-0" size={24}/>
+                 <div>
+                    <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Configuração de Perfil Ativo</p>
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1 uppercase">Transforme o candidato em um colaborador oficial da Alicerce.</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+                    <select className="input-field w-full font-bold" value={admissaoForm.unidade} onChange={e => setAdmissaoForm({...admissaoForm, unidade: e.target.value})}>
+                       <option value="">Selecione a Unidade...</option>
+                       <option value="SEMED">SEMED (Educação)</option>
+                       <option value="SEMSA">SEMSA (Saúde)</option>
+                       <option value="SEMUSP">SEMUSP (Limpeza)</option>
+                       <option value="SEFIN">SEFIN (Finanças)</option>
+                       <option value="SEPLAN">SEPLAN (Planejamento)</option>
+                       <option value="GABINETE">GABINETE DO PREFEITO</option>
+                       <option value="ALMOXARIFADO">ALMOXARIFADO CENTRAL</option>
+                       <option value="SEDE">SEDE ADMINISTRATIVA</option>
+                    </select>
+                 </div>
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo Oficial</label>
+                    <input type="text" className="input-field w-full font-black" placeholder="Ex: ASG, Porteiro, Assistente..." value={admissaoForm.cargo} onChange={e => setAdmissaoForm({...admissaoForm, cargo: e.target.value})} />
+                 </div>
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Data de Admissão</label>
+                    <input type="date" className="input-field w-full font-black" value={admissaoForm.data} onChange={e => setAdmissaoForm({...admissaoForm, data: e.target.value})} />
+                 </div>
+              </div>
+
+              <button onClick={handleAdmissaoFinal} className="w-full h-14 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-[var(--brand)]/30">Finalizar Contratação</button>
+           </div>
+        </AdaptiveModal>
 
      </div>
   );
