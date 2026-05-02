@@ -11,42 +11,10 @@ export type NavItem = {
 
 export const ALL_NAV: NavItem[] = [
   {
-    label: 'Painel de Controle',
-    icon: ShieldAlert,
+    label: 'Dashboard',
+    icon: LayoutDashboard,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    subItems: [
-      { href: '/dashboard?module=COMMAND&tab=OVERVIEW', label: 'Centro de Comando', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=RH_FULL', label: 'Recursos Humanos', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=OPERACIONAL', label: 'Gestão de Campo', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=INTEL_BI', label: 'Inteligência de Dados', icon: Zap, roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=COMMS', label: 'Comunicados Master', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=ETHICS', label: 'Canal de Ética', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=FINANCE', label: 'Financeiro Master', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-      { href: '/dashboard?module=COMMAND&tab=DOCS', label: 'Relatórios & Documentos', roles: ['ADMIN', 'DIRETORIA', 'GERENTE'] },
-    ],
-  },
-  {
-    label: 'Prefeitura',
-    icon: Building2,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'DIRETOR', 'RH_SECRETARIA'],
-    subItems: [
-      { href: '/dashboard/rh/prefeitura', label: 'Indicadores RH PMG', roles: ['ADMIN', 'DIRETORIA', 'RH_SECRETARIA'] },
-      { href: '/dashboard/unidade', label: 'Portal do Diretor', roles: ['ADMIN', 'DIRETOR', 'RH_SECRETARIA'] },
-    ],
-  },
-  {
-    label: 'Compras',
-    icon: ShoppingCart,
-    roles: ['ADMIN', 'COMPRADOR', 'DIRETORIA'],
-    href: '/dashboard?module=COMPRAS'
-  },
-  {
-    label: 'RH Pessoal',
-    icon: Users,
-    roles: ['RH_DP', 'RH_PESSOAL', 'ADMIN'],
-    subItems: [
-      { href: '/dashboard/rh/pessoal', label: 'Dep. Pessoal (DP)', roles: ['RH_DP', 'ADMIN'] },
-    ],
+    href: '/dashboard?module=COMMAND&tab=OVERVIEW'
   },
   {
     label: 'Gestão de Ponto',
@@ -55,18 +23,33 @@ export const ALL_NAV: NavItem[] = [
     href: '/dashboard/ponto'
   },
   {
-    label: 'Almoxarifado',
-    icon: Package,
-    roles: ['ALMOXARIFE'],
-    href: '/dashboard?module=ALMOXARIFADO'
+    label: 'Central de Ocorrências',
+    icon: AlertTriangle,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR', 'RH_SECRETARIA'],
+    href: '/dashboard/ocorrencias'
   },
   {
-    label: 'Segurança do Trabalho',
-    icon: ShieldCheck,
-    roles: ['TECNICO_SEGURANCA'],
-    subItems: [
-      { href: '/dashboard/seguranca/epis', label: 'Gestão de EPIs', roles: ['TECNICO_SEGURANCA'] },
-    ],
+    label: 'Canal de Ética',
+    icon: ShieldAlert,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
+    href: '/dashboard?module=COMMAND&tab=ETHICS'
   },
-  { href: '/dashboard/ocorrencias', icon: AlertTriangle, label: 'Central de Ocorrências', roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR', 'RH_SECRETARIA'] },
+  {
+    label: 'Gestão de Campo',
+    icon: Truck,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
+    href: '/dashboard?module=COMMAND&tab=OPERACIONAL'
+  },
+  {
+    label: 'Recursos Humanos',
+    icon: Users,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'RH_PESSOAL'],
+    href: '/dashboard?module=COMMAND&tab=RH_FULL'
+  },
+  {
+    label: 'Configurações',
+    icon: Settings,
+    roles: ['ADMIN', 'DIRETORIA'],
+    href: '/dashboard?module=SETTINGS'
+  }
 ];
