@@ -149,27 +149,24 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
   return (
     <div className="flex flex-col gap-10 animate-fade-in h-full px-4 lg:px-20 py-10">
       
-      {/* 1. MASTER HEADER & NAVIGATION */}
       <div className="flex flex-col gap-6">
         <h2 className="text-4xl font-black text-[var(--text-primary)] italic leading-tight tracking-tighter">RH Master & Gestão Administrativa</h2>
-        {user?.role !== 'GERENTE' && (
-          <div className="flex flex-wrap gap-8 border-b border-[var(--border)] pb-4">
-            {[
-              { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
-              { id: "DOCS", label: "Documentos", icon: FileText }
-            ].map((t: any) => (
-              <button 
-                key={t.id}
-                onClick={() => setMasterTab(t.id as any)} 
-                className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-              >
-                <t.icon size={16} />
-                {t.label}
-                {masterTab === t.id && <div className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-[var(--brand)] rounded-full" />}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap gap-8 border-b border-[var(--border)] pb-4">
+          {[
+            { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
+            { id: "DOCS", label: "Documentos", icon: FileText }
+          ].map((t: any) => (
+            <button 
+              key={t.id}
+              onClick={() => setMasterTab(t.id as any)} 
+              className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              <t.icon size={16} />
+              {t.label}
+              {masterTab === t.id && <div className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-[var(--brand)] rounded-full" />}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 2. CONTEÚDO DINÂMICO POR ABA MASTER */}
@@ -179,26 +176,24 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
         {masterTab === "DP" && (
           <div className="flex flex-col gap-8 flex-1 overflow-hidden animate-fade-in">
              {/* SUB-ABAS DP - INTEGRALIZADAS ABAIXO DO TÍTULO */}
-             {user?.role !== 'GERENTE' && (
-                 <div className="flex flex-col gap-6">
-                     <div className="flex gap-6 bg-[var(--bg-base)]/30 p-1.5 rounded-2xl w-fit border border-[var(--border)]/50">
-                        {[
-                          { id: "ativos", label: "Colaboradores Ativos", count: colaboradores.filter(c => c.status !== 'DESLIGADO').length },
-                          { id: "talentos", label: "Banco de Talentos", count: candidatos.length },
-                          { id: "vagas", label: "Quadro de Vagas", count: 5 },
-                          { id: "arquivo", label: "Arquivo Morto", count: colaboradores.filter(c => c.status === 'DESLIGADO').length }
-                        ].map((t: any) => (
-                          <button 
-                            key={t.id}
-                            onClick={() => setDpAba(t.id)} 
-                            className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-                          >
-                            {t.label} ({t.count})
-                          </button>
-                        ))}
-                     </div>
+             <div className="flex flex-col gap-6">
+                 <div className="flex gap-6 bg-[var(--bg-base)]/30 p-1.5 rounded-2xl w-fit border border-[var(--border)]/50">
+                    {[
+                      { id: "ativos", label: "Colaboradores Ativos", count: colaboradores.filter(c => c.status !== 'DESLIGADO').length },
+                      { id: "talentos", label: "Banco de Talentos", count: candidatos.length },
+                      { id: "vagas", label: "Quadro de Vagas", count: 5 },
+                      { id: "arquivo", label: "Arquivo Morto", count: colaboradores.filter(c => c.status === 'DESLIGADO').length }
+                    ].map((t: any) => (
+                      <button 
+                        key={t.id}
+                        onClick={() => setDpAba(t.id)} 
+                        className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                      >
+                        {t.label} ({t.count})
+                      </button>
+                    ))}
                  </div>
-              )}
+             </div>
 
              <div className="bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] shadow-2xl flex-1 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-6">
@@ -291,7 +286,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
 
       </div>
 
-      <FichaColaborador360 colabId={selecionado?.id} isOpen={!!selecionado} onClose={() => setSelecionado(null)} canEdit={true} restrictLevel={user.nivel < 4} />
+      <FichaColaborador360 colabId={selecionado?.id} isOpen={!!selecionado} onClose={() => setSelecionado(null)} canEdit={true} restrictLevel={user.nivel < 3 && user.role !== 'GERENTE'} />
       
        {/* MODAL AFASTAMENTO */}
        <AdaptiveModal title="Registrar Afastamento / Licença" isOpen={!!modalAfastamento} onClose={() => setModalAfastamento(null)} width="500px">
