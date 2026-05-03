@@ -136,19 +136,20 @@ export default function AlmoxModals({
                         <div key={epi.id} className={`p-4 rounded-2xl border transition-all flex justify-between items-center ${selecionado ? 'border-orange-500 bg-orange-50/20' : 'border-[var(--border)] bg-white'}`}>
                            <div>
                               <p className="text-xs font-black">{epi.item}</p>
-                              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mt-0.5">CA: {epi.ca || '---'} • Tam: {epi.tamanho || 'UN'}</p>
+                              <p className="text-[8px] font-bold text-[var(--text-muted)] uppercase mt-0.5">CA: {epi.ca || '---'} • Tam: {epi.tamanho || 'UN'} • <span className={epi.quantidade > 0 ? "text-green-600" : "text-red-600"}>Estoque: {epi.quantidade}</span></p>
                            </div>
                            <div className="flex items-center gap-3">
                               {selecionado ? (
                                  <>
-                                    <input type="number" className="w-16 h-10 rounded-lg border-2 border-orange-500 text-center text-xs font-black" value={selecionado.qtd_entrega} onChange={e => {
-                                       const newItens = entregaData.itens.map((x: any) => x.id === epi.id ? {...x, qtd_entrega: Number(e.target.value)} : x);
+                                    <input type="number" className="w-16 h-10 rounded-lg border-2 border-orange-500 text-center text-xs font-black" value={selecionado.qtd_entrega} max={epi.quantidade} min={1} onChange={e => {
+                                       const val = Math.min(Number(e.target.value), epi.quantidade);
+                                       const newItens = entregaData.itens.map((x: any) => x.id === epi.id ? {...x, qtd_entrega: val} : x);
                                        setEntregaData({...entregaData, itens: newItens});
                                     }} />
                                     <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((x: any) => x.id !== epi.id)})} className="p-2 text-red-500"><Trash2 size={16}/></button>
                                  </>
                               ) : (
-                                 <button onClick={() => setEntregaData({...entregaData, itens: [...entregaData.itens, {...epi, qtd_entrega: 1}]})} className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-orange-600 hover:text-white transition-all"><Plus size={16}/></button>
+                                 <button onClick={() => setEntregaData({...entregaData, itens: [...entregaData.itens, {...epi, qtd_entrega: 1}]})} disabled={epi.quantidade <= 0} className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-orange-600 hover:text-white transition-all disabled:opacity-30"><Plus size={16}/></button>
                               )}
                            </div>
                         </div>

@@ -77,6 +77,39 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
     </div>
   );
 
+  const handleConfirmarEntregaEPI = async () => {
+    if (!entregaData.colaborador || entregaData.itens.length === 0) return;
+    try {
+      const loadingToast = toast.loading("Processando entrega e baixando estoque...");
+      for (const item of entregaData.itens) {
+        const { data: req, error: reqErr } = await supabase.from('requisicoes').insert([{
+          item_id: item.id,
+          item_nome: item.item,
+          quantidade: item.qtd_entrega,
+          solicitante_nome: entregaData.colaborador,
+          status: 'PENDENTE',
+          tipo_item: 'EPI',
+          unidade_destino: 'Entrega Direta (Almoxarifado)',
+          protocolo: `EPI-${Math.floor(1000 + Math.random() * 9000)}`
+        }]).select().single();
+        if (reqErr) throw reqErr;
+
+        await processarEntregaRPC({
+          req_id: req.id,
+          item_id: item.id,
+          quantidade_entregue: item.qtd_entrega,
+          categoria: 'EPI',
+          recebedor: entregaData.colaborador,
+          status_final: 'ENTREGUE'
+        });
+      }
+      setModalAberto(null);
+      setEntregaData({ colaborador: "", itens: [] });
+      toast.dismiss(loadingToast);
+      toast.success("EPI entregue e estoque atualizado com sucesso!");
+    } catch (e: any) { toast.error("Erro na entrega: " + e.message); }
+  };
+
   return (
     <div className="flex flex-col gap-10 animate-fade-in h-full px-4 md:px-10 py-6 max-w-[1600px] mx-auto overflow-hidden">
       
@@ -128,7 +161,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
       <AlmoxModals 
         modalAberto={modalAberto} setModalAberto={setModalAberto}
         formData={formData} setFormData={setFormData} onSalvarItem={handleSalvarItem} onExcluirItem={handleExcluirItem}
-        entregaData={entregaData} setEntregaData={setEntregaData} buscaFuncionario={buscaFuncionario} setBuscaFuncionario={setBuscaFuncionario} usuarios={usuarios} estoque={estoque} onConfirmarEntregaEPI={() => toast.success("Recibo de EPI gerado com sucesso!")}
+        entregaData={entregaData} setEntregaData={setEntregaData} buscaFuncionario={buscaFuncionario} setBuscaFuncionario={setBuscaFuncionario} usuarios={usuarios} estoque={estoque} onConfirmarEntregaEPI={handleConfirmarEntregaEPI}
         reqEditando={reqEditando} setReqEditando={setReqEditando} onProcessarReq={(id, status, qtd) => {
            processarRequisicao(id, {status, quantidade_aprovada: qtd});
            toast.success(`Requisição ${status === 'APROVADO' ? 'Aprovada' : 'Reprovada'}`);
