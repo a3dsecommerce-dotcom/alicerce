@@ -79,7 +79,6 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         return {
           item_id: id,
           solicitante: "Almoxarifado Central (Interno)",
-          secretaria_origem: "ALMOXARIFADO",
           unidade_destino: "Almoxarifado Central",
           secretaria_destino: "ALMOXARIFADO",
           quantidade: volumes[id] || 0,
