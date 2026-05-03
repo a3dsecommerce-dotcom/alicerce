@@ -65,10 +65,45 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   };
 
   const handleFinalizarPedidoInternal = async () => {
-    // Lógica simplificada para a requisição interna do almox
-    toast.info("Processando pedido interno...");
-    toast.success("Pedido gerado com sucesso!");
-    setActiveTab("REQUISICOES");
+    const todosItensId = Array.from(new Set([...Object.keys(volumes), ...Object.keys(volumesExtra)]));
+    const itensParaPedir = todosItensId.filter(id => (volumes[id] || 0) > 0 || (volumesExtra[id] || 0) > 0);
+    
+    if (itensParaPedir.length === 0) return toast.warning("Selecione quantidades antes de enviar.");
+    
+    try {
+      const loadingToast = toast.loading("Enviando requisição interna...");
+      const protocolo = `REQ-INT-${Math.floor(100000 + Math.random() * 900000)}`;
+      
+      const payload = itensParaPedir.map(id => {
+        const item = estoque.find(c => String(c.id) === id);
+        return {
+          item_id: id,
+          solicitante: "Almoxarifado Central (Interno)",
+          unidade_destino: "Almoxarifado Central",
+          quantidade: volumes[id] || 0,
+          quantidade_extra: volumesExtra[id] || 0,
+          status: 'SOLICITADO',
+          item_nome: item?.item || 'Item',
+          unidade_medida: item?.unidade_medida || 'UN',
+          protocolo: protocolo,
+          tipo_item: item?.categoria || 'SUPRIMENTO',
+          tipo_pedido: tipoPedidoGeral,
+          data_solicitacao: new Date().toISOString(),
+        };
+      });
+
+      const { error } = await supabase.from('requisicoes').insert(payload);
+      if (error) throw error;
+
+      setVolumes({});
+      setVolumesExtra({});
+      toast.dismiss(loadingToast);
+      toast.success("Pedido interno gerado com sucesso!");
+      refresh();
+      setActiveTab("REQUISICOES");
+    } catch (e: any) { 
+      toast.error("Erro ao gerar pedido: " + e.message); 
+    }
   };
 
   const calcularDias = (dataIso: string) => {
