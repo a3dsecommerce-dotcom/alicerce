@@ -3,9 +3,10 @@ import { useState, useEffect } from "react";
 import { 
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter,
-  CheckCircle, ArrowUpRight, Building2, User, UserPlus
+  CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 export default function EncarregadoModule({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">("MY_UNITS");
@@ -16,6 +17,8 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const [saving, setSaving] = useState(false);
 
   const [admissao, setAdmissao] = useState({ nome: '', telefone: '', unidade: '', secretaria: '' });
+  const [editandoColab, setEditandoColab] = useState<any>(null);
+  const [justificativa, setJustificativa] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -132,12 +135,20 @@ export default function EncarregadoModule({ user }: { user: any }) {
                         </td>
                         <td className="py-4 text-xs font-bold text-[var(--text-muted)] uppercase">{colab.unidade_alocacao}</td>
                         <td className="py-4 text-xs font-medium text-[var(--text-muted)]">{colab.cargo || 'OPERACIONAL'}</td>
-                        <td className="py-4 text-right">
-                           <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${colab.status === 'ATIVO' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                              {colab.status}
-                           </span>
-                        </td>
-                     </tr>
+                         <td className="py-4 text-right">
+                           <div className="flex items-center justify-end gap-2">
+                             <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${colab.status === 'ATIVO' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                {colab.status}
+                             </span>
+                             <button 
+                               onClick={() => setEditandoColab(colab)}
+                               className="p-2 hover:bg-[var(--bg-base)] rounded-lg text-[var(--text-muted)] hover:text-[var(--brand)] transition-all"
+                             >
+                                <Edit3 size={14} />
+                             </button>
+                           </div>
+                         </td>
+                      </tr>
                    ))}
                 </tbody>
              </table>
@@ -145,6 +156,34 @@ export default function EncarregadoModule({ user }: { user: any }) {
        </div>
     </div>
   );
+
+  const handleSalvarEdicao = async () => {
+    if (!justificativa || justificativa.length < 10) {
+      alert("Por favor, forneça uma justificativa detalhada (mínimo 10 caracteres).");
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase.from('usuarios').update({
+      nome: editandoColab.nome,
+      telefone: editandoColab.telefone,
+      unidade_alocacao: editandoColab.unidade_alocacao,
+      secretaria: fullUnits.find(u => u.nome === editandoColab.unidade_alocacao)?.secretaria || editandoColab.secretaria,
+      justificativa_alteracao: justificativa,
+      editado_por: user.nome,
+      data_ultima_alteracao: new Date().toISOString()
+    }).eq('id', editandoColab.id);
+
+    if (!error) {
+      alert("Cadastro atualizado com sucesso!");
+      setEditandoColab(null);
+      setJustificativa("");
+      fetchEncarregadoData();
+    } else {
+      alert("Erro ao atualizar: " + error.message);
+    }
+    setSaving(false);
+  };
 
   const handleSalvarAdmissao = async () => {
     if (!admissao.nome || !admissao.telefone || !admissao.unidade) {
@@ -311,6 +350,70 @@ export default function EncarregadoModule({ user }: { user: any }) {
            )}
         </div>
       )}
+
+      {/* MODAL DE EDIÇÃO COM JUSTIFICATIVA */}
+      <AdaptiveModal 
+        isOpen={!!editandoColab} 
+        onClose={() => { setEditandoColab(null); setJustificativa(""); }}
+        title={`Alterar Cadastro: ${editandoColab?.nome}`}
+        width="500px"
+      >
+        <div className="p-10 space-y-6">
+          <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex items-start gap-4">
+            <ShieldCheck className="text-amber-600 shrink-0" size={24}/>
+            <div>
+              <p className="text-xs font-black text-amber-900 uppercase tracking-widest">Alteração de Cadastro</p>
+              <p className="text-[10px] font-bold text-amber-700 mt-1 uppercase">Toda alteração realizada pelo encarregado exige uma justificativa para auditoria do RH.</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome Completo</label>
+              <input 
+                className="input-field w-full font-bold" 
+                value={editandoColab?.nome || ''} 
+                onChange={e => setEditandoColab({...editandoColab, nome: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone</label>
+              <input 
+                className="input-field w-full font-bold" 
+                value={editandoColab?.telefone || ''} 
+                onChange={e => setEditandoColab({...editandoColab, telefone: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+              <select 
+                className="input-field w-full font-bold"
+                value={editandoColab?.unidade_alocacao || ''}
+                onChange={e => setEditandoColab({...editandoColab, unidade_alocacao: e.target.value})}
+              >
+                {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-red-500 mb-2 block font-black">Justificativa da Alteração (Obrigatório)</label>
+              <textarea 
+                className="input-field w-full min-h-[100px] py-4 font-bold !text-xs" 
+                placeholder="Ex: Erro de digitação no nome / Mudança de telefone / Transferência de posto autorizada..."
+                value={justificativa}
+                onChange={e => setJustificativa(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <button 
+            onClick={handleSalvarEdicao}
+            className="w-full h-14 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+            disabled={saving}
+          >
+            {saving ? "Salvando..." : "Confirmar Alteração"}
+          </button>
+        </div>
+      </AdaptiveModal>
 
     </div>
   );
