@@ -118,7 +118,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   };
 
   return (
-    <div className="flex flex-col gap-10 animate-fade-in h-full px-4 md:px-10 py-6 max-w-[1600px] mx-auto overflow-hidden">
+    <div className="flex flex-col gap-10 animate-fade-in px-4 md:px-10 py-6 max-w-[1600px] mx-auto overflow-y-auto">
       
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-card)] p-8 md:p-12 rounded-[3rem] border border-[var(--border)] shadow-sm">
@@ -158,7 +158,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
       </div>
 
       {/* CONTEÚDO */}
-      <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] overflow-hidden shadow-xl flex flex-col flex-1 min-h-[500px]">
+      <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl flex flex-col flex-1 min-h-[500px]">
           {activeTab === "ESTOQUE" && <EstoqueTable estoque={estoque} busca={busca} onEdit={(item) => { setFormData(item); setModalAberto("cadastro"); }} />}
           {activeTab === "REQUISICOES" && <RequisicoesTable requisicoes={requisicoes} busca={busca} calcularDias={calcularDias} onAnalisar={(r) => { setReqEditando({...r, quantidade_aprovada: r.quantidade}); setModalAberto("editar_req"); }} onGerenciar={(r) => { setReqEditando(r); setEntregaConfirm({recebedor: r.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} />}
           {activeTab === "FAZER_REQ" && <NovaRequisicaoForm estoque={estoque} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} tipoPedidoGeral={tipoPedidoGeral} setTipoPedidoGeral={setTipoPedidoGeral} onFinalizar={handleFinalizarPedidoInternal} loading={loading} />}
