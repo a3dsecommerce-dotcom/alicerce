@@ -10,10 +10,17 @@ interface RequisicoesTableProps {
 }
 
 export default function RequisicoesTable({ requisicoes, busca, onAnalisar, onGerenciar, calcularDias }: RequisicoesTableProps) {
-  const filtradas = requisicoes.filter(r => 
-    r.protocolo?.toLowerCase().includes(busca.toLowerCase()) || 
-    r.item_nome?.toLowerCase().includes(busca.toLowerCase())
-  );
+  const filtradas = requisicoes.filter(r => {
+    // Esconde entregas diretas de EPI para não poluir a aba de requisições gerais
+    const isEntregaDiretaEPI = r.tipo_item === 'EPI' && (r.unidade_destino?.includes('Entrega Direta') || r.unidade_destino === 'Almoxarifado Central');
+    if (isEntregaDiretaEPI && r.status === 'ENTREGUE') return false;
+
+    return (
+      r.protocolo?.toLowerCase().includes(busca.toLowerCase()) || 
+      r.item_nome?.toLowerCase().includes(busca.toLowerCase()) ||
+      r.solicitante?.toLowerCase().includes(busca.toLowerCase())
+    );
+  });
 
   return (
     <div className="overflow-x-auto flex-1 scrollbar-thin">
