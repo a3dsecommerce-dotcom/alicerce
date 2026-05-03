@@ -150,7 +150,7 @@ function CockpitContent() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex bg-[var(--bg-base)] p-1 rounded-xl border border-[var(--border)] overflow-x-auto max-w-[500px] custom-scrollbar">
+          <div className="flex bg-[var(--bg-base)] p-1 rounded-xl border border-[var(--border)] overflow-x-auto max-w-[500px] custom-scrollbar flex-nowrap">
              {filteredModules.map(m => (
                <button 
                 key={m.id}
