@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, Package, Plus, FileText, ShoppingBag, AlertTriangle, Loader, UserCheck
+  Search, Package, Plus, FileText, ShoppingBag, AlertTriangle, Loader, UserCheck, Archive
 } from "lucide-react";
 import { useAlmoxData } from "./almoxarifado/useAlmoxData";
 import EstoqueTable from "./almoxarifado/EstoqueTable";
