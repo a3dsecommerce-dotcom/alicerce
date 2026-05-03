@@ -172,8 +172,6 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         resolucaoData={resolucaoData} setResolucaoData={setResolucaoData} onFinalizarResolucao={() => toast.success("Atendimento finalizado.")}
         loading={loading}
       />
-        loading={loading}
-      />
     </div>
   );
 }
