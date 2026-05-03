@@ -179,16 +179,16 @@ function CockpitContent() {
               </div>
             </div>
           }>
-            {(activeModule === "COMMAND" || !activeModule) && filteredModules.some(m => m.id === "COMMAND") && (
-              safeRole === 'ENCARREGADO' 
-                ? <EncarregadoModule user={user} />
-                : <GerenciaModule user={user} initialTab={tabParam as any} />
-            )}
-            {activeModule === "RH" && <RHModule user={user} />}
-            {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
+            { activeModule === "RH" && <RHModule user={user} />}
+            { activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
             { activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} /> }
             { activeModule === "OPERACIONAL" && <OperacionalModule /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
+            { (activeModule === "COMMAND" || !activeModule) && (
+               safeRole === 'ENCARREGADO' 
+                 ? <EncarregadoModule user={user} />
+                 : <GerenciaModule user={user} initialTab={tabParam as any} />
+            )}
             
             {activeModule === "SST" && (
               <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">

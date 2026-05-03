@@ -247,6 +247,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Controls */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            
+            {/* Settings Quick Access */}
+            <Link 
+              href="/dashboard?module=SETTINGS" 
+              className="w-10 h-10 flex items-center justify-center rounded-xl glass hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] transition-all"
+              title="Configurações"
+            >
+              <Settings size={18} />
+            </Link>
 
             {/* Notifications */}
             <div className="relative">
