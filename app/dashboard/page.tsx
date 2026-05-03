@@ -20,6 +20,7 @@ const ComunicacaoModule = dynamic(() => import("./components/modules/Comunicacao
 const AlmoxarifadoModule = dynamic(() => import("./components/modules/AlmoxarifadoModule"), { ssr: false });
 const ConfiguracoesModule = dynamic(() => import("./components/modules/ConfiguracoesModule"), { ssr: false });
 const EncarregadoModule = dynamic(() => import("./components/modules/EncarregadoModule"), { ssr: false });
+const OperacionalModule = dynamic(() => import("./components/modules/OperacionalModule"), { ssr: false });
 
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
@@ -27,6 +28,7 @@ const ALL_MODULES = [
   { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
   { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["COMPRADOR"] },
   { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
+  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "OPERACIONAL"] },
   { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
 ];
@@ -184,8 +186,9 @@ function CockpitContent() {
             )}
             {activeModule === "RH" && <RHModule user={user} />}
             {activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
-            {activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} />}
-            {activeModule === "SETTINGS" && <ConfiguracoesModule user={user} />}
+            { activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} /> }
+            { activeModule === "OPERACIONAL" && <OperacionalModule /> }
+            { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             
             {activeModule === "SST" && (
               <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
