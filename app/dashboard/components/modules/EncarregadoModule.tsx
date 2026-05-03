@@ -34,12 +34,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
     setLoading(true);
     try {
       // 1. Buscar unidades sob responsabilidade deste encarregado
-      const { data: unitsMapping } = await supabase
-        .from('gestao_rotas')
-        .select('unidade_nome')
+      const { data: units } = await supabase
+        .from('unidades')
+        .select('nome')
         .eq('encarregado_id', user.id);
 
-      const unitNames = unitsMapping?.map(u => u.unidade_nome) || [];
+      const unitNames = units?.map(u => u.nome) || [];
       setMyUnits(unitNames);
 
       // Buscar detalhes das unidades (incluindo secretaria)

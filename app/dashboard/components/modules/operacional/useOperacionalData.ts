@@ -22,8 +22,11 @@ export function useOperacionalData(user?: any) {
       // 1. Unidades
       let unitData: any[] = [];
       if (isEncarregado) {
+        console.log("🔍 Buscando unidades para Encarregado ID:", user.id);
         // Busca direta na tabela de unidades pelo ID do encarregado vinculado
-        const { data: units } = await supabase.from('unidades').select('*').eq('encarregado_id', user.id).order('nome');
+        const { data: units, error } = await supabase.from('unidades').select('*').eq('encarregado_id', user.id).order('nome');
+        if (error) console.error("❌ Erro ao buscar unidades:", error);
+        console.log("📦 Unidades encontradas:", units?.length || 0, units);
         unitData = units || [];
       } else {
         const { data: units } = await supabase.from('unidades').select('*').order('nome');
