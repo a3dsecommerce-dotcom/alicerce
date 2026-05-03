@@ -25,6 +25,7 @@ export default function RequisicoesTable({ requisicoes, busca, onAnalisar, onGer
             <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[60px]">Ped.</th>
             <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[60px]">Apr.</th>
             <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[80px]">Tipo</th>
+            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-left w-[120px]">Solicitante</th>
             <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[40px]">D.</th>
             <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[90px]">Status</th>
             <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[120px]">Ação</th>
@@ -52,6 +53,10 @@ export default function RequisicoesTable({ requisicoes, busca, onAnalisar, onGer
                 <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${r.tipo_pedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-blue-50 text-blue-600'}`}>
                   {r.tipo_pedido || 'MENSAL'}
                 </span>
+              </td>
+              <td className="px-3 py-4">
+                <div className="text-[10px] font-black text-slate-700 truncate w-[120px]">{r.solicitante}</div>
+                <div className="text-[7px] font-bold text-slate-400 uppercase">{r.secretaria_origem || '---'}</div>
               </td>
               <td className="px-3 py-4 text-center">
                  <div className="flex flex-col items-center gap-0.5">

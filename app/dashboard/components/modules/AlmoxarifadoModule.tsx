@@ -79,7 +79,9 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         return {
           item_id: id,
           solicitante: "Almoxarifado Central (Interno)",
+          secretaria_origem: "ALMOXARIFADO",
           unidade_destino: "Almoxarifado Central",
+          secretaria_destino: "ALMOXARIFADO",
           quantidade: volumes[id] || 0,
           quantidade_extra: volumesExtra[id] || 0,
           status: 'SOLICITADO',
@@ -195,7 +197,15 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
       {/* CONTEÚDO */}
       <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl flex flex-col flex-1 min-h-[500px]">
           {activeTab === "ESTOQUE" && <EstoqueTable estoque={estoque} busca={busca} onEdit={(item) => { setFormData(item); setModalAberto("cadastro"); }} />}
-          {activeTab === "REQUISICOES" && <RequisicoesTable requisicoes={requisicoes} busca={busca} calcularDias={calcularDias} onAnalisar={(r) => { setReqEditando({...r, quantidade_aprovada: r.quantidade}); setModalAberto("editar_req"); }} onGerenciar={(r) => { setReqEditando(r); setEntregaConfirm({recebedor: r.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} />}
+          {activeTab === "REQUISICOES" && (
+            <RequisicoesTable 
+              requisicoes={requisicoes} 
+              busca={busca} 
+              calcularDias={calcularDias} 
+              onAnalisar={(r) => { setReqEditando({...r, quantidade_aprovada: r.quantidade}); setModalAberto("editar_req"); }} 
+              onGerenciar={(r) => { setReqEditando(r); setEntregaConfirm({recebedor: r.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} 
+            />
+          )}
           {activeTab === "FAZER_REQ" && <NovaRequisicaoForm estoque={estoque} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} tipoPedidoGeral={tipoPedidoGeral} setTipoPedidoGeral={setTipoPedidoGeral} onFinalizar={handleFinalizarPedidoInternal} loading={loading} />}
           {activeTab === "OCORRENCIAS" && <div className="p-20 text-center opacity-50"><AlertTriangle size={48} className="mx-auto mb-4" /><p className="text-xs font-black uppercase tracking-widest">Módulo de Ocorrências em Manutenção</p></div>}
       </div>
