@@ -24,7 +24,8 @@ export default function OperacionalModule({ user }: { user: any }) {
     diretor: "",
     telefone: "",
     atendidos_dia: "",
-    status: "ATIVO"
+    status: "ATIVO",
+    rota: "ROTA 1"
   });
   
   const isEncarregado = user?.role === 'ENCARREGADO';
@@ -39,7 +40,8 @@ export default function OperacionalModule({ user }: { user: any }) {
       diretor: "",
       telefone: "",
       atendidos_dia: "",
-      status: "ATIVO"
+      status: "ATIVO",
+      rota: "ROTA 1"
     });
     setEditingUnit(null);
   };
@@ -55,7 +57,8 @@ export default function OperacionalModule({ user }: { user: any }) {
       diretor: u.diretor || "",
       telefone: u.telefone || "",
       atendidos_dia: u.atendidos_dia?.toString() || "",
-      status: u.status || "ATIVO"
+      status: u.status || "ATIVO",
+      rota: u.rota || "ROTA 1"
     });
     setIsModalOpen(true);
   };
@@ -409,6 +412,20 @@ export default function OperacionalModule({ user }: { user: any }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><MapPin size={12}/> Rota / Responsavel</label>
+              <select 
+                className="input-field w-full h-12 font-bold"
+                value={newUnit.rota}
+                onChange={e => setNewUnit({...newUnit, rota: e.target.value})}
+              >
+                <option value="ROTA 1">ROTA 1: RICARDO</option>
+                <option value="ROTA 2">ROTA 2: MARCOS</option>
+                <option value="ROTA 3">ROTA 3: FELIPE</option>
+                <option value="ROTA 4">ROTA 4: SANDRA</option>
+                <option value="ROTA 5">ROTA 5: JULIO</option>
+              </select>
+            </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><ShieldCheck size={12}/> Status</label>
               <select 
