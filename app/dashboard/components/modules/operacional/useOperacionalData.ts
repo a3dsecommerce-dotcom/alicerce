@@ -22,9 +22,8 @@ export function useOperacionalData(user?: any) {
       // 1. Unidades
       let unitData: any[] = [];
       if (isEncarregado) {
-        const { data: mapping } = await supabase.from('gestao_rotas').select('unidade_nome').eq('encarregado_id', user.id);
-        const names = mapping?.map(m => m.unidade_nome) || [];
-        const { data: units } = await supabase.from('unidades').select('*').in('nome', names).order('nome');
+        // Busca direta na tabela de unidades pelo ID do encarregado vinculado
+        const { data: units } = await supabase.from('unidades').select('*').eq('encarregado_id', user.id).order('nome');
         unitData = units || [];
       } else {
         const { data: units } = await supabase.from('unidades').select('*').order('nome');
