@@ -46,7 +46,7 @@ export default function OcorrenciasPage() {
     unidade_id: "",
     prioridade: "NORMAL",
     descricao: "",
-    setor_destino: "OPERACIONAL",
+    setor_destino: "Gerência Operacional",
     responsavel_citado: ""
   });
 
@@ -164,7 +164,7 @@ export default function OcorrenciasPage() {
       }
 
       setModalNova(false);
-      setNovaOcorrencia({ assunto: "", unidade_id: "", prioridade: "NORMAL", descricao: "", setor_destino: "OPERACIONAL", responsavel_citado: "" });
+      setNovaOcorrencia({ assunto: "", unidade_id: "", prioridade: "NORMAL", descricao: "", setor_destino: "Gerência Operacional", responsavel_citado: "" });
       loadData();
       alert("Ocorrência aberta e direcionada ao setor com sucesso!");
     } else {
@@ -320,35 +320,26 @@ export default function OcorrenciasPage() {
             <input className="input-field" placeholder="Ex: Falta de material na unidade..." value={novaOcorrencia.assunto} onChange={e => setNovaOcorrencia({...novaOcorrencia, assunto: e.target.value})} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Unidade / Rota</label>
-              <select className="input-field" value={novaOcorrencia.unidade_id} onChange={e => setNovaOcorrencia({...novaOcorrencia, unidade_id: e.target.value})}>
-                <option value="">Selecione...</option>
-                {unidades.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Gravidade</label>
-              <select className="input-field" value={novaOcorrencia.prioridade} onChange={e => setNovaOcorrencia({...novaOcorrencia, prioridade: e.target.value})}>
-                <option value="BAIXA">BAIXA</option>
-                <option value="NORMAL">NORMAL</option>
-                <option value="ALTA">ALTA</option>
-                <option value="CRITICA">CRÍTICA</option>
-              </select>
-            </div>
+          <div>
+            <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Gravidade / Urgência</label>
+            <select className="input-field" value={novaOcorrencia.prioridade} onChange={e => setNovaOcorrencia({...novaOcorrencia, prioridade: e.target.value})}>
+              <option value="BAIXA">BAIXA</option>
+              <option value="NORMAL">NORMAL</option>
+              <option value="ALTA">ALTA</option>
+              <option value="CRITICA">CRÍTICA</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Setor Destino</label>
               <select className="input-field" value={novaOcorrencia.setor_destino} onChange={e => setNovaOcorrencia({...novaOcorrencia, setor_destino: e.target.value})}>
-                <option value="OPERACIONAL">Operacional</option>
-                <option value="RH">Recursos Humanos (RH)</option>
-                <option value="TI">TI / Sistemas</option>
-                <option value="ALMOXARIFADO">Almoxarifado</option>
-                <option value="FINANCEIRO">Financeiro</option>
-                <option value="DIRETORIA">Diretoria</option>
+                <option value="Gerência Operacional">Gerência Operacional</option>
+                <option value="RH Recursos Humanos">RH Recursos Humanos</option>
+                <option value="Almoxarifado">Almoxarifado</option>
+                <option value="Encarregado">Encarregado</option>
+                <option value="Técnico Segurança">Técnico Segurança</option>
+                <option value="Gerência Regional">Gerência Regional</option>
               </select>
             </div>
             <div>
