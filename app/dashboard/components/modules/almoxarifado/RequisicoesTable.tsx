@@ -1,5 +1,5 @@
 "use client";
-import { Clock, Truck } from "lucide-react";
+import { Clock, Truck, Package } from "lucide-react";
 
 interface RequisicoesTableProps {
   requisicoes: any[];
@@ -81,8 +81,9 @@ export default function RequisicoesTable({ requisicoes, busca, onAnalisar, onGer
                   {r.status === 'SOLICITADO' ? (
                     <button onClick={() => onAnalisar(r)} className="px-4 py-1.5 bg-black text-white rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
                   ) : (
-                    <button onClick={() => onGerenciar(r)} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2 ${r.status === 'ENTREGUE' ? 'bg-gray-100 text-gray-400' : 'bg-green-600 text-white'}`} disabled={r.status === 'ENTREGUE'}>
-                       <Truck size={12}/> Gerenciar
+                    <button onClick={() => onGerenciar(r)} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2 ${r.status === 'ENTREGUE' ? 'bg-gray-100 text-gray-400' : (r.unidade_destino === 'Almoxarifado Central' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white')}`} disabled={r.status === 'ENTREGUE'}>
+                       {r.unidade_destino === 'Almoxarifado Central' ? <Package size={12}/> : <Truck size={12}/>}
+                       {r.unidade_destino === 'Almoxarifado Central' ? 'Receber' : 'Gerenciar'}
                     </button>
                   )}
                 </div>
