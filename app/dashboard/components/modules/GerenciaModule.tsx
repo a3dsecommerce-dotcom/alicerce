@@ -97,11 +97,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
   }, [activeTab]);
 
   const fetchConfigRotas = async () => {
-    // 1. Fetch Encarregados (Nível 2 ou cargo ENCARREGADO)
+    // 1. Fetch Encarregados (Mais abrangente para capturar variações de escrita)
     const { data: users } = await supabase
       .from('usuarios')
-      .select('id, nome')
-      .eq('cargo', 'ENCARREGADO');
+      .select('id, nome, nivel_acesso')
+      .or('cargo.ilike.%encarregado%,nivel_acesso.in.(2,3)')
+      .eq('status', 'ATIVO');
     setSupervisores(users || []);
 
     // 2. Fetch Configurações de Rota
