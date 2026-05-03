@@ -20,7 +20,10 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
   const [saving, setSaving] = useState(false);
-  const [busca, setBusca] = useState("");
+   const [busca, setBusca] = useState("");
+   const [supervisores, setSupervisores] = useState<any[]>([]);
+   const [configRotas, setConfigRotas] = useState<any[]>([]);
+   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   const [newUnit, setNewUnit] = useState({
     secretaria: "SEMED",
@@ -89,8 +92,40 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
   useEffect(() => {
     if (activeTab === "ROTAS") {
       fetchUnidades();
+      fetchConfigRotas();
     }
   }, [activeTab]);
+
+  const fetchConfigRotas = async () => {
+    // 1. Fetch Encarregados (Nível 2 ou cargo ENCARREGADO)
+    const { data: users } = await supabase
+      .from('usuarios')
+      .select('id, nome')
+      .eq('cargo', 'ENCARREGADO');
+    setSupervisores(users || []);
+
+    // 2. Fetch Configurações de Rota
+    const { data: configs } = await supabase
+      .from('config_rotas')
+      .select('*')
+      .order('rota_nome');
+    setConfigRotas(configs || []);
+  };
+
+  const handleUpdateRotaConfig = async (rotaNome: string, encId: string) => {
+    const encNome = supervisores.find(s => s.id === encId)?.nome || "";
+    const { error } = await supabase
+      .from('config_rotas')
+      .update({ encarregado_id: encId, encarregado_nome: encNome, updated_at: new Date().toISOString() })
+      .eq('rota_nome', rotaNome);
+    
+    if (!error) {
+      toast.success(`Supervisor da ${rotaNome} atualizado!`);
+      fetchConfigRotas();
+    } else {
+      toast.error("Erro ao atualizar: " + error.message);
+    }
+  };
 
   const fetchUnidades = async () => {
     setLoading(true);
@@ -203,9 +238,14 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
         {activeTab === "ROTAS" && (
           <div className="flex flex-col gap-8">
             <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
-              <div>
+              <div className="flex flex-col gap-2">
                 <h3 className="text-xl font-black text-[var(--text-primary)] italic">Unidades Operacionais</h3>
-                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">Gestão de postos e rotas de campo</p>
+                <button 
+                  onClick={() => setIsConfigModalOpen(true)}
+                  className="px-3 py-1.5 bg-[var(--brand)]/10 text-[var(--brand)] rounded-lg text-[9px] font-black uppercase border border-[var(--brand)]/20 hover:bg-[var(--brand)] hover:text-white transition-all flex items-center gap-2 w-fit"
+                >
+                  <Settings size={12} /> Configurar Responsáveis
+                </button>
               </div>
               <div className="flex items-center gap-4 w-full md:w-auto">
                 <div className="relative flex-1 md:w-64">
@@ -363,6 +403,46 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
             {saving ? "Salvando..." : editingUnit ? "Salvar Alteracoes" : "Finalizar Cadastro de Unidade"}
+          </button>
+        </div>
+      {/* MODAL CONFIGURAÇÃO DE RESPONSÁVEIS DE ROTA */}
+      <AdaptiveModal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        title="Gestão de Responsáveis por Rota"
+        width="500px"
+      >
+        <div className="p-8 space-y-6">
+          <p className="text-[11px] font-bold text-[var(--text-muted)] leading-relaxed bg-[var(--bg-base)] p-4 rounded-xl border border-[var(--border)]">
+            Selecione o Encarregado (Nível 2) responsável por cada rota. Isso atualizará automaticamente quem gerencia as unidades vinculadas.
+          </p>
+          
+          <div className="space-y-4">
+            {configRotas.map((rota) => (
+              <div key={rota.id} className="flex flex-col gap-2 p-4 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
+                <label className="text-[10px] font-black uppercase text-[var(--brand)] flex justify-between items-center">
+                  <span>{rota.rota_nome}</span>
+                  <span className="text-[8px] text-[var(--text-muted)]">Última alteração: {new Date(rota.updated_at).toLocaleDateString()}</span>
+                </label>
+                <select 
+                  className="input-field w-full h-12 font-bold !bg-white"
+                  value={rota.encarregado_id || ""}
+                  onChange={(e) => handleUpdateRotaConfig(rota.rota_nome, e.target.value)}
+                >
+                  <option value="">NÃO ATRIBUÍDO</option>
+                  {supervisores.map((sup) => (
+                    <option key={sup.id} value={sup.id}>{sup.nome}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+
+          <button 
+            onClick={() => setIsConfigModalOpen(false)}
+            className="w-full h-14 bg-black text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
+          >
+            Fechar Configuração
           </button>
         </div>
       </AdaptiveModal>
