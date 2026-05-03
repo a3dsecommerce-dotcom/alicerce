@@ -59,28 +59,42 @@ export default function AlmoxModals({
         <head>
           <title>Ficha de EPI - ${entregaData.colaborador}</title>
           <style>
-            @page { size: landscape; margin: 1cm; }
-            body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; color: black; }
-            .ficha-container { width: 100%; border: 1px solid #ccc; padding: 40px; }
-            .header { border: 4px solid black; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-            .header-left h2 { margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; font-style: italic; }
-            .header-right { text-align: right; border-left: 2px solid black; padding-left: 30px; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 2px solid black; margin-bottom: 30px; background: #f9f9f9; }
-            .info-item { padding: 15px; border-right: 2px solid black; }
+            @page { size: landscape; margin: 0.5cm; }
+            body { 
+              font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+              margin: 0; 
+              padding: 10px; 
+              color: black; 
+              overflow: hidden; /* Garantir que não gere página 2 por pequenos overflows */
+            }
+            .ficha-container { 
+              width: 277mm; /* Largura A4 paisagem aproximada menos margens */
+              height: 190mm; /* Altura A4 paisagem aproximada menos margens */
+              border: 2px solid black; 
+              padding: 25px; 
+              display: flex;
+              flex-direction: column;
+              box-sizing: border-box;
+            }
+            .header { border: 4px solid black; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+            .header-left h2 { margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; font-style: italic; }
+            .header-right { text-align: right; border-left: 2px solid black; padding-left: 20px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 2px solid black; margin-bottom: 15px; background: #f9f9f9; }
+            .info-item { padding: 10px; border-right: 2px solid black; }
             .info-item:last-child { border-right: none; }
-            .info-label { font-size: 8px; font-weight: 900; text-transform: uppercase; color: #666; margin-bottom: 5px; }
-            .info-value { font-size: 12px; font-weight: 900; text-transform: uppercase; }
-            table { width: 100%; border-collapse: collapse; border: 2px solid black; margin-bottom: 30px; }
-            th { background: black; color: white; padding: 12px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
-            td { padding: 12px; border: 1px solid black; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-            .termo { border: 2px solid black; padding: 20px; background: #f9f9f9; margin-bottom: 40px; }
-            .termo h4 { margin: 0 0 10px 0; font-size: 10px; text-transform: uppercase; text-decoration: underline; }
-            .termo p { margin: 0; font-size: 9px; line-height: 1.6; text-align: justify; font-weight: bold; }
-            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; margin-top: 60px; }
+            .info-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #666; margin-bottom: 3px; }
+            .info-value { font-size: 11px; font-weight: 900; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; border: 2px solid black; margin-bottom: 15px; flex-grow: 0; }
+            th { background: black; color: white; padding: 10px; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+            td { padding: 8px; border: 1px solid black; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+            .termo { border: 2px solid black; padding: 15px; background: #f9f9f9; margin-bottom: 20px; }
+            .termo h4 { margin: 0 0 8px 0; font-size: 9px; text-transform: uppercase; text-decoration: underline; }
+            .termo p { margin: 0; font-size: 8px; line-height: 1.4; text-align: justify; font-weight: bold; }
+            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: auto; padding-bottom: 20px; }
             .sig-box { text-align: center; }
-            .sig-line { border-bottom: 2px solid black; margin-bottom: 10px; height: 60px; }
-            .sig-label { font-size: 10px; font-weight: 900; text-transform: uppercase; }
-            .footer { margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-between; font-size: 7px; color: #999; font-weight: bold; text-transform: uppercase; }
+            .sig-line { border-bottom: 2px solid black; margin-bottom: 5px; height: 50px; }
+            .sig-label { font-size: 9px; font-weight: 900; text-transform: uppercase; }
+            .footer { border-top: 1px solid #eee; padding-top: 8px; display: flex; justify-content: space-between; font-size: 7px; color: #999; font-weight: bold; text-transform: uppercase; }
           </style>
         </head>
         <body>
@@ -88,10 +102,12 @@ export default function AlmoxModals({
             ${printContent.innerHTML}
           </div>
           <script>
-            setTimeout(() => {
-              window.print();
-              window.close();
-            }, 500);
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            };
           </script>
         </body>
       </html>
@@ -229,16 +245,16 @@ export default function AlmoxModals({
       {/* MODAL RECIBO DE ENTREGA (VISUALIZAÇÃO NO DASHBOARD) */}
       <AdaptiveModal isOpen={modalAberto === "recibo"} onClose={() => setModalAberto(null)} title="Ficha de Entrega de EPI (NR-06)" width="1200px">
          <div className="p-10 space-y-8 bg-slate-50 min-h-screen">
-            <div id="print-recibo-content" className="bg-white p-12 shadow-inner border border-slate-200">
+            <div id="print-recibo-content" className="bg-white p-10 shadow-inner border border-slate-200">
                
                <div className="header">
                   <div className="header-left">
-                     <h2>Alicerce ERP</h2>
-                     <div style={{fontSize: '9px', fontWeight: 'bold', color: '#666', marginTop: '5px', textTransform: 'uppercase'}}>Sistema de Gestão Logística e Segurança</div>
+                     <h2 style={{margin: 0, fontSize: '20px', fontWeight: '900', textTransform: 'uppercase', fontStyle: 'italic'}}>Alicerce ERP</h2>
+                     <div style={{fontSize: '8px', fontWeight: 'bold', color: '#666', marginTop: '3px', textTransform: 'uppercase'}}>Sistema de Gestão Logística e Segurança</div>
                   </div>
                   <div className="header-right">
-                     <div style={{fontSize: '20px', fontWeight: '900', textTransform: 'uppercase'}}>Ficha de Entrega de EPI</div>
-                     <div style={{fontSize: '10px', fontWeight: '900', color: '#666', marginTop: '5px', textTransform: 'uppercase'}}>Equipamento de Proteção Individual - NR-06</div>
+                     <div style={{fontSize: '18px', fontWeight: '900', textTransform: 'uppercase'}}>Ficha de Entrega de EPI</div>
+                     <div style={{fontSize: '9px', fontWeight: '900', color: '#666', marginTop: '3px', textTransform: 'uppercase'}}>Equipamento de Proteção Individual - NR-06</div>
                   </div>
                </div>
 
@@ -268,13 +284,13 @@ export default function AlmoxModals({
                      </tr>
                   </thead>
                   <tbody>
-                     {entregaData.itens.map((item: any) => (
+                     {entregaData.itens.slice(0, 10).map((item: any) => (
                         <tr key={item.id}>
                            <td>{item.item}</td>
                            <td style={{textAlign: 'center', fontWeight: '900', color: '#1e40af'}}>{item.ca || 'N/A'}</td>
                            <td style={{textAlign: 'center'}}>{item.tamanho || 'UN'}</td>
                            <td style={{textAlign: 'center'}}>{item.unidade_medida || 'UN'}</td>
-                           <td style={{textAlign: 'center', fontSize: '14px', background: '#f9f9f9'}}>{item.qtd_entrega}</td>
+                           <td style={{textAlign: 'center', fontSize: '12px', background: '#f9f9f9', fontWeight: '900'}}>{item.qtd_entrega}</td>
                         </tr>
                      ))}
                   </tbody>
@@ -291,12 +307,12 @@ export default function AlmoxModals({
                   <div className="sig-box">
                      <div className="sig-line"></div>
                      <div className="sig-label">Assinatura do Colaborador</div>
-                     <div style={{fontSize: '7px', color: '#999', marginTop: '5px'}}>Ciente em: {new Date().toLocaleDateString('pt-BR')}</div>
+                     <div style={{fontSize: '6px', color: '#999', marginTop: '2px'}}>Ciente em: {new Date().toLocaleDateString('pt-BR')}</div>
                   </div>
                   <div className="sig-box">
                      <div className="sig-line"></div>
                      <div className="sig-label">Responsável pela Entrega</div>
-                     <div style={{fontSize: '7px', color: '#999', marginTop: '5px'}}>Almoxarifado Central / SST</div>
+                     <div style={{fontSize: '6px', color: '#999', marginTop: '2px'}}>Almoxarifado Central / SST</div>
                   </div>
                </div>
 
