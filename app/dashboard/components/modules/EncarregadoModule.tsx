@@ -3,15 +3,19 @@ import { useState, useEffect } from "react";
 import { 
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter,
-  CheckCircle, ArrowUpRight, Building2, User
+  CheckCircle, ArrowUpRight, Building2, User, UserPlus
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function EncarregadoModule({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "ATTENDANCE" | "TICKETS">("MY_UNITS");
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">("MY_UNITS");
   const [myUnits, setMyUnits] = useState<any[]>([]);
+  const [fullUnits, setFullUnits] = useState<any[]>([]);
   const [myColabs, setMyColabs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [admissao, setAdmissao] = useState({ nome: '', telefone: '', unidade: '', secretaria: '' });
 
   useEffect(() => {
     if (user) {
@@ -30,6 +34,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
 
       const unitNames = unitsMapping?.map(u => u.unidade_nome) || [];
       setMyUnits(unitNames);
+
+      // Buscar detalhes das unidades (incluindo secretaria)
+      if (unitNames.length > 0) {
+        const { data: unitsDetail } = await supabase.from('unidades').select('*').in('nome', unitNames);
+        setFullUnits(unitsDetail || []);
+      }
 
       // 2. Buscar colaboradores alocados nessas unidades
       if (unitNames.length > 0) {
@@ -136,6 +146,122 @@ export default function EncarregadoModule({ user }: { user: any }) {
     </div>
   );
 
+  const handleSalvarAdmissao = async () => {
+    if (!admissao.nome || !admissao.telefone || !admissao.unidade) {
+      alert("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase.from('usuarios').insert([{
+      nome: admissao.nome,
+      telefone: admissao.telefone,
+      unidade_alocacao: admissao.unidade,
+      secretaria: admissao.secretaria,
+      status: 'ATIVO',
+      role: 'COLABORADOR',
+      nivel: 1,
+      criado_por: user.nome
+    }]);
+
+    if (!error) {
+      alert("Colaborador cadastrado e ATIVO no sistema!");
+      setAdmissao({ nome: '', telefone: '', unidade: '', secretaria: '' });
+      fetchEncarregadoData();
+      setActiveTab("MY_COLABS");
+    } else {
+      alert("Erro ao cadastrar: " + error.message);
+    }
+    setSaving(false);
+  };
+
+  const renderQuickAdmission = () => (
+    <div className="flex flex-col gap-8 animate-fade-in max-w-2xl mx-auto">
+      <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand)]/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+        
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+            <UserPlus size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-[var(--text-primary)] uppercase italic">Admissão Rápida</h3>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Povoamento imediato da base operacional</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome Completo</label>
+            <input 
+              className="input-field w-full !h-14 font-bold" 
+              placeholder="Ex: João da Silva Santos" 
+              value={admissao.nome}
+              onChange={e => setAdmissao({...admissao, nome: e.target.value.toUpperCase()})}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone / WhatsApp</label>
+              <input 
+                className="input-field w-full !h-14 font-bold" 
+                placeholder="(00) 00000-0000" 
+                value={admissao.telefone}
+                onChange={e => setAdmissao({...admissao, telefone: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+              <select 
+                className="input-field w-full !h-14 font-bold"
+                value={admissao.unidade}
+                onChange={e => {
+                  const unit = fullUnits.find(u => u.nome === e.target.value);
+                  setAdmissao({
+                    ...admissao, 
+                    unidade: e.target.value,
+                    secretaria: unit?.secretaria || 'SEMED' 
+                  });
+                }}
+              >
+                <option value="">Selecione o Posto...</option>
+                {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="p-6 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Secretaria Detectada</p>
+                <p className="text-sm font-black text-[var(--brand)]">{admissao.secretaria || "Aguardando Unidade..."}</p>
+              </div>
+              <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                Status: Ativo
+              </div>
+            </div>
+          </div>
+
+          <button 
+            className="btn-brand w-full !h-16 shadow-xl shadow-[var(--brand)]/20"
+            onClick={handleSalvarAdmissao}
+            disabled={saving}
+          >
+            {saving ? "Salvando..." : "Finalizar Admissão e Ativar"}
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-start gap-4">
+        <Activity className="text-blue-500 shrink-0" size={20} />
+        <p className="text-[10px] font-bold text-blue-700/70 uppercase leading-relaxed">
+          Atenção Encarregado: Este cadastro é simplificado para agilizar o povoamento. O RH será notificado para complementar a documentação técnica (CPF, RG, CTPS) posteriormente.
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20">
       
@@ -144,6 +270,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
          {[
            { id: "MY_UNITS", label: "Minhas Unidades", icon: Building2 },
            { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
+           { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
            { id: "ATTENDANCE", label: "Gestão de Ponto", icon: Clock },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
@@ -167,6 +294,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
         <div className="flex-1">
            {activeTab === "MY_UNITS" && renderMyUnits()}
            {activeTab === "MY_COLABS" && renderMyColabs()}
+           {activeTab === "QUICK_ADMISSION" && renderQuickAdmission()}
            {activeTab === "ATTENDANCE" && (
               <div className="card py-20 text-center">
                  <Clock size={48} className="mx-auto mb-4 opacity-20" />
