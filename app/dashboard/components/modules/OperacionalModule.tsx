@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Activity, Building2, AlertTriangle, ShieldCheck, 
   MapPin, Users, Search, Plus, ArrowUpRight, Clock
 } from "lucide-react";
 import { useOperacionalData } from "./operacional/useOperacionalData";
-import UnidadesTable from "./operacional/UnidadesTable";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export default function OperacionalModule({ user }: { user: any }) {
   const { loading, unidades, colaboradores, tickets, stats, refresh } = useOperacionalData(user);
@@ -27,6 +28,8 @@ export default function OperacionalModule({ user }: { user: any }) {
     status: "ATIVO",
     rota: "ROTA 1"
   });
+
+  const [configRotas, setConfigRotas] = useState<any[]>([]);
   
   const isEncarregado = user?.role === 'ENCARREGADO';
 
@@ -75,6 +78,17 @@ export default function OperacionalModule({ user }: { user: any }) {
     }
   };
 
+  useEffect(() => {
+    if (activeTab === "UNIDADES") {
+      fetchConfigRotas();
+    }
+  }, [activeTab]);
+
+  const fetchConfigRotas = async () => {
+    const { data } = await supabase.from('config_rotas').select('*');
+    setConfigRotas(data || []);
+  };
+
   const handleCreateUnit = async () => {
     if (!newUnit.nome || !newUnit.secretaria) {
       toast.error("Nome e Secretaria são obrigatórios");
@@ -82,8 +96,14 @@ export default function OperacionalModule({ user }: { user: any }) {
     }
 
     setSaving(true);
+
+    // Busca automática do encarregado baseado na rota escolhida
+    const rotaConfig = configRotas.find(r => r.rota_nome === newUnit.rota);
+
     const payload = {
       ...newUnit,
+      encarregado_id: rotaConfig?.encarregado_id || null,
+      encarregado_nome: rotaConfig?.encarregado_nome || null,
       atendidos_dia: parseInt(newUnit.atendidos_dia) || 0,
       atualizado_em: new Date().toISOString()
     };

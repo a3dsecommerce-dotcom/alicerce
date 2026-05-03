@@ -142,8 +142,14 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     }
 
     setSaving(true);
+    
+    // Busca automática do encarregado baseado na rota escolhida
+    const rotaConfig = configRotas.find(r => r.rota_nome === newUnit.rota);
+
     const payload = {
       ...newUnit,
+      encarregado_id: rotaConfig?.encarregado_id || null,
+      encarregado_nome: rotaConfig?.encarregado_nome || null,
       atendidos_dia: parseInt(newUnit.atendidos_dia) || 0,
       atualizado_em: new Date().toISOString()
     };
