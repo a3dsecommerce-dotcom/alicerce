@@ -45,31 +45,62 @@ export default function AlmoxModals({
   loading
 }: AlmoxModalsProps) {
   
-  // Buscar função do colaborador selecionado
   const colaboradorInfo = usuarios.find(u => u.nome === entregaData.colaborador);
+
+  const handleImprimir = () => {
+    const printContent = document.getElementById('print-recibo-content');
+    if (!printContent) return;
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Ficha de EPI - ${entregaData.colaborador}</title>
+          <style>
+            @page { size: landscape; margin: 1cm; }
+            body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 20px; color: black; }
+            .ficha-container { width: 100%; border: 1px solid #ccc; padding: 40px; }
+            .header { border: 4px solid black; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+            .header-left h2 { margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; font-style: italic; }
+            .header-right { text-align: right; border-left: 2px solid black; padding-left: 30px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 2px solid black; margin-bottom: 30px; background: #f9f9f9; }
+            .info-item { padding: 15px; border-right: 2px solid black; }
+            .info-item:last-child { border-right: none; }
+            .info-label { font-size: 8px; font-weight: 900; text-transform: uppercase; color: #666; margin-bottom: 5px; }
+            .info-value { font-size: 12px; font-weight: 900; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; border: 2px solid black; margin-bottom: 30px; }
+            th { background: black; color: white; padding: 12px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+            td { padding: 12px; border: 1px solid black; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+            .termo { border: 2px solid black; padding: 20px; background: #f9f9f9; margin-bottom: 40px; }
+            .termo h4 { margin: 0 0 10px 0; font-size: 10px; text-transform: uppercase; text-decoration: underline; }
+            .termo p { margin: 0; font-size: 9px; line-height: 1.6; text-align: justify; font-weight: bold; }
+            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 100px; margin-top: 60px; }
+            .sig-box { text-align: center; }
+            .sig-line { border-bottom: 2px solid black; margin-bottom: 10px; height: 60px; }
+            .sig-label { font-size: 10px; font-weight: 900; text-transform: uppercase; }
+            .footer { margin-top: 40px; border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-between; font-size: 7px; color: #999; font-weight: bold; text-transform: uppercase; }
+          </style>
+        </head>
+        <body>
+          <div class="ficha-container">
+            ${printContent.innerHTML}
+          </div>
+          <script>
+            setTimeout(() => {
+              window.print();
+              window.close();
+            }, 500);
+          </script>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  };
 
   return (
     <>
-      {/* CSS PARA IMPRESSÃO EM PAISAGEM */}
-      <style jsx global>{`
-        @media print {
-          @page { size: landscape; margin: 1cm; }
-          body * { visibility: hidden; }
-          #print-recibo, #print-recibo * { visibility: visible; }
-          #print-recibo { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 100%; 
-            padding: 0 !important;
-            margin: 0 !important;
-            box-shadow: none !important;
-            border: none !important;
-          }
-          .no-print { display: none !important; }
-        }
-      `}</style>
-
       {/* MODAL CADASTRO/EDIÇÃO */}
       <AdaptiveModal isOpen={modalAberto === "cadastro"} onClose={() => setModalAberto(null)} title={formData.id ? "Editar Material" : "Cadastrar Material"}>
          <div className="p-8 space-y-6">
@@ -195,98 +226,90 @@ export default function AlmoxModals({
          </div>
       </AdaptiveModal>
 
-      {/* MODAL RECIBO DE ENTREGA (FICHA DE EPI PROFISSIONAL - NR-06) */}
+      {/* MODAL RECIBO DE ENTREGA (VISUALIZAÇÃO NO DASHBOARD) */}
       <AdaptiveModal isOpen={modalAberto === "recibo"} onClose={() => setModalAberto(null)} title="Ficha de Entrega de EPI (NR-06)" width="1200px">
-         <div className="p-4 bg-slate-100 min-h-screen no-print flex flex-col items-center gap-6">
-            <div className="bg-white p-12 shadow-2xl rounded-sm w-full max-w-[1100px] border border-slate-300" id="print-recibo">
+         <div className="p-10 space-y-8 bg-slate-50 min-h-screen">
+            <div id="print-recibo-content" className="bg-white p-12 shadow-inner border border-slate-200">
                
-               {/* CABEÇALHO SST */}
-               <div className="border-4 border-black p-4 mb-8 flex justify-between items-center">
-                  <div className="space-y-1">
-                     <h2 className="text-2xl font-black uppercase tracking-tighter italic">Alicerce ERP</h2>
-                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Sistema de Gestão Logística e Segurança</p>
+               <div className="header">
+                  <div className="header-left">
+                     <h2>Alicerce ERP</h2>
+                     <div style={{fontSize: '9px', fontWeight: 'bold', color: '#666', marginTop: '5px', textTransform: 'uppercase'}}>Sistema de Gestão Logística e Segurança</div>
                   </div>
-                  <div className="text-right border-l-2 border-black pl-8">
-                     <h3 className="text-xl font-black uppercase tracking-tight">Ficha de Entrega de EPI</h3>
-                     <p className="text-[10px] font-black uppercase text-slate-600">Equipamento de Proteção Individual - NR-06</p>
-                  </div>
-               </div>
-
-               {/* DADOS DO COLABORADOR */}
-               <div className="grid grid-cols-3 gap-0 border-x-2 border-t-2 border-black mb-8 bg-slate-50/50">
-                  <div className="p-4 border-r-2 border-black">
-                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Nome do Colaborador / Funcionário</label>
-                     <p className="text-xs font-black uppercase">{entregaData.colaborador}</p>
-                  </div>
-                  <div className="p-4 border-r-2 border-black">
-                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Função / Cargo</label>
-                     <p className="text-xs font-black uppercase">{colaboradorInfo?.cargo || 'Não Informado'}</p>
-                  </div>
-                  <div className="p-4">
-                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Data da Entrega</label>
-                     <p className="text-xs font-black uppercase">{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  <div className="header-right">
+                     <div style={{fontSize: '20px', fontWeight: '900', textTransform: 'uppercase'}}>Ficha de Entrega de EPI</div>
+                     <div style={{fontSize: '10px', fontWeight: '900', color: '#666', marginTop: '5px', textTransform: 'uppercase'}}>Equipamento de Proteção Individual - NR-06</div>
                   </div>
                </div>
 
-               {/* TABELA DE ITENS */}
-               <div className="border-2 border-black rounded-none mb-8 overflow-hidden">
-                  <table className="w-full text-left border-collapse">
-                     <thead>
-                        <tr className="bg-black text-white text-[9px] font-black uppercase tracking-widest">
-                           <th className="p-3 border-r border-white/20 w-[45%]">Descrição do Item (EPI/EPC)</th>
-                           <th className="p-3 text-center border-r border-white/20">C.A.</th>
-                           <th className="p-3 text-center border-r border-white/20">Tam</th>
-                           <th className="p-3 text-center border-r border-white/20">U.M.</th>
-                           <th className="p-3 text-center">Qtd</th>
+               <div className="info-grid">
+                  <div className="info-item">
+                     <div className="info-label">Nome do Colaborador</div>
+                     <div className="info-value">{entregaData.colaborador}</div>
+                  </div>
+                  <div className="info-item">
+                     <div className="info-label">Função / Cargo</div>
+                     <div className="info-value">{colaboradorInfo?.cargo || 'Não Informado'}</div>
+                  </div>
+                  <div className="info-item">
+                     <div className="info-label">Data da Entrega</div>
+                     <div className="info-value">{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
+               </div>
+
+               <table>
+                  <thead>
+                     <tr>
+                        <th>Descrição do Item (EPI/EPC)</th>
+                        <th style={{textAlign: 'center'}}>C.A.</th>
+                        <th style={{textAlign: 'center'}}>Tam</th>
+                        <th style={{textAlign: 'center'}}>U.M.</th>
+                        <th style={{textAlign: 'center'}}>Qtd</th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                     {entregaData.itens.map((item: any) => (
+                        <tr key={item.id}>
+                           <td>{item.item}</td>
+                           <td style={{textAlign: 'center', fontWeight: '900', color: '#1e40af'}}>{item.ca || 'N/A'}</td>
+                           <td style={{textAlign: 'center'}}>{item.tamanho || 'UN'}</td>
+                           <td style={{textAlign: 'center'}}>{item.unidade_medida || 'UN'}</td>
+                           <td style={{textAlign: 'center', fontSize: '14px', background: '#f9f9f9'}}>{item.qtd_entrega}</td>
                         </tr>
-                     </thead>
-                     <tbody className="divide-y divide-black">
-                        {entregaData.itens.map((item: any) => (
-                           <tr key={item.id} className="text-[10px] font-bold uppercase">
-                              <td className="p-3 border-r border-black">{item.item}</td>
-                              <td className="p-3 text-center border-r border-black font-black text-blue-800">{item.ca || 'N/A'}</td>
-                              <td className="p-3 text-center border-r border-black">{item.tamanho || 'UN'}</td>
-                              <td className="p-3 text-center border-r border-black">{item.unidade_medida || 'UN'}</td>
-                              <td className="p-3 text-center font-black bg-slate-50 text-sm">{item.qtd_entrega}</td>
-                           </tr>
-                        ))}
-                     </tbody>
-                  </table>
-               </div>
+                     ))}
+                  </tbody>
+               </table>
 
-               {/* TERMO DE RESPONSABILIDADE */}
-               <div className="border-2 border-black p-6 bg-slate-50 mb-10">
-                  <h4 className="text-[10px] font-black uppercase mb-4 underline decoration-2">Termo de Responsabilidade e Ciência (NR-06 / CLT)</h4>
-                  <p className="text-[9px] font-bold text-justify leading-relaxed uppercase">
+               <div className="termo">
+                  <h4>Termo de Responsabilidade e Ciência (NR-06 / CLT)</h4>
+                  <p>
                      Declaro ter recebido os equipamentos de proteção individual (EPIs) constantes desta ficha, os quais são de uso obrigatório nas minhas atividades, estando em perfeito estado de conservação e uso. Comprometo-me a utilizá-los apenas para a finalidade a que se destinam, responsabilizando-me pela sua guarda e conservação, observando as normas de segurança da empresa e as diretrizes da NR-06. Estou ciente de que o não uso dos mesmos constitui falta grave, passível de punições disciplinares conforme a CLT, bem como autorizo o desconto em folha de pagamento em caso de extravio ou dano por uso inadequado, conforme Artigo 462 da CLT.
                   </p>
                </div>
 
-               {/* ASSINATURAS */}
-               <div className="grid grid-cols-2 gap-20 pt-10">
-                  <div className="flex flex-col items-center">
-                     <div className="w-full border-b-2 border-black mb-2"></div>
-                     <p className="text-[9px] font-black uppercase">Assinatura do Colaborador</p>
-                     <p className="text-[7px] text-slate-500 mt-1 uppercase">Ciente em: {new Date().toLocaleDateString('pt-BR')}</p>
+               <div className="signatures">
+                  <div className="sig-box">
+                     <div className="sig-line"></div>
+                     <div className="sig-label">Assinatura do Colaborador</div>
+                     <div style={{fontSize: '7px', color: '#999', marginTop: '5px'}}>Ciente em: {new Date().toLocaleDateString('pt-BR')}</div>
                   </div>
-                  <div className="flex flex-col items-center">
-                     <div className="w-full border-b-2 border-black mb-2"></div>
-                     <p className="text-[9px] font-black uppercase">Responsável pela Entrega</p>
-                     <p className="text-[7px] text-slate-500 mt-1 uppercase">Almoxarifado Central / SST</p>
+                  <div className="sig-box">
+                     <div className="sig-line"></div>
+                     <div className="sig-label">Responsável pela Entrega</div>
+                     <div style={{fontSize: '7px', color: '#999', marginTop: '5px'}}>Almoxarifado Central / SST</div>
                   </div>
                </div>
 
-               {/* RODAPÉ TÉCNICO */}
-               <div className="mt-12 pt-4 border-t border-slate-200 flex justify-between items-center text-[7px] font-bold text-slate-400 uppercase">
+               <div className="footer">
                   <span>Documento gerado eletronicamente pelo Alicerce ERP</span>
                   <span>NR-06 • CLT Art. 158 • Portaria 3.214/78</span>
                   <span>Página 01 / 01</span>
                </div>
             </div>
 
-            <div className="flex gap-4 w-full max-w-[1100px]">
-               <button onClick={() => window.print()} className="flex-1 h-16 bg-black text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:scale-105 transition-all shadow-2xl">
-                  <Printer size={24} /> Imprimir Ficha de EPI
+            <div className="flex gap-4 pt-6">
+               <button onClick={handleImprimir} className="flex-1 h-16 bg-black text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:scale-105 transition-all shadow-2xl">
+                  <Printer size={24} /> Imprimir em Nova Janela
                </button>
                <button onClick={() => setModalAberto(null)} className="h-16 px-10 bg-white text-slate-600 border-2 border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
                   Fechar
