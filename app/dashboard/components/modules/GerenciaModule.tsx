@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  Activity, Shield, Settings, Database, Loader, LayoutDashboard, MapPin, Plus, Building2, User, Phone, Map, Users
+  Activity, Shield, Settings, Database, Loader, LayoutDashboard, MapPin, Plus, Building2, User, Phone, Map, Users, Search
 } from "lucide-react";
 import { useGerenciaData } from "./gerencia/useGerenciaData";
 import StatsCards from "./gerencia/StatsCards";
