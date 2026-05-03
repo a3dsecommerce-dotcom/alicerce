@@ -18,6 +18,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [busca, setBusca] = useState("");
 
@@ -29,8 +30,52 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     bairro: "",
     diretor: "",
     telefone: "",
-    atendidos_dia: ""
+    atendidos_dia: "",
+    status: "ATIVO"
   });
+
+  const resetForm = () => {
+    setNewUnit({
+      secretaria: "SEMED",
+      nome: "",
+      endereco: "",
+      numero: "",
+      bairro: "",
+      diretor: "",
+      telefone: "",
+      atendidos_dia: "",
+      status: "ATIVO"
+    });
+    setEditingUnit(null);
+  };
+
+  const handleEdit = (u: any) => {
+    setEditingUnit(u);
+    setNewUnit({
+      secretaria: u.secretaria || "SEMED",
+      nome: u.nome || "",
+      endereco: u.endereco || "",
+      numero: u.numero || "",
+      bairro: u.bairro || "",
+      diretor: u.diretor || "",
+      telefone: u.telefone || "",
+      atendidos_dia: u.atendidos_dia?.toString() || "",
+      status: u.status || "ATIVO"
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: any) => {
+    if (!confirm("Tem certeza que deseja excluir esta unidade?")) return;
+
+    const { error } = await supabase.from('unidades').delete().eq('id', id);
+    if (!error) {
+      toast.success("Unidade excluída!");
+      fetchUnidades();
+    } else {
+      toast.error("Erro ao excluir: " + error.message);
+    }
+  };
 
   useEffect(() => {
     if (initialTab) {
@@ -58,28 +103,31 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     }
 
     setSaving(true);
-    const { error } = await supabase.from('unidades').insert([{
+    const payload = {
       ...newUnit,
       atendidos_dia: parseInt(newUnit.atendidos_dia) || 0,
-      criado_em: new Date().toISOString()
-    }]);
+      atualizado_em: new Date().toISOString()
+    };
+
+    let error;
+    if (editingUnit) {
+      const { error: err } = await supabase.from('unidades').update(payload).eq('id', editingUnit.id);
+      error = err;
+    } else {
+      const { error: err } = await supabase.from('unidades').insert([{
+        ...payload,
+        criado_em: new Date().toISOString()
+      }]);
+      error = err;
+    }
 
     if (!error) {
-      toast.success("Unidade cadastrada com sucesso!");
+      toast.success(editingUnit ? "Unidade atualizada!" : "Unidade cadastrada!");
       setIsModalOpen(false);
-      setNewUnit({
-        secretaria: "SEMED",
-        nome: "",
-        endereco: "",
-        numero: "",
-        bairro: "",
-        diretor: "",
-        telefone: "",
-        atendidos_dia: ""
-      });
+      resetForm();
       fetchUnidades();
     } else {
-      toast.error("Erro ao cadastrar: " + error.message);
+      toast.error("Erro ao salvar: " + error.message);
     }
     setSaving(false);
   };
@@ -167,7 +215,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
                   />
                 </div>
                 <button 
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => { resetForm(); setIsModalOpen(true); }}
                   className="h-12 px-8 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-xl shadow-[var(--brand)]/20"
                 >
                   <Plus size={18} /> Cadastrar Unidade
@@ -179,7 +227,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               <TableSkeleton rows={8} cols={5} />
             ) : (
               <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden">
-                <UnidadesTable unidades={unidades} busca={busca} />
+                <UnidadesTable 
+                  unidades={unidades} 
+                  busca={busca} 
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               </div>
             )}
           </div>
@@ -199,8 +252,8 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
       {/* MODAL CADASTRO UNIDADE */}
       <AdaptiveModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title="Novo Cadastro de Unidade"
+        onClose={() => { setIsModalOpen(false); resetForm(); }} 
+        title={editingUnit ? "Editar Unidade" : "Novo Cadastro de Unidade"}
         width="600px"
       >
         <div className="p-10 space-y-8">
@@ -275,6 +328,17 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Shield size={12}/> Status da Unidade</label>
+              <select 
+                className="input-field w-full h-12 font-bold"
+                value={newUnit.status}
+                onChange={e => setNewUnit({...newUnit, status: e.target.value})}
+              >
+                <option value="ATIVO">ATIVO (Operando)</option>
+                <option value="INATIVO">INATIVO (Suspenso)</option>
+              </select>
+            </div>
+            <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><User size={12}/> Nome Diretor(a)</label>
               <input 
                 className="input-field w-full h-12 font-bold"
@@ -283,6 +347,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
                 onChange={e => setNewUnit({...newUnit, diretor: e.target.value.toUpperCase()})}
               />
             </div>
+          </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Phone size={12}/> Telefone Contato</label>
               <input 
@@ -299,7 +364,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             onClick={handleCreateUnit}
             className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            {saving ? "Salvando..." : "Finalizar Cadastro de Unidade"}
+            {saving ? "Salvando..." : editingUnit ? "Salvar Alterações" : "Finalizar Cadastro de Unidade"}
           </button>
         </div>
       </AdaptiveModal>
