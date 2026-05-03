@@ -19,6 +19,8 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const [admissao, setAdmissao] = useState({ nome: '', telefone: '', unidade: '', secretaria: '' });
   const [editandoColab, setEditandoColab] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
+  const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
+  const [ocorrencias, setOcorrencias] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -52,6 +54,16 @@ export default function EncarregadoModule({ user }: { user: any }) {
           .in('unidade_alocacao', unitNames);
         setMyColabs(colabs || []);
       }
+
+      // 3. Buscar ocorrências das minhas unidades
+      if (unitNames.length > 0) {
+        const { data: tickets } = await supabase
+          .from('tickets_sla')
+          .select('*')
+          .in('unidade', unitNames)
+          .order('criado_em', { ascending: false });
+        setOcorrencias(tickets || []);
+      }
     } catch (err) {
       console.error("Erro ao carregar dados do encarregado:", err);
     } finally {
@@ -80,15 +92,23 @@ export default function EncarregadoModule({ user }: { user: any }) {
         <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Unidades Sob Minha Responsabilidade</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {myUnits.map((unit, i) => (
-            <div key={i} className="p-6 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl flex items-center gap-4 hover:border-[var(--brand)] transition-all">
-              <div className="w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+            <button 
+              key={i} 
+              onClick={() => {
+                setFiltroUnidadeOcorrencia(unit);
+                setActiveTab("TICKETS");
+              }}
+              className="p-6 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl flex items-center gap-4 hover:border-[var(--brand)] hover:scale-[1.02] active:scale-[0.98] transition-all text-left w-full group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] group-hover:bg-[var(--brand)] group-hover:text-white transition-all">
                 <Building2 size={24} />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-black text-[var(--text-primary)] uppercase">{unit}</p>
                 <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{myColabs.filter(c => c.unidade_alocacao === unit).length} Colaboradores</p>
               </div>
-            </div>
+              <ArrowUpRight size={18} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-all" />
+            </button>
           ))}
           {myUnits.length === 0 && (
             <div className="col-span-full py-20 text-center opacity-50">
@@ -190,6 +210,64 @@ export default function EncarregadoModule({ user }: { user: any }) {
       alert("Erro ao atualizar: " + error.message);
     }
     setSaving(false);
+  };
+
+  const renderTickets = () => {
+    const filtered = filtroUnidadeOcorrencia 
+      ? ocorrencias.filter(o => o.unidade === filtroUnidadeOcorrencia)
+      : ocorrencias;
+
+    return (
+      <div className="flex flex-col gap-8 animate-fade-in">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Gestão de Ocorrências</h3>
+            {filtroUnidadeOcorrencia && (
+              <div className="flex items-center gap-2 mt-2">
+                <span className="px-3 py-1 bg-[var(--brand)]/10 text-[var(--brand)] text-[9px] font-black uppercase rounded-lg">Filtro: {filtroUnidadeOcorrencia}</span>
+                <button onClick={() => setFiltroUnidadeOcorrencia("")} className="text-[9px] font-bold text-red-500 hover:underline uppercase">Limpar Filtro</button>
+              </div>
+            )}
+          </div>
+          <div className="text-[10px] font-black text-[var(--text-muted)] uppercase bg-[var(--bg-card)] px-4 py-2 rounded-xl border border-[var(--border)]">
+            Total: {filtered.length} Demandas
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {filtered.map((ticket, i) => (
+            <div key={i} className="card !p-0 overflow-hidden border-l-4 border-l-[var(--brand)]">
+              <div className="p-6 flex flex-col md:flex-row justify-between gap-6">
+                <div className="flex gap-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${ticket.prioridade === 'ALTA' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                    <AlertTriangle size={24} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">{ticket.protocolo}</span>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${ticket.status === 'ABERTO' ? 'bg-amber-500/10 text-amber-500' : 'bg-green-500/10 text-green-500'}`}>{ticket.status}</span>
+                    </div>
+                    <h4 className="text-sm font-black text-[var(--text-primary)] uppercase">{ticket.assunto}</h4>
+                    <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1">{ticket.unidade} • {ticket.secretaria}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col md:items-end justify-between gap-2">
+                  <div className="text-[10px] font-black text-[var(--text-muted)] uppercase">Aberto em: {new Date(ticket.criado_em).toLocaleDateString()}</div>
+                  <button className="px-6 py-2 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-xl text-[9px] font-black uppercase transition-all">Ver Detalhes</button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {filtered.length === 0 && (
+            <div className="py-20 text-center bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
+              <CheckCircle size={48} className="mx-auto mb-4 text-green-500 opacity-20" />
+              <p className="text-xs font-black uppercase text-[var(--text-muted)]">Nenhuma ocorrência encontrada para esta seleção.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const handleSalvarAdmissao = async () => {
@@ -348,13 +426,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
                  <p className="text-xs font-medium text-[var(--text-muted)] mt-2">Aguardando espelhamento da base biométrica.</p>
               </div>
            )}
-           {activeTab === "TICKETS" && (
-              <div className="card py-20 text-center">
-                 <AlertTriangle size={48} className="mx-auto mb-4 opacity-20" />
-                 <h3 className="text-lg font-black text-[var(--text-primary)] uppercase">Minhas Demandas</h3>
-                 <p className="text-xs font-medium text-[var(--text-muted)] mt-2">Filtre por suas unidades na Central de Ocorrências.</p>
-              </div>
-           )}
+           {activeTab === "TICKETS" && renderTickets()}
         </div>
       )}
 
