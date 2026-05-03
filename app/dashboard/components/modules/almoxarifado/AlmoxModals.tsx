@@ -1,5 +1,5 @@
 "use client";
-import { UserCheck, Plus, Save, Trash2, Truck, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { UserCheck, Plus, Save, Trash2, Truck, AlertTriangle, CheckCircle2, Printer } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 interface AlmoxModalsProps {
@@ -44,8 +44,32 @@ export default function AlmoxModals({
   resolucaoData, setResolucaoData, onFinalizarResolucao,
   loading
 }: AlmoxModalsProps) {
+  
+  // Buscar função do colaborador selecionado
+  const colaboradorInfo = usuarios.find(u => u.nome === entregaData.colaborador);
+
   return (
     <>
+      {/* CSS PARA IMPRESSÃO EM PAISAGEM */}
+      <style jsx global>{`
+        @media print {
+          @page { size: landscape; margin: 1cm; }
+          body * { visibility: hidden; }
+          #print-recibo, #print-recibo * { visibility: visible; }
+          #print-recibo { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .no-print { display: none !important; }
+        }
+      `}</style>
+
       {/* MODAL CADASTRO/EDIÇÃO */}
       <AdaptiveModal isOpen={modalAberto === "cadastro"} onClose={() => setModalAberto(null)} title={formData.id ? "Editar Material" : "Cadastrar Material"}>
          <div className="p-8 space-y-6">
@@ -171,64 +195,100 @@ export default function AlmoxModals({
          </div>
       </AdaptiveModal>
 
-      {/* MODAL RECIBO DE ENTREGA (VISUALIZAÇÃO) */}
-      <AdaptiveModal isOpen={modalAberto === "recibo"} onClose={() => setModalAberto(null)} title="Comprovante de Entrega de EPI">
-         <div id="print-recibo" className="p-12 space-y-8 bg-white max-h-[80vh] overflow-y-auto">
-            <div className="text-center border-b-2 border-black pb-6">
-               <h3 className="text-xl font-black uppercase italic">Comprovante de Entrega de EPI</h3>
-               <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1 text-slate-500">Alicerce ERP • Gestão de Segurança do Trabalho (NR-06)</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 text-[10px] font-black uppercase">
-               <div className="space-y-1">
-                  <p className="text-slate-400">Colaborador / Recebedor</p>
-                  <p className="text-sm">{entregaData.colaborador}</p>
+      {/* MODAL RECIBO DE ENTREGA (FICHA DE EPI PROFISSIONAL - NR-06) */}
+      <AdaptiveModal isOpen={modalAberto === "recibo"} onClose={() => setModalAberto(null)} title="Ficha de Entrega de EPI (NR-06)" width="1200px">
+         <div className="p-4 bg-slate-100 min-h-screen no-print flex flex-col items-center gap-6">
+            <div className="bg-white p-12 shadow-2xl rounded-sm w-full max-w-[1100px] border border-slate-300" id="print-recibo">
+               
+               {/* CABEÇALHO SST */}
+               <div className="border-4 border-black p-4 mb-8 flex justify-between items-center">
+                  <div className="space-y-1">
+                     <h2 className="text-2xl font-black uppercase tracking-tighter italic">Alicerce ERP</h2>
+                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">Sistema de Gestão Logística e Segurança</p>
+                  </div>
+                  <div className="text-right border-l-2 border-black pl-8">
+                     <h3 className="text-xl font-black uppercase tracking-tight">Ficha de Entrega de EPI</h3>
+                     <p className="text-[10px] font-black uppercase text-slate-600">Equipamento de Proteção Individual - NR-06</p>
+                  </div>
                </div>
-               <div className="space-y-1 text-right">
-                  <p className="text-slate-400">Data da Entrega</p>
-                  <p className="text-sm">{new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-               </div>
-            </div>
 
-            <div className="border-2 border-black rounded-3xl overflow-hidden">
-               <table className="w-full text-left border-collapse">
-                  <thead>
-                     <tr className="bg-black text-white text-[9px] font-black uppercase tracking-widest">
-                        <th className="p-4 border-r border-white/20">Item / Descrição</th>
-                        <th className="p-4 text-center border-r border-white/20">C.A.</th>
-                        <th className="p-4 text-center">Qtd</th>
-                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-black/10">
-                     {entregaData.itens.map((item: any) => (
-                        <tr key={item.id} className="text-[10px] font-bold uppercase">
-                           <td className="p-4 border-r border-black/5">{item.item} ({item.tamanho || 'UN'})</td>
-                           <td className="p-4 text-center border-r border-black/5">{item.ca || '---'}</td>
-                           <td className="p-4 text-center font-black">{item.qtd_entrega}</td>
+               {/* DADOS DO COLABORADOR */}
+               <div className="grid grid-cols-3 gap-0 border-x-2 border-t-2 border-black mb-8 bg-slate-50/50">
+                  <div className="p-4 border-r-2 border-black">
+                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Nome do Colaborador / Funcionário</label>
+                     <p className="text-xs font-black uppercase">{entregaData.colaborador}</p>
+                  </div>
+                  <div className="p-4 border-r-2 border-black">
+                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Função / Cargo</label>
+                     <p className="text-xs font-black uppercase">{colaboradorInfo?.cargo || 'Não Informado'}</p>
+                  </div>
+                  <div className="p-4">
+                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1">Data da Entrega</label>
+                     <p className="text-xs font-black uppercase">{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+               </div>
+
+               {/* TABELA DE ITENS */}
+               <div className="border-2 border-black rounded-none mb-8 overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                     <thead>
+                        <tr className="bg-black text-white text-[9px] font-black uppercase tracking-widest">
+                           <th className="p-3 border-r border-white/20 w-[45%]">Descrição do Item (EPI/EPC)</th>
+                           <th className="p-3 text-center border-r border-white/20">C.A.</th>
+                           <th className="p-3 text-center border-r border-white/20">Tam</th>
+                           <th className="p-3 text-center border-r border-white/20">U.M.</th>
+                           <th className="p-3 text-center">Qtd</th>
                         </tr>
-                     ))}
-                  </tbody>
-               </table>
-            </div>
-
-            <div className="pt-12 space-y-12">
-               <div className="flex flex-col items-center">
-                  <div className="w-64 border-b-2 border-black"></div>
-                  <p className="text-[9px] font-black uppercase mt-2">Assinatura do Colaborador</p>
+                     </thead>
+                     <tbody className="divide-y divide-black">
+                        {entregaData.itens.map((item: any) => (
+                           <tr key={item.id} className="text-[10px] font-bold uppercase">
+                              <td className="p-3 border-r border-black">{item.item}</td>
+                              <td className="p-3 text-center border-r border-black font-black text-blue-800">{item.ca || 'N/A'}</td>
+                              <td className="p-3 text-center border-r border-black">{item.tamanho || 'UN'}</td>
+                              <td className="p-3 text-center border-r border-black">{item.unidade_medida || 'UN'}</td>
+                              <td className="p-3 text-center font-black bg-slate-50 text-sm">{item.qtd_entrega}</td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
                </div>
 
-               <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300">
-                  <p className="text-[8px] font-bold text-slate-500 uppercase text-center leading-relaxed">
-                     Declaro ter recebido os equipamentos de proteção individual (EPIs) acima relacionados, devidamente higienizados e em perfeito estado de conservação, orientando-me quanto ao seu uso correto e guarda. Comprometo-me a utilizá-los apenas para a finalidade a que se destinam e a solicitar a sua substituição quando danificados ou extraviados.
+               {/* TERMO DE RESPONSABILIDADE */}
+               <div className="border-2 border-black p-6 bg-slate-50 mb-10">
+                  <h4 className="text-[10px] font-black uppercase mb-4 underline decoration-2">Termo de Responsabilidade e Ciência (NR-06 / CLT)</h4>
+                  <p className="text-[9px] font-bold text-justify leading-relaxed uppercase">
+                     Declaro ter recebido os equipamentos de proteção individual (EPIs) constantes desta ficha, os quais são de uso obrigatório nas minhas atividades, estando em perfeito estado de conservação e uso. Comprometo-me a utilizá-los apenas para a finalidade a que se destinam, responsabilizando-me pela sua guarda e conservação, observando as normas de segurança da empresa e as diretrizes da NR-06. Estou ciente de que o não uso dos mesmos constitui falta grave, passível de punições disciplinares conforme a CLT, bem como autorizo o desconto em folha de pagamento em caso de extravio ou dano por uso inadequado, conforme Artigo 462 da CLT.
                   </p>
                </div>
+
+               {/* ASSINATURAS */}
+               <div className="grid grid-cols-2 gap-20 pt-10">
+                  <div className="flex flex-col items-center">
+                     <div className="w-full border-b-2 border-black mb-2"></div>
+                     <p className="text-[9px] font-black uppercase">Assinatura do Colaborador</p>
+                     <p className="text-[7px] text-slate-500 mt-1 uppercase">Ciente em: {new Date().toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  <div className="flex flex-col items-center">
+                     <div className="w-full border-b-2 border-black mb-2"></div>
+                     <p className="text-[9px] font-black uppercase">Responsável pela Entrega</p>
+                     <p className="text-[7px] text-slate-500 mt-1 uppercase">Almoxarifado Central / SST</p>
+                  </div>
+               </div>
+
+               {/* RODAPÉ TÉCNICO */}
+               <div className="mt-12 pt-4 border-t border-slate-200 flex justify-between items-center text-[7px] font-bold text-slate-400 uppercase">
+                  <span>Documento gerado eletronicamente pelo Alicerce ERP</span>
+                  <span>NR-06 • CLT Art. 158 • Portaria 3.214/78</span>
+                  <span>Página 01 / 01</span>
+               </div>
             </div>
 
-            <div className="flex gap-4 pt-6 sticky bottom-0 bg-white pb-2 no-print">
-               <button onClick={() => window.print()} className="flex-1 h-14 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl">
-                  Imprimir Recibo
+            <div className="flex gap-4 w-full max-w-[1100px]">
+               <button onClick={() => window.print()} className="flex-1 h-16 bg-black text-white rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 hover:scale-105 transition-all shadow-2xl">
+                  <Printer size={24} /> Imprimir Ficha de EPI
                </button>
-               <button onClick={() => setModalAberto(null)} className="flex-1 h-14 bg-slate-100 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
+               <button onClick={() => setModalAberto(null)} className="h-16 px-10 bg-white text-slate-600 border-2 border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all">
                   Fechar
                </button>
             </div>
