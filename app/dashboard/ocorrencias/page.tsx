@@ -31,6 +31,7 @@ export default function OcorrenciasPage() {
   const [ticketSelecionado, setTicketSelecionado] = useState<any>(null);
   const [solucaoTexto, setSolucaoTexto] = useState("");
   const [aba, setAba] = useState<"demandas" | "solicitacoes">("demandas");
+  const [busca, setBusca] = useState("");
   
   const [user, setUser] = useState<any>(() => {
     if (typeof window !== "undefined") {
@@ -513,9 +514,14 @@ export default function OcorrenciasPage() {
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
                     const isResponsavel = t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName));
 
-                    if (aba === "solicitacoes") return isSolicitante;
+                    const matchesBusca = !busca || 
+                                         clean(t.titulo).includes(clean(busca)) || 
+                                         clean(t.descricao).includes(clean(busca)) ||
+                                         clean(t.id).includes(clean(busca));
+
+                    if (aba === "solicitacoes") return isSolicitante && matchesBusca;
                     
-                    return isResponsavel;
+                    return isResponsavel && matchesBusca;
                   })
                   .map(t => (
                   <tr 
@@ -575,10 +581,15 @@ export default function OcorrenciasPage() {
                                          (myEmail && (clean(t.unidade).includes(myEmail) || clean(t.criado_por).includes(myEmail))) ||
                                          ((clean(t.criado_por) === "usuário portal" || !t.criado_por) && role === "ADMIN");
                                          
-                    if (aba === "solicitacoes") return isSolicitante;
+                    const matchesBusca = !busca || 
+                                         clean(t.titulo).includes(clean(busca)) || 
+                                         clean(t.descricao).includes(clean(busca)) ||
+                                         clean(t.id).includes(clean(busca));
+
+                    if (aba === "solicitacoes") return isSolicitante && matchesBusca;
                     
                     const meuSetor = role.startsWith("RH") ? "RH" : role === "ALMOXARIFE" ? "ALMOXARIFADO" : role === "TI" ? "TI" : role === "FINANCEIRO" ? "FINANCEIRO" : "OPERACIONAL";
-                    return (t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName)));
+                    return (t.setor_destino === meuSetor || (myName && clean(t.responsavel_citado).includes(myName))) && matchesBusca;
                 }).length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-20 text-center">
