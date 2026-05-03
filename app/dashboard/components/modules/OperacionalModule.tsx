@@ -410,35 +410,35 @@ export default function OperacionalModule({ user }: { user: any }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><ShieldCheck size={12}/> Status da Unidade</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><ShieldCheck size={12}/> Status</label>
               <select 
                 className="input-field w-full h-12 font-bold"
                 value={newUnit.status}
                 onChange={e => setNewUnit({...newUnit, status: e.target.value})}
               >
-                <option value="ATIVO">ATIVO (Operando)</option>
-                <option value="INATIVO">INATIVO (Suspenso)</option>
+                <option value="ATIVO">ATIVO</option>
+                <option value="INATIVO">INATIVO</option>
               </select>
             </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><User size={12}/> Nome Diretor(a)</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><User size={12}/> Diretor(a)</label>
               <input 
                 className="input-field w-full h-12 font-bold"
-                placeholder="Responsável Local"
+                placeholder="Responsável"
                 value={newUnit.diretor}
                 onChange={e => setNewUnit({...newUnit, diretor: e.target.value.toUpperCase()})}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Phone size={12}/> Telefone Contato</label>
-              <input 
-                className="input-field w-full h-12 font-bold"
-                placeholder="(00) 00000-0000"
-                value={newUnit.telefone}
-                onChange={e => setNewUnit({...newUnit, telefone: e.target.value})}
-              />
-            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Phone size={12}/> Telefone Contato</label>
+            <input 
+              className="input-field w-full h-12 font-bold"
+              placeholder="(00) 00000-0000"
+              value={newUnit.telefone}
+              onChange={e => setNewUnit({...newUnit, telefone: e.target.value})}
+            />
           </div>
 
           <button 
@@ -446,7 +446,7 @@ export default function OperacionalModule({ user }: { user: any }) {
             onClick={handleCreateUnit}
             className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            {saving ? "Salvando..." : editingUnit ? "Salvar Alterações" : "Finalizar Cadastro de Unidade"}
+            {saving ? "Salvando..." : editingUnit ? "Salvar Alteracoes" : "Finalizar Cadastro de Unidade"}
           </button>
         </div>
       </AdaptiveModal>
