@@ -405,7 +405,9 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             {saving ? "Salvando..." : editingUnit ? "Salvar Alteracoes" : "Finalizar Cadastro de Unidade"}
           </button>
         </div>
-      {/* MODAL CONFIGURAÇÃO DE RESPONSÁVEIS DE ROTA */}
+      </AdaptiveModal>
+
+      {/* MODAL CONFIGURACAO DE RESPONSAVEIS DE ROTA */}
       <AdaptiveModal
         isOpen={isConfigModalOpen}
         onClose={() => setIsConfigModalOpen(false)}
