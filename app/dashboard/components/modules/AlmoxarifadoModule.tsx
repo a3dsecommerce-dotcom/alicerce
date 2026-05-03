@@ -93,7 +93,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           item_id: item.id,
           item_nome: item.item,
           quantidade: item.qtd_entrega,
-          solicitante_nome: entregaData.colaborador,
+          solicitante: entregaData.colaborador,
           status: 'PENDENTE',
           tipo_item: 'EPI',
           unidade_destino: 'Entrega Direta (Almoxarifado)',
