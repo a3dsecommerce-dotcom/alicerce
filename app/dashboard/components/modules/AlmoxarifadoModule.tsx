@@ -45,6 +45,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const [ocorrenciaData, setOcorrenciaData] = useState({ desc: "", prioridade: "ALTA", dias_solucao: 1 });
   const [resolucaoData, setResolucaoData] = useState({ id: "", solucao: "" });
   const [mostrarArquivados, setMostrarArquivados] = useState(false);
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("EPI");
 
   // Handlers Complexos (que envolvem lógica de UI + Banco)
   const handleSalvarItem = async () => {
@@ -207,7 +208,27 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
 
       {/* CONTEÚDO */}
       <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl flex flex-col flex-1 min-h-[500px]">
-          {activeTab === "ESTOQUE" && <EstoqueTable estoque={estoque} busca={busca} onEdit={(item) => { setFormData(item); setModalAberto("cadastro"); }} />}
+          {activeTab === "ESTOQUE" && (
+            <div className="flex flex-col h-full">
+              {/* Filtros de Categoria dentro do Estoque */}
+              <div className="flex gap-4 p-6 border-b border-[var(--border)] bg-slate-50/50">
+                 {["EPI", "SUPRIMENTO", "ESCRITORIO"].map(cat => (
+                   <button 
+                     key={cat} 
+                     onClick={() => setFiltroCategoria(cat)}
+                     className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border ${filtroCategoria === cat ? 'bg-black text-white shadow-md' : 'bg-white text-slate-500 border-[var(--border)] hover:bg-slate-100'}`}
+                   >
+                     {cat === 'EPI' ? 'Equipamentos (EPI)' : cat === 'SUPRIMENTO' ? 'Suprimentos / Catálogo' : 'Mat. Escritório'}
+                   </button>
+                 ))}
+              </div>
+              <EstoqueTable 
+                estoque={estoque.filter(i => i.categoria === filtroCategoria)} 
+                busca={busca} 
+                onEdit={(item) => { setFormData(item); setModalAberto("cadastro"); }} 
+              />
+            </div>
+          )}
           {activeTab === "REQUISICOES" && (
             <RequisicoesTable 
               requisicoes={requisicoes} 
