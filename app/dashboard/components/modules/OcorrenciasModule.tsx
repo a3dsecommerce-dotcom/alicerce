@@ -18,7 +18,7 @@ export default function OcorrenciasModule() {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   
   const [formData, setFormData] = useState({ 
-    assunto: "", descricao: "", prioridade: "ALTA", prazo_estipulado_dias: 1 
+    assunto: "", descricao: "", prioridade: "ALTA", prazo_estipulado_dias: 1, setor_destino: "Gerência Operacional" 
   });
   const [receberData, setReceberData] = useState({ prazo_prometido: "" });
   const [resolverData, setResolverData] = useState({ solucao: "" });
@@ -44,7 +44,6 @@ export default function OcorrenciasModule() {
     const { error } = await supabase.from('tickets_sla').insert([{
       ...formData,
       criado_por: user.name || 'Setor Admin',
-      unidade: user.email || 'Unidade Central',
       status: 'PENDENTE'
     }]);
     if (error) alert(error.message);
@@ -142,7 +141,7 @@ export default function OcorrenciasModule() {
                            <td className="p-8 text-center text-xs font-bold text-[var(--text-muted)]">{new Date(t.data_abertura).toLocaleDateString()}</td>
                            <td className="p-8">
                               <div className="text-sm font-black">{t.criado_por}</div>
-                              <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.unidade}</div>
+                              <div className="text-[9px] font-bold text-red-600 uppercase tracking-widest">{t.setor_destino || 'Setor Geral'}</div>
                            </td>
                            <td className="p-8">
                               <div className="text-sm font-bold text-[var(--text-primary)] whitespace-normal max-w-[300px]">{t.assunto}</div>
@@ -173,6 +172,17 @@ export default function OcorrenciasModule() {
             <div>
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Assunto da Demanda</label>
                <input className="input-field !h-14 font-black" value={formData.assunto} onChange={e => setFormData({...formData, assunto: e.target.value})} placeholder="Ex: Ar-condicionado parou de funcionar" />
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Setor Destino / Responsável</label>
+               <select className="input-field !h-14 font-black" value={formData.setor_destino} onChange={e => setFormData({...formData, setor_destino: e.target.value})}>
+                  <option value="Gerência Operacional">Gerência Operacional</option>
+                  <option value="RH Recursos Humanos">RH Recursos Humanos</option>
+                  <option value="Almoxarifado">Almoxarifado</option>
+                  <option value="Encarregado">Encarregado</option>
+                  <option value="Técnico Segurança">Técnico Segurança</option>
+                  <option value="Gerência Regional">Gerência Regional</option>
+               </select>
             </div>
             <div>
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
