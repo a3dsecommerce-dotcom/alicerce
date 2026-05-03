@@ -420,25 +420,6 @@ export default function OperacionalModule({ user }: { user: any }) {
                 <option value="INATIVO">INATIVO</option>
               </select>
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><User size={12}/> Diretor(a)</label>
-              <input 
-                className="input-field w-full h-12 font-bold"
-                placeholder="Responsável"
-                value={newUnit.diretor}
-                onChange={e => setNewUnit({...newUnit, diretor: e.target.value.toUpperCase()})}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Phone size={12}/> Telefone Contato</label>
-            <input 
-              className="input-field w-full h-12 font-bold"
-              placeholder="(00) 00000-0000"
-              value={newUnit.telefone}
-              onChange={e => setNewUnit({...newUnit, telefone: e.target.value})}
-            />
           </div>
 
           <button 
