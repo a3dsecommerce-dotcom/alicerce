@@ -3,13 +3,14 @@ import { useState, useEffect } from "react";
 import { 
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter,
-  CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3
+  CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
+  Settings, Save, Lock, LogOut
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 export default function EncarregadoModule({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">("MY_UNITS");
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS" | "CONFIG">("MY_UNITS");
   const [myUnits, setMyUnits] = useState<any[]>([]);
   const [fullUnits, setFullUnits] = useState<any[]>([]);
   const [myColabs, setMyColabs] = useState<any[]>([]);
@@ -21,6 +22,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const [justificativa, setJustificativa] = useState("");
   const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -127,10 +129,16 @@ export default function EncarregadoModule({ user }: { user: any }) {
        <div className="card">
           <div className="flex justify-between items-center mb-6">
              <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Lista de Colaboradores (Minha Equipe)</h3>
-             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
-                <input type="text" placeholder="BUSCAR NA EQUIPE..." className="input-field !h-9 !pl-10 !text-[10px] w-64" />
-             </div>
+              <div className="relative">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
+                 <input 
+                   type="text" 
+                   placeholder="BUSCAR NA EQUIPE..." 
+                   className="input-field !h-9 !pl-10 !text-[10px] w-64" 
+                   value={searchTerm}
+                   onChange={e => setSearchTerm(e.target.value)}
+                 />
+              </div>
           </div>
           <div className="overflow-x-auto">
              <table className="w-full text-left">
@@ -144,7 +152,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
-                   {myColabs.map((colab, i) => (
+                   {myColabs
+                    .filter(c => 
+                      c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      c.cpf?.includes(searchTerm)
+                    )
+                    .map((colab, i) => (
                      <tr key={i} className="hover:bg-[var(--bg-base)]/50 transition-colors group cursor-pointer" onClick={() => setEditandoColab(colab)}>
                         <td className="p-6">
                            <div className="flex items-center gap-5">
@@ -386,6 +399,91 @@ export default function EncarregadoModule({ user }: { user: any }) {
     </div>
   );
 
+  const renderConfig = () => (
+    <div className="flex flex-col gap-8 animate-fade-in max-w-4xl mx-auto">
+      <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <Settings size={120} className="text-[var(--brand)]" />
+        </div>
+        
+        <div className="mb-12">
+          <h2 className="text-3xl font-black text-[var(--text-primary)] italic tracking-tight">Configurações de Conta</h2>
+          <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2">Gerencie seus dados e preferências do sistema</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+                <User size={20} />
+              </div>
+              <h4 className="text-sm font-black uppercase italic text-[var(--text-primary)]">Perfil Operacional</h4>
+            </div>
+
+            <div className="space-y-4">
+              <div className="p-4 bg-[var(--bg-base)]/50 rounded-xl border border-[var(--border)]">
+                <p className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">Nome Completo</p>
+                <p className="text-xs font-black text-[var(--text-primary)] uppercase">{user.nome}</p>
+              </div>
+              <div className="p-4 bg-[var(--bg-base)]/50 rounded-xl border border-[var(--border)]">
+                <p className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">ID Usuário</p>
+                <p className="text-xs font-black text-[var(--text-primary)]">#{user.id?.slice(0, 8)}</p>
+              </div>
+              <div className="p-4 bg-[var(--bg-base)]/50 rounded-xl border border-[var(--border)]">
+                <p className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">Cargo / Função</p>
+                <p className="text-xs font-black text-[var(--text-primary)] uppercase">{user.role || 'ENCARREGADO'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <ShieldCheck size={20} />
+              </div>
+              <h4 className="text-sm font-black uppercase italic text-[var(--text-primary)]">Segurança & Acesso</h4>
+            </div>
+
+            <div className="space-y-4">
+               <button 
+                 onClick={() => alert("Função de alteração de senha disponível no módulo de configurações geral.")}
+                 className="w-full p-6 bg-slate-900 text-white rounded-2xl flex items-center justify-between group hover:bg-slate-800 transition-all"
+               >
+                 <div className="flex items-center gap-4 text-left">
+                   <Lock size={20} className="text-amber-500" />
+                   <div>
+                     <p className="text-[10px] font-black uppercase tracking-widest">Alterar Minha Senha</p>
+                     <p className="text-[8px] font-bold text-slate-400 mt-1 uppercase">Mantenha sua conta protegida</p>
+                   </div>
+                 </div>
+                 <ArrowUpRight size={20} className="opacity-0 group-hover:opacity-100 transition-all" />
+               </button>
+
+               <button 
+                 onClick={() => { localStorage.clear(); window.location.href = "/"; }}
+                 className="w-full p-6 bg-red-500/5 text-red-500 border border-red-500/10 rounded-2xl flex items-center justify-between group hover:bg-red-500 hover:text-white transition-all"
+               >
+                 <div className="flex items-center gap-4 text-left">
+                   <LogOut size={20} />
+                   <div>
+                     <p className="text-[10px] font-black uppercase tracking-widest">Encerrar Sessão</p>
+                     <p className="text-[8px] font-bold opacity-70 mt-1 uppercase">Sair do portal com segurança</p>
+                   </div>
+                 </div>
+               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card p-10 border-dashed border-[var(--border)] text-center">
+         <Package size={48} className="mx-auto mb-4 opacity-10" />
+         <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Versão do Sistema: v520.4-SOVEREIGN</p>
+         <p className="text-[8px] font-bold mt-1 text-[var(--text-muted)]">© 2026 ALICERCE ERP - TODOS OS DIREITOS RESERVADOS</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20">
       
@@ -397,6 +495,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
            { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
            { id: "ATTENDANCE", label: "Gestão de Ponto", icon: Clock },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
+           { id: "CONFIG", label: "Configurações", icon: Settings },
          ].map(tab => (
            <button 
              key={tab.id}
@@ -427,6 +526,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
               </div>
            )}
            {activeTab === "TICKETS" && renderTickets()}
+           {activeTab === "CONFIG" && renderConfig()}
         </div>
       )}
 
@@ -489,16 +589,17 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
-          <div>
-            <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
-            <select 
-              className="input-field w-full font-bold"
-              value={editandoColab?.unidade_alocacao || ''}
-              onChange={e => setEditandoColab({...editandoColab, unidade_alocacao: e.target.value})}
-            >
-              {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
-            </select>
-          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+              <select 
+                className="input-field w-full font-bold"
+                value={editandoColab?.unidade_alocacao || ''}
+                onChange={e => setEditandoColab({...editandoColab, unidade_alocacao: e.target.value})}
+              >
+                {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
             <div>
               <label className="text-[10px] font-black uppercase text-red-500 mb-2 block font-black">Justificativa da Alteração (Obrigatório)</label>
               <textarea 
