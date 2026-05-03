@@ -24,7 +24,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
   const [modalAdmissao, setModalAdmissao] = useState<any>(null);
-  const [admissaoForm, setAdmissaoForm] = useState({ unidade: "", cargo: "", data: new Date().toISOString().split('T')[0] });
+  const [admissaoForm, setAdmissaoForm] = useState({ secretaria: "", unidade: "", cargo: "", data: new Date().toISOString().split('T')[0] });
   const [modalAfastamento, setModalAfastamento] = useState<any>(null);
   const [afastamentoData, setAfastamentoData] = useState({ motivo: "", tempo: "" });
   const [modalOcorrenciaGeral, setModalOcorrenciaGeral] = useState(false);
@@ -162,6 +162,7 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
       email: modalAdmissao.email || `${modalAdmissao.nome.toLowerCase().replace(/\s+/g, '.')}@alicerce.com`,
       status: 'ATIVO',
       nivel_acesso: 1,
+      secretaria: admissaoForm.secretaria,
       unidade_alocacao: admissaoForm.unidade,
       cargo: admissaoForm.cargo,
       data_admissao: admissaoForm.data,
@@ -453,12 +454,13 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
 
               <div className="space-y-4">
                  <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
-                    <select className="input-field w-full font-bold" value={admissaoForm.unidade} onChange={e => setAdmissaoForm({...admissaoForm, unidade: e.target.value})}>
-                       <option value="">Selecione a Unidade...</option>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Secretaria Responsável</label>
+                    <select className="input-field w-full font-bold" value={admissaoForm.secretaria} onChange={e => setAdmissaoForm({...admissaoForm, secretaria: e.target.value, unidade: ""})}>
+                       <option value="">Selecione a Secretaria...</option>
                        <option value="SEMED">SEMED (Educação)</option>
                        <option value="SEMSA">SEMSA (Saúde)</option>
-                       <option value="SEMUSP">SEMUSP (Limpeza)</option>
+                       <option value="SEMUSP">SEMUSP (Serviços Públicos)</option>
+                       <option value="SEMAS">SEMAS (Ação Social)</option>
                        <option value="SEFIN">SEFIN (Finanças)</option>
                        <option value="SEPLAN">SEPLAN (Planejamento)</option>
                        <option value="GABINETE">GABINETE DO PREFEITO</option>
@@ -466,6 +468,37 @@ export default function RHModule({ user, isDirectorView = false }: { user: any, 
                        <option value="SEDE">SEDE ADMINISTRATIVA</option>
                     </select>
                  </div>
+
+                 <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+                    <select className="input-field w-full font-bold" value={admissaoForm.unidade} onChange={e => setAdmissaoForm({...admissaoForm, unidade: e.target.value})}>
+                       <option value="">Selecione a Unidade...</option>
+                       {admissaoForm.secretaria === "SEMED" && (
+                         <>
+                           <option value="Escola Jorge Boueri">Escola Jorge Boueri</option>
+                           <option value="Escola Maria de Nazaré">Escola Maria de Nazaré</option>
+                           <option value="Centro Infantil">Centro Infantil</option>
+                         </>
+                       )}
+                       {admissaoForm.secretaria === "SEMSA" && (
+                         <>
+                           <option value="UPA - Unidade de Pronto Atendimento">UPA - Unidade de Pronto Atendimento</option>
+                           <option value="UBS Central">UBS Central</option>
+                           <option value="Vigilância Sanitária">Vigilância Sanitária</option>
+                         </>
+                       )}
+                       {/* Opção padrão caso não seja SEMED/SEMSA ou queira digitar */}
+                       <option value="OUTRA">OUTRA UNIDADE...</option>
+                    </select>
+                 </div>
+
+                 {admissaoForm.unidade === "OUTRA" && (
+                    <div>
+                        <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome da Unidade (Manual)</label>
+                        <input type="text" className="input-field w-full font-black" placeholder="Digite o nome da unidade..." onBlur={e => setAdmissaoForm({...admissaoForm, unidade: e.target.value})} />
+                    </div>
+                 )}
+
                  <div>
                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo Oficial</label>
                     <input type="text" className="input-field w-full font-black" placeholder="Ex: ASG, Porteiro, Assistente..." value={admissaoForm.cargo} onChange={e => setAdmissaoForm({...admissaoForm, cargo: e.target.value})} />

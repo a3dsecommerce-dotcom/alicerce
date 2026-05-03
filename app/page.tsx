@@ -62,7 +62,8 @@ export default function LoginPage() {
         role: cargoResolvido, 
         name: user.nome, 
         nivel: user.nivel_acesso || 1,
-        unidade_alocacao: user.unidade_alocacao 
+        unidade_alocacao: user.unidade_alocacao,
+        secretaria: user.secretaria
       }));
       let dest = "/dashboard";
       if (rawCargo === "COMPRADOR") dest = "/dashboard?module=COMPRAS";

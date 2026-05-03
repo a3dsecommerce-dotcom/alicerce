@@ -5,7 +5,7 @@ import {
   Package, ShieldCheck, Activity, Bell, Settings,
   Loader
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import QuickActions from "./components/QuickActions";
@@ -51,17 +51,37 @@ function CockpitContent() {
   const [reducaoGeral, setReducaoGeral] = useState(20);
   const [loading, setLoading] = useState(true);
 
-  // Carrega dados do usuário logado do armazenamento local
+  // Carrega dados do usuário logado e sincroniza com o banco para garantir campos novos (como secretaria)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("crm_user");
-      if (saved) setUser(JSON.parse(saved));
-    } catch (err) {
-      console.error(err);
-      localStorage.removeItem("crm_user");
-    } finally {
-      setLoading(false);
+    async function syncUser() {
+      try {
+        const saved = localStorage.getItem("crm_user");
+        if (saved) {
+          const localUser = JSON.parse(saved);
+          setUser(localUser);
+
+          // Sincroniza com o banco para pegar campos novos (ex: secretaria)
+          if (localUser.id || localUser.email) {
+            const { data: dbUser } = await supabase
+              .from('usuarios')
+              .select('*')
+              .or(`id.eq.${localUser.id},email.eq.${localUser.email}`)
+              .single();
+            
+            if (dbUser) {
+              const updatedUser = { ...localUser, ...dbUser };
+              setUser(updatedUser);
+              localStorage.setItem("crm_user", JSON.stringify(updatedUser));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar usuário:", err);
+      } finally {
+        setLoading(false);
+      }
     }
+    syncUser();
   }, []);
 
   // Lógica de Filtragem de Módulos (RBAC)
@@ -101,6 +121,17 @@ function CockpitContent() {
     return ALL_MODULES.find(m => m.id === activeModule) || ALL_MODULES[0];
   }, [activeModule]);
 
+  const router = useRouter();
+
+  // Handler para trocar de módulo atualizando a URL
+  const handleModuleChange = (id: string) => {
+    setActiveModule(id);
+    const params = new URLSearchParams(window.location.search);
+    params.set("module", id);
+    params.delete("tab"); // Limpa a aba ao trocar de módulo principal
+    router.push(`?${params.toString()}`);
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">
       
@@ -121,7 +152,7 @@ function CockpitContent() {
              {filteredModules.map(m => (
                <button 
                 key={m.id}
-                onClick={() => setActiveModule(m.id)}
+                onClick={() => handleModuleChange(m.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[0.7rem] font-black uppercase tracking-wider transition-all whitespace-nowrap ${activeModule === m.id ? 'bg-[var(--brand)] text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'}`}
                >
                  <m.icon size={14} />

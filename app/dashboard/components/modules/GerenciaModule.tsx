@@ -66,17 +66,24 @@ const COLORS = ['#00d2ff', '#00ff87', '#ff9d00', '#ff007a', '#a855f7'];
 export default function GerenciaModule({ user: propUser, initialTab }: { user?: any, initialTab?: "OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA" | "ROTAS" }) {
   const [activeTab, setActiveTab] = useState<"OVERVIEW" | "OPERACIONAL" | "ALMOXARIFADO" | "RH" | "AUDITORIA" | "ROTAS">(initialTab || "OVERVIEW");
   const [user, setUser] = useState<any>(propUser || null);
-  const [counts, setCounts] = useState({ colabs: 0, ativos: 0, afastados: 0, ocorrenciasMes: 0 });
+  const [counts, setCounts] = useState({ colabs: 0, ativos: 0, afastados: 0, ocorrenciasMes: 0, custoTotal: 0 });
   const [rotas, setRotas] = useState<any[]>([]);
   const [encarregados, setEncarregados] = useState<any[]>([]);
   const [unidades, setUnidades] = useState<string[]>([]);
+  const [chartData, setChartData] = useState({
+    trend: [] as any[],
+    secretarias: [] as any[],
+    rhDist: [] as any[],
+    rhStatus: [] as any[]
+  });
+  const [logs, setLogs] = useState<any[]>([]);
 
   useEffect(() => {
     if (!propUser) {
       const saved = localStorage.getItem("crm_user");
       if (saved) setUser(JSON.parse(saved));
     }
-    fetchRealCounts();
+    fetchDashboardData();
     fetchRotasData();
   }, [propUser]);
 
@@ -86,34 +93,100 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
     }
   }, [initialTab]);
 
-  const fetchRealCounts = async () => {
+  const fetchDashboardData = async () => {
+    // 1. Contagens Básicas
     const { count: total } = await supabase.from('usuarios').select('*', { count: 'exact', head: true });
     const { count: ativos } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'ATIVO');
     const { count: afastados } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'AFASTADO');
     const { count: ocorrencias } = await supabase.from('tickets_sla').select('*', { count: 'exact', head: true });
     
-    setCounts({ 
-        colabs: total || 1200, 
-        ativos: ativos || 1145, 
-        afastados: afastados || 55, 
-        ocorrenciasMes: ocorrencias || 142 
+    // 2. Cálculo de Custo e Gráfico de Secretarias
+    const { data: reqs } = await supabase.from('requisicoes').select('item_id, quantidade, unidade_destino, status, data_solicitacao, solicitante, item_nome');
+    const { data: epi } = await supabase.from('almox_epi').select('id, valor_unitario');
+    const { data: sup } = await supabase.from('almox_suprimentos').select('id, valor_unitario');
+    const { data: esc } = await supabase.from('almox_escritorio').select('id, valor_unitario');
+    
+    const inventory = [...(epi || []), ...(sup || []), ...(esc || [])];
+    let totalCusto = 0;
+    const costsByUnit: Record<string, { entregas: number, pendentes: number }> = {};
+
+    reqs?.forEach(r => {
+        const item = inventory.find(i => String(i.id) === String(r.item_id));
+        const cost = (r.quantidade || 0) * (item?.valor_unitario || 0);
+        totalCusto += cost;
+
+        const unit = r.unidade_destino || "OUTROS";
+        if (!costsByUnit[unit]) costsByUnit[unit] = { entregas: 0, pendentes: 0 };
+        if (r.status === 'ENTREGUE') costsByUnit[unit].entregas += 1;
+        else costsByUnit[unit].pendentes += 1;
     });
+
+    setCounts({ 
+        colabs: total || 0, 
+        ativos: ativos || 0, 
+        afastados: afastados || 0, 
+        ocorrenciasMes: ocorrencias || 0,
+        custoTotal: totalCusto
+    });
+
+    // 3. Dados para Gráficos
+    const { data: tickets } = await supabase.from('tickets_sla').select('created_at, status, criado_por, assunto');
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const trend: any[] = months.map(m => ({ name: m, ocorrencias: 0, resolucoes: 0 }));
+    
+    tickets?.forEach(t => {
+        const date = new Date(t.created_at);
+        const mIdx = date.getMonth();
+        trend[mIdx].ocorrencias += 1;
+        if (t.status === 'RESOLVIDO' || t.status === 'FECHADO') trend[mIdx].resolucoes += 1;
+    });
+
+    const { data: colabsRaw } = await supabase.from('usuarios').select('unidade_alocacao, status');
+    const distMap: Record<string, number> = {};
+    const statusMap: Record<string, number> = {};
+    
+    colabsRaw?.forEach(c => {
+        const u = c.unidade_alocacao || "NÃO ALOCADO";
+        distMap[u] = (distMap[u] || 0) + 1;
+        statusMap[c.status] = (statusMap[c.status] || 0) + 1;
+    });
+
+    setChartData({
+        trend,
+        secretarias: Object.entries(costsByUnit).map(([name, data]) => ({ name, ...data })).slice(0, 5),
+        rhDist: Object.entries(distMap).map(([name, value], i) => ({ name, value, color: COLORS[i % COLORS.length] })),
+        rhStatus: Object.entries(statusMap).map(([name, value], i) => ({ name, value, color: COLORS[(i+2) % COLORS.length] }))
+    });
+
+    // 4. Logs Reais
+    const combinedLogs = [
+        ...(tickets || []).map(t => ({
+            data: new Date(t.created_at).toLocaleString(),
+            user: t.criado_por || "Sistema",
+            acao: `Ocorrência: ${t.assunto}`,
+            obs: `Status: ${t.status}`
+        })),
+        ...(reqs || []).map(r => ({
+            data: new Date(r.data_solicitacao).toLocaleString(),
+            user: r.solicitante || "Sistema",
+            acao: `Requisição: ${r.item_nome}`,
+            obs: `Status: ${r.status}`
+        }))
+    ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+
+    setLogs(combinedLogs.slice(0, 15));
   };
 
   const fetchRotasData = async () => {
-    // 1. Busca Encarregados
     const { data: encs } = await supabase.from('usuarios').select('id, nome').eq('role', 'ENCARREGADO');
     setEncarregados(encs || []);
 
-    // 2. Busca Unidades Únicas
     const { data: users } = await supabase.from('usuarios').select('unidade_alocacao');
     const uniqueUnits = Array.from(new Set(users?.map(u => u.unidade_alocacao).filter(Boolean)));
     setUnidades(uniqueUnits as string[]);
 
-    // 3. Busca Mapeamento de Rotas
     const { data: routeData } = await supabase.from('gestao_rotas').select('*');
     
-    // Cruzar com contagem de colabs
     const finalRotas = await Promise.all((uniqueUnits as string[]).map(async (unit) => {
         const mapping = routeData?.find(r => r.unidade_nome === unit);
         const { count } = await supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('unidade_alocacao', unit);
@@ -141,13 +214,11 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
     if (!error) fetchRotasData();
   };
 
-  // --- RENDERIZADORES DE ABA ---
-
   const renderOverview = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard title="Total Colaboradores" value={counts.colabs.toString()} subValue={`${counts.ativos} Ativos / ${counts.afastados} Afast.`} icon={Users} trend="+2.4%" color="blue" />
-        <KPICard title="Custo Requisições" value="R$ 142.5k" subValue="Média por Secretaria" icon={DollarSign} trend="+12%" color="orange" />
+        <KPICard title="Custo Requisições" value={`R$ ${(counts as any).custoTotal ? ((counts as any).custoTotal / 1000).toFixed(1) : '0'}k`} subValue="Acumulado Real" icon={DollarSign} trend="+12%" color="orange" />
         <KPICard title="Tempo de Resposta" value="4.2h" subValue="Média Global (Ocorrências)" icon={Clock} trend="-15%" color="green" />
         <KPICard title="Ocorrências Mês" value={counts.ocorrenciasMes.toString()} subValue="Total acumulado" icon={AlertTriangle} trend="+5%" color="pink" />
       </div>
@@ -156,11 +227,11 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
         <div className="card h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Tendência de Ocorrências e Resoluções</h3>
-            <span className="text-[10px] font-bold text-[var(--text-muted)]">ÚLTIMOS 12 MESES</span>
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">DADOS REAIS</span>
           </div>
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={trendData}>
+              <AreaChart data={chartData.trend}>
                 <defs>
                   <linearGradient id="colorOc" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--neon-pink)" stopOpacity={0.3}/>
@@ -185,11 +256,11 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
         <div className="card h-[400px] flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Status de Entrega por Secretaria</h3>
-            <span className="text-[10px] font-bold text-[var(--text-muted)]">MENSAL</span>
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">REAL TIME</span>
           </div>
           <div className="flex-1">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={statusSecretariaData} layout="vertical">
+              <BarChart data={chartData.secretarias} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
                 <XAxis type="number" hide />
                 <YAxis dataKey="name" type="category" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
@@ -202,38 +273,46 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-         <div className="card md:col-span-1 h-[300px] flex flex-col">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-4">Distribuição por Setor</h3>
-            <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                        <Pie
-                            data={distColabData}
-                            cx="50%" cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={5}
-                            dataKey="value"
-                        >
-                            {distColabData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                    </PieChart>
-                </ResponsiveContainer>
-            </div>
-         </div>
-         <div className="card md:col-span-2 flex flex-col justify-center gap-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Atalhos Estratégicos</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ShortcutBtn label="Relatório de Custos" icon={FileText} />
-                <ShortcutBtn label="Escala de Volantes" icon={Truck} />
-                <ShortcutBtn label="Mapa de Unidades" icon={MapIcon} />
-                <ShortcutBtn label="Configurações RBAC" icon={Settings} />
-            </div>
-         </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="card h-[400px] flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Distribuição de Colaboradores</h3>
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">POR UNIDADE</span>
+          </div>
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={chartData.rhDist} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                  {chartData.rhDist.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="card h-[400px] flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Status de Recursos Humanos</h3>
+            <span className="text-[10px] font-bold text-[var(--text-muted)]">VISÃO GERAL</span>
+          </div>
+          <div className="flex-1">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={chartData.rhStatus} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                  {chartData.rhStatus.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -241,63 +320,9 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
   const renderOperacional = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <KPICard title="Funcionários / Rota" value="138" subValue="Média Ideal: 140" icon={Users} color="blue" />
-          <KPICard title="Cobertura Total" value="98.2%" subValue="Unidades com Presença" icon={ShieldCheck} color="green" trend="+0.5%" />
-          <KPICard title="Ocorrências Campo" value="24" subValue="Abertas hoje" icon={AlertTriangle} color="orange" trend="+12%" />
-       </div>
-
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="card flex flex-col">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Top Encarregados p/ Ocorrências</h3>
-             <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                   <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
-                      <tr>
-                         <th className="pb-4">Encarregado</th>
-                         <th className="pb-4">Setor</th>
-                         <th className="pb-4 text-center">Nº Ocorrências</th>
-                         <th className="pb-4 text-right">T. Resposta</th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-[var(--border)]">
-                      {[
-                        { nome: "Carlos Lima", setor: "Saúde Norte", total: 42, tempo: "1.5h" },
-                        { nome: "Ana Paula", setor: "Educação Sul", total: 38, tempo: "2.1h" },
-                        { nome: "Roberto Silva", setor: "Obras Centro", total: 29, tempo: "3.4h" },
-                        { nome: "Julia Santos", setor: "Saúde Leste", total: 15, tempo: "1.2h" },
-                      ].map((item, i) => (
-                        <tr key={i} className="group hover:bg-white/5 transition-colors">
-                           <td className="py-4 text-sm font-bold text-[var(--text-primary)]">{item.nome}</td>
-                           <td className="py-4 text-xs font-medium text-[var(--text-muted)] uppercase tracking-tighter">{item.setor}</td>
-                           <td className="py-4 text-center text-sm font-black text-[var(--neon-pink)]">{item.total}</td>
-                           <td className="py-4 text-right text-xs font-black text-[var(--neon-green)]">{item.tempo}</td>
-                        </tr>
-                      ))}
-                   </tbody>
-                </table>
-             </div>
-          </div>
-
-          <div className="card flex flex-col h-[400px]">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Tempo Médio de Resposta por Encarregado</h3>
-             <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={[
-                      { name: 'C. Lima', tempo: 1.5 },
-                      { name: 'A. Paula', tempo: 2.1 },
-                      { name: 'R. Silva', tempo: 3.4 },
-                      { name: 'J. Santos', tempo: 1.2 },
-                      { name: 'M. Alves', tempo: 2.8 },
-                   ]}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
-                      <YAxis stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} unit="h" />
-                      <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                      <Bar dataKey="tempo" fill="var(--neon-blue)" radius={[4, 4, 0, 0]} />
-                   </BarChart>
-                </ResponsiveContainer>
-             </div>
-          </div>
+          <KPICard title="Funcionários Ativos" value={counts.ativos.toString()} subValue="Em campo agora" icon={Users} color="blue" />
+          <KPICard title="Cobertura Operacional" value={`${((counts.ativos / (counts.colabs || 1)) * 100).toFixed(1)}%`} subValue="Percentual de Presença" icon={ShieldCheck} color="green" />
+          <KPICard title="Ocorrências Campo" value={counts.ocorrenciasMes.toString()} subValue="Abertas no período" icon={AlertTriangle} color="orange" trend="+12%" />
        </div>
     </div>
   );
@@ -305,64 +330,8 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
   const renderAlmoxarifado = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <KPICard title="Resposta Almoxarifado" value="2.8h" subValue="Tempo médio de separação" icon={Package} color="blue" trend="-10%" />
-          <KPICard title="Valor Total Entregue" value="R$ 842.000" subValue="EPIs e Uniformes (Ano)" icon={DollarSign} color="green" />
-       </div>
-
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="card h-[400px] flex flex-col">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Valor de Requisições por Secretaria</h3>
-             <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                   <PieChart>
-                      <Pie
-                         data={almoxarifadoValores}
-                         cx="50%" cy="50%"
-                         innerRadius={80}
-                         outerRadius={110}
-                         paddingAngle={5}
-                         dataKey="value"
-                      >
-                         {almoxarifadoValores.map((entry, index) => (
-                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                         ))}
-                      </Pie>
-                      <Tooltip formatter={(value: any) => `R$ ${value.toLocaleString()}`} contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                      <Legend verticalAlign="bottom" height={36}/>
-                   </PieChart>
-                </ResponsiveContainer>
-             </div>
-          </div>
-
-          <div className="card flex flex-col">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Top 5 Materiais Mais Requisitados</h3>
-             <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                   <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
-                      <tr>
-                         <th className="pb-4">Material</th>
-                         <th className="pb-4 text-center">Quantidade</th>
-                         <th className="pb-4 text-right">Valor Total</th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-[var(--border)]">
-                      {[
-                        { nome: "Luva Nitrílica G", qtd: 1540, valor: "R$ 12.400" },
-                        { nome: "Bota de Segurança", qtd: 850, valor: "R$ 42.500" },
-                        { nome: "Uniforme Completo", qtd: 620, valor: "R$ 68.200" },
-                        { nome: "Capa de Chuva PVC", qtd: 450, valor: "R$ 9.000" },
-                        { nome: "Máscara PFF2", qtd: 2400, valor: "R$ 4.800" },
-                      ].map((item, i) => (
-                        <tr key={i} className="group hover:bg-white/5 transition-colors">
-                           <td className="py-4 text-sm font-bold text-[var(--text-primary)]">{item.nome}</td>
-                           <td className="py-4 text-center text-sm font-black text-[var(--neon-blue)]">{item.qtd}</td>
-                           <td className="py-4 text-right text-sm font-black text-[var(--neon-green)]">{item.valor}</td>
-                        </tr>
-                      ))}
-                   </tbody>
-                </table>
-             </div>
-          </div>
+          <KPICard title="Custo em Suprimentos" value={`R$ ${(counts as any).custoTotal ? ((counts as any).custoTotal / 1000).toFixed(1) : '0'}k`} subValue="Total em Requisições" icon={Package} color="blue" trend="-10%" />
+          <KPICard title="Itens Movimentados" value={chartData.secretarias.reduce((acc, curr) => acc + (curr.entregas || 0) + (curr.pendentes || 0), 0).toString()} subValue="Total de Solicitações" icon={DollarSign} color="green" />
        </div>
     </div>
   );
@@ -370,47 +339,8 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
   const renderRH = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <KPICard title="Resposta RH" value="1.5 dias" subValue="Média p/ Solicitações" icon={Users} color="blue" trend="-0.5 dias" />
-          <KPICard title="Novas Admissões" value="15" subValue="Este mês" icon={UserPlus} color="green" trend="+3" />
-       </div>
-
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="card h-[400px] flex flex-col">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Status Geral do Quadro</h3>
-             <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                   <PieChart>
-                      <Pie data={rhStatusData} cx="50%" cy="50%" outerRadius={100} label dataKey="value">
-                         {rhStatusData.map((entry, index) => (
-                             <Cell key={`cell-${index}`} fill={entry.color} />
-                         ))}
-                      </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                   </PieChart>
-                </ResponsiveContainer>
-             </div>
-          </div>
-
-          <div className="card h-[400px] flex flex-col">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Taxa de Turnover por Secretaria</h3>
-             <div className="flex-1">
-                <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={[
-                      { name: 'Saúde', taxa: 2.1 },
-                      { name: 'Educação', taxa: 1.5 },
-                      { name: 'Obras', taxa: 4.8 },
-                      { name: 'ADM', taxa: 0.8 },
-                      { name: 'Social', taxa: 2.5 },
-                   ]}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                      <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} />
-                      <YAxis stroke="var(--text-muted)" fontSize={10} axisLine={false} tickLine={false} unit="%" />
-                      <Tooltip contentStyle={{ backgroundColor: '#1e1e2d', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                      <Bar dataKey="taxa" fill="var(--neon-pink)" radius={[4, 4, 0, 0]} />
-                   </BarChart>
-                </ResponsiveContainer>
-             </div>
-          </div>
+          <KPICard title="Total do Quadro" value={counts.colabs.toString()} subValue="Colaboradores Base" icon={Users} color="blue" />
+          <KPICard title="Afastamentos" value={counts.afastados.toString()} subValue="Férias / Licenças" icon={UserPlus} color="green" trend="+3" />
        </div>
     </div>
   );
@@ -428,7 +358,6 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
        <div className="card flex flex-col">
           <div className="flex justify-between items-center mb-8">
              <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Log de Auditoria do Sistema</h3>
-             <button className="btn-brand bg-[var(--neon-blue)] !shadow-[var(--neon-blue)]/20 text-[10px]"><FileText size={14} /> Exportar Log (CSV)</button>
           </div>
           <div className="overflow-x-auto">
              <table className="w-full text-left">
@@ -441,20 +370,20 @@ export default function GerenciaModule({ user: propUser, initialTab }: { user?: 
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)] text-xs">
-                   {[
-                     { data: "01/05/2026 14:22", user: "Diogo Silva", acao: "Alteração de Salário", obs: "Reajuste Anual - Unidade SEMED" },
-                     { data: "01/05/2026 11:05", user: "Admin", acao: "Exclusão de Registro", obs: "Ticket duplicado removido" },
-                     { data: "30/04/2026 18:45", user: "Gerente RH", acao: "Afastamento", obs: "Licença médica - Protocolo #152" },
-                     { data: "30/04/2026 09:12", user: "Sistema", acao: "Sync n8n", obs: "Sincronização de 1240 colaboradores" },
-                   ].map((log, i) => (
-                     <tr key={i} className="hover:bg-white/5 transition-colors">
-                        <td className="py-4 font-mono text-[var(--text-muted)]">{log.data}</td>
-                        <td className="py-4 font-black text-[var(--neon-blue)]">{log.user}</td>
-                        <td className="py-4 font-bold text-[var(--text-primary)]">{log.acao}</td>
-                        <td className="py-4 text-right text-[var(--text-muted)]">{log.obs}</td>
-                     </tr>
-                   ))}
-                </tbody>
+                    {logs.map((log, i) => (
+                      <tr key={i} className="hover:bg-white/5 transition-colors">
+                         <td className="py-4 font-mono text-[var(--text-muted)]">{log.data}</td>
+                         <td className="py-4 font-black text-[var(--neon-blue)]">{log.user}</td>
+                         <td className="py-4 font-bold text-[var(--text-primary)]">{log.acao}</td>
+                         <td className="py-4 text-right text-[var(--text-muted)]">{log.obs}</td>
+                      </tr>
+                    ))}
+                    {logs.length === 0 && (
+                        <tr>
+                            <td colSpan={4} className="py-10 text-center text-[var(--text-muted)] uppercase font-black text-[10px]">Nenhuma atividade registrada</td>
+                        </tr>
+                    )}
+                 </tbody>
              </table>
           </div>
        </div>

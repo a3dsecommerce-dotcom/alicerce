@@ -286,6 +286,7 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
           item_id: id,
           solicitante: `ALMOXARIFADO (${user?.name || 'Central'})`,
           unidade_destino: 'ALMOXARIFADO CENTRAL',
+          secretaria_destino: 'ALMOXARIFADO',
           quantidade: volumes[id] || 0,
           quantidade_extra: volumesExtra[id] || 0,
           status: 'SOLICITADO',
@@ -485,7 +486,14 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                       <td className="px-3 py-4 text-center font-black text-[var(--brand)] text-[10px]">{r.protocolo || '---'}</td>
                       <td className="px-3 py-4">
                         <div className="text-[11px] font-black whitespace-normal w-[150px] leading-tight line-clamp-2">{r.item_nome || r.item}</div>
-                        <div className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5 opacity-70 truncate w-[150px]">{r.unidade_destino}</div>
+                        <div className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5 opacity-70 truncate w-[150px]">
+                          {r.secretaria_destino ? (
+                            <span className="text-orange-600">{r.secretaria_destino} • </span>
+                          ) : (
+                            <span className="text-red-500 font-black">S/ SEC • </span>
+                          )}
+                          {r.unidade_destino}
+                        </div>
                       </td>
                       <td className="px-3 py-4 text-center text-[10px] font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</td>
                       <td className="px-3 py-4 text-center text-xs font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</td>
@@ -663,7 +671,9 @@ export default function AlmoxarifadoModule({ reducao, setReducao }: { reducao: n
                     </div>
                     <div>
                        <h4 className="text-lg font-black uppercase text-[var(--text-primary)]">{reqEditando.item_nome || reqEditando.item}</h4>
-                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Protocolo: {reqEditando.protocolo}</p>
+                       <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
+                          {reqEditando.secretaria_destino ? `${reqEditando.secretaria_destino} • ` : ''}{reqEditando.unidade_destino} • Protocolo: {reqEditando.protocolo}
+                       </p>
                     </div>
                  </div>
                  <div className="text-right">

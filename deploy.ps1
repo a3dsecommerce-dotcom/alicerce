@@ -74,3 +74,4 @@ Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "✅ Processo de deploy concluído!" -ForegroundColor Green
 Write-Host "   Verifique o Easypanel para acompanhar o build." -ForegroundColor Gray
 Write-Host ""
+

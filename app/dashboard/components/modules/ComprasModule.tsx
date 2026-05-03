@@ -62,8 +62,18 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
     const { data: catData } = await supabase.from('almox_suprimentos').select('*').order('item');
     if (catData) setCatalogo(catData);
 
-    // 2. Fetch Requisições da secretaria do usuário logado (Isolamento de Dados)
-    if (currentUser?.unidade_alocacao) {
+    // 2. Fetch Requisições (Lógica de Hierarquia: Comprador vê Secretaria, Unidade vê Unidade)
+    if (currentUser?.role === 'COMPRADOR' && currentUser?.secretaria) {
+      // Se for comprador, vê tudo da secretaria dele
+      const { data: reqData } = await supabase
+        .from('requisicoes')
+        .select('*')
+        .eq('secretaria_destino', currentUser.secretaria)
+        .order('data_solicitacao', { ascending: false });
+      
+      if (reqData) setRequisicoesRaw(reqData);
+    } else if (currentUser?.unidade_alocacao) {
+      // Se for solicitante comum, vê apenas da sua unidade
       const { data: reqData } = await supabase
         .from('requisicoes')
         .select('*')
@@ -72,8 +82,6 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
       
       if (reqData) setRequisicoesRaw(reqData);
     } else {
-      // Se não houver unidade (ex: admin), busca tudo ou nada?
-      // O usuário solicitou que cada secretaria veja as suas.
       const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
       if (reqData) setRequisicoesRaw(reqData);
     }
@@ -135,8 +143,9 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
         
         return {
           item_id: id,
-          solicitante: user?.name || 'Comprador',
+          solicitante: user?.nome || user?.name || 'Comprador',
           unidade_destino: user?.unidade_alocacao || 'Unidade',
+          secretaria_destino: user?.secretaria || 'SEMED',
           quantidade: qtdNormal,
           quantidade_extra: qtdExtra,
           status: 'SOLICITADO',
@@ -175,11 +184,13 @@ export default function ComprasModule({ reducao }: { reducao: number }) {
            </div>
            <div>
               <h2 className="text-2xl font-black text-[var(--text-primary)] italic tracking-tight flex items-center gap-3">
-                {user.name || 'Setor Admin'} 
-                <span className="text-[10px] not-italic font-black bg-[var(--brand)] text-white px-3 py-1 rounded-full uppercase tracking-widest">{user.unidade_alocacao || 'Unidade'}</span>
+                {user.name || user.nome || 'Setor Admin'} 
+                <span className="text-[10px] not-italic font-black bg-[var(--brand)] text-white px-3 py-1 rounded-full uppercase tracking-widest">
+                  {user.role === 'COMPRADOR' ? (user.secretaria || 'Sem Secretaria') : (user.unidade_alocacao || user.secretaria || 'Unidade')}
+                </span>
               </h2>
               <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1 flex items-center gap-2">
-                <Package size={14} className="text-[var(--brand)]" /> {requisicoesRaw.length} Requisições Geradas • Período: {new Date().toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'})}
+                <Package size={14} className="text-[var(--brand)]" /> {requisicoesRaw.length} Requisições Visíveis • {user.role === 'COMPRADOR' ? 'Visão Secretaria' : 'Visão Unidade'}
               </p>
            </div>
         </div>
