@@ -13,6 +13,8 @@ import SidebarLink from "./components/SidebarLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BottomNav } from "@/components/BottomNav";
 import { n8n } from "@/lib/n8n";
+import { Toaster } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -358,6 +360,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       )}
       <BottomNav />
+      <Toaster position="top-right" richColors />
     </div>
   );
 }
