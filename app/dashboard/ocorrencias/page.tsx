@@ -252,8 +252,10 @@ export default function OcorrenciasPage() {
           <div className="flex-1 lg:w-64 relative group">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--brand)] transition-colors" />
             <input 
-              className="input-field w-full pl-11 !bg-[var(--bg-base)] border-transparent focus:border-[var(--brand)]/30" 
+              className="input-field w-full !pl-14 !h-12 text-xs !bg-[var(--bg-base)] border-transparent focus:border-[var(--brand)]/30" 
               placeholder="Localizar evento..." 
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
             />
           </div>
 
