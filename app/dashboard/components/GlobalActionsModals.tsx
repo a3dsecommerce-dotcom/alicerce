@@ -18,7 +18,7 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
   const [loading, setLoading] = useState(false);
   
   // Ocorrência State
-  const [ocorrencia, setOcorrencia] = useState({ assunto: '', unidade: '', descricao: '', prioridade: 'NORMAL', setor_destino: 'OPERACIONAL', responsavel_citado: '' });
+  const [ocorrencia, setOcorrencia] = useState({ assunto: '', descricao: '', prioridade: 'NORMAL', setor_destino: 'Gerência Operacional', responsavel_citado: '' });
   
   // EPI State (Step-by-Step)
   const [epiStep, setEpiStep] = useState(1);
@@ -75,16 +75,6 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label-sm">Unidade</label>
-              <input 
-                className="input-field w-full" 
-                placeholder="Ex: SEMED" 
-                value={ocorrencia.unidade}
-                onChange={e => setOcorrencia({...ocorrencia, unidade: e.target.value})}
-              />
-            </div>
             <div>
               <label className="label-sm">Prioridade</label>
               <select 
@@ -98,7 +88,6 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
                 <option value="CRITICA">Crítica (Sinistro)</option>
               </select>
             </div>
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -108,11 +97,12 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
                 value={ocorrencia.setor_destino}
                 onChange={e => setOcorrencia({...ocorrencia, setor_destino: e.target.value})}
               >
-                <option value="OPERACIONAL">Operacional</option>
-                <option value="RH">Recursos Humanos (RH)</option>
-                <option value="TI">TI / Sistemas</option>
-                <option value="FINANCEIRO">Financeiro</option>
-                <option value="DIRETORIA">Diretoria</option>
+                <option value="Gerência Operacional">Gerência Operacional</option>
+                <option value="RH Recursos Humanos">RH Recursos Humanos</option>
+                <option value="Almoxarifado">Almoxarifado</option>
+                <option value="Encarregado">Encarregado</option>
+                <option value="Técnico Segurança">Técnico Segurança</option>
+                <option value="Gerência Regional">Gerência Regional</option>
               </select>
             </div>
             <div>

@@ -428,10 +428,21 @@ export default function AlmoxModals({
                  <p className="text-xs font-black text-red-900 uppercase">Gestão de SLA e Prazos</p>
               </div>
               <div className="grid grid-cols-2 gap-6">
-                 <div className="col-span-2">
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Descrição da Demanda</label>
-                    <textarea className="input-field !h-32 p-4 text-xs font-bold" value={ocorrenciaData.desc} onChange={e => setOcorrenciaData({...ocorrenciaData, desc: e.target.value})} placeholder="O que precisa ser resolvido?" />
-                 </div>
+                  <div className="col-span-2">
+                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Setor Destino / Responsável</label>
+                     <select className="input-field !h-14 font-black" value={ocorrenciaData.setor_destino} onChange={e => setOcorrenciaData({...ocorrenciaData, setor_destino: e.target.value})}>
+                        <option value="Gerência Operacional">Gerência Operacional</option>
+                        <option value="RH Recursos Humanos">RH Recursos Humanos</option>
+                        <option value="Almoxarifado">Almoxarifado</option>
+                        <option value="Encarregado">Encarregado</option>
+                        <option value="Técnico Segurança">Técnico Segurança</option>
+                        <option value="Gerência Regional">Gerência Regional</option>
+                     </select>
+                  </div>
+                  <div className="col-span-2">
+                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Descrição da Demanda</label>
+                     <textarea className="input-field !h-32 p-4 text-xs font-bold" value={ocorrenciaData.desc} onChange={e => setOcorrenciaData({...ocorrenciaData, desc: e.target.value})} placeholder="O que precisa ser resolvido?" />
+                  </div>
                  <button onClick={onSalvarOcorrencia} className="col-span-2 h-14 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">Abrir Ticket</button>
               </div>
            </div>
