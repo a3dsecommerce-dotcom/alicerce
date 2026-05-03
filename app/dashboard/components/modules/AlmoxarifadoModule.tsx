@@ -7,12 +7,13 @@ import { useAlmoxData } from "./almoxarifado/useAlmoxData";
 import EstoqueTable from "./almoxarifado/EstoqueTable";
 import RequisicoesTable from "./almoxarifado/RequisicoesTable";
 import NovaRequisicaoForm from "./almoxarifado/NovaRequisicaoForm";
+import EntregasEPITable from "./almoxarifado/EntregasEPITable";
 import AlmoxModals from "./almoxarifado/AlmoxModals";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "OCORRENCIAS";
+type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI";
 
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
@@ -177,7 +178,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           {[
             { id: "ESTOQUE", label: "Cadastro Geral", icon: Package },
             { id: "REQUISICOES", label: "Requisições", icon: FileText },
-            { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle },
+            { id: "ENTREGAS_EPI", label: "Entregas EPI", icon: UserCheck },
             { id: "FAZER_REQ", label: "Fazer Requisição", icon: ShoppingBag },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
@@ -206,7 +207,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
             />
           )}
           {activeTab === "FAZER_REQ" && <NovaRequisicaoForm estoque={estoque} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} tipoPedidoGeral={tipoPedidoGeral} setTipoPedidoGeral={setTipoPedidoGeral} onFinalizar={handleFinalizarPedidoInternal} loading={loading} />}
-          {activeTab === "OCORRENCIAS" && <div className="p-20 text-center opacity-50"><AlertTriangle size={48} className="mx-auto mb-4" /><p className="text-xs font-black uppercase tracking-widest">Módulo de Ocorrências em Manutenção</p></div>}
+          {activeTab === "ENTREGAS_EPI" && <EntregasEPITable requisicoes={requisicoes} busca={busca} calcularDias={calcularDias} />}
       </div>
 
       <AlmoxModals 
