@@ -8,10 +8,12 @@ import { useOperacionalData } from "./operacional/useOperacionalData";
 import UnidadesTable from "./operacional/UnidadesTable";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 
-export default function OperacionalModule() {
-  const { loading, unidades, tickets, stats, refresh } = useOperacionalData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "UNIDADES" | "HISTORICO">("VISAO");
+export default function OperacionalModule({ user }: { user: any }) {
+  const { loading, unidades, colaboradores, tickets, stats, refresh } = useOperacionalData(user);
+  const [activeTab, setActiveTab] = useState<"VISAO" | "UNIDADES" | "EQUIPE" | "HISTORICO">("VISAO");
   const [busca, setBusca] = useState("");
+  
+  const isEncarregado = user?.role === 'ENCARREGADO';
 
   if (loading) return (
     <div className="p-20">
@@ -39,8 +41,9 @@ export default function OperacionalModule() {
 
         <div className="flex gap-2 p-1.5 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)] relative z-10">
           {[
-            { id: "VISAO", label: "Visão Geral", icon: Activity },
-            { id: "UNIDADES", label: "Unidades / Postos", icon: Building2 },
+            { id: "VISAO", label: isEncarregado ? "Painel de Rota" : "Visão Geral", icon: Activity },
+            { id: "UNIDADES", label: isEncarregado ? "Minhas Unidades" : "Unidades / Postos", icon: Building2 },
+            { id: "EQUIPE", label: isEncarregado ? "Minha Equipe" : "Efetivo Global", icon: Users },
             { id: "HISTORICO", label: "Logs de Campo", icon: Clock },
           ].map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
@@ -55,14 +58,14 @@ export default function OperacionalModule() {
           {/* KPI CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm">
-              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">Unidades Ativas</p>
+              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">{isEncarregado ? "Unidades na Rota" : "Unidades Ativas"}</p>
               <h3 className="text-4xl font-black text-[var(--text-primary)]">{stats.totalUnidades}</h3>
               <div className="mt-4 h-1.5 bg-[var(--bg-base)] rounded-full overflow-hidden">
                 <div className="h-full bg-blue-500" style={{ width: '85%' }}></div>
               </div>
             </div>
             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm">
-              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">Tickets do Setor</p>
+              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">{isEncarregado ? "Minhas Demandas" : "Tickets do Setor"}</p>
               <h3 className="text-4xl font-black text-orange-500">{stats.ticketsAtivos}</h3>
               <p className="text-[9px] font-bold text-[var(--text-muted)] mt-2 uppercase">Aguardando atendimento</p>
             </div>
@@ -176,6 +179,53 @@ export default function OperacionalModule() {
               </button>
            </div>
            <UnidadesTable unidades={unidades} busca={busca} />
+        </div>
+      )}
+
+      {activeTab === "EQUIPE" && (
+        <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden flex flex-col flex-1">
+           <div className="p-10 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-6">
+              <h4 className="text-sm font-black uppercase flex items-center gap-2">
+                 <Users size={18} className="text-blue-500" /> {isEncarregado ? "Colaboradores da Minha Rota" : "Efetivo Global Operacional"}
+              </h4>
+              <div className="relative flex-1 w-full max-w-md">
+                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={20} />
+                 <input className="input-field !pl-16 !h-14 font-bold" placeholder="Pesquisar por nome ou CPF..." value={busca} onChange={e => setBusca(e.target.value)} />
+              </div>
+           </div>
+           <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                 <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+                    <tr>
+                       <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Colaborador</th>
+                       <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Posto Alocado</th>
+                       <th className="p-8 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
+                    </tr>
+                 </thead>
+                 <tbody className="divide-y divide-[var(--border)]">
+                    {colaboradores.filter(c => c.nome?.toLowerCase().includes(busca.toLowerCase())).map((c, i) => (
+                      <tr key={c.id || i} className="hover:bg-[var(--bg-base)]/30 transition-all group">
+                         <td className="p-8">
+                            <div className="flex items-center gap-3">
+                               <div className="w-10 h-10 rounded-full bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center text-[var(--text-muted)]">
+                                  <User size={18} />
+                               </div>
+                               <span className="text-sm font-black text-[var(--text-primary)]">{c.nome}</span>
+                            </div>
+                         </td>
+                         <td className="p-8">
+                            <span className="text-xs font-black text-[var(--text-muted)] uppercase">{c.unidade_alocacao || 'Sem Posto'}</span>
+                         </td>
+                         <td className="p-8 text-center">
+                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${c.status === 'ATIVO' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                               {c.status}
+                            </span>
+                         </td>
+                      </tr>
+                    ))}
+                 </tbody>
+              </table>
+           </div>
         </div>
       )}
 
