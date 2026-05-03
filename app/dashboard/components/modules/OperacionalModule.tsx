@@ -12,8 +12,53 @@ export default function OperacionalModule({ user }: { user: any }) {
   const { loading, unidades, colaboradores, tickets, stats, refresh } = useOperacionalData(user);
   const [activeTab, setActiveTab] = useState<"VISAO" | "UNIDADES" | "EQUIPE" | "HISTORICO">("VISAO");
   const [busca, setBusca] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newUnit, setNewUnit] = useState({
+    secretaria: "SEMED",
+    nome: "",
+    endereco: "",
+    numero: "",
+    bairro: "",
+    diretor: "",
+    telefone: "",
+    atendidos_dia: ""
+  });
   
   const isEncarregado = user?.role === 'ENCARREGADO';
+
+  const handleCreateUnit = async () => {
+    if (!newUnit.nome || !newUnit.secretaria) {
+      toast.error("Nome e Secretaria são obrigatórios");
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase.from('unidades').insert([{
+      ...newUnit,
+      atendidos_dia: parseInt(newUnit.atendidos_dia) || 0,
+      criado_em: new Date().toISOString()
+    }]);
+
+    if (!error) {
+      toast.success("Unidade cadastrada com sucesso!");
+      setIsModalOpen(false);
+      setNewUnit({
+        secretaria: "SEMED",
+        nome: "",
+        endereco: "",
+        numero: "",
+        bairro: "",
+        diretor: "",
+        telefone: "",
+        atendidos_dia: ""
+      });
+      refresh();
+    } else {
+      toast.error("Erro ao cadastrar: " + error.message);
+    }
+    setSaving(false);
+  };
 
   if (loading) return (
     <div className="p-20">
@@ -174,7 +219,10 @@ export default function OperacionalModule({ user }: { user: any }) {
                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={20} />
                  <input className="input-field !pl-16 !h-14 font-bold" placeholder="Pesquisar posto ou unidade..." value={busca} onChange={e => setBusca(e.target.value)} />
               </div>
-              <button className="h-14 px-8 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-black/20">
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="h-14 px-8 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-black/20"
+              >
                  <Plus size={18} /> Adicionar Unidade
               </button>
            </div>
@@ -229,6 +277,114 @@ export default function OperacionalModule({ user }: { user: any }) {
         </div>
       )}
 
+
+      {/* MODAL CADASTRO UNIDADE */}
+      <AdaptiveModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="Novo Cadastro de Unidade"
+        width="600px"
+      >
+        <div className="p-10 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><ShieldCheck size={12}/> Secretaria</label>
+              <select 
+                className="input-field w-full h-12 font-bold"
+                value={newUnit.secretaria}
+                onChange={e => setNewUnit({...newUnit, secretaria: e.target.value})}
+              >
+                <option value="SEMED">SEMED (Educação)</option>
+                <option value="SEMSA">SEMSA (Saúde)</option>
+                <option value="SEMAD">SEMAD (Administração)</option>
+                <option value="SEMOSP">SEMOSP (Obras)</option>
+                <option value="GABINETE">GABINETE</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Building2 size={12}/> Nome da Unidade</label>
+              <input 
+                className="input-field w-full h-12 font-bold"
+                placeholder="Ex: Escola Municipal Alicerce"
+                value={newUnit.nome}
+                onChange={e => setNewUnit({...newUnit, nome: e.target.value.toUpperCase()})}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><MapPin size={12}/> Endereço</label>
+              <input 
+                className="input-field w-full h-12 font-bold"
+                placeholder="Rua, Avenida..."
+                value={newUnit.endereco}
+                onChange={e => setNewUnit({...newUnit, endereco: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Número</label>
+              <input 
+                className="input-field w-full h-12 font-bold"
+                placeholder="S/N"
+                value={newUnit.numero}
+                onChange={e => setNewUnit({...newUnit, numero: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><MapPin size={12}/> Bairro</label>
+              <input 
+                className="input-field w-full h-12 font-bold"
+                placeholder="Bairro da Unidade"
+                value={newUnit.bairro}
+                onChange={e => setNewUnit({...newUnit, bairro: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Users size={12}/> Atendidos/Dia</label>
+              <input 
+                type="number"
+                className="input-field w-full h-12 font-bold"
+                placeholder="Qtd. Pessoas"
+                value={newUnit.atendidos_dia}
+                onChange={e => setNewUnit({...newUnit, atendidos_dia: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><User size={12}/> Nome Diretor(a)</label>
+              <input 
+                className="input-field w-full h-12 font-bold"
+                placeholder="Responsável Local"
+                value={newUnit.diretor}
+                onChange={e => setNewUnit({...newUnit, diretor: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Phone size={12}/> Telefone Contato</label>
+              <input 
+                className="input-field w-full h-12 font-bold"
+                placeholder="(00) 00000-0000"
+                value={newUnit.telefone}
+                onChange={e => setNewUnit({...newUnit, telefone: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <button 
+            disabled={saving}
+            onClick={handleCreateUnit}
+            className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            {saving ? "Salvando..." : "Finalizar Cadastro de Unidade"}
+          </button>
+        </div>
+      </AdaptiveModal>
     </div>
   );
 }
