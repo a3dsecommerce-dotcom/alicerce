@@ -114,41 +114,45 @@ export default function EncarregadoModule({ user }: { user: any }) {
           </div>
           <div className="overflow-x-auto">
              <table className="w-full text-left">
-                <thead className="text-[10px] font-black uppercase text-[var(--text-muted)] border-b border-[var(--border)]">
+                <thead className="border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                    <tr>
-                      <th className="pb-4">Colaborador</th>
-                      <th className="pb-4">Unidade</th>
-                      <th className="pb-4">Cargo</th>
-                      <th className="pb-4 text-right">Status</th>
+                      <th className="p-6">Colaborador</th>
+                      <th className="p-6">Cargo / Unidade</th>
+                      <th className="p-6 text-center">CPF / Telefone</th>
+                      <th className="p-6 text-center">Status</th>
+                      <th className="p-6 text-right">Ações</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                    {myColabs.map((colab, i) => (
-                     <tr key={i} className="hover:bg-white/5 transition-colors">
-                        <td className="py-4">
-                           <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-[var(--bg-base)] border border-[var(--border)] flex items-center justify-center">
-                                 <User size={14} className="text-[var(--text-muted)]" />
+                     <tr key={i} className="hover:bg-[var(--bg-base)]/50 transition-colors group cursor-pointer" onClick={() => setEditandoColab(colab)}>
+                        <td className="p-6">
+                           <div className="flex items-center gap-5">
+                              <div className="w-12 h-12 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center text-sm font-black shadow-lg shadow-[var(--brand)]/20">
+                                 {colab.nome?.charAt(0)}
                               </div>
-                              <span className="text-sm font-bold text-[var(--text-primary)]">{colab.nome}</span>
+                              <span className="text-base font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors">{colab.nome}</span>
                            </div>
                         </td>
-                        <td className="py-4 text-xs font-bold text-[var(--text-muted)] uppercase">{colab.unidade_alocacao}</td>
-                        <td className="py-4 text-xs font-medium text-[var(--text-muted)]">{colab.cargo || 'OPERACIONAL'}</td>
-                         <td className="py-4 text-right">
-                           <div className="flex items-center justify-end gap-2">
-                             <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase ${colab.status === 'ATIVO' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                {colab.status}
-                             </span>
-                             <button 
-                               onClick={() => setEditandoColab(colab)}
-                               className="p-2 hover:bg-[var(--bg-base)] rounded-lg text-[var(--text-muted)] hover:text-[var(--brand)] transition-all"
-                             >
-                                <Edit3 size={14} />
-                             </button>
-                           </div>
-                         </td>
-                      </tr>
+                        <td className="p-6">
+                           <div className="text-xs font-black text-[var(--text-secondary)]">{colab.cargo || 'OPERACIONAL'}</div>
+                           <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">{colab.unidade_alocacao}</div>
+                        </td>
+                        <td className="p-6 text-center">
+                           <div className="text-xs font-bold text-[var(--text-secondary)]">{colab.cpf || '---'}</div>
+                           <div className="text-[10px] text-[var(--text-muted)]">{colab.telefone || '---'}</div>
+                        </td>
+                        <td className="p-6 text-center">
+                           <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${colab.status === 'ATIVO' ? 'bg-green-100 text-green-700' : colab.status === 'AFASTADO' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
+                              {colab.status}
+                           </span>
+                        </td>
+                        <td className="p-6 text-right">
+                           <button className="p-3 bg-[var(--bg-base)] text-[var(--text-muted)] rounded-xl group-hover:text-[var(--brand)] group-hover:bg-white transition-all">
+                             <Edit3 size={18} />
+                           </button>
+                        </td>
+                     </tr>
                    ))}
                 </tbody>
              </table>
@@ -167,6 +171,9 @@ export default function EncarregadoModule({ user }: { user: any }) {
     const { error } = await supabase.from('usuarios').update({
       nome: editandoColab.nome,
       telefone: editandoColab.telefone,
+      cpf: editandoColab.cpf,
+      cargo: editandoColab.cargo,
+      status: editandoColab.status,
       unidade_alocacao: editandoColab.unidade_alocacao,
       secretaria: fullUnits.find(u => u.nome === editandoColab.unidade_alocacao)?.secretaria || editandoColab.secretaria,
       justificativa_alteracao: justificativa,
@@ -367,13 +374,13 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome Completo</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CPF</label>
               <input 
                 className="input-field w-full font-bold" 
-                value={editandoColab?.nome || ''} 
-                onChange={e => setEditandoColab({...editandoColab, nome: e.target.value.toUpperCase()})}
+                value={editandoColab?.cpf || ''} 
+                onChange={e => setEditandoColab({...editandoColab, cpf: e.target.value})}
               />
             </div>
             <div>
@@ -384,16 +391,42 @@ export default function EncarregadoModule({ user }: { user: any }) {
                 onChange={e => setEditandoColab({...editandoColab, telefone: e.target.value})}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo</label>
+              <input 
+                className="input-field w-full font-bold" 
+                value={editandoColab?.cargo || ''} 
+                onChange={e => setEditandoColab({...editandoColab, cargo: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Status</label>
               <select 
                 className="input-field w-full font-bold"
-                value={editandoColab?.unidade_alocacao || ''}
-                onChange={e => setEditandoColab({...editandoColab, unidade_alocacao: e.target.value})}
+                value={editandoColab?.status || ''}
+                onChange={e => setEditandoColab({...editandoColab, status: e.target.value})}
               >
-                {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
+                <option value="ATIVO">ATIVO</option>
+                <option value="AFASTADO">AFASTADO</option>
+                <option value="INATIVO">INATIVO</option>
+                <option value="DESLIGADO">DESLIGADO</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+            <select 
+              className="input-field w-full font-bold"
+              value={editandoColab?.unidade_alocacao || ''}
+              onChange={e => setEditandoColab({...editandoColab, unidade_alocacao: e.target.value})}
+            >
+              {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
             <div>
               <label className="text-[10px] font-black uppercase text-red-500 mb-2 block font-black">Justificativa da Alteração (Obrigatório)</label>
               <textarea 
