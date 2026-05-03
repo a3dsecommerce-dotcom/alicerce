@@ -420,6 +420,7 @@ export default function OperacionalModule({ user }: { user: any }) {
                 <option value="INATIVO">INATIVO (Suspenso)</option>
               </select>
             </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><User size={12}/> Nome Diretor(a)</label>
               <input 
@@ -429,7 +430,6 @@ export default function OperacionalModule({ user }: { user: any }) {
                 onChange={e => setNewUnit({...newUnit, diretor: e.target.value.toUpperCase()})}
               />
             </div>
-          </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Phone size={12}/> Telefone Contato</label>
               <input 
