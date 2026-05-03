@@ -1,5 +1,5 @@
 "use client";
-import { Clock, Truck, Package, Archive, CheckCircle2 } from "lucide-react";
+import { Clock, Truck, Package, Archive, CheckCircle2, FileText } from "lucide-react";
 
 interface RequisicoesTableProps {
   requisicoes: any[];
@@ -61,6 +61,12 @@ export default function RequisicoesTable({
                   )}
                   {r.unidade_destino}
                 </div>
+                {r.observacao && (
+                  <div className="mt-2 p-2 bg-amber-50 rounded-lg border border-amber-100 flex items-start gap-2">
+                    <FileText size={10} className="text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-[8px] font-bold text-amber-800 leading-tight italic uppercase">{r.observacao}</p>
+                  </div>
+                )}
               </td>
               <td className="px-3 py-4 text-center text-[10px] font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</td>
               <td className="px-3 py-4 text-center text-xs font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</td>

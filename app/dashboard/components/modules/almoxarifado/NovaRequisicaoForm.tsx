@@ -9,6 +9,8 @@ interface NovaRequisicaoFormProps {
   setVolumesExtra: (v: any) => void;
   tipoPedidoGeral: "MENSAL" | "EMERGENCIAL";
   setTipoPedidoGeral: (v: "MENSAL" | "EMERGENCIAL") => void;
+  observacao: string;
+  setObservacao: (v: string) => void;
   onFinalizar: () => void;
   loading: boolean;
 }
@@ -18,31 +20,41 @@ export default function NovaRequisicaoForm({
   volumes, setVolumes,
   volumesExtra, setVolumesExtra,
   tipoPedidoGeral, setTipoPedidoGeral,
+  observacao, setObservacao,
   onFinalizar,
   loading
 }: NovaRequisicaoFormProps) {
   return (
     <div className="flex flex-col flex-1">
-       <div className="p-8 border-b border-[var(--border)] flex justify-between items-center bg-[var(--bg-base)]/5">
-          <div className="flex items-center gap-8">
+        <div className="p-8 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--bg-base)]/5">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-8 w-full">
             <div>
-              <h3 className="text-lg font-black uppercase">Gerador de Pedidos Almoxarifado</h3>
-              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-1">Crie requisições internas de qualquer material para reposição ou uso</p>
+              <h3 className="text-lg font-black uppercase italic">Gerador de Pedidos</h3>
+              <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-1 tracking-widest">Requisição Interna de Materiais</p>
             </div>
             
-            <div className="flex gap-2 p-1 bg-white rounded-2xl border border-[var(--border)] shadow-sm">
+            <div className="flex gap-2 p-1.5 bg-white rounded-2xl border border-[var(--border)] shadow-sm">
                <button onClick={() => setTipoPedidoGeral("MENSAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedidoGeral === 'MENSAL' ? 'bg-blue-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-blue-50'}`}>Mensal</button>
                <button onClick={() => setTipoPedidoGeral("EMERGENCIAL")} className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tipoPedidoGeral === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-red-50'}`}>Emergencial</button>
+            </div>
+
+            <div className="flex-1 w-full">
+              <textarea 
+                className="w-full h-12 px-4 py-3 rounded-xl border border-[var(--border)] bg-white text-[11px] font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none"
+                placeholder="Observações ou justificativa do pedido (opcional)..."
+                value={observacao}
+                onChange={e => setObservacao(e.target.value)}
+              />
             </div>
           </div>
           <button 
             onClick={onFinalizar} 
             disabled={loading || (Object.values(volumes).every(v => v === 0) && Object.values(volumesExtra).every(v => v === 0))} 
-            className="h-14 px-10 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30 disabled:opacity-30"
+            className="h-12 px-10 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-xl disabled:opacity-30 whitespace-nowrap"
           >
-            <Send size={18} /> Finalizar Pedido
+            <Send size={16} /> Enviar Requisição
           </button>
-       </div>
+        </div>
        
        <div className="flex-1 overflow-x-auto">
          <table className="w-full text-left">

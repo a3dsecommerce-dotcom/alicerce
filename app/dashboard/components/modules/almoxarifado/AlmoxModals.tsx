@@ -31,6 +31,7 @@ interface AlmoxModalsProps {
   resolucaoData: any;
   setResolucaoData: (v: any) => void;
   onFinalizarResolucao: () => void;
+  onFinalizarRequisicaoInternal: () => void;
   loading: boolean;
 }
 
@@ -42,6 +43,7 @@ export default function AlmoxModals({
   entregaConfirm, setEntregaConfirm, entregaParcialQtd, setEntregaParcialQtd, onConfirmarEntregaTotal, onConfirmarEntregaParcial,
   ocorrenciaData, setOcorrenciaData, onSalvarOcorrencia,
   resolucaoData, setResolucaoData, onFinalizarResolucao,
+  onFinalizarRequisicaoInternal,
   loading
 }: AlmoxModalsProps) {
   

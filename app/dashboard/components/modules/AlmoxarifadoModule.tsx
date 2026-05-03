@@ -46,6 +46,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const [resolucaoData, setResolucaoData] = useState({ id: "", solucao: "" });
   const [mostrarArquivados, setMostrarArquivados] = useState(false);
   const [filtroCategoria, setFiltroCategoria] = useState<string>("EPI");
+  const [observacao, setObservacao] = useState("");
 
   // Handlers Complexos (que envolvem lógica de UI + Banco)
   const handleSalvarItem = async () => {
@@ -93,6 +94,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           tipo_item: item?.categoria || 'SUPRIMENTO',
           tipo_pedido: tipoPedidoGeral,
           data_solicitacao: new Date().toISOString(),
+          observacao: observacao,
         };
       });
 
@@ -101,6 +103,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
 
       setVolumes({});
       setVolumesExtra({});
+      setObservacao("");
       toast.dismiss(loadingToast);
       toast.success("Pedido interno gerado com sucesso!");
       refresh();
@@ -244,7 +247,21 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
               }}
             />
           )}
-          {activeTab === "FAZER_REQ" && <NovaRequisicaoForm estoque={estoque} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} tipoPedidoGeral={tipoPedidoGeral} setTipoPedidoGeral={setTipoPedidoGeral} onFinalizar={handleFinalizarPedidoInternal} loading={loading} />}
+          {activeTab === "FAZER_REQ" && (
+            <NovaRequisicaoForm 
+              estoque={estoque} 
+              volumes={volumes} 
+              setVolumes={setVolumes} 
+              volumesExtra={volumesExtra} 
+              setVolumesExtra={setVolumesExtra} 
+              tipoPedidoGeral={tipoPedidoGeral} 
+              setTipoPedidoGeral={setTipoPedidoGeral} 
+              observacao={observacao}
+              setObservacao={setObservacao}
+              onFinalizar={() => setModalAberto("termo_requisicao")} 
+              loading={loading} 
+            />
+          )}
           {activeTab === "ENTREGAS_EPI" && <EntregasEPITable requisicoes={requisicoes} busca={busca} calcularDias={calcularDias} />}
       </div>
 
@@ -293,6 +310,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         }} 
         ocorrenciaData={ocorrenciaData} setOcorrenciaData={setOcorrenciaData} onSalvarOcorrencia={() => toast.error("Ocorrência registrada e enviada para o RH.")}
         resolucaoData={resolucaoData} setResolucaoData={setResolucaoData} onFinalizarResolucao={() => toast.success("Atendimento finalizado.")}
+        onFinalizarRequisicaoInternal={handleFinalizarPedidoInternal}
         loading={loading}
       />
     </div>
