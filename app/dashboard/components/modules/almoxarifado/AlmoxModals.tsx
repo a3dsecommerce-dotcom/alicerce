@@ -141,11 +141,18 @@ export default function AlmoxModals({
                            <div className="flex items-center gap-3">
                               {selecionado ? (
                                  <>
-                                    <input type="number" className="w-16 h-10 rounded-lg border-2 border-orange-500 text-center text-xs font-black" value={selecionado.qtd_entrega} max={epi.quantidade} min={1} onChange={e => {
-                                       const val = Math.min(Number(e.target.value), epi.quantidade);
-                                       const newItens = entregaData.itens.map((x: any) => x.id === epi.id ? {...x, qtd_entrega: val} : x);
-                                       setEntregaData({...entregaData, itens: newItens});
-                                    }} />
+                                    <input 
+                                       type="number" 
+                                       className="w-16 h-10 rounded-lg border-2 border-orange-500 text-center text-xs font-black [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                                       value={selecionado.qtd_entrega} 
+                                       max={epi.quantidade} 
+                                       min={1} 
+                                       onChange={e => {
+                                          const val = Math.min(Number(e.target.value), epi.quantidade);
+                                          const newItens = entregaData.itens.map((x: any) => x.id === epi.id ? {...x, qtd_entrega: val} : x);
+                                          setEntregaData({...entregaData, itens: newItens});
+                                       }} 
+                                    />
                                     <button onClick={() => setEntregaData({...entregaData, itens: entregaData.itens.filter((x: any) => x.id !== epi.id)})} className="p-2 text-red-500"><Trash2 size={16}/></button>
                                  </>
                               ) : (
@@ -161,6 +168,70 @@ export default function AlmoxModals({
             <button onClick={onConfirmarEntregaEPI} disabled={loading || !entregaData.colaborador || entregaData.itens.length === 0} className="w-full h-16 bg-orange-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/30 flex items-center justify-center gap-3 hover:scale-[1.02] transition-all disabled:opacity-30">
                <UserCheck size={20} /> Gerar Recibo e Baixar Estoque
             </button>
+         </div>
+      </AdaptiveModal>
+
+      {/* MODAL RECIBO DE ENTREGA (VISUALIZAÇÃO) */}
+      <AdaptiveModal isOpen={modalAberto === "recibo"} onClose={() => setModalAberto(null)} title="Comprovante de Entrega de EPI">
+         <div id="print-recibo" className="p-12 space-y-8 bg-white max-h-[80vh] overflow-y-auto">
+            <div className="text-center border-b-2 border-black pb-6">
+               <h3 className="text-xl font-black uppercase italic">Comprovante de Entrega de EPI</h3>
+               <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1 text-slate-500">Alicerce ERP • Gestão de Segurança do Trabalho (NR-06)</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 text-[10px] font-black uppercase">
+               <div className="space-y-1">
+                  <p className="text-slate-400">Colaborador / Recebedor</p>
+                  <p className="text-sm">{entregaData.colaborador}</p>
+               </div>
+               <div className="space-y-1 text-right">
+                  <p className="text-slate-400">Data da Entrega</p>
+                  <p className="text-sm">{new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+               </div>
+            </div>
+
+            <div className="border-2 border-black rounded-3xl overflow-hidden">
+               <table className="w-full text-left border-collapse">
+                  <thead>
+                     <tr className="bg-black text-white text-[9px] font-black uppercase tracking-widest">
+                        <th className="p-4 border-r border-white/20">Item / Descrição</th>
+                        <th className="p-4 text-center border-r border-white/20">C.A.</th>
+                        <th className="p-4 text-center">Qtd</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/10">
+                     {entregaData.itens.map((item: any) => (
+                        <tr key={item.id} className="text-[10px] font-bold uppercase">
+                           <td className="p-4 border-r border-black/5">{item.item} ({item.tamanho || 'UN'})</td>
+                           <td className="p-4 text-center border-r border-black/5">{item.ca || '---'}</td>
+                           <td className="p-4 text-center font-black">{item.qtd_entrega}</td>
+                        </tr>
+                     ))}
+                  </tbody>
+               </table>
+            </div>
+
+            <div className="pt-12 space-y-12">
+               <div className="flex flex-col items-center">
+                  <div className="w-64 border-b-2 border-black"></div>
+                  <p className="text-[9px] font-black uppercase mt-2">Assinatura do Colaborador</p>
+               </div>
+
+               <div className="bg-slate-50 p-6 rounded-2xl border border-dashed border-slate-300">
+                  <p className="text-[8px] font-bold text-slate-500 uppercase text-center leading-relaxed">
+                     Declaro ter recebido os equipamentos de proteção individual (EPIs) acima relacionados, devidamente higienizados e em perfeito estado de conservação, orientando-me quanto ao seu uso correto e guarda. Comprometo-me a utilizá-los apenas para a finalidade a que se destinam e a solicitar a sua substituição quando danificados ou extraviados.
+                  </p>
+               </div>
+            </div>
+
+            <div className="flex gap-4 pt-6 sticky bottom-0 bg-white pb-2 no-print">
+               <button onClick={() => window.print()} className="flex-1 h-14 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl">
+                  Imprimir Recibo
+               </button>
+               <button onClick={() => setModalAberto(null)} className="flex-1 h-14 bg-slate-100 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">
+                  Fechar
+               </button>
+            </div>
          </div>
       </AdaptiveModal>
 

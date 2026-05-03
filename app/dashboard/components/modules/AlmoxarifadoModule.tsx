@@ -25,6 +25,13 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   
   // Estados Locais (UI)
   const [modalAberto, setModalAberto] = useState<null | string>(null);
+  const handleCloseModal = () => {
+    if (modalAberto === "recibo" || modalAberto === "entrega") {
+      setEntregaData({ colaborador: "", itens: [] });
+      setBuscaFuncionario("");
+    }
+    setModalAberto(null);
+  };
   const [formData, setFormData] = useState<any>({ categoria: "EPI", quantidade: 0, estoque_minimo: 5 });
   const [entregaData, setEntregaData] = useState({ colaborador: "", itens: [] as any[] });
   const [buscaFuncionario, setBuscaFuncionario] = useState("");
@@ -103,10 +110,10 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           status_final: 'ENTREGUE'
         });
       }
-      setModalAberto(null);
-      setEntregaData({ colaborador: "", itens: [] });
+      setModalAberto("recibo");
       toast.dismiss(loadingToast);
       toast.success("EPI entregue e estoque atualizado com sucesso!");
+      refresh();
     } catch (e: any) { toast.error("Erro na entrega: " + e.message); }
   };
 
@@ -159,7 +166,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
       </div>
 
       <AlmoxModals 
-        modalAberto={modalAberto} setModalAberto={setModalAberto}
+        modalAberto={modalAberto} setModalAberto={handleCloseModal}
         formData={formData} setFormData={setFormData} onSalvarItem={handleSalvarItem} onExcluirItem={handleExcluirItem}
         entregaData={entregaData} setEntregaData={setEntregaData} buscaFuncionario={buscaFuncionario} setBuscaFuncionario={setBuscaFuncionario} usuarios={usuarios} estoque={estoque} onConfirmarEntregaEPI={handleConfirmarEntregaEPI}
         reqEditando={reqEditando} setReqEditando={setReqEditando} onProcessarReq={(id, status, qtd) => {
