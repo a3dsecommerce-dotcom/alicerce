@@ -439,11 +439,21 @@ export default function OperacionalModule({ user }: { user: any }) {
                 value={newUnit.rota}
                 onChange={e => setNewUnit({...newUnit, rota: e.target.value})}
               >
-                <option value="ROTA 1">ROTA 1: RICARDO</option>
-                <option value="ROTA 2">ROTA 2: MARCOS</option>
-                <option value="ROTA 3">ROTA 3: FELIPE</option>
-                <option value="ROTA 4">ROTA 4: SANDRA</option>
-                <option value="ROTA 5">ROTA 5: JULIO</option>
+                {configRotas.length > 0 ? (
+                  configRotas.map(r => (
+                    <option key={r.id} value={r.rota_nome}>
+                      {r.rota_nome}: {r.encarregado_nome || "NÃO ATRIBUÍDO"}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="ROTA 1">ROTA 1</option>
+                    <option value="ROTA 2">ROTA 2</option>
+                    <option value="ROTA 3">ROTA 3</option>
+                    <option value="ROTA 4">ROTA 4</option>
+                    <option value="ROTA 5">ROTA 5</option>
+                  </>
+                )}
               </select>
             </div>
             <div className="space-y-2">
