@@ -1,16 +1,24 @@
 "use client";
-import { Clock, Truck, Package } from "lucide-react";
+import { Clock, Truck, Package, Archive, CheckCircle2 } from "lucide-react";
 
 interface RequisicoesTableProps {
   requisicoes: any[];
   busca: string;
   onAnalisar: (r: any) => void;
   onGerenciar: (r: any) => void;
+  onArquivar?: (id: string) => void;
+  mostrarArquivados?: boolean;
   calcularDias: (d: string) => string;
 }
 
-export default function RequisicoesTable({ requisicoes, busca, onAnalisar, onGerenciar, calcularDias }: RequisicoesTableProps) {
+export default function RequisicoesTable({ 
+  requisicoes, busca, onAnalisar, onGerenciar, onArquivar, mostrarArquivados, calcularDias 
+}: RequisicoesTableProps) {
   const filtradas = requisicoes.filter(r => {
+    // Filtro de Arquivamento
+    if (!mostrarArquivados && r.arquivado) return false;
+    if (mostrarArquivados && !r.arquivado) return false;
+
     // Esconde entregas diretas de EPI para não poluir a aba de requisições gerais
     const isEntregaDiretaEPI = r.tipo_item === 'EPI' && (r.unidade_destino?.includes('Entrega Direta') || r.unidade_destino === 'Almoxarifado Central');
     if (isEntregaDiretaEPI && r.status === 'ENTREGUE') return false;
@@ -81,10 +89,22 @@ export default function RequisicoesTable({ requisicoes, busca, onAnalisar, onGer
                   {r.status === 'SOLICITADO' ? (
                     <button onClick={() => onAnalisar(r)} className="px-4 py-1.5 bg-black text-white rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
                   ) : (
-                    <button onClick={() => onGerenciar(r)} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2 ${r.status === 'ENTREGUE' ? 'bg-gray-100 text-gray-400' : (r.unidade_destino === 'Almoxarifado Central' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white')}`} disabled={r.status === 'ENTREGUE'}>
-                       {r.unidade_destino === 'Almoxarifado Central' ? <Package size={12}/> : <Truck size={12}/>}
-                       {r.unidade_destino === 'Almoxarifado Central' ? 'Receber' : 'Gerenciar'}
-                    </button>
+                    <div className="flex flex-col gap-1">
+                      <button onClick={() => onGerenciar(r)} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2 ${r.status === 'ENTREGUE' ? 'bg-gray-100 text-gray-400' : (r.unidade_destino === 'Almoxarifado Central' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white')}`} disabled={r.status === 'ENTREGUE'}>
+                        {r.unidade_destino === 'Almoxarifado Central' ? <Package size={12}/> : <Truck size={12}/>}
+                        {r.unidade_destino === 'Almoxarifado Central' ? 'Receber' : 'Gerenciar'}
+                      </button>
+                      {r.status === 'ENTREGUE' && !r.arquivado && onArquivar && (
+                        <button onClick={() => onArquivar(r.id)} className="px-4 py-1 bg-amber-50 text-amber-700 rounded-lg text-[8px] font-black uppercase flex items-center justify-center gap-1 hover:bg-amber-600 hover:text-white transition-all border border-amber-100">
+                          <Archive size={10}/> Arquivar
+                        </button>
+                      )}
+                      {r.arquivado && (
+                        <span className="text-[7px] font-black uppercase text-slate-400 flex items-center justify-center gap-1 italic">
+                          <CheckCircle2 size={8}/> Arquivado
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </td>

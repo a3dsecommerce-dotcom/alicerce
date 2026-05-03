@@ -90,6 +90,12 @@ export function useAlmoxData() {
     await fetchAll();
   };
 
+  const arquivarRequisicao = async (id: string) => {
+    const { error } = await supabase.from('requisicoes').update({ arquivado: true }).eq('id', id);
+    if (error) throw error;
+    await fetchAll();
+  };
+
   return {
     loading,
     estoque,
@@ -101,6 +107,7 @@ export function useAlmoxData() {
     insertItem,
     deleteItem,
     processarRequisicao,
-    processarEntregaRPC
+    processarEntregaRPC,
+    arquivarRequisicao
   };
 }

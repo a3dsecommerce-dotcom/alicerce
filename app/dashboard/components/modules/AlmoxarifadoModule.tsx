@@ -18,7 +18,7 @@ type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI";
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
     loading, estoque, requisicoes, usuarios, ocorrencias, 
-    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, refresh 
+    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, arquivarRequisicao, refresh 
   } = useAlmoxData();
 
   const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
@@ -44,6 +44,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const [entregaParcialQtd, setEntregaParcialQtd] = useState(0);
   const [ocorrenciaData, setOcorrenciaData] = useState({ desc: "", prioridade: "ALTA", dias_solucao: 1 });
   const [resolucaoData, setResolucaoData] = useState({ id: "", solucao: "" });
+  const [mostrarArquivados, setMostrarArquivados] = useState(false);
 
   // Handlers Complexos (que envolvem lógica de UI + Banco)
   const handleSalvarItem = async () => {
@@ -187,9 +188,19 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           ))}
         </div>
         {activeTab !== "FAZER_REQ" && (
-          <div className="relative w-full md:w-80">
-            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-            <input className="input-field !pl-12 !h-12 text-xs" placeholder="Pesquisar..." value={busca} onChange={e => setBusca(e.target.value)} />
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            {activeTab === "REQUISICOES" && (
+              <button 
+                onClick={() => setMostrarArquivados(!mostrarArquivados)} 
+                className={`h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border transition-all ${mostrarArquivados ? 'bg-amber-600 border-amber-700 text-white shadow-lg' : 'bg-white border-[var(--border)] text-slate-500 hover:bg-slate-50'}`}
+              >
+                <Archive size={16} /> {mostrarArquivados ? "Ver Ativas" : "Ver Arquivadas"}
+              </button>
+            )}
+            <div className="relative flex-1 md:w-80">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input className="input-field !pl-12 !h-12 text-xs" placeholder="Pesquisar..." value={busca} onChange={e => setBusca(e.target.value)} />
+            </div>
           </div>
         )}
       </div>
@@ -201,9 +212,15 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
             <RequisicoesTable 
               requisicoes={requisicoes} 
               busca={busca} 
+              mostrarArquivados={mostrarArquivados}
               calcularDias={calcularDias} 
               onAnalisar={(r) => { setReqEditando({...r, quantidade_aprovada: r.quantidade}); setModalAberto("editar_req"); }} 
               onGerenciar={(r) => { setReqEditando(r); setEntregaConfirm({recebedor: r.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} 
+              onArquivar={(id) => {
+                 if (confirm("Arquivar esta requisição concluída? Ela sairá da tela principal mas continuará disponível para auditoria.")) {
+                    arquivarRequisicao(id);
+                 }
+              }}
             />
           )}
           {activeTab === "FAZER_REQ" && <NovaRequisicaoForm estoque={estoque} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} tipoPedidoGeral={tipoPedidoGeral} setTipoPedidoGeral={setTipoPedidoGeral} onFinalizar={handleFinalizarPedidoInternal} loading={loading} />}
