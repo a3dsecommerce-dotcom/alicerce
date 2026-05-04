@@ -397,7 +397,8 @@ export default function EncarregadoModule({ user }: { user: any }) {
                       valor_vale_transporte: info.valor_vale_transporte,
                       insalubridade: info.insalubridade_padrao,
                       carga_horaria: info.carga_horaria_padrao,
-                      escala_tipo: info.carga_horaria_padrao === '44H' ? 'DIARIO' : 'IMPAR'
+                      periodo: info.periodo_padrao || 'DIURNO',
+                      escala_tipo: info.escala_padrao || (info.carga_horaria_padrao === '44H' ? 'DIARIO' : 'IMPAR')
                     });
                   } else {
                     setAdmissao({...admissao, cargo: cargoNome});
