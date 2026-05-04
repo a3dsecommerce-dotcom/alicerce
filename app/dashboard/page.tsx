@@ -184,9 +184,9 @@ function CockpitContent() {
             { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             { (activeModule === "COMMAND" || !activeModule) && (
-               isManager 
-                 ? <GerenciaModule user={user} initialTab={tabParam as any} />
-                 : <EncarregadoModule user={user} />
+               safeRole === 'ENCARREGADO' 
+                 ? <EncarregadoModule user={user} />
+                 : <GerenciaModule user={user} initialTab={tabParam as any} />
             )}
             
             {activeModule === "SST" && (

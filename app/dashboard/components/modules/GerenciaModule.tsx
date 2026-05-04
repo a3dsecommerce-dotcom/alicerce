@@ -213,7 +213,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             { id: "CONFIG", label: "Configurações", icon: Settings },
             { id: "DB", label: "Banco de Dados", icon: Database }
           ].map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
+            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[13px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
               <t.icon size={16} /> {t.label}
             </button>
           ))}
