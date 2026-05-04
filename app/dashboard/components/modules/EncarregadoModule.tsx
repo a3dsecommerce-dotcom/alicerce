@@ -18,7 +18,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const [saving, setSaving] = useState(false);
 
   const [admissao, setAdmissao] = useState({ 
-    nome: '', telefone: '', unidade: '', secretaria: '', 
+    nome: '', telefone: '', unidade: '', secretaria: '', cargo: 'AUXILIAR DE SERVIÇOS GERAIS',
     insalubridade: 'N/A', carga_horaria: '12X36', 
     horario_entrada: '07:00', horario_saida: '19:00',
     escala_tipo: 'IMPAR', data_referencia: new Date().toISOString().split('T')[0]
@@ -308,6 +308,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
       secretaria: admissao.secretaria,
       status: 'ATIVO',
       role: 'COLABORADOR',
+      cargo: admissao.cargo,
       nivel: 1,
       insalubridade: admissao.insalubridade,
       carga_horaria: admissao.carga_horaria,
@@ -345,14 +346,25 @@ export default function EncarregadoModule({ user }: { user: any }) {
         </div>
 
         <div className="space-y-6">
-          <div>
-            <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome Completo</label>
-            <input 
-              className="input-field w-full !h-14 font-bold" 
-              placeholder="Ex: João da Silva Santos" 
-              value={admissao.nome}
-              onChange={e => setAdmissao({...admissao, nome: e.target.value.toUpperCase()})}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome Completo</label>
+              <input 
+                className="input-field w-full !h-14 font-bold" 
+                placeholder="Ex: João da Silva Santos" 
+                value={admissao.nome}
+                onChange={e => setAdmissao({...admissao, nome: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo / Função</label>
+              <input 
+                className="input-field w-full !h-14 font-bold" 
+                placeholder="Ex: PORTEIRO" 
+                value={admissao.cargo}
+                onChange={e => setAdmissao({...admissao, cargo: e.target.value.toUpperCase()})}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
