@@ -11,13 +11,12 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
     if (t === "EQUIPE" || t === "COLABS") return "MY_COLABS";
     if (t === "ADMISSAO" || t === "CADASTRO") return "QUICK_ADMISSION";
-    if (t === "PONTO") return "ATTENDANCE";
     if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
     return "MY_UNITS";
   });
@@ -610,7 +609,6 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "MY_UNITS", label: "Minhas Unidades", icon: Building2 },
            { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
            { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
-           { id: "ATTENDANCE", label: "Gestão de Ponto", icon: Clock },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
@@ -634,13 +632,6 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            {activeTab === "MY_UNITS" && renderMyUnits()}
            {activeTab === "MY_COLABS" && renderMyColabs()}
            {activeTab === "QUICK_ADMISSION" && renderQuickAdmission()}
-           {activeTab === "ATTENDANCE" && (
-              <div className="card py-20 text-center">
-                 <Clock size={48} className="mx-auto mb-4 opacity-20" />
-                 <h3 className="text-lg font-black text-[var(--text-primary)] uppercase">Módulo de Ponto em Sincronização</h3>
-                 <p className="text-xs font-medium text-[var(--text-muted)] mt-2">Aguardando espelhamento da base biométrica.</p>
-              </div>
-           )}
            {activeTab === "TICKETS" && renderTickets()}
         </div>
       )}

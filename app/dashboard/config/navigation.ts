@@ -61,7 +61,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Gestão de Ponto',
     icon: Clock,
-    roles: ['SUPERVISOR', 'GERENTE', 'ENCARREGADO', 'ADMIN', 'DIRETORIA'],
+    roles: ['SUPERVISOR', 'GERENTE', 'ADMIN', 'DIRETORIA'],
     href: '/dashboard/ponto'
   }
 ];
