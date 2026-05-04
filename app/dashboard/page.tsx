@@ -157,7 +157,7 @@ function CockpitContent() {
           </div>
           <div>
             <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">{activeModuleData.label}</h1>
-            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce</p>
+            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce V753.1</p>
           </div>
         </div>
 
