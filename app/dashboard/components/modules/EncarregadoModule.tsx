@@ -543,157 +543,16 @@ export default function EncarregadoModule({ user }: { user: any }) {
         </div>
       )}
 
-      {/* MODAL DE EDIÇÃO COM JUSTIFICATIVA */}
-      <AdaptiveModal 
+      <FichaColaborador360 
+        colabId={editandoColab?.id} 
         isOpen={!!editandoColab} 
-        onClose={() => { setEditandoColab(null); setJustificativa(""); }}
-        title={`Alterar Cadastro: ${editandoColab?.nome}`}
-        width="500px"
-      >
-        <div className="p-10 space-y-6">
-          <div className="bg-amber-50 p-6 rounded-2xl border border-amber-100 flex items-start gap-4">
-            <ShieldCheck className="text-amber-600 shrink-0" size={24}/>
-            <div>
-              <p className="text-xs font-black text-amber-900 uppercase tracking-widest">Alteração de Cadastro</p>
-              <p className="text-[10px] font-bold text-amber-700 mt-1 uppercase">Toda alteração realizada pelo encarregado exige uma justificativa para auditoria do RH.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CPF</label>
-              <input 
-                className="input-field w-full font-bold" 
-                value={editandoColab?.cpf || ''} 
-                onChange={e => setEditandoColab({...editandoColab, cpf: e.target.value})}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone</label>
-              <input 
-                className="input-field w-full font-bold" 
-                value={editandoColab?.telefone || ''} 
-                onChange={e => setEditandoColab({...editandoColab, telefone: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo</label>
-              <input 
-                className="input-field w-full font-bold" 
-                value={editandoColab?.cargo || ''} 
-                onChange={e => setEditandoColab({...editandoColab, cargo: e.target.value.toUpperCase()})}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Status</label>
-              <select 
-                className="input-field w-full font-bold"
-                value={editandoColab?.status || ''}
-                onChange={e => setEditandoColab({...editandoColab, status: e.target.value})}
-              >
-                <option value="ATIVO">ATIVO</option>
-                <option value="AFASTADO">AFASTADO</option>
-                <option value="INATIVO">INATIVO</option>
-                <option value="DESLIGADO">DESLIGADO</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga / Horário</label>
-              <select 
-                className="input-field w-full font-bold mb-2 h-10"
-                value={editandoColab?.carga_horaria || ''}
-                onChange={e => setEditandoColab({...editandoColab, carga_horaria: e.target.value})}
-              >
-                <option value="12X36">12X36</option>
-                <option value="44H">44H (SEMANAL)</option>
-              </select>
-              <div className="flex gap-2">
-                <input type="time" className="input-field flex-1 !h-8 text-[10px]" value={editandoColab?.horario_entrada || ''} onChange={e => setEditandoColab({...editandoColab, horario_entrada: e.target.value})} />
-                <input type="time" className="input-field flex-1 !h-8 text-[10px]" value={editandoColab?.horario_saida || ''} onChange={e => setEditandoColab({...editandoColab, horario_saida: e.target.value})} />
-              </div>
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Escala / Período</label>
-              <select 
-                className="input-field w-full font-bold mb-2 h-10"
-                value={editandoColab?.escala_tipo || ''}
-                onChange={e => setEditandoColab({...editandoColab, escala_tipo: e.target.value})}
-              >
-                <option value="PAR">PAR</option>
-                <option value="IMPAR">ÍMPAR</option>
-                <option value="DIARIO">DIÁRIO</option>
-              </select>
-              <select 
-                className="input-field w-full font-bold h-10"
-                value={editandoColab?.periodo || 'DIURNO'}
-                onChange={e => setEditandoColab({...editandoColab, periodo: e.target.value})}
-              >
-                <option value="DIURNO">DIURNO</option>
-                <option value="NOTURNO">NOTURNO</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Insalubridade</label>
-              <select 
-                className="input-field w-full font-bold h-10"
-                value={editandoColab?.insalubridade || ''}
-                onChange={e => setEditandoColab({...editandoColab, insalubridade: e.target.value})}
-              >
-                <option value="N/A">SEM</option>
-                <option value="20%">20%</option>
-                <option value="40%">40%</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
-              <select 
-                className="input-field w-full font-bold"
-                value={editandoColab?.unidade_alocacao || ''}
-                onChange={e => setEditandoColab({...editandoColab, unidade_alocacao: e.target.value})}
-              >
-                {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-            </div>
-            {editandoColab?.carga_horaria === '12X36' && (
-              <div>
-                <label className="text-[10px] font-black uppercase text-blue-500 mb-2 block">Data de Referência (Cálculo Escala)</label>
-                <input 
-                  type="date" 
-                  className="input-field w-full font-bold" 
-                  value={editandoColab?.data_referencia_escala || ''}
-                  onChange={e => setEditandoColab({...editandoColab, data_referencia_escala: e.target.value})}
-                />
-              </div>
-            )}
-            <div>
-              <label className="text-[10px] font-black uppercase text-red-500 mb-2 block font-black">Justificativa da Alteração (Obrigatório)</label>
-              <textarea 
-                className="input-field w-full min-h-[100px] py-4 font-bold !text-xs" 
-                placeholder="Ex: Erro de digitação no nome / Mudança de telefone / Transferência de posto autorizada..."
-                value={justificativa}
-                onChange={e => setJustificativa(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <button 
-            onClick={handleSalvarEdicao}
-            className="w-full h-14 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
-            disabled={saving}
-          >
-            {saving ? "Salvando..." : "Confirmar Alteração"}
-          </button>
-        </div>
-      </AdaptiveModal>
+        onClose={() => { setEditandoColab(null); setJustificativa(""); }} 
+        canEdit={true}
+        onUpdate={fetchEncarregadoData}
+      />
+    </div>
+  );
+}
 
     </div>
   );

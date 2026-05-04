@@ -15,9 +15,10 @@ interface Ficha360Props {
   onClose: () => void;
   canEdit?: boolean;
   restrictLevel?: boolean;
+  onUpdate?: () => void;
 }
 
-export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit = false, restrictLevel = false }: Ficha360Props) {
+export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit = false, restrictLevel = false, onUpdate }: Ficha360Props) {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState<"perfil" | "pessoal" | "financeiro" | "ponto" | "ocorrencias" | "audit">("perfil");
@@ -103,6 +104,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
         setEditing(false);
         setMotivoAlt("");
         loadFullData();
+        if (onUpdate) onUpdate();
       } else {
         alert("Erro ao salvar: " + error.message);
       }
