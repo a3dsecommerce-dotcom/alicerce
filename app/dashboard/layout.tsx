@@ -250,7 +250,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             
             {/* Settings Quick Access */}
             <Link 
-              href="/dashboard?module=SETTINGS" 
+              href="/dashboard?module=CONFIGURACAO" 
               className="w-10 h-10 flex items-center justify-center rounded-xl glass hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] transition-all"
               title="Configurações"
             >

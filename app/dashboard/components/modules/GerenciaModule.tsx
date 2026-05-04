@@ -14,7 +14,7 @@ import UnidadesTable from "./operacional/UnidadesTable";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS">((initialTab as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,7 +85,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
   useEffect(() => {
     if (initialTab) {
-      setActiveTab(initialTab as any);
+      setActiveTab(initialTab.toUpperCase() as any);
     }
   }, [initialTab]);
 

@@ -14,13 +14,13 @@ export const ALL_NAV: NavItem[] = [
     label: 'Visão Geral',
     icon: LayoutDashboard,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    href: '/dashboard?module=COMMAND&tab=OVERVIEW'
+    href: '/dashboard?module=COMMAND&tab=VISAO'
   },
   {
     label: 'Operacional',
     icon: Truck,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO'],
-    href: '/dashboard?module=COMMAND&tab=OPERACIONAL'
+    href: '/dashboard?module=OPERACIONAL'
   },
   {
     label: 'Almoxarifado',
@@ -38,7 +38,7 @@ export const ALL_NAV: NavItem[] = [
     label: 'Auditoria & Seg.',
     icon: ShieldAlert,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    href: '/dashboard?module=COMMAND&tab=AUDITORIA'
+    href: '/dashboard?module=COMMAND&tab=VISAO'
   },
   {
     label: 'Gestão de Rotas',
