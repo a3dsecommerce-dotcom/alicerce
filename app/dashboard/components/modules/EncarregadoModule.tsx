@@ -17,7 +17,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [admissao, setAdmissao] = useState({ nome: '', telefone: '', unidade: '', secretaria: '' });
+  const [admissao, setAdmissao] = useState({ 
+    nome: '', telefone: '', unidade: '', secretaria: '', 
+    insalubridade: 'N/A', carga_horaria: '12X36', 
+    horario_entrada: '07:00', horario_saida: '19:00',
+    escala_tipo: 'IMPAR', data_referencia: new Date().toISOString().split('T')[0]
+  });
   const [editandoColab, setEditandoColab] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
   const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
@@ -209,6 +214,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
       status: editandoColab.status,
       unidade_alocacao: editandoColab.unidade_alocacao,
       secretaria: fullUnits.find(u => u.nome === editandoColab.unidade_alocacao)?.secretaria || editandoColab.secretaria,
+      insalubridade: editandoColab.insalubridade,
+      carga_horaria: editandoColab.carga_horaria,
+      horario_entrada: editandoColab.horario_entrada,
+      horario_saida: editandoColab.horario_saida,
+      escala_tipo: editandoColab.escala_tipo,
+      data_referencia_escala: editandoColab.data_referencia_escala,
       justificativa_alteracao: justificativa,
       editado_por: user.nome,
       data_ultima_alteracao: new Date().toISOString()
@@ -298,6 +309,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
       status: 'ATIVO',
       role: 'COLABORADOR',
       nivel: 1,
+      insalubridade: admissao.insalubridade,
+      carga_horaria: admissao.carga_horaria,
+      horario_entrada: admissao.horario_entrada,
+      horario_saida: admissao.horario_saida,
+      escala_tipo: admissao.escala_tipo,
+      data_referencia_escala: admissao.data_referencia,
       criado_por: user.nome
     }]);
 
@@ -368,16 +385,67 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga Horária / Escala</label>
+              <div className="flex gap-2">
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.carga_horaria}
+                  onChange={e => setAdmissao({...admissao, carga_horaria: e.target.value})}
+                >
+                  <option value="12X36">12X36</option>
+                  <option value="44H">44H (SEMANAL)</option>
+                  <option value="20H">20H (PARCIAL)</option>
+                </select>
+                {admissao.carga_horaria === '12X36' && (
+                  <select 
+                    className="input-field flex-1 !h-12 font-bold"
+                    value={admissao.escala_tipo}
+                    onChange={e => setAdmissao({...admissao, escala_tipo: e.target.value})}
+                  >
+                    <option value="PAR">ESCALA PAR</option>
+                    <option value="IMPAR">ESCALA ÍMPAR</option>
+                  </select>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Insalubridade</label>
+              <select 
+                className="input-field w-full !h-12 font-bold"
+                value={admissao.insalubridade}
+                onChange={e => setAdmissao({...admissao, insalubridade: e.target.value})}
+              >
+                <option value="N/A">NÃO POSSUI</option>
+                <option value="20%">MÉDIA (20%)</option>
+                <option value="40%">MÁXIMA (40%)</option>
+              </select>
+            </div>
+          </div>
+
           <div className="p-6 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <div>
                 <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Secretaria Detectada</p>
                 <p className="text-sm font-black text-[var(--brand)]">{admissao.secretaria || "Aguardando Unidade..."}</p>
               </div>
-              <div className="px-3 py-1 bg-green-500/10 text-green-500 rounded-lg text-[9px] font-black uppercase tracking-widest">
-                Status: Ativo
+              <div className="text-right">
+                 <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Entrada / Saída</p>
+                 <p className="text-sm font-black text-[var(--text-primary)]">{admissao.horario_entrada} às {admissao.horario_saida}</p>
               </div>
             </div>
+            {admissao.carga_horaria === '12X36' && (
+              <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between">
+                 <p className="text-[9px] font-black text-blue-600 uppercase">Cálculo de Alternância Ativo (Evita erro dia 31/01)</p>
+                 <input 
+                  type="date" 
+                  className="bg-transparent text-[10px] font-black uppercase outline-none" 
+                  value={admissao.data_referencia}
+                  onChange={e => setAdmissao({...admissao, data_referencia: e.target.value})}
+                />
+              </div>
+            )}
           </div>
 
           <button 
@@ -502,6 +570,45 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga / Horário</label>
+              <select 
+                className="input-field w-full font-bold mb-2"
+                value={editandoColab?.carga_horaria || ''}
+                onChange={e => setEditandoColab({...editandoColab, carga_horaria: e.target.value})}
+              >
+                <option value="12X36">12X36</option>
+                <option value="44H">44H (SEMANAL)</option>
+              </select>
+              <div className="flex gap-2">
+                <input type="time" className="input-field flex-1 !h-10 text-xs" value={editandoColab?.horario_entrada || ''} onChange={e => setEditandoColab({...editandoColab, horario_entrada: e.target.value})} />
+                <input type="time" className="input-field flex-1 !h-10 text-xs" value={editandoColab?.horario_saida || ''} onChange={e => setEditandoColab({...editandoColab, horario_saida: e.target.value})} />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Escala / Insalubridade</label>
+              <select 
+                className="input-field w-full font-bold mb-2"
+                value={editandoColab?.escala_tipo || ''}
+                onChange={e => setEditandoColab({...editandoColab, escala_tipo: e.target.value})}
+              >
+                <option value="PAR">ESCALA PAR</option>
+                <option value="IMPAR">ESCALA ÍMPAR</option>
+                <option value="DIARIO">DIÁRIO FIXO</option>
+              </select>
+              <select 
+                className="input-field w-full font-bold"
+                value={editandoColab?.insalubridade || ''}
+                onChange={e => setEditandoColab({...editandoColab, insalubridade: e.target.value})}
+              >
+                <option value="N/A">SEM INSALUBRIDADE</option>
+                <option value="20%">20% (MÉDIA)</option>
+                <option value="40%">40% (MÁXIMA)</option>
+              </select>
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
@@ -513,6 +620,17 @@ export default function EncarregadoModule({ user }: { user: any }) {
                 {myUnits.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
+            {editandoColab?.carga_horaria === '12X36' && (
+              <div>
+                <label className="text-[10px] font-black uppercase text-blue-500 mb-2 block">Data de Referência (Cálculo Escala)</label>
+                <input 
+                  type="date" 
+                  className="input-field w-full font-bold" 
+                  value={editandoColab?.data_referencia_escala || ''}
+                  onChange={e => setEditandoColab({...editandoColab, data_referencia_escala: e.target.value})}
+                />
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-black uppercase text-red-500 mb-2 block font-black">Justificativa da Alteração (Obrigatório)</label>
               <textarea 
