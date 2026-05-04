@@ -11,6 +11,11 @@ interface Colaborador {
   cpf: string;
   telefone: string;
   admissao: string;
+  insalubridade?: string;
+  carga_horaria?: string;
+  horario_entrada?: string;
+  horario_saida?: string;
+  escala_tipo?: string;
 }
 
 interface ColaboradoresTableProps {
@@ -34,7 +39,8 @@ export default function ColaboradoresTable({
         <tr>
           <th className="p-6">Colaborador</th>
           <th className="p-6">Cargo / Unidade</th>
-          <th className="p-6 text-center">CPF / Telefone</th>
+          <th className="p-6">Jornada / Horário</th>
+          <th className="p-6 text-center">Insalubridade</th>
           <th className="p-6 text-center">Status</th>
           <th className="p-6 text-right">Ações</th>
         </tr>
@@ -52,9 +58,14 @@ export default function ColaboradoresTable({
               <div className="text-xs font-black text-[var(--text-secondary)]">{c.cargo}</div>
               <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">{c.unidade}</div>
             </td>
+            <td className="p-6">
+              <div className="text-xs font-bold text-[var(--text-primary)]">{c.carga_horaria || '---'} ({c.horario_entrada || '07:00'}-{c.horario_saida || '19:00'})</div>
+              <div className="text-[9px] text-blue-600 font-black uppercase">{c.escala_tipo || 'DIARIO'}</div>
+            </td>
             <td className="p-6 text-center">
-              <div className="text-xs font-bold text-[var(--text-secondary)]">{c.cpf}</div>
-              <div className="text-[10px] text-[var(--text-muted)]">{c.telefone}</div>
+               <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${c.insalubridade === '40%' ? 'bg-red-100 text-red-700' : c.insalubridade === '20%' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {c.insalubridade || 'N/A'}
+               </span>
             </td>
             <td className="p-6 text-center">
               <div className="flex flex-col gap-1 items-center">
