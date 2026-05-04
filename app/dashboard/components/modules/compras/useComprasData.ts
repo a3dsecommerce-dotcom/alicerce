@@ -34,7 +34,9 @@ export function useComprasData(user: any) {
       if (reqData) setRequisicoesRaw(reqData);
 
       // 3. Detectar ASGs (Cota)
-      if (user?.unidade_alocacao) {
+      if (user?.secretaria === 'SEMED') {
+          setQtdAsg(266);
+      } else if (user?.unidade_alocacao) {
           const { count } = await supabase
             .from('usuarios')
             .select('*', { count: 'exact', head: true })
