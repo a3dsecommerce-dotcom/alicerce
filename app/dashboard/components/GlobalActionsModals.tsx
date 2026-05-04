@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import AdaptiveModal from '../../../components/ui/AdaptiveModal';
+import AdaptiveModal from '@/components/ui/AdaptiveModal';
 import { supabase } from '@/lib/supabase';
 import { n8n } from '@/lib/n8n';
 import { Loader, Send, AlertTriangle, Package, User, CheckCircle2, ChevronRight, ChevronLeft, MapPin, Truck, ShieldCheck } from 'lucide-react';

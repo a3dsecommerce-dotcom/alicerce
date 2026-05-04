@@ -90,6 +90,11 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
   }, [initialTab]);
 
   useEffect(() => {
+    fetchConfigRotas();
+    fetchUnidades();
+  }, []);
+
+  useEffect(() => {
     if (activeTab === "ROTAS") {
       fetchUnidades();
       fetchConfigRotas();
@@ -130,9 +135,15 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
   const fetchUnidades = async () => {
     setLoading(true);
-    const { data } = await supabase.from('unidades').select('*').order('nome');
-    setUnidades(data || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase.from('unidades').select('*').order('nome');
+      if (error) throw error;
+      setUnidades(data || []);
+    } catch (err: any) {
+      toast.error("Erro ao carregar unidades: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreateUnit = async () => {
@@ -365,7 +376,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[100px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Users size={12}/> Atendidos/Dia</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Users size={12}/> Atendidos/Dia</label>
               <input 
                 type="number"
                 className="input-field w-full h-12 font-bold"

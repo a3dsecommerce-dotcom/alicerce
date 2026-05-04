@@ -1,0 +1,37 @@
+-- SCRIPT: Organização de Unidades por Rota (Rota 2 - COMPLETO)
+BEGIN;
+
+-- 1. Garantir que a coluna rota existe
+ALTER TABLE unidades ADD COLUMN IF NOT EXISTS rota TEXT;
+
+-- 2. Limpar rota 2 anterior para evitar conflito de carga (opcional)
+-- UPDATE unidades SET rota = NULL WHERE rota = 'Rota 2';
+
+-- 3. Atualizar as unidades da Rota 2 (Lista Expandida)
+UPDATE unidades SET rota = 'Rota 2' 
+WHERE nome IN (
+    'CEMEITI CLARIONÍCIO RAMALHETE',
+    'CEMEI ILCLÉIA FERNANDES BASTOS DE ÁVILA',
+    'CEMEI MARIA IGNES ALEIXO PINNA',
+    'EMEFTI CÂNDIDA SOARES MACHADO',
+    'EMEIEF CONSTANTINO JOSÉ VIEIRA',
+    'EMEFTI DALZIRA MERIGUETTI MERÍSIO',
+    'EMEF DARCY RIBEIRO',
+    'EMEFTI IGNEZ MASSAD COLA',
+    'EMEIEF MARIA LINO RAMOS',
+    'CEMEITI VEREADOR FRANCISCO DE ASSIS PEREIRA DUARTE',
+    'EMEIEF JORGE BOUERI SOBRINHO',
+    'EMEIEF LÚCIA SASSO BANDEIRA',
+    'EMEIEF PROF.ª MARIA MARTA DALLA HUARCAYA',
+    'EMPEIEF LOURENÇO BRAMBATI',
+    'EMPEF FRANCISCO HONORATO',
+    'SEMED - SECRETARIA DE EDUCAÇÃO',
+    'POSTO DE SAUDE TODOS OS SANTOS',
+    'POSTO DE SAUDE RETA GRANDE',
+    'USF PEDRO MACHADO'
+);
+
+-- Garantia para nomes que podem variar levemente
+UPDATE unidades SET rota = 'Rota 2' WHERE nome ILIKE '%SECRETARIA DE EDUCAÇÃO%';
+
+COMMIT;

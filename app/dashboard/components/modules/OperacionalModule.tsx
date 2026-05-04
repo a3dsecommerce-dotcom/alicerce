@@ -8,6 +8,7 @@ import { useOperacionalData } from "./operacional/useOperacionalData";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 export default function OperacionalModule({ user }: { user: any }) {
   const { loading, unidades, colaboradores, tickets, stats, refresh } = useOperacionalData(user);

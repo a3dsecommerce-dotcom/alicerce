@@ -1,0 +1,52 @@
+-- SCRIPT UNIFICADO: Estrutura e Dados de Cargos
+-- 1. Garantir que a tabela existe com todas as colunas necessárias
+CREATE TABLE IF NOT EXISTS cargos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome TEXT UNIQUE NOT NULL,
+    salario_base DECIMAL(10,2) DEFAULT 0,
+    insalubridade_valor DECIMAL(10,2) DEFAULT 0,
+    valor_alimentacao DECIMAL(10,2) DEFAULT 0,
+    valor_vale_transporte DECIMAL(10,2) DEFAULT 0,
+    insalubridade_padrao TEXT DEFAULT 'N/A',
+    carga_horaria_padrao TEXT DEFAULT '44H',
+    periodo_padrao TEXT DEFAULT 'DIURNO',
+    escala_padrao TEXT DEFAULT 'DIARIO',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 2. Garantir que as novas colunas existam (caso a tabela já existisse sem elas)
+ALTER TABLE cargos ADD COLUMN IF NOT EXISTS insalubridade_valor DECIMAL(10,2) DEFAULT 0;
+ALTER TABLE cargos ADD COLUMN IF NOT EXISTS periodo_padrao TEXT DEFAULT 'DIURNO';
+ALTER TABLE cargos ADD COLUMN IF NOT EXISTS escala_padrao TEXT DEFAULT 'DIARIO';
+
+-- 3. Limpar para carga limpa
+TRUNCATE TABLE cargos;
+
+-- 4. Inserção dos Dados Reais
+INSERT INTO cargos (nome, salario_base, insalubridade_valor, valor_alimentacao, valor_vale_transporte, insalubridade_padrao, carga_horaria_padrao, periodo_padrao, escala_padrao)
+VALUES 
+('ASSISTENTE ADMINISTRATIVO I', 2279.72, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('ASSISTENTE ADMINISTRATIVO II', 2736.76, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('ASSISTENTE ADMINISTRATIVO III', 3917.57, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('AUXILIAR DE EDUCADOR SOCIAL', 1553.88, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('AUXILIAR DE SERVIÇOS GERAIS - 44H', 1682.70, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('AUXILIAR DE SERVIÇOS GERAIS - INSALUBRIDADE - 20% - 44H', 1682.70, 336.54, 499.84, 200.00, '20%', '44H', 'DIURNO', 'DIARIO'),
+('AUXILIAR DE SERVIÇOS GERAIS - INSALUBRIDADE - 40% - 44H', 1682.70, 673.08, 499.84, 200.00, '40%', '44H', 'DIURNO', 'DIARIO'),
+('AUXILIAR DE SERVIÇOS GERAIS - INSALUBRIDADE - 20% C/ ADIC. NOTU', 1682.70, 336.54, 408.60, 200.00, '20%', '44H', 'NOTURNO', 'DIARIO'),
+('AUXILIAR DE SERVIÇOS GERAIS - INSALUBRIDADE - 20% 12/36', 1682.70, 336.54, 408.60, 200.00, '20%', '12X36', 'DIURNO', 'IMPAR'),
+('CONTÍNUO', 1682.70, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('COPEIRO', 1682.70, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('COZINHEIRO', 2213.45, 336.54, 499.84, 200.00, '20%', '44H', 'DIURNO', 'DIARIO'),
+('CUIDADOR SOCIAL', 2279.72, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('EDUCADOR SOCIAL', 2279.72, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('ENCARREGADO', 2614.57, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('ENGENHEIRO/ARQUITETO JUNIOR', 9726.00, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('ENGENHEIRO/ARQUITETO PLENO', 11840.40, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('INSTRUTOR EDUCACIONAL', 3100.00, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('MOTORISTA DIURNO 12/36 HS', 2739.33, 0.00, 408.60, 200.00, 'N/A', '12X36', 'DIURNO', 'IMPAR'),
+('MOTORISTA NOTURNO 12/36 HS', 2739.33, 0.00, 408.60, 200.00, 'N/A', '12X36', 'NOTURNO', 'PAR'),
+('PORTEIRO - 44H', 1864.63, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('PORTEIRO NOTURNO 12/36 HS', 1864.63, 0.00, 408.60, 200.00, 'N/A', '12X36', 'NOTURNO', 'PAR'),
+('RECEPCIONISTA', 2279.72, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO'),
+('RECEPCIONISTA HOSPITALAR', 2279.72, 673.08, 499.84, 200.00, '40%', '44H', 'DIURNO', 'DIARIO'),
+('TELEFONISTA', 2105.20, 0.00, 499.84, 200.00, 'N/A', '44H', 'DIURNO', 'DIARIO');
