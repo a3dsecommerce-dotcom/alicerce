@@ -89,7 +89,7 @@ function CockpitContent() {
     const nivel = user?.nivel || 0;
     const safeRole = user?.role ? String(user.role).toUpperCase() : "";
     const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
-    const isManager = !isStrictRole && (nivel >= 2 || ["ADMIN", "DIRETORIA", "GERENTE", "ENCARREGADO"].includes(safeRole));
+    const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
     
     if (!user) return [];
     
@@ -131,7 +131,7 @@ function CockpitContent() {
   };
 
   const safeRole = user?.role ? String(user.role).toUpperCase() : "";
-  const isManager = (user?.nivel || 0) >= 2 || ["ADMIN", "DIRETORIA", "GERENTE", "ENCARREGADO"].includes(safeRole);
+  const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
 
   useEffect(() => {
     if (user) {

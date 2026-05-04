@@ -89,17 +89,17 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const renderMyUnits = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="kpi-card bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Minhas Unidades</p>
-          <h4 className="text-3xl font-black text-[var(--text-primary)]">{myUnits.length}</h4>
+        <div className="kpi-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] overflow-hidden">
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 px-1">Minhas Unidades</p>
+          <h4 className="text-4xl font-black text-[var(--text-primary)] px-1">{myUnits.length}</h4>
         </div>
-        <div className="kpi-card bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Meus Colaboradores</p>
-          <h4 className="text-3xl font-black text-[var(--text-primary)]">{myColabs.length}</h4>
+        <div className="kpi-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] overflow-hidden">
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 px-1">Meus Colaboradores</p>
+          <h4 className="text-4xl font-black text-[var(--text-primary)] px-1">{myColabs.length}</h4>
         </div>
-        <div className="kpi-card bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Média p/ Rota</p>
-          <h4 className="text-3xl font-black text-[var(--neon-blue)]">{myUnits.length > 0 ? (myColabs.length / myUnits.length).toFixed(1) : 0}</h4>
+        <div className="kpi-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] overflow-hidden">
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 px-1">Média p/ Rota</p>
+          <h4 className="text-4xl font-black text-[var(--neon-blue)] px-1">{myUnits.length > 0 ? (myColabs.length / myUnits.length).toFixed(1) : 0}</h4>
         </div>
       </div>
 
@@ -113,16 +113,16 @@ export default function EncarregadoModule({ user }: { user: any }) {
                 setFiltroUnidadeOcorrencia(unit);
                 setActiveTab("TICKETS");
               }}
-              className="p-6 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl flex items-center gap-4 hover:border-[var(--brand)] hover:scale-[1.02] active:scale-[0.98] transition-all text-left w-full group"
+              className="p-8 bg-[var(--bg-base)] border border-[var(--border)] rounded-3xl flex items-center gap-6 hover:border-[var(--brand)] hover:scale-[1.02] active:scale-[0.98] transition-all text-left w-full group overflow-hidden"
             >
-              <div className="w-12 h-12 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] group-hover:bg-[var(--brand)] group-hover:text-white transition-all">
-                <Building2 size={24} />
+              <div className="w-14 h-14 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] group-hover:bg-[var(--brand)] group-hover:text-white transition-all shrink-0">
+                <Building2 size={28} />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-black text-[var(--text-primary)] uppercase">{unit}</p>
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">{myColabs.filter(c => c.unidade_alocacao === unit).length} Colaboradores</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-[var(--text-primary)] uppercase truncate mb-1">{unit}</p>
+                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{myColabs.filter(c => c.unidade_alocacao === unit).length} Colaboradores</p>
               </div>
-              <ArrowUpRight size={18} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-all" />
+              <ArrowUpRight size={20} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-all shrink-0" />
             </button>
           ))}
           {myUnits.length === 0 && (
@@ -280,8 +280,8 @@ export default function EncarregadoModule({ user }: { user: any }) {
 
         <div className="grid grid-cols-1 gap-4">
           {filtered.map((ticket, i) => (
-            <div key={i} className="card !p-0 overflow-hidden border-l-4 border-l-[var(--brand)]">
-              <div className="p-6 flex flex-col md:flex-row justify-between gap-6">
+            <div key={i} className="card !p-0 overflow-hidden border-l-4 border-l-[var(--brand)] rounded-3xl">
+              <div className="p-8 flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${ticket.prioridade === 'ALTA' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
                     <AlertTriangle size={24} />
@@ -441,7 +441,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]">
             <div>
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga / Período</label>
               <div className="flex gap-2">
@@ -497,7 +497,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
-          <div className="p-6 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
+          <div className="p-8 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
             <div className="flex justify-between items-center mb-4">
               <div>
                 <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Secretaria Detectada</p>
@@ -544,7 +544,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
     <div className="flex flex-col gap-8 animate-fade-in pb-20">
       
       {/* Navegação Superior do Encarregado */}
-      <div className="flex flex-wrap items-center gap-3 bg-[var(--bg-card)] p-2 rounded-2xl border border-[var(--border)] shadow-sm sticky top-0 z-30 backdrop-blur-md overflow-x-auto custom-scrollbar">
+      <div className="flex flex-wrap items-center gap-4 bg-[var(--bg-card)] p-3 rounded-2xl border border-[var(--border)] shadow-sm sticky top-0 z-30 backdrop-blur-md overflow-x-auto custom-scrollbar">
          {[
            { id: "MY_UNITS", label: "Minhas Unidades", icon: Building2 },
            { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
@@ -555,9 +555,9 @@ export default function EncarregadoModule({ user }: { user: any }) {
            <button 
              key={tab.id}
              onClick={() => setActiveTab(tab.id as any)}
-             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
+             className={`flex items-center gap-3 px-8 py-4 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
            >
-             <tab.icon size={16} />
+             <tab.icon size={18} />
              {tab.label}
            </button>
          ))}
