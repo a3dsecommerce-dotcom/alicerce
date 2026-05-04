@@ -86,7 +86,18 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
         motivo: motivoAlt
       }]);
 
-      const { error } = await supabase.from('usuarios').update(editForm).eq('id', colabId);
+      const payload = { ...editForm };
+      if (payload.insalubridade) {
+        payload.insalubridade = parseInt(String(payload.insalubridade).replace(/\D/g, "")) || 0;
+      }
+      
+      // Padronização para 'cargo' conforme migração do banco
+      if (payload.funcao) {
+        payload.cargo = payload.funcao;
+        delete payload.funcao;
+      }
+      
+      const { error } = await supabase.from('usuarios').update(payload).eq('id', colabId);
       
       if (!error) {
         if (restrictLevel) {
