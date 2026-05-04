@@ -28,7 +28,7 @@ const ALL_MODULES = [
   { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["RH_DP", "RH_PESSOAL"] },
   { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["COMPRADOR"] },
   { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ALMOXARIFE", "ALMOXARIFADO"] },
-  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "OPERACIONAL"] },
+  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "OPERACIONAL", "ENCARREGADO"] },
   { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["TECNICO_SEGURANCA"] },
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
 ];
@@ -182,7 +182,7 @@ function CockpitContent() {
             { activeModule === "RH" && <RHModule user={user} />}
             { activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
             { activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} /> }
-            { activeModule === "OPERACIONAL" && <OperacionalModule /> }
+            { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             { (activeModule === "COMMAND" || !activeModule) && (
                safeRole === 'ENCARREGADO' 
