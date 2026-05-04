@@ -24,7 +24,7 @@ export default function QuickActions({ user }: QuickActionsProps) {
       label: 'Check-in Unidade',
       icon: MapPin,
       color: 'var(--brand)',
-      allowed: isEncarregado,
+      allowed: isAdmin,
       onClick: () => setModalActive('checkin-unidade')
     },
     {
@@ -32,7 +32,7 @@ export default function QuickActions({ user }: QuickActionsProps) {
       label: 'Gerar Abono / Feriado',
       icon: CheckCircle,
       color: 'var(--success)',
-      allowed: isEncarregado || isDiretor,
+      allowed: isDiretor && !isEncarregado,
       onClick: () => setModalActive('informar-abono')
     },
 
