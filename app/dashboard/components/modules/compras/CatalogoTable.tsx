@@ -35,7 +35,13 @@ export default function CatalogoTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border)]">
-            {catalogo.map((prod) => {
+            {catalogo.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-20 text-center text-[var(--text-muted)] font-bold italic">
+                  Nenhum material encontrado no catálogo de suprimentos.
+                </td>
+              </tr>
+            ) : catalogo.map((prod) => {
               const cotaMaxima = Math.floor(qtdAsg * (prod.coeficiente || 1.0));
               const volAtual = volumes[prod.id] || 0;
               const volExtra = volumesExtra[prod.id] || 0;

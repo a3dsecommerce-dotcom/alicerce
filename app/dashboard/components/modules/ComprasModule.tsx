@@ -18,22 +18,30 @@ export default function ComprasModule({ user }: { user: any }) {
   const [tipoPedido, setTipoPedido] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
 
+  // Guard para evitar quebra caso o usuário demore a sincronizar
+  if (!user) return (
+    <div className="flex items-center justify-center p-20 text-[var(--text-muted)] font-bold">
+      Aguardando sincronização de perfil...
+    </div>
+  );
+
   if (loading) return (
     <div className="p-20">
       <TableSkeleton rows={10} cols={5} />
     </div>
   );
 
-  // Agrupamento para Tracking
-  const requisicoesAgrupadas = requisicoesRaw.reduce((acc: any[], current: any) => {
+  // Agrupamento para Tracking com segurança contra dados nulos
+  const requisicoesAgrupadas = (requisicoesRaw || []).reduce((acc: any[], current: any) => {
+    if (!current) return acc;
     const proto = current.protocolo || 'SEM-PROTOCOLO';
     let group = acc.find(g => g.protocolo === proto);
     if (!group) {
       group = { 
         protocolo: proto, 
-        data: new Date(current.data_solicitacao).toLocaleDateString(),
+        data: current.data_solicitacao ? new Date(current.data_solicitacao).toLocaleDateString() : '---',
         data_raw: current.data_solicitacao,
-        status_geral: current.status,
+        status_geral: current.status || 'PENDENTE',
         tipo_pedido: current.tipo_pedido || 'MENSAL',
         itens: [] 
       };

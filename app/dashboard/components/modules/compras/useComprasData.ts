@@ -22,6 +22,12 @@ export function useComprasData(user: any) {
         query = query.eq('secretaria_destino', user.secretaria);
       } else if (user?.unidade_alocacao) {
         query = query.eq('unidade_destino', user.unidade_alocacao);
+      } else {
+        // Se for um Comprador mas sem secretaria definida, por segurança, não filtramos por local
+        // Isso evita que o painel fique em branco caso o cadastro esteja incompleto
+        if (user?.role === 'COMPRADOR') {
+           console.log("Comprador sem secretaria/unidade definida. Carregando dados globais.");
+        }
       }
 
       const { data: reqData } = await query;
@@ -29,12 +35,12 @@ export function useComprasData(user: any) {
 
       // 3. Detectar ASGs (Cota)
       if (user?.unidade_alocacao) {
-         const { count } = await supabase
-           .from('usuarios')
-           .select('*', { count: 'exact', head: true })
-           .eq('unidade_alocacao', user.unidade_alocacao)
-           .eq('cargo', 'ASG')
-           .eq('status', 'ATIVO');
+          const { count } = await supabase
+            .from('usuarios')
+            .select('*', { count: 'exact', head: true })
+            .eq('unidade_alocacao', user.unidade_alocacao)
+            .or(`função.eq.ASG,funcao.eq.ASG,cargo.eq.ASG`)
+            .eq('status', 'ATIVO');
          
          if (count !== null) setQtdAsg(count > 0 ? count : 1);
       }

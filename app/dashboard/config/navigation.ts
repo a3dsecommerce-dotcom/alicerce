@@ -13,19 +13,19 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Visão Geral',
     icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO', 'COMPRADOR', 'ALMOXARIFE'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO'],
     href: '/dashboard?module=COMMAND&tab=VISAO'
   },
   {
     label: 'Operacional',
     icon: Truck,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO'],
     href: '/dashboard?module=OPERACIONAL'
   },
   {
     label: 'Gestão de Compras',
     icon: ShoppingCart,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'COMPRADOR'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
     href: '/dashboard?module=COMPRAS'
   },
   {
@@ -55,8 +55,8 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Central de Ocorrências',
     icon: AlertTriangle,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR', 'ENCARREGADO'],
-    href: '/dashboard/ocorrencias'
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'DIRETOR', 'ENCARREGADO'],
+    href: '/dashboard?module=OCORRENCIAS'
   },
   {
     label: 'Gestão de Ponto',

@@ -35,7 +35,7 @@ export default function RHPessoalPage() {
         setColaboradores(data.map(u => ({
           id: u.id,
           nome: u.nome,
-          cargo: u.cargo || "ASG",
+          cargo: u.funcao || u.cargo || "ASG",
           unidade: u.unidade_alocacao || "Não alocado",
           telefone: u.telefone,
           status: u.status,
@@ -54,7 +54,7 @@ export default function RHPessoalPage() {
 
       // Fetch Horas Extras
       const { data: extras } = await supabase.from('horas_extras')
-        .select('*, usuarios(nome, cargo)')
+        .select('*, usuarios(nome, cargo, funcao)')
         .order('created_at', { ascending: false });
       if (extras) setHorasExtras(extras);
 
@@ -226,7 +226,7 @@ export default function RHPessoalPage() {
                     <tr key={e.id} className="table-row">
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{e.usuarios?.nome}</div>
-                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{e.usuarios?.cargo}</div>
+                        <div style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>{e.usuarios?.funcao || e.usuarios?.cargo}</div>
                       </td>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--brand)" }}>{e.unidade_alocacao}</div>

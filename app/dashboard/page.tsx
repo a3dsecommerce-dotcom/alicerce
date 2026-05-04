@@ -22,13 +22,13 @@ import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
 import EncarregadoModule from "./components/modules/EncarregadoModule";
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
-  { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "ENCARREGADO"] },
-  { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL"] },
-  { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["ADMIN", "DIRETORIA", "GERENTE", "COMPRADOR"] },
-  { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ADMIN", "DIRETORIA", "GERENTE", "ALMOXARIFE", "ALMOXARIFADO"] },
-  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "OPERACIONAL", "ENCARREGADO"] },
-  { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "TECNICO_SEGURANCA"] },
-  { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "RH_DP", "RH_PESSOAL", "COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
+  { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ENCARREGADO"] },
+  { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL"] },
+  { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "COMPRADOR", "COMPRAS"] },
+  { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ALMOXARIFE", "ALMOXARIFADO"] },
+  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "OPERACIONAL", "ENCARREGADO"] },
+  { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "TECNICO_SEGURANCA"] },
+  { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
 ];
 
 export default function UnifiedCockpitPage() {
@@ -69,7 +69,21 @@ function CockpitContent() {
               .single();
             
             if (dbUser) {
-              const updatedUser = { ...localUser, ...dbUser };
+              const dbFuncao = dbUser.funcao || dbUser['função'] || dbUser.cargo;
+              const rawFuncao = dbFuncao 
+                ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                : null;
+              
+              // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
+              // Caso contrário, usa o que vier do banco ou o nível de acesso
+              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+              
+              const updatedUser = { 
+                ...localUser, 
+                ...dbUser, 
+                role: cargoResolvido,
+                funcao: dbFuncao 
+              };
               setUser(updatedUser);
               localStorage.setItem("crm_user", JSON.stringify(updatedUser));
             }
@@ -86,13 +100,17 @@ function CockpitContent() {
 
   // Lógica de Filtragem de Módulos (RBAC)
   const filteredModules = useMemo(() => {
-    const nivel = user?.nivel || 0;
-    const safeRole = user?.role ? String(user.role).toUpperCase() : "";
-    const isStrictRole = ["COMPRADOR", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
-    const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole));
-    
     if (!user) return [];
     
+    const safeRole = user?.role ? String(user.role).toUpperCase() : "";
+    const nivel = user?.nivel || 0;
+    
+    // Unificação da lógica de permissão
+    const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
+    const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole));
+    
+    console.log("🔍 Filtering Modules:", { safeRole, nivel, isManager });
+
     return isManager
       ? ALL_MODULES
       : ALL_MODULES.filter(m => m.roles.includes(safeRole));
@@ -100,6 +118,8 @@ function CockpitContent() {
 
   // Sincroniza o módulo ativo caso venha um parâmetro via URL ou baseando-se nas permissões
   useEffect(() => {
+    const safeRole = user?.role ? String(user.role).toUpperCase() : "";
+    
     // 1. Prioridade: Parâmetro da URL (Validado contra permissões)
     if (modParam && filteredModules.some(m => m.id === modParam)) {
       setActiveModule(modParam);
@@ -107,9 +127,14 @@ function CockpitContent() {
     // 2. Se o parâmetro for COMMAND mas não tem acesso (ou se não houver parâmetro)
     else if (filteredModules.length > 0) {
       if (!activeModule) {
-        setActiveModule(filteredModules[0].id);
+        // Prioridade para Comprador ir direto para Compras
+        const hasCompras = filteredModules.find(m => m.id === "COMPRAS");
+        if (hasCompras && (safeRole === "COMPRADOR" || safeRole === "COMPRAS")) {
+          setActiveModule("COMPRAS");
+        } else {
+          setActiveModule(filteredModules[0].id);
+        }
       } else if (!filteredModules.some(m => m.id === activeModule)) {
-        // Se o módulo ativo atual não for permitido para este usuário, volta para o primeiro disponível
         setActiveModule(filteredModules[0].id);
       }
     }
@@ -131,7 +156,7 @@ function CockpitContent() {
   };
 
   const safeRole = user?.role ? String(user.role).toUpperCase() : "";
-  const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
+  const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole);
 
   useEffect(() => {
     if (user) {
@@ -192,7 +217,7 @@ function CockpitContent() {
             </div>
           }>
             { activeModule === "RH" && <RHModule user={user} />}
-            { activeModule === "COMPRAS" && <ComprasModule reducao={reducaoGeral} />}
+            { activeModule === "COMPRAS" && <ComprasModule user={user} />}
             { activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} /> }
             { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }

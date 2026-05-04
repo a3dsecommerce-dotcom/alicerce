@@ -13,7 +13,7 @@ interface QuickActionsProps {
 export default function QuickActions({ user }: QuickActionsProps) {
   const [modalActive, setModalActive] = useState<string | null>(null);
   const isAdmin = user.role === 'ADMIN' || user.role === 'DIRETORIA' || user.nivel === 4;
-  const isAlmoxarifado = user.role === 'ALMOXARIFE' || isAdmin;
+  const isAlmoxarifado = user.role === 'ALMOXARIFE' || user.role === 'ALMOXARIFADO' || isAdmin;
   const isRH = user.role === 'RH_DP' || user.role === 'RH_PESSOAL' || user.role === 'RH_SECRETARIA' || isAdmin;
   const isEncarregado = user.role === 'ENCARREGADO' || isAdmin;
   const isDiretor = user.role === 'DIRETOR' || isAdmin;

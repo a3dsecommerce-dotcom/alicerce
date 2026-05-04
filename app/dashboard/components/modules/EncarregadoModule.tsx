@@ -29,7 +29,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const [saving, setSaving] = useState(false);
 
   const [admissao, setAdmissao] = useState<any>({ 
-    nome: '', telefone: '', unidade: '', secretaria: '', cargo: '',
+    nome: '', telefone: '', unidade: '', secretaria: '', funcao: '',
     insalubridade: 'N/A', carga_horaria: '44H', periodo: 'DIURNO',
     horario_entrada: '07:00', horario_saida: '17:00',
     escala_tipo: 'DIARIO', data_referencia: new Date().toISOString().split('T')[0],
@@ -243,7 +243,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                            </div>
                         </td>
                         <td className="p-6">
-                           <div className="text-xs font-black text-[var(--text-secondary)]">{colab.cargo || 'OPERACIONAL'}</div>
+                           <div className="text-xs font-black text-[var(--text-secondary)]">{colab.funcao || colab.cargo || 'OPERACIONAL'}</div>
                            <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">{colab.unidade_alocacao}</div>
                         </td>
                         <td className="p-6">
@@ -290,7 +290,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       nome: editandoColab.nome,
       telefone: editandoColab.telefone,
       cpf: editandoColab.cpf,
-      cargo: editandoColab.cargo,
+      funcao: editandoColab.funcao || editandoColab.cargo,
       status: editandoColab.status,
       unidade_alocacao: editandoColab.unidade_alocacao,
       secretaria: fullUnits.find(u => u.nome === editandoColab.unidade_alocacao)?.secretaria || editandoColab.secretaria,
@@ -389,7 +389,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       secretaria: admissao.secretaria,
       status: 'ATIVO',
       role: 'COLABORADOR',
-      cargo: admissao.cargo,
+      funcao: admissao.funcao,
       nivel: 1,
       insalubridade: admissao.insalubridade,
       carga_horaria: admissao.carga_horaria,
@@ -445,14 +445,14 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo / Função</label>
               <select 
                 className="input-field w-full !h-14 font-bold"
-                value={admissao.cargo}
+                value={admissao.funcao}
                 onChange={e => {
                   const cargoNome = e.target.value;
                   const info = cargos.find(c => c.nome === cargoNome);
                   if (info) {
                     setAdmissao({
                       ...admissao,
-                      cargo: cargoNome,
+                      funcao: cargoNome,
                       salario_base: info.salario_base,
                       valor_alimentacao: info.valor_alimentacao,
                       valor_vale_transporte: info.valor_vale_transporte,
@@ -462,7 +462,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                       escala_tipo: info.escala_padrao || (info.carga_horaria_padrao === '44H' ? 'DIARIO' : 'IMPAR')
                     });
                   } else {
-                    setAdmissao({...admissao, cargo: cargoNome});
+                    setAdmissao({...admissao, funcao: cargoNome});
                   }
                 }}
               >

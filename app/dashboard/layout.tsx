@@ -31,13 +31,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState({ name: "Diretoria", role: "ADMIN" });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("crm_user");
-      if (saved) setUser(JSON.parse(saved));
-    } catch (err) {
-      console.error("Erro ao ler crm_user", err);
-      localStorage.removeItem("crm_user");
+    async function syncUser() {
+      try {
+        const saved = localStorage.getItem("crm_user");
+        if (saved) {
+          const localUser = JSON.parse(saved);
+          setUser(localUser);
+
+          // Sincroniza com o banco para garantir campos novos e role calculado
+          if (localUser.id || localUser.email) {
+            const { data: dbUser } = await supabase
+              .from('usuarios')
+              .select('*')
+              .or(`id.eq.${localUser.id},email.eq.${localUser.email}`)
+              .single();
+            
+            if (dbUser) {
+              const dbFuncao = dbUser.funcao || dbUser['função'] || dbUser.cargo;
+              const rawFuncao = dbFuncao 
+                ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                : null;
+              
+              // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
+              // Caso contrário, usa o que vier do banco ou o nível de acesso
+              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+              
+              const updatedUser = { 
+                ...localUser, 
+                ...dbUser, 
+                role: cargoResolvido,
+                funcao: dbFuncao 
+              };
+              setUser(updatedUser);
+              localStorage.setItem("crm_user", JSON.stringify(updatedUser));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao sincronizar usuário no layout:", err);
+      }
     }
+    syncUser();
   }, []);
 
   // Agora mostramos todos os itens, mas controlamos quem está "aceso"
@@ -151,11 +185,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 px-6 flex flex-col gap-2 overflow-y-auto custom-scrollbar pb-6 mt-4">
           {nav.filter(item => {
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';
-            const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
+            const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
+            const isManager = !isStrictRole && ((user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole));
             return isManager || item.roles.includes(safeRole);
           }).map(item => {
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';
-            const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
+            const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole);
             if (item.subItems) {
               const isOpen = openMenus[item.label] && sidebarOpen;
               const hasActiveSub = item.subItems.some(sub => pathname === sub.href);
@@ -234,7 +269,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col overflow-hidden relative glass rounded-[2rem] border border-[var(--border)] shadow-xl mr-4 my-2">
         {/* TOPBAR - COM PROTEÇÃO DE BORDA DIREITA */}
         <header className="no-print h-[80px] flex items-center px-10 lg:px-14 gap-8 glass z-40 border-b border-[var(--border)]">
-          {(!user?.role || String(user.role).toUpperCase() !== "COMPRADOR") && (
+          {(!user?.role || !["COMPRADOR", "COMPRAS"].includes(String(user.role).toUpperCase())) && (
             <div className="hidden md:flex flex-1 max-w-[480px] relative group">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--brand)] transition-colors" />
               <input 

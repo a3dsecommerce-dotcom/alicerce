@@ -169,7 +169,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   {[
-                    { key: "cargo", label: "Cargo Operacional", type: "text" },
+                    { key: "funcao", label: "Função Operacional", type: "text" },
                     { key: "unidade_alocacao", label: "Unidade de Trabalho", type: "text" },
                     ...(restrictLevel ? [] : [{ key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] }]),
                     { key: "insalubridade", label: "Insalubridade", type: "select", options: ["N/A", "20%", "40%"] },
@@ -214,7 +214,9 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                           <input type={f.type} className="input-field" value={editForm[f.key] || ""} onChange={e => setEditForm({...editForm, [f.key]: e.target.value})} />
                         )
                       ) : (
-                        <div className="p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] text-sm font-semibold">{data?.[f.key] || "—"}</div>
+                        <div className="p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] text-sm font-semibold">
+                          {(f.key === 'funcao' ? (data?.funcao || data?.cargo) : data?.[f.key]) || "—"}
+                        </div>
                       )}
                     </div>
                   ))}
