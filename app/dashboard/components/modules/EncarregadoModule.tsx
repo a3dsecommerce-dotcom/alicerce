@@ -14,15 +14,17 @@ export default function EncarregadoModule({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">("MY_UNITS");
   const [myUnits, setMyUnits] = useState<any[]>([]);
   const [fullUnits, setFullUnits] = useState<any[]>([]);
+  const [cargos, setCargos] = useState<any[]>([]);
   const [myColabs, setMyColabs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [admissao, setAdmissao] = useState({ 
-    nome: '', telefone: '', unidade: '', secretaria: '', cargo: 'AUXILIAR DE SERVIÇOS GERAIS',
-    insalubridade: 'N/A', carga_horaria: '12X36', periodo: 'DIURNO',
-    horario_entrada: '07:00', horario_saida: '19:00',
-    escala_tipo: 'IMPAR', data_referencia: new Date().toISOString().split('T')[0]
+  const [admissao, setAdmissao] = useState<any>({ 
+    nome: '', telefone: '', unidade: '', secretaria: '', cargo: '',
+    insalubridade: 'N/A', carga_horaria: '44H', periodo: 'DIURNO',
+    horario_entrada: '07:00', horario_saida: '17:00',
+    escala_tipo: 'DIARIO', data_referencia: new Date().toISOString().split('T')[0],
+    salario_base: 0, valor_alimentacao: 0, valor_vale_transporte: 0
   });
   const [editandoColab, setEditandoColab] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
@@ -72,6 +74,11 @@ export default function EncarregadoModule({ user }: { user: any }) {
           .order('criado_em', { ascending: false });
         setOcorrencias(tickets || []);
       }
+
+      // 4. Buscar Cargos Mestres
+      const { data: cargosDb } = await supabase.from('cargos').select('*').order('nome');
+      if (cargosDb) setCargos(cargosDb);
+
     } catch (err) {
       console.error("Erro ao carregar dados do encarregado:", err);
     } finally {
@@ -330,6 +337,9 @@ export default function EncarregadoModule({ user }: { user: any }) {
       horario_saida: admissao.horario_saida,
       escala_tipo: admissao.escala_tipo,
       data_referencia_escala: admissao.data_referencia,
+      salario_base: admissao.salario_base || 0,
+      valor_alimentacao: admissao.valor_alimentacao || 0,
+      valor_vale_transporte: admissao.valor_vale_transporte || 0,
       criado_por: user.nome
     }]);
 
@@ -372,12 +382,31 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo / Função</label>
-              <input 
-                className="input-field w-full !h-14 font-bold" 
-                placeholder="Ex: PORTEIRO" 
+              <select 
+                className="input-field w-full !h-14 font-bold"
                 value={admissao.cargo}
-                onChange={e => setAdmissao({...admissao, cargo: e.target.value.toUpperCase()})}
-              />
+                onChange={e => {
+                  const cargoNome = e.target.value;
+                  const info = cargos.find(c => c.nome === cargoNome);
+                  if (info) {
+                    setAdmissao({
+                      ...admissao,
+                      cargo: cargoNome,
+                      salario_base: info.salario_base,
+                      valor_alimentacao: info.valor_alimentacao,
+                      valor_vale_transporte: info.valor_vale_transporte,
+                      insalubridade: info.insalubridade_padrao,
+                      carga_horaria: info.carga_horaria_padrao,
+                      escala_tipo: info.carga_horaria_padrao === '44H' ? 'DIARIO' : 'IMPAR'
+                    });
+                  } else {
+                    setAdmissao({...admissao, cargo: cargoNome});
+                  }
+                }}
+              >
+                <option value="">Selecione o Cargo...</option>
+                {cargos.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+              </select>
             </div>
           </div>
 
