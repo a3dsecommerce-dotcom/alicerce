@@ -167,10 +167,15 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   {[
-                    { key: "cargo", label: "Cargo Operacional", type: "select", options: ["ASG", "Porteiro", "Encarregado", "Zelador", "Recepcionista"] },
+                    { key: "cargo", label: "Cargo Operacional", type: "text" },
                     { key: "unidade_alocacao", label: "Unidade de Trabalho", type: "text" },
                     ...(restrictLevel ? [] : [{ key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] }]),
-                    { key: "insalubridade", label: "Insalubridade (%)", type: "select", options: [0, 20, 40] },
+                    { key: "insalubridade", label: "Insalubridade", type: "select", options: ["N/A", "20%", "40%"] },
+                    { key: "carga_horaria", label: "Carga Horária", type: "select", options: ["12X36", "44H", "20H"] },
+                    { key: "escala_tipo", label: "Tipo de Escala", type: "select", options: ["PAR", "IMPAR", "DIARIO"] },
+                    { key: "horario_entrada", label: "Entrada", type: "time" },
+                    { key: "horario_saida", label: "Saída", type: "time" },
+                    { key: "data_referencia_escala", label: "Referência Escala", type: "date" },
                     { key: "data_admissao", label: "Data de Admissão", type: "date" },
                   ].map(f => (
                     <div key={f.key}>
