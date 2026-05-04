@@ -8,11 +8,10 @@ import {
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-export default function OcorrenciasModule() {
+export default function OcorrenciasModule({ user }: { user: any }) {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [user, setUser] = useState<any>({});
   
   const [modalAberto, setModalAberto] = useState<null | "nova" | "detalhes" | "receber" | "resolver">(null);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -24,10 +23,6 @@ export default function OcorrenciasModule() {
   const [resolverData, setResolverData] = useState({ solucao: "" });
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("crm_user");
-      if (saved) setUser(JSON.parse(saved));
-    } catch (err) {}
     fetchTickets();
   }, []);
 

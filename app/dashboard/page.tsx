@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, Users, ShoppingBag, Megaphone, 
   Package, ShieldCheck, Activity, Bell, Settings,
-  Loader
+  Loader, AlertTriangle
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
@@ -20,14 +20,16 @@ import ComunicacaoModule from "./components/modules/ComunicacaoModule";
 import AlmoxarifadoModule from "./components/modules/AlmoxarifadoModule";
 import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
 import EncarregadoModule from "./components/modules/EncarregadoModule";
+import OcorrenciasModule from "./components/modules/OcorrenciasModule";
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
   { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ENCARREGADO"] },
   { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL"] },
   { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "COMPRADOR", "COMPRAS"] },
   { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ALMOXARIFE", "ALMOXARIFADO"] },
-  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "OPERACIONAL", "ENCARREGADO"] },
+  { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "OPERACIONAL"] },
   { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "TECNICO_SEGURANCA"] },
+  { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "ENCARREGADO"] },
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
 ];
 
@@ -220,6 +222,7 @@ function CockpitContent() {
             { activeModule === "COMPRAS" && <ComprasModule user={user} />}
             { activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} /> }
             { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
+            { activeModule === "OCORRENCIAS" && <OcorrenciasModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             { (activeModule === "COMMAND" || !activeModule) && (
                (safeRole === 'ENCARREGADO') 

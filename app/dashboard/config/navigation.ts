@@ -19,7 +19,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Operacional',
     icon: Truck,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
     href: '/dashboard?module=OPERACIONAL'
   },
   {
