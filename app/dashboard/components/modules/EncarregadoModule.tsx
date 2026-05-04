@@ -151,7 +151,8 @@ export default function EncarregadoModule({ user }: { user: any }) {
                    <tr>
                       <th className="p-6">Colaborador</th>
                       <th className="p-6">Cargo / Unidade</th>
-                      <th className="p-6 text-center">CPF / Telefone</th>
+                      <th className="p-6">Jornada / Escala</th>
+                      <th className="p-6 text-center">Insalubridade</th>
                       <th className="p-6 text-center">Status</th>
                       <th className="p-6 text-right">Ações</th>
                    </tr>
@@ -176,9 +177,14 @@ export default function EncarregadoModule({ user }: { user: any }) {
                            <div className="text-xs font-black text-[var(--text-secondary)]">{colab.cargo || 'OPERACIONAL'}</div>
                            <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">{colab.unidade_alocacao}</div>
                         </td>
+                        <td className="p-6">
+                           <div className="text-xs font-bold text-[var(--text-primary)]">{colab.carga_horaria || '---'} ({colab.horario_entrada || '07:00'}-{colab.horario_saida || '19:00'})</div>
+                           <div className="text-[9px] text-blue-600 font-black uppercase">{colab.escala_tipo || 'DIARIO'}</div>
+                        </td>
                         <td className="p-6 text-center">
-                           <div className="text-xs font-bold text-[var(--text-secondary)]">{colab.cpf || '---'}</div>
-                           <div className="text-[10px] text-[var(--text-muted)]">{colab.telefone || '---'}</div>
+                           <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${colab.insalubridade === '40%' ? 'bg-red-100 text-red-700' : colab.insalubridade === '20%' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
+                              {colab.insalubridade || 'N/A'}
+                           </span>
                         </td>
                         <td className="p-6 text-center">
                            <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest ${colab.status === 'ATIVO' ? 'bg-green-100 text-green-700' : colab.status === 'AFASTADO' ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
