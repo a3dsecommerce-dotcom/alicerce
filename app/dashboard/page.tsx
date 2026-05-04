@@ -98,8 +98,6 @@ function CockpitContent() {
       : ALL_MODULES.filter(m => m.roles.includes(safeRole));
   }, [user]);
 
-  const safeRole = user?.role ? String(user.role).toUpperCase() : "";
-
   // Sincroniza o módulo ativo caso venha um parâmetro via URL ou baseando-se nas permissões
   useEffect(() => {
     // 1. Prioridade: Parâmetro da URL (Validado contra permissões)
@@ -131,6 +129,9 @@ function CockpitContent() {
     params.delete("tab"); // Limpa a aba ao trocar de módulo principal
     router.push(`?${params.toString()}`);
   };
+
+  const safeRole = user?.role ? String(user.role).toUpperCase() : "";
+  const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">
@@ -183,9 +184,9 @@ function CockpitContent() {
             { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             { (activeModule === "COMMAND" || !activeModule) && (
-               safeRole === 'ENCARREGADO' 
-                 ? <EncarregadoModule user={user} />
-                 : <GerenciaModule user={user} initialTab={tabParam as any} />
+               isManager 
+                 ? <GerenciaModule user={user} initialTab={tabParam as any} />
+                 : <EncarregadoModule user={user} />
             )}
             
             {activeModule === "SST" && (
