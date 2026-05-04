@@ -15,6 +15,7 @@ export function useRHData(user: any) {
       const { data: users } = await supabase.from('usuarios').select('*').order('nome');
       if (users) {
         setColaboradores(users.map(u => ({
+          ...u,
           id: u.id,
           nome: u.nome || "Sem Nome",
           cargo: u.cargo || "Não definido",
