@@ -151,13 +151,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 px-6 flex flex-col gap-2 overflow-y-auto custom-scrollbar pb-6 mt-4">
           {nav.filter(item => {
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';
-            return item.roles.includes(safeRole);
+            const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
+            return isManager || item.roles.includes(safeRole);
           }).map(item => {
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';
+            const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE"].includes(safeRole);
             if (item.subItems) {
               const isOpen = openMenus[item.label] && sidebarOpen;
               const hasActiveSub = item.subItems.some(sub => pathname === sub.href);
-              const permittedSubItems = item.subItems.filter(sub => sub.roles.includes(safeRole));
+              const permittedSubItems = item.subItems.filter(sub => isManager || sub.roles.includes(safeRole));
 
               if (permittedSubItems.length === 0) return null;
               
@@ -250,7 +252,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             
             {/* Settings Quick Access */}
             <Link 
-              href="/dashboard?module=CONFIGURACAO" 
+              href="/dashboard?module=SETTINGS" 
               className="w-10 h-10 flex items-center justify-center rounded-xl glass hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] transition-all"
               title="Configurações"
             >
