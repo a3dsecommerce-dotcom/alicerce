@@ -39,7 +39,7 @@ export function useComprasData(user: any) {
             .from('usuarios')
             .select('*', { count: 'exact', head: true })
             .eq('unidade_alocacao', user.unidade_alocacao)
-            .or(`função.eq.ASG,funcao.eq.ASG,cargo.eq.ASG`)
+            .eq('cargo', 'ASG')
             .eq('status', 'ATIVO');
          
          if (count !== null) setQtdAsg(count > 0 ? count : 1);

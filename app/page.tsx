@@ -54,7 +54,7 @@ export default function LoginPage() {
         return; 
       }
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
-      const dbFuncao = user.funcao || user['função'] || user.cargo;
+      const dbFuncao = user.cargo;
       const rawFuncao = dbFuncao ? String(dbFuncao).toUpperCase() : null;
       const cargoResolvido = rawFuncao || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
       localStorage.setItem("crm_user", JSON.stringify({ 

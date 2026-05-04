@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               .single();
             
             if (dbUser) {
-              const dbFuncao = dbUser.funcao || dbUser['função'] || dbUser.cargo;
+              const dbFuncao = dbUser.cargo;
               const rawFuncao = dbFuncao 
                 ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
                 : null;
