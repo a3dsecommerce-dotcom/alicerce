@@ -292,12 +292,14 @@ export default function OperacionalModule({ user }: { user: any }) {
                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={20} />
                  <input className="input-field !pl-16 !h-14 font-bold" placeholder="Pesquisar posto ou unidade..." value={busca} onChange={e => setBusca(e.target.value)} />
               </div>
-              <button 
-                onClick={() => { resetForm(); setIsModalOpen(true); }}
-                className="h-14 px-8 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-black/20"
-              >
-                 <Plus size={18} /> Adicionar Unidade
-              </button>
+              {!isEncarregado && (
+                <button 
+                  onClick={() => { resetForm(); setIsModalOpen(true); }}
+                  className="h-14 px-8 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-black/20"
+                >
+                   <Plus size={18} /> Adicionar Unidade
+                </button>
+              )}
            </div>
             <UnidadesTable 
               unidades={unidades} 

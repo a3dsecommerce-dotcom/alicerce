@@ -112,27 +112,62 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         </div>
       </div>
 
+      <div className="flex justify-between items-center bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-sm">
+        <div>
+          <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-1 italic">Povoamento Operacional</h3>
+          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Cadastre colaboradores diretamente nas suas unidades de rota</p>
+        </div>
+        <button 
+          onClick={() => setActiveTab("QUICK_ADMISSION")}
+          className="px-10 py-4 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-[var(--brand)]/20 flex items-center gap-3"
+        >
+          <UserPlus size={18} /> Admissão Rápida
+        </button>
+      </div>
+
       <div className="card">
         <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-6">Unidades Sob Minha Responsabilidade</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {myUnits.map((unit, i) => (
-            <button 
+            <div 
               key={i} 
-              onClick={() => {
-                setFiltroUnidadeOcorrencia(unit);
-                setActiveTab("TICKETS");
-              }}
-              className="p-8 bg-[var(--bg-base)] border border-[var(--border)] rounded-3xl flex items-center gap-6 hover:border-[var(--brand)] hover:scale-[1.02] active:scale-[0.98] transition-all text-left w-full group overflow-hidden"
+              className="p-8 bg-[var(--bg-base)] border border-[var(--border)] rounded-3xl flex flex-col gap-6 hover:border-[var(--brand)] transition-all group overflow-hidden"
             >
-              <div className="w-14 h-14 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] group-hover:bg-[var(--brand)] group-hover:text-white transition-all shrink-0">
-                <Building2 size={28} />
+              <div className="flex items-center gap-6">
+                <div className="w-14 h-14 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] group-hover:bg-[var(--brand)] group-hover:text-white transition-all shrink-0">
+                  <Building2 size={28} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-black text-[var(--text-primary)] uppercase truncate mb-1">{unit}</p>
+                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{myColabs.filter(c => c.unidade_alocacao === unit).length} Colaboradores</p>
+                </div>
+                <button 
+                  onClick={() => { setFiltroUnidadeOcorrencia(unit); setActiveTab("TICKETS"); }}
+                  className="p-3 bg-[var(--bg-card)] text-[var(--text-muted)] rounded-xl border border-[var(--border)] hover:text-[var(--brand)] transition-all"
+                >
+                  <AlertTriangle size={18} />
+                </button>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-[var(--text-primary)] uppercase truncate mb-1">{unit}</p>
-                <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">{myColabs.filter(c => c.unidade_alocacao === unit).length} Colaboradores</p>
+
+              <div className="pt-6 border-t border-[var(--border)] flex gap-2">
+                 <button 
+                   onClick={() => {
+                     const unitObj = fullUnits.find(u => u.nome === unit);
+                     setAdmissao({ ...admissao, unidade: unit, secretaria: unitObj?.secretaria || 'SEMED' });
+                     setActiveTab("QUICK_ADMISSION");
+                   }}
+                   className="flex-1 py-3 bg-[var(--brand)]/10 text-[var(--brand)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all"
+                 >
+                    Vincular Colaborador
+                 </button>
+                 <button 
+                   onClick={() => { setFiltroUnidadeOcorrencia(unit); setActiveTab("TICKETS"); }}
+                   className="px-4 py-3 bg-[var(--bg-card)] text-[var(--text-muted)] rounded-xl border border-[var(--border)] text-[9px] font-black uppercase hover:border-[var(--brand)] transition-all"
+                 >
+                    Chamados
+                 </button>
               </div>
-              <ArrowUpRight size={20} className="text-[var(--text-muted)] group-hover:text-[var(--brand)] transition-all shrink-0" />
-            </button>
+            </div>
           ))}
           {myUnits.length === 0 && (
             <div className="col-span-full py-20 text-center opacity-50">
