@@ -17,10 +17,57 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   
   const [formData, setFormData] = useState({ 
-    assunto: "", descricao: "", prioridade: "ALTA", prazo_estipulado_dias: 1, setor_destino: "Gerência Operacional" 
+    assunto: "", 
+    descricao: "", 
+    prioridade: "NORMAL", 
+    prazo_estipulado_dias: 7, 
+    setor_destino: "Gerência Operacional",
+    interessado_id: "",
+    interessado_nome: "",
+    unidade: "",
+    secretaria: "",
+    funcao: ""
   });
   const [receberData, setReceberData] = useState({ prazo_prometido: "" });
   const [resolverData, setResolverData] = useState({ solucao: "" });
+
+  // Busca de colaboradores
+  const [buscaColab, setBuscaColab] = useState("");
+  const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
+  const [buscando, setBuscando] = useState(false);
+
+  useEffect(() => {
+    if (buscaColab.length > 2) {
+      searchColabs();
+    } else {
+      setColabsSugeridos([]);
+    }
+  }, [buscaColab]);
+
+  async function searchColabs() {
+    setBuscando(true);
+    const { data } = await supabase
+      .from('usuarios')
+      .select('id, nome, unidade_alocacao, secretaria, cargo, funcao')
+      .ilike('nome', `%${buscaColab}%`)
+      .limit(5);
+    if (data) setColabsSugeridos(data);
+    setBuscando(false);
+  }
+
+  const selecionarColab = (colab: any) => {
+    setFormData({
+      ...formData,
+      interessado_id: colab.id,
+      interessado_nome: colab.nome,
+      unidade: colab.unidade_alocacao || "",
+      secretaria: colab.secretaria || "",
+      funcao: colab.funcao || colab.cargo || ""
+    });
+    setBuscaColab("");
+    setColabsSugeridos([]);
+  };
+
 
   useEffect(() => {
     fetchTickets();
@@ -38,7 +85,9 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setLoading(true);
     const { error } = await supabase.from('tickets_sla').insert([{
       ...formData,
-      criado_por: user.name || 'Setor Admin',
+      criado_por: user.name || user.nome || 'Setor Admin',
+      representante_id: user.id,
+      representante_nome: user.name || user.nome,
       status: 'PENDENTE'
     }]);
     if (error) alert(error.message);
@@ -135,8 +184,11 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                         <tr key={t.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
                            <td className="p-8 text-center text-xs font-bold text-[var(--text-muted)]">{new Date(t.data_abertura).toLocaleDateString()}</td>
                            <td className="p-8">
-                              <div className="text-sm font-black">{t.criado_por}</div>
+                              <div className="text-sm font-black">{t.interessado_nome || t.criado_por}</div>
                               <div className="text-[9px] font-bold text-red-600 uppercase tracking-widest">{t.setor_destino || 'Setor Geral'}</div>
+                              {t.representante_nome && (
+                                 <div className="text-[8px] text-[var(--text-muted)] font-black uppercase mt-1">Rep: {t.representante_nome}</div>
+                              )}
                            </td>
                            <td className="p-8">
                               <div className="text-sm font-bold text-[var(--text-primary)] whitespace-normal max-w-[300px]">{t.assunto}</div>
@@ -183,14 +235,73 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
                <textarea className="input-field !h-32 p-4 text-xs font-bold" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} placeholder="Descreva o problema para que o setor possa resolver..." />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="relative">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block italic">Pesquisa Rápida de Colaborador (Interessado)</label>
+                  <div className="relative">
+                     <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                     <input 
+                       className="input-field !pl-12 !h-14 font-black text-xs" 
+                       placeholder="BUSCAR PELO NOME..." 
+                       value={buscaColab}
+                       onChange={e => setBuscaColab(e.target.value.toUpperCase())}
+                     />
+                  </div>
+                  {colabsSugeridos.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      {colabsSugeridos.map(c => (
+                        <button 
+                          key={c.id}
+                          onClick={() => selecionarColab(c)}
+                          className="w-full p-4 flex flex-col items-start gap-1 hover:bg-[var(--brand)]/10 border-b border-[var(--border)] last:border-none transition-colors"
+                        >
+                          <span className="text-[11px] font-black uppercase text-[var(--text-primary)]">{c.nome}</span>
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.unidade_alocacao} • {c.funcao || c.cargo}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+               </div>
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Interessado Selecionado</label>
+                  <div className="input-field !h-14 font-black flex items-center px-4 bg-[var(--bg-base)] text-[var(--brand)] border-dashed border-2">
+                     {formData.interessado_nome || "NENHUM SELECIONADO"}
+                  </div>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade / Alocação</label>
+                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-xs font-bold" value={formData.unidade} disabled />
+               </div>
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Secretaria</label>
+                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-xs font-bold" value={formData.secretaria} disabled />
+               </div>
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Função</label>
+                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-xs font-bold" value={formData.funcao} disabled />
+               </div>
+            </div>
+
             <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Tempo Máximo para Solução (Dias)</label>
-               <select className="input-field !h-14 font-black" value={formData.prazo_estipulado_dias} onChange={e => setFormData({...formData, prazo_estipulado_dias: Number(e.target.value)})}>
-                  <option value={1}>24 Horas (Mínimo)</option>
-                  <option value={2}>2 Dias</option>
-                  <option value={3}>3 Dias</option>
-                  <option value={7}>7 Dias</option>
-               </select>
+               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Prioridade & Prazo de SLA</label>
+               <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { id: 'NORMAL', label: 'NORMAL (7 DIAS)', days: 7, color: 'hover:border-blue-500 text-blue-600' },
+                    { id: 'MEDIO', label: 'MÉDIO (3 DIAS)', days: 3, color: 'hover:border-orange-500 text-orange-600' },
+                    { id: 'CRITICO', label: 'CRÍTICO (24HS)', days: 1, color: 'hover:border-red-600 text-red-600' },
+                  ].map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setFormData({...formData, prioridade: p.id, prazo_estipulado_dias: p.days})}
+                      className={`h-14 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${formData.prioridade === p.id ? 'border-current bg-[var(--bg-base)]' : 'border-[var(--border)] opacity-60'} ${p.color}`}
+                    >
+                      <span className="text-[10px] font-black tracking-tighter">{p.label}</span>
+                    </button>
+                  ))}
+               </div>
             </div>
             <button onClick={handleNovaOcorrencia} className="w-full h-16 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/30 hover:scale-[1.02] transition-all">Registrar Ocorrência</button>
          </div>
@@ -205,16 +316,38 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                   <p className="text-xs text-[var(--text-muted)] font-bold mt-2">{selectedTicket.descricao}</p>
                </div>
 
-               <div className="grid grid-cols-2 gap-6">
-                  <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                     <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Solicitado em</p>
-                     <p className="text-sm font-black">{new Date(selectedTicket.data_abertura).toLocaleString()}</p>
-                  </div>
-                  <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                     <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo Estipulado</p>
-                     <p className="text-sm font-black text-red-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
-                  </div>
-               </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Aberto em</p>
+                      <p className="text-sm font-black">{new Date(selectedTicket.data_abertura).toLocaleDateString()}</p>
+                   </div>
+                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo SLA</p>
+                      <p className="text-sm font-black text-red-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
+                   </div>
+                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Secretaria</p>
+                      <p className="text-sm font-black">{selectedTicket.secretaria || 'N/A'}</p>
+                   </div>
+                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Unidade</p>
+                      <p className="text-sm font-black truncate">{selectedTicket.unidade || 'N/A'}</p>
+                   </div>
+                </div>
+
+                <div className="p-6 bg-[var(--bg-base)] rounded-3xl border border-[var(--border)] flex justify-between items-center">
+                   <div>
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1">Interessado (Colaborador)</p>
+                      <p className="text-base font-black text-[var(--text-primary)]">{selectedTicket.interessado_nome || selectedTicket.criado_por}</p>
+                      <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-tight">{selectedTicket.funcao || 'OPERACIONAL'}</p>
+                   </div>
+                   {selectedTicket.representante_nome && (
+                      <div className="text-right">
+                         <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1">Representante</p>
+                         <p className="text-sm font-black text-[var(--text-secondary)]">{selectedTicket.representante_nome}</p>
+                      </div>
+                   )}
+                </div>
 
                {selectedTicket.status === 'PENDENTE' && (
                   <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
