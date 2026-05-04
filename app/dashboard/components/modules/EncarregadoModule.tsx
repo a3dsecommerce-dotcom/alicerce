@@ -418,7 +418,10 @@ export default function EncarregadoModule({ user }: { user: any }) {
                 <select 
                   className="input-field flex-1 !h-12 font-bold"
                   value={admissao.carga_horaria}
-                  onChange={e => setAdmissao({...admissao, carga_horaria: e.target.value})}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setAdmissao({...admissao, carga_horaria: val, escala_tipo: val === '44H' ? 'DIARIO' : admissao.escala_tipo});
+                  }}
                 >
                   <option value="12X36">12X36</option>
                   <option value="44H">44H (SEM)</option>
@@ -439,10 +442,17 @@ export default function EncarregadoModule({ user }: { user: any }) {
                 <select 
                   className="input-field flex-1 !h-12 font-bold"
                   value={admissao.escala_tipo}
+                  disabled={admissao.carga_horaria === '44H'}
                   onChange={e => setAdmissao({...admissao, escala_tipo: e.target.value})}
                 >
-                  <option value="PAR">ESCALA PAR</option>
-                  <option value="IMPAR">ESCALA ÍMPAR</option>
+                  {admissao.carga_horaria === '44H' ? (
+                    <option value="DIARIO">DIARIO / FIXO</option>
+                  ) : (
+                    <>
+                      <option value="PAR">ESCALA PAR</option>
+                      <option value="IMPAR">ESCALA ÍMPAR</option>
+                    </>
+                  )}
                 </select>
                 <select 
                   className="input-field flex-1 !h-12 font-bold"

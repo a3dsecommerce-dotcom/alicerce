@@ -186,10 +186,16 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                       {editing ? (
                         f.type === "select" ? (
                           <select 
-                            className={`input-field ${f.key === "nivel_acesso" && restrictLevel ? 'opacity-50 cursor-not-allowed' : ''}`} 
-                            disabled={f.key === "nivel_acesso" && restrictLevel}
                             value={editForm[f.key]} 
-                            onChange={e => setEditForm({...editForm, [f.key]: e.target.value})}
+                            disabled={(f.key === "nivel_acesso" && restrictLevel) || (f.key === "escala_tipo" && editForm.carga_horaria === "44H")}
+                            onChange={e => {
+                              const val = e.target.value;
+                              const updates: any = { [f.key]: val };
+                              if (f.key === "carga_horaria" && val === "44H") {
+                                updates.escala_tipo = "DIARIO";
+                              }
+                              setEditForm({...editForm, ...updates});
+                            }}
                           >
                             {f.key === "nivel_acesso" ? (
                               <>
@@ -198,6 +204,8 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                                 <option value="3">3 - Gestor / Encarregado</option>
                                 <option value="4">4 - Diretoria / RH Master</option>
                               </>
+                            ) : f.key === "escala_tipo" && editForm.carga_horaria === "44H" ? (
+                              <option value="DIARIO">DIARIO / FIXO</option>
                             ) : (
                               f.options?.map((opt: any) => <option key={opt} value={opt}>{opt}</option>)
                             )}
