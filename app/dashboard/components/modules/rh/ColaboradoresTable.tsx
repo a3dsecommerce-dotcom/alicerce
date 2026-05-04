@@ -16,6 +16,7 @@ interface Colaborador {
   horario_entrada?: string;
   horario_saida?: string;
   escala_tipo?: string;
+  periodo?: string;
 }
 
 interface ColaboradoresTableProps {
@@ -60,7 +61,12 @@ export default function ColaboradoresTable({
             </td>
             <td className="p-6">
               <div className="text-xs font-bold text-[var(--text-primary)]">{c.carga_horaria || '---'} ({c.horario_entrada || '07:00'}-{c.horario_saida || '19:00'})</div>
-              <div className="text-[9px] text-blue-600 font-black uppercase">{c.escala_tipo || 'DIARIO'}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] text-blue-600 font-black uppercase">{c.escala_tipo || 'DIARIO'}</span>
+                <span className={`text-[8px] font-black uppercase px-1.5 rounded ${c.periodo === 'NOTURNO' ? 'bg-indigo-100 text-indigo-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                   {c.periodo || 'DIURNO'}
+                </span>
+              </div>
             </td>
             <td className="p-6 text-center">
                <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${c.insalubridade === '40%' ? 'bg-red-100 text-red-700' : c.insalubridade === '20%' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>

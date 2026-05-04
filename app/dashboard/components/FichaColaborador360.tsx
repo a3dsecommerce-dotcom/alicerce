@@ -172,6 +172,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                     ...(restrictLevel ? [] : [{ key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] }]),
                     { key: "insalubridade", label: "Insalubridade", type: "select", options: ["N/A", "20%", "40%"] },
                     { key: "carga_horaria", label: "Carga Horária", type: "select", options: ["12X36", "44H", "20H"] },
+                    { key: "periodo", label: "Período", type: "select", options: ["DIURNO", "NOTURNO"] },
                     { key: "escala_tipo", label: "Tipo de Escala", type: "select", options: ["PAR", "IMPAR", "DIARIO"] },
                     { key: "horario_entrada", label: "Entrada", type: "time" },
                     { key: "horario_saida", label: "Saída", type: "time" },

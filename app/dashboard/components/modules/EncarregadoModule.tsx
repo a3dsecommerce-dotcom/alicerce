@@ -19,7 +19,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
 
   const [admissao, setAdmissao] = useState({ 
     nome: '', telefone: '', unidade: '', secretaria: '', cargo: 'AUXILIAR DE SERVIÇOS GERAIS',
-    insalubridade: 'N/A', carga_horaria: '12X36', 
+    insalubridade: 'N/A', carga_horaria: '12X36', periodo: 'DIURNO',
     horario_entrada: '07:00', horario_saida: '19:00',
     escala_tipo: 'IMPAR', data_referencia: new Date().toISOString().split('T')[0]
   });
@@ -179,7 +179,12 @@ export default function EncarregadoModule({ user }: { user: any }) {
                         </td>
                         <td className="p-6">
                            <div className="text-xs font-bold text-[var(--text-primary)]">{colab.carga_horaria || '---'} ({colab.horario_entrada || '07:00'}-{colab.horario_saida || '19:00'})</div>
-                           <div className="text-[9px] text-blue-600 font-black uppercase">{colab.escala_tipo || 'DIARIO'}</div>
+                           <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-blue-600 font-black uppercase">{colab.escala_tipo || 'DIARIO'}</span>
+                              <span className={`text-[8px] font-black uppercase px-1.5 rounded ${colab.periodo === 'NOTURNO' ? 'bg-indigo-100 text-indigo-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                 {colab.periodo || 'DIURNO'}
+                              </span>
+                           </div>
                         </td>
                         <td className="p-6 text-center">
                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${colab.insalubridade === '40%' ? 'bg-red-100 text-red-700' : colab.insalubridade === '20%' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
@@ -222,6 +227,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
       secretaria: fullUnits.find(u => u.nome === editandoColab.unidade_alocacao)?.secretaria || editandoColab.secretaria,
       insalubridade: editandoColab.insalubridade,
       carga_horaria: editandoColab.carga_horaria,
+      periodo: editandoColab.periodo,
       horario_entrada: editandoColab.horario_entrada,
       horario_saida: editandoColab.horario_saida,
       escala_tipo: editandoColab.escala_tipo,
@@ -318,6 +324,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
       nivel: 1,
       insalubridade: admissao.insalubridade,
       carga_horaria: admissao.carga_horaria,
+      periodo: admissao.periodo,
       horario_entrada: admissao.horario_entrada,
       horario_saida: admissao.horario_saida,
       escala_tipo: admissao.escala_tipo,
@@ -405,7 +412,7 @@ export default function EncarregadoModule({ user }: { user: any }) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]">
             <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga Horária / Escala</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga / Período</label>
               <div className="flex gap-2">
                 <select 
                   className="input-field flex-1 !h-12 font-bold"
@@ -413,32 +420,39 @@ export default function EncarregadoModule({ user }: { user: any }) {
                   onChange={e => setAdmissao({...admissao, carga_horaria: e.target.value})}
                 >
                   <option value="12X36">12X36</option>
-                  <option value="44H">44H (SEMANAL)</option>
-                  <option value="20H">20H (PARCIAL)</option>
+                  <option value="44H">44H (SEM)</option>
                 </select>
-                {admissao.carga_horaria === '12X36' && (
-                  <select 
-                    className="input-field flex-1 !h-12 font-bold"
-                    value={admissao.escala_tipo}
-                    onChange={e => setAdmissao({...admissao, escala_tipo: e.target.value})}
-                  >
-                    <option value="PAR">ESCALA PAR</option>
-                    <option value="IMPAR">ESCALA ÍMPAR</option>
-                  </select>
-                )}
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.periodo}
+                  onChange={e => setAdmissao({...admissao, periodo: e.target.value})}
+                >
+                  <option value="DIURNO">DIURNO</option>
+                  <option value="NOTURNO">NOTURNO</option>
+                </select>
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Insalubridade</label>
-              <select 
-                className="input-field w-full !h-12 font-bold"
-                value={admissao.insalubridade}
-                onChange={e => setAdmissao({...admissao, insalubridade: e.target.value})}
-              >
-                <option value="N/A">NÃO POSSUI</option>
-                <option value="20%">MÉDIA (20%)</option>
-                <option value="40%">MÁXIMA (40%)</option>
-              </select>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Escala / Insalubridade</label>
+              <div className="flex gap-2">
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.escala_tipo}
+                  onChange={e => setAdmissao({...admissao, escala_tipo: e.target.value})}
+                >
+                  <option value="PAR">ESCALA PAR</option>
+                  <option value="IMPAR">ESCALA ÍMPAR</option>
+                </select>
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.insalubridade}
+                  onChange={e => setAdmissao({...admissao, insalubridade: e.target.value})}
+                >
+                  <option value="N/A">N/A</option>
+                  <option value="20%">20%</option>
+                  <option value="40%">40%</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -588,11 +602,11 @@ export default function EncarregadoModule({ user }: { user: any }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-100">
             <div>
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga / Horário</label>
               <select 
-                className="input-field w-full font-bold mb-2"
+                className="input-field w-full font-bold mb-2 h-10"
                 value={editandoColab?.carga_horaria || ''}
                 onChange={e => setEditandoColab({...editandoColab, carga_horaria: e.target.value})}
               >
@@ -600,29 +614,40 @@ export default function EncarregadoModule({ user }: { user: any }) {
                 <option value="44H">44H (SEMANAL)</option>
               </select>
               <div className="flex gap-2">
-                <input type="time" className="input-field flex-1 !h-10 text-xs" value={editandoColab?.horario_entrada || ''} onChange={e => setEditandoColab({...editandoColab, horario_entrada: e.target.value})} />
-                <input type="time" className="input-field flex-1 !h-10 text-xs" value={editandoColab?.horario_saida || ''} onChange={e => setEditandoColab({...editandoColab, horario_saida: e.target.value})} />
+                <input type="time" className="input-field flex-1 !h-8 text-[10px]" value={editandoColab?.horario_entrada || ''} onChange={e => setEditandoColab({...editandoColab, horario_entrada: e.target.value})} />
+                <input type="time" className="input-field flex-1 !h-8 text-[10px]" value={editandoColab?.horario_saida || ''} onChange={e => setEditandoColab({...editandoColab, horario_saida: e.target.value})} />
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Escala / Insalubridade</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Escala / Período</label>
               <select 
-                className="input-field w-full font-bold mb-2"
+                className="input-field w-full font-bold mb-2 h-10"
                 value={editandoColab?.escala_tipo || ''}
                 onChange={e => setEditandoColab({...editandoColab, escala_tipo: e.target.value})}
               >
-                <option value="PAR">ESCALA PAR</option>
-                <option value="IMPAR">ESCALA ÍMPAR</option>
-                <option value="DIARIO">DIÁRIO FIXO</option>
+                <option value="PAR">PAR</option>
+                <option value="IMPAR">ÍMPAR</option>
+                <option value="DIARIO">DIÁRIO</option>
               </select>
               <select 
-                className="input-field w-full font-bold"
+                className="input-field w-full font-bold h-10"
+                value={editandoColab?.periodo || 'DIURNO'}
+                onChange={e => setEditandoColab({...editandoColab, periodo: e.target.value})}
+              >
+                <option value="DIURNO">DIURNO</option>
+                <option value="NOTURNO">NOTURNO</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Insalubridade</label>
+              <select 
+                className="input-field w-full font-bold h-10"
                 value={editandoColab?.insalubridade || ''}
                 onChange={e => setEditandoColab({...editandoColab, insalubridade: e.target.value})}
               >
-                <option value="N/A">SEM INSALUBRIDADE</option>
-                <option value="20%">20% (MÉDIA)</option>
-                <option value="40%">40% (MÁXIMA)</option>
+                <option value="N/A">SEM</option>
+                <option value="20%">20%</option>
+                <option value="40%">40%</option>
               </select>
             </div>
           </div>
