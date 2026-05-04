@@ -14,7 +14,7 @@ import UnidadesTable from "./operacional/UnidadesTable";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -210,6 +210,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
           {[
             { id: "VISAO", label: "Visão Geral", icon: LayoutDashboard },
             { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
+            { id: "AUDITORIA", label: "Auditoria", icon: Shield },
             { id: "CONFIG", label: "Configurações", icon: Settings },
             { id: "DB", label: "Banco de Dados", icon: Database }
           ].map(t => (
@@ -299,12 +300,16 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
           </div>
         )}
 
-        {(activeTab === "CONFIG" || activeTab === "DB") && (
+        {(activeTab === "CONFIG" || activeTab === "DB" || activeTab === "AUDITORIA") && (
           <div className="flex-1 flex items-center justify-center p-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)] opacity-40">
             <div className="text-center">
-              <Settings size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" />
-              <h3 className="text-xl font-black uppercase italic">Módulo em Desenvolvimento</h3>
-              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em] mt-2">As configurações de sistema estão sendo migradas para a nova arquitetura.</p>
+              {activeTab === "AUDITORIA" ? <Shield size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" /> : <Settings size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" />}
+              <h3 className="text-xl font-black uppercase italic">Módulo {activeTab === "AUDITORIA" ? "de Auditoria" : "em Desenvolvimento"}</h3>
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em] mt-2">
+                {activeTab === "AUDITORIA" 
+                  ? "Logs de auditoria e monitoramento forense estão sendo processados." 
+                  : "As configurações de sistema estão sendo migradas para a nova arquitetura."}
+              </p>
             </div>
           </div>
         )}

@@ -38,7 +38,7 @@ export const ALL_NAV: NavItem[] = [
     label: 'Auditoria & Seg.',
     icon: ShieldAlert,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    href: '/dashboard?module=COMMAND&tab=VISAO'
+    href: '/dashboard?module=COMMAND&tab=AUDITORIA'
   },
   {
     label: 'Gestão de Rotas',
