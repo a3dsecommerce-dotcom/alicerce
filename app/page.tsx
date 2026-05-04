@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Phone, Lock, Shield, ShieldCheck, Zap, Network, Database, CheckCircle2, User, MapPin, Briefcase, Ruler } from "lucide-react";
+import { Eye, EyeOff, Phone, Lock, Shield, ShieldCheck, Zap, Network, Database, CheckCircle2, User, MapPin, Briefcase, Ruler, ArrowRight } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { supabase } from "@/lib/supabase";
 
