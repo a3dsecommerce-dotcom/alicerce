@@ -37,7 +37,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const [buscando, setBuscando] = useState(false);
 
   useEffect(() => {
-    if (buscaColab.length > 2) {
+    if (buscaColab.length > 1) {
       searchColabs();
     } else {
       setColabsSugeridos([]);
@@ -46,11 +46,13 @@ export default function OcorrenciasModule({ user }: { user: any }) {
 
   async function searchColabs() {
     setBuscando(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('usuarios')
-      .select('id, nome, unidade_alocacao, secretaria, cargo, funcao')
+      .select('*')
       .ilike('nome', `%${buscaColab}%`)
-      .limit(5);
+      .limit(10);
+    
+    if (error) console.error("Erro busca:", error);
     if (data) setColabsSugeridos(data);
     setBuscando(false);
   }
@@ -60,9 +62,9 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       ...formData,
       interessado_id: colab.id,
       interessado_nome: colab.nome,
-      unidade: colab.unidade_alocacao || "",
+      unidade: colab.unidade_alocacao || colab.unidade || "",
       secretaria: colab.secretaria || "",
-      funcao: colab.funcao || colab.cargo || ""
+      funcao: colab.funcao || colab.cargo || colab.função || "OPERACIONAL"
     });
     setBuscaColab("");
     setColabsSugeridos([]);
@@ -244,10 +246,15 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                        className="input-field !pl-12 !h-14 font-black text-xs" 
                        placeholder="BUSCAR PELO NOME..." 
                        value={buscaColab}
-                       onChange={e => setBuscaColab(e.target.value.toUpperCase())}
+                       onChange={e => setBuscaColab(e.target.value)}
                      />
+                     {buscando && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-[var(--brand)] border-t-transparent"></div>
+                        </div>
+                     )}
                   </div>
-                  {colabsSugeridos.length > 0 && (
+                  {colabsSugeridos.length > 0 ? (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                       {colabsSugeridos.map(c => (
                         <button 
@@ -256,10 +263,16 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                           className="w-full p-4 flex flex-col items-start gap-1 hover:bg-[var(--brand)]/10 border-b border-[var(--border)] last:border-none transition-colors"
                         >
                           <span className="text-[11px] font-black uppercase text-[var(--text-primary)]">{c.nome}</span>
-                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.unidade_alocacao} • {c.funcao || c.cargo}</span>
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.unidade_alocacao || c.unidade || "S/ UNIDADE"} • {c.funcao || c.cargo || "COLABORADOR"}</span>
                         </button>
                       ))}
                     </div>
+                  ) : (
+                    buscaColab.length > 1 && !buscando && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-4 shadow-xl z-50 text-center">
+                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Nenhum colaborador encontrado</p>
+                      </div>
+                    )
                   )}
                </div>
                <div>
