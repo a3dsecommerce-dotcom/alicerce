@@ -553,7 +553,3 @@ export default function EncarregadoModule({ user }: { user: any }) {
     </div>
   );
 }
-
-    </div>
-  );
-}
