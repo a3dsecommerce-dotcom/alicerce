@@ -13,7 +13,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Visão Geral',
     icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO'],
     href: '/dashboard?module=COMMAND&tab=VISAO'
   },
   {
@@ -49,7 +49,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Central de Ocorrências',
     icon: AlertTriangle,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP', 'ALMOXARIFE', 'DIRETOR', 'ENCARREGADO'],
     href: '/dashboard/ocorrencias'
   },
   {

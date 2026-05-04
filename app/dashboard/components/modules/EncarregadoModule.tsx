@@ -10,8 +10,17 @@ import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
-export default function EncarregadoModule({ user }: { user: any }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">("MY_UNITS");
+export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "ATTENDANCE" | "TICKETS">(() => {
+    if (!initialTab) return "MY_UNITS";
+    const t = initialTab.toUpperCase();
+    if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
+    if (t === "EQUIPE" || t === "COLABS") return "MY_COLABS";
+    if (t === "ADMISSAO" || t === "CADASTRO") return "QUICK_ADMISSION";
+    if (t === "PONTO") return "ATTENDANCE";
+    if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
+    return "MY_UNITS";
+  });
   const [myUnits, setMyUnits] = useState<any[]>([]);
   const [fullUnits, setFullUnits] = useState<any[]>([]);
   const [cargos, setCargos] = useState<any[]>([]);
