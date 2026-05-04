@@ -13,7 +13,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Visão Geral',
     icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ENCARREGADO', 'COMPRADOR', 'ALMOXARIFE'],
     href: '/dashboard?module=COMMAND&tab=VISAO'
   },
   {
@@ -23,9 +23,15 @@ export const ALL_NAV: NavItem[] = [
     href: '/dashboard?module=OPERACIONAL'
   },
   {
+    label: 'Gestão de Compras',
+    icon: ShoppingCart,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'COMPRADOR'],
+    href: '/dashboard?module=COMPRAS'
+  },
+  {
     label: 'Almoxarifado',
     icon: Package,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ALMOXARIFE'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'ALMOXARIFE', 'ALMOXARIFADO'],
     href: '/dashboard?module=ALMOXARIFADO'
   },
   {

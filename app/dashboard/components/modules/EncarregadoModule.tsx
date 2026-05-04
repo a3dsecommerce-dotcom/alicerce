@@ -184,18 +184,35 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const renderMyColabs = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
        <div className="card">
-          <div className="flex justify-between items-center mb-6">
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Lista de Colaboradores (Minha Equipe)</h3>
-              <div className="relative">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
-                 <input 
-                   type="text" 
-                   placeholder="BUSCAR NA EQUIPE..." 
-                   className="input-field !h-9 !pl-10 !text-[10px] w-64" 
-                   value={searchTerm}
-                   onChange={e => setSearchTerm(e.target.value)}
-                 />
-              </div>
+          <div className="flex justify-between items-center mb-8 bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
+             <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+                   <Users size={20} />
+                </div>
+                <div>
+                   <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Gestão de Equipe</h3>
+                   <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Visualize e gerencie seus colaboradores de campo</p>
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-4">
+                <div className="relative">
+                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
+                   <input 
+                     type="text" 
+                     placeholder="BUSCAR NA EQUIPE..." 
+                     className="input-field !h-10 !pl-10 !text-[10px] w-64" 
+                     value={searchTerm}
+                     onChange={e => setSearchTerm(e.target.value)}
+                   />
+                </div>
+                <button 
+                   onClick={() => setActiveTab("QUICK_ADMISSION")}
+                   className="h-10 px-6 bg-[var(--brand)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-[var(--brand)]/20 flex items-center gap-2"
+                >
+                   <UserPlus size={14} /> Nova Admissão
+                </button>
+             </div>
           </div>
           <div className="overflow-x-auto">
              <table className="w-full text-left">
