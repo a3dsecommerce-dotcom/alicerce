@@ -122,42 +122,23 @@ export default function LoginPage() {
       </div>
 
       <style>{`
-        .smartphone-frame {
-          width: min(420px, 95vw);
-          aspect-ratio: 9 / 19.5;
-          max-height: 92vh;
+        .login-card {
+          width: min(480px, 95vw);
           background: var(--bg-card);
-          border: 10px solid #171717;
-          border-radius: 3.5rem;
+          backdrop-filter: blur(20px);
+          border: 1px solid var(--border);
+          border-radius: 2.5rem;
           box-shadow: 0 40px 100px -20px rgba(0,0,0,0.4);
           position: relative;
           z-index: 10;
           overflow: hidden;
           display: flex;
           flex-direction: column;
+          padding: 60px 45px 45px;
           transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .smartphone-screen {
-          flex: 1;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          padding: 60px 35px 35px;
-          position: relative;
-        }
-        .smartphone-screen::-webkit-scrollbar { width: 0; }
-        .dynamic-island {
-          position: absolute;
-          top: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 120px;
-          height: 28px;
-          background: #171717;
-          border-bottom-left-radius: 18px;
-          border-bottom-right-radius: 18px;
-          z-index: 50;
-        }
+        .login-card::-webkit-scrollbar { width: 0; }
+
         .input-group {
           margin-bottom: 20px;
         }
@@ -231,11 +212,8 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div className="smartphone-frame animate-fade-in">
-        <div className="dynamic-island" />
-        
-        <div className="smartphone-screen">
-          <div className="flex flex-col items-center text-center mt-12 mb-12">
+      <div className="login-card animate-fade-in">
+        <div className="flex flex-col items-center text-center mb-12">
             <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-600/30 mb-6">
               <ShieldCheck size={32} color="white" />
             </div>
@@ -311,7 +289,6 @@ export default function LoginPage() {
             <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] opacity-40">Segurança de Nível Militar</p>
             <p className="text-[8px] text-[var(--text-secondary)] mt-1 font-bold opacity-20 uppercase tracking-widest">Alicerce ERP • v1.0.0</p>
           </div>
-        </div>
       </div>
 
       {/* Modal Trabalhe Conosco com Tema Smartphone */}
