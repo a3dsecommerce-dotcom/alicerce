@@ -4,7 +4,7 @@ import {
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter, Trash2,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut, Send, Archive
+  Settings, Save, Lock, LogOut, Send, Archive, Plus
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
