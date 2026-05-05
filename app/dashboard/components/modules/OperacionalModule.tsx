@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   Activity, Building2, AlertTriangle, ShieldCheck, 
-  MapPin, Users, Search, Plus, ArrowUpRight, Clock
+  MapPin, Users, Search, Plus, ArrowUpRight, Clock, User
 } from "lucide-react";
 import { useOperacionalData } from "./operacional/useOperacionalData";
 import TableSkeleton from "@/components/ui/TableSkeleton";
