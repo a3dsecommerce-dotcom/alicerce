@@ -91,7 +91,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
    const [buscaColab, setBuscaColab] = useState("");
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
-   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado">("interessado");
+   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado" | "epi_recebedor">("interessado");
 
    const selecionarColab = (colab: any) => {
      if (campoBuscaAtivo === "substituto") {
@@ -114,6 +114,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
          colaborador_cpf: colab.cpf || "",
          colaborador_cargo: colab.cargo || colab.funcao || "",
          unidade_alocada: colab.unidade_alocacao || ""
+       });
+     } else if (campoBuscaAtivo === "epi_recebedor") {
+       setEpiData({
+         ...epiData,
+         colaborador_nome: colab.nome,
+         unidade: colab.unidade_alocacao || epiData.unidade
        });
      }
      setBuscaColab("");
@@ -881,14 +887,47 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           <div className="lg:col-span-7 space-y-8">
              <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-sm space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div>
+                   <div className="relative">
                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Colaborador Recebedor</label>
-                      <input 
-                        className="input-field w-full !h-14 font-black"
-                        placeholder="Digite o nome completo..."
-                        value={epiData.colaborador_nome}
-                        onChange={e => setEpiData({...epiData, colaborador_nome: e.target.value.toUpperCase()})}
-                      />
+                      <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
+                        <input 
+                          className="input-field w-full !h-14 font-black !pl-12"
+                          placeholder="Pesquisar colaborador..."
+                          value={epiData.colaborador_nome}
+                          onChange={e => {
+                            const val = e.target.value.toUpperCase();
+                            setCampoBuscaAtivo("epi_recebedor");
+                            setBuscaColab(val);
+                            setEpiData({...epiData, colaborador_nome: val});
+                            if (val.length > 2) {
+                              setColabsSugeridos(myColabs.filter(c => c.nome.includes(val) || c.cpf?.includes(val)));
+                            } else {
+                              setColabsSugeridos([]);
+                            }
+                          }}
+                        />
+                      </div>
+                      
+                      {campoBuscaAtivo === "epi_recebedor" && colabsSugeridos.length > 0 && (
+                        <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2">
+                           {colabsSugeridos.map((c, i) => (
+                             <button 
+                               key={i}
+                               onClick={() => selecionarColab(c)}
+                               className="w-full p-4 flex items-center gap-4 hover:bg-[var(--bg-base)] transition-colors border-b border-[var(--border)] last:border-0 text-left"
+                             >
+                                <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] font-black text-xs">
+                                   {c.nome.charAt(0)}
+                                </div>
+                                <div>
+                                   <p className="text-[10px] font-black uppercase text-[var(--text-primary)]">{c.nome}</p>
+                                   <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.funcao || c.cargo} • {c.unidade_alocacao}</p>
+                                </div>
+                             </button>
+                           ))}
+                        </div>
+                      )}
                    </div>
                    <div>
                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Unidade de Entrega</label>
