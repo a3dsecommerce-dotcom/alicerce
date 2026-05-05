@@ -260,7 +260,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       {/* FILTROS */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="flex gap-2 p-1 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-x-auto custom-scrollbar w-full md:w-auto">
-          {["TODOS", "Gerência Operacional", "RH Recursos Humanos", "Almoxarifado", "Técnico Segurança", "Gerência Regional"].map(s => (
+          {["TODOS", "Gerência", "RH Recursos Humanos", "Almoxarifado", "Técnico Segurança", "Encarregado"].map(s => (
             <button 
               key={s} 
               onClick={() => setFiltroSetor(s)}
@@ -291,7 +291,11 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                </thead>
                <tbody className="divide-y divide-[var(--border)]">
                   {tickets
-                    .filter(t => filtroSetor === "TODOS" || t.setor_destino === filtroSetor)
+                    .filter(t => {
+                      if (filtroSetor === "TODOS") return true;
+                      if (filtroSetor === "Gerência") return t.setor_destino?.startsWith("Gerência");
+                      return t.setor_destino === filtroSetor;
+                    })
                     .filter(t => t.assunto?.toLowerCase().includes(busca.toLowerCase()) || t.criado_por?.toLowerCase().includes(busca.toLowerCase()))
                     .map(t => {
                      const s = getStatusInfo(t);
