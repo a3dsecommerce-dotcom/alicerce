@@ -21,7 +21,14 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const canEdit = Number(user?.nivel || user?.nivel_acesso) >= 3;
+  const canEdit = Number(user?.nivel || user?.nivel_acesso) >= 3 || 
+                  user?.nivel === 3 || user?.nivel === '3' ||
+                  user?.nivel_acesso === 3 || user?.nivel_acesso === '3' ||
+                  user?.role?.toUpperCase().includes('GERENTE') || 
+                  user?.role?.toUpperCase().includes('ADMIN') ||
+                  user?.cargo?.toUpperCase().includes('GERENTE') ||
+                  user?.cargo?.toUpperCase().includes('ADMIN') ||
+                  user?.role?.toUpperCase().includes('MASTER');
   
   const [formData, setFormData] = useState({
     colaborador_id: "",
