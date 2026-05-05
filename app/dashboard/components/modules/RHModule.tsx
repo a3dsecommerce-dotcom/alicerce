@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
 import TalentosGrid from "./rh/TalentosGrid";
 import CATSList from "./rh/CATSList";
+import ExtrasList from "./rh/ExtrasList";
 import AdmissaoModals from "./rh/AdmissaoModals";
 import FichaColaborador360 from "../FichaColaborador360";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -18,10 +19,10 @@ import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "DOCS" | "CATS";
+type MasterTab = "DP" | "DOCS" | "CATS" | "EXTRAS";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, candidatos, cats, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
+  const { loading, colaboradores, candidatos, cats, extras, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
@@ -181,7 +182,8 @@ export default function RHModule({ user }: { user: any }) {
           {[
             { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
             { id: "DOCS", label: "Documentos", icon: FileText },
-            { id: "CATS", label: "CATs", icon: ShieldCheck }
+            { id: "CATS", label: "CATs", icon: ShieldCheck },
+            { id: "EXTRAS", label: "Extras", icon: Clock }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> {t.label}
@@ -233,6 +235,10 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "CATS" && (
            <CATSList cats={cats} onSelect={setSelecionadaCAT} />
+        )}
+
+        {masterTab === "EXTRAS" && (
+           <ExtrasList extras={extras} />
         )}
       </div>
 
