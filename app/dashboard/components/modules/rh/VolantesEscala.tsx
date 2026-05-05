@@ -473,8 +473,9 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             ) : (
               <div className="p-8 bg-amber-50 rounded-2xl border-2 border-dashed border-amber-200 flex flex-col items-center justify-center gap-3">
                 <TrendingUp size={32} className="text-amber-500" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 text-center">
-                  MODO DE CONSULTA: Apenas a gerência operacional pode alterar escalas já registradas.
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 text-center leading-relaxed">
+                  MODO DE CONSULTA: Seu nível de acesso permite apenas o registro e consulta. <br/>
+                  Alterações em escalas consolidadas exigem autorização da Gerência ou Master (Nível 3+).
                 </p>
               </div>
             )}
