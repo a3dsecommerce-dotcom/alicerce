@@ -203,7 +203,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       </div>
 
       {/* TABELA DE OCORRÊNCIAS - DESIGN PREMIUM CENTRADO */}
-      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden shadow-2xl flex flex-col flex-1">
+      <div className="bg-[var(--bg-card)] rounded-none border border-[var(--border)] overflow-hidden shadow-2xl flex flex-col flex-1">
          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left table-fixed border-separate border-spacing-0">
                <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
