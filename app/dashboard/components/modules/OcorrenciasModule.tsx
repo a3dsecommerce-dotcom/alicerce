@@ -175,7 +175,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in h-full px-2 md:px-6 py-4 max-w-[1600px] mx-auto">
+    <div className="flex flex-col gap-10 animate-fade-in h-full w-full max-w-[1400px] mx-auto py-10 px-6 lg:px-20">
       
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
@@ -202,54 +202,61 @@ export default function OcorrenciasModule({ user }: { user: any }) {
         </div>
       </div>
 
-      {/* TABELA DE OCORRÊNCIAS */}
-      <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] overflow-hidden shadow-xl flex flex-col flex-1 min-h-[500px]">
-         <div className="overflow-x-auto">
-            <table className="w-full text-left">
-               <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
+      {/* TABELA DE OCORRÊNCIAS - DESIGN PREMIUM CENTRADO */}
+      <div className="bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] overflow-hidden shadow-2xl flex flex-col flex-1">
+         <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left table-fixed border-separate border-spacing-0">
+               <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
                   <tr>
-                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-6">Identificação / Assunto</th>
-                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Setor / Citado</th>
-                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Prazos</th>
-                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
-                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right pr-6 whitespace-nowrap">Gestão</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-8 w-[35%]">Identificação / Assunto</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest w-[25%]">Setor / Citado</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[15%]">Prazos</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[15%]">Status</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right pr-8 w-[10%]">Gestão</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-[var(--border)]">
                   {tickets.filter(t => t.assunto?.toLowerCase().includes(busca.toLowerCase()) || t.criado_por?.toLowerCase().includes(busca.toLowerCase())).map(t => {
                      const s = getStatusInfo(t);
                      return (
-                        <tr key={t.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                           <td className="p-3 pl-6 max-w-[250px]">
-                              <div className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-tighter mb-0.5">
-                                 {new Date(t.data_abertura).toLocaleDateString()}
-                              </div>
-                              <div className="text-xs font-black text-[var(--text-primary)] truncate" title={t.assunto}>{t.assunto}</div>
-                              <div className="text-[8px] font-bold text-blue-600 uppercase truncate">Req: {t.interessado_nome || t.criado_por}</div>
-                           </td>
-                           <td className="p-3">
-                              <div className="text-xs font-black text-red-600 uppercase tracking-tight truncate">{t.setor_destino || 'Geral'}</div>
-                              <div className="text-[9px] font-bold text-[var(--text-muted)] truncate">
-                                 {t.responsavel_citado_nome ? `Cit: ${t.responsavel_citado_nome}` : '--'}
+                        <tr key={t.id} className="hover:bg-[var(--brand-alpha)] transition-all group">
+                           <td className="p-4 pl-8">
+                              <div className="flex flex-col">
+                                 <span className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">{new Date(t.data_abertura).toLocaleDateString()}</span>
+                                 <div className="text-xs font-black text-[var(--text-primary)] truncate pr-4" title={t.assunto}>{t.assunto}</div>
+                                 <span className="text-[8px] font-bold text-blue-600 mt-1 uppercase truncate opacity-70">Solic: {t.interessado_nome || t.criado_por}</span>
                               </div>
                            </td>
-                           <td className="p-3 text-center">
-                              <div className="flex flex-col items-center leading-tight">
+                           <td className="p-4">
+                              <div className="flex flex-col">
+                                 <span className="text-xs font-black text-red-600 uppercase tracking-tight truncate">{t.setor_destino || 'Setor Geral'}</span>
+                                 <span className="text-[9px] font-bold text-[var(--text-muted)] truncate mt-0.5">
+                                    {t.responsavel_citado_nome ? `Citado: ${t.responsavel_citado_nome}` : '--'}
+                                 </span>
+                              </div>
+                           </td>
+                           <td className="p-4 text-center">
+                              <div className="flex flex-col items-center justify-center">
                                  <span className="text-xs font-black text-blue-600">{t.prazo_estipulado_dias}d</span>
                                  {t.prazo_prometido && (
-                                    <span className="text-[8px] font-black text-green-600 mt-0.5">
+                                    <span className="text-[8px] font-black text-green-600 border-t border-[var(--border)] pt-1 mt-1">
                                        {new Date(t.prazo_prometido).toLocaleDateString()}
                                     </span>
                                  )}
                               </div>
                            </td>
-                           <td className="p-3 text-center">
-                              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${s.color}`}>
+                           <td className="p-4 text-center">
+                              <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${s.color}`}>
                                  <s.icon size={10} /> {s.label}
                               </div>
                            </td>
-                           <td className="p-3 text-right pr-6 whitespace-nowrap">
-                              <button onClick={() => { setSelectedTicket(t); setModalAberto("detalhes"); }} className="p-2 bg-[var(--bg-base)] text-[var(--brand)] rounded-lg border border-[var(--border)] hover:scale-105 transition-all shadow-sm"><Eye size={14}/></button>
+                           <td className="p-4 text-right pr-8">
+                              <button 
+                                 onClick={() => { setSelectedTicket(t); setModalAberto("detalhes"); }} 
+                                 className="p-2.5 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl border border-[var(--border)] hover:bg-[var(--brand)] hover:text-white hover:border-transparent transition-all shadow-sm group-hover:scale-110"
+                              >
+                                 <Eye size={14}/>
+                              </button>
                            </td>
                         </tr>
                      );
