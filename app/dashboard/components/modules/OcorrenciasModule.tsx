@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { 
   Search, AlertTriangle, Clock, CheckCircle2, Plus, 
@@ -102,7 +102,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       status: 'PENDENTE'
     }]);
     if (error) alert(error.message);
-    else { setModalAberto(null); fetchTickets(); }
+    else { supabase.from("notificacoes").insert([{ setor_destino: formData.setor_destino, titulo: "Nova OcorrÃªncia", mensagem: "Demanda: " + formData.assunto, link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
     setLoading(false);
   };
 
@@ -117,7 +117,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       recebido_por_nome: user.name || user.nome
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
-    else { setModalAberto(null); fetchTickets(); }
+    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "OcorrÃªncia Recebida", mensagem: "Sua demanda foi recebida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
     setLoading(false);
   };
 
@@ -137,7 +137,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       atrasado_na_entrega: isFalit // Campo extra opcional para auditoria
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
-    else { setModalAberto(null); fetchTickets(); }
+    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "OcorrÃªncia Resolvida", mensagem: "Sua demanda foi resolvida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
     setLoading(false);
   };
 
