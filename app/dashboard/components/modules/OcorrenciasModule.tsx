@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import { 
   Search, AlertTriangle, Clock, CheckCircle2, Plus, 
   MessageSquare, User, Calendar, Filter, ArrowRight,
-  ShieldAlert, Send, Info, Save, Eye
+  ShieldAlert, Send, Info, Save, Eye, TrendingUp, AlertOctagon, Activity
 } from "lucide-react";
+import { useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
@@ -173,10 +174,63 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     
     return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: AlertTriangle };
   };
+  
+  const stats = useMemo(() => {
+    const agora = new Date();
+    const mesAtual = agora.getMonth();
+    const anoAtual = agora.getFullYear();
+
+    const ocorrenciasMes = tickets.filter(t => {
+      const data = new Date(t.data_abertura);
+      return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+    }).length;
+
+    const resolvidasMes = tickets.filter(t => {
+      if (!t.status?.startsWith('RESOLVIDO')) return false;
+      const data = new Date(t.data_fechamento || t.updated_at);
+      return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
+    }).length;
+
+    const emAberto = tickets.filter(t => 
+      ['PENDENTE', 'RECEBIDO', 'EM ANALISE'].includes(t.status)
+    ).length;
+
+    const falit = tickets.filter(t => {
+      if (t.atrasado_na_entrega) return true;
+      const abertura = new Date(t.data_abertura);
+      const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
+      if (deadlineAcordado && agora > deadlineAcordado && !t.status?.startsWith('RESOLVIDO')) {
+        return true;
+      }
+      return false;
+    }).length;
+
+    return { ocorrenciasMes, resolvidasMes, emAberto, falit };
+  }, [tickets]);
 
   return (
     <div className="flex flex-col gap-10 animate-fade-in h-full w-full max-w-[1400px] mx-auto py-10 px-6 lg:px-20">
       
+      {/* ESTATÍSTICAS RÁPIDAS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+         {[
+           { label: 'Ocorrências no Mês', val: stats.ocorrenciasMes, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+           { label: 'Resolvidas no Mês', val: stats.resolvidasMes, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+           { label: 'Demandas em Aberto', val: stats.emAberto, icon: Clock, color: 'text-orange-600', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+           { label: 'Nível Falit (Atraso)', val: stats.falit, icon: AlertOctagon, color: 'text-red-600', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+         ].map((s, idx) => (
+            <div key={idx} className={`flex items-center justify-between p-6 bg-[var(--bg-card)] rounded-2xl border ${s.border} shadow-sm group hover:scale-[1.02] transition-all`}>
+               <div>
+                  <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider mb-1">{s.label}</p>
+                  <h3 className={`text-3xl font-black ${s.color}`}>{s.val}</h3>
+               </div>
+               <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-xl flex items-center justify-center`}>
+                  <s.icon size={24} />
+               </div>
+            </div>
+         ))}
+      </div>
+
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
         <div className="flex items-center gap-4">
