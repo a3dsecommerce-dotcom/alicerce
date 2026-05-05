@@ -8,19 +8,9 @@ import ColaboradoresTable from "./rh/ColaboradoresTable";
 import TalentosGrid from "./rh/TalentosGrid";
 import CATSList from "./rh/CATSList";
 import ExtrasList from "./rh/ExtrasList";
-import VolantesEscala from "./rh/VolantesEscala";
-import AdmissaoModals from "./rh/AdmissaoModals";
-import FichaColaborador360 from "../FichaColaborador360";
-import AdaptiveModal from "@/components/ui/AdaptiveModal";
-import TableSkeleton from "@/components/ui/TableSkeleton";
-import { toast } from "sonner";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import { supabase } from "@/lib/supabase";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import RequisicoesRH from "./rh/RequisicoesRH";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "VOLANTES";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "VOLANTES" | "REQUISICOES";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, candidatos, cats, extras, volantes, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
@@ -184,7 +174,8 @@ export default function RHModule({ user }: { user: any }) {
             { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
             { id: "CATS", label: "CATs", icon: ShieldCheck },
             { id: "EXTRAS", label: "Extras", icon: Clock },
-            { id: "VOLANTES", label: "Escala Volantes", icon: Truck }
+            { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
+            { id: "REQUISICOES", label: "Requisições", icon: Package }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> {t.label}
@@ -244,6 +235,10 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "VOLANTES" && (
            <VolantesEscala volantes={volantes} refresh={refresh} user={user} />
+        )}
+
+        {masterTab === "REQUISICOES" && (
+           <RequisicoesRH user={user} />
         )}
       </div>
 
