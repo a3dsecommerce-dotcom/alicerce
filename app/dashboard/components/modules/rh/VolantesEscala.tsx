@@ -21,6 +21,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [editingId, setEditingId] = useState<string | null>(null);
+  const canEdit = user?.nivel >= 3;
   
   const [formData, setFormData] = useState({
     colaborador_id: "",
@@ -382,56 +383,58 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             </div>
           </div>
 
-          <div className="p-8 bg-white rounded-3xl border-2 border-indigo-100 shadow-sm space-y-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-               <MapPin size={120} />
-            </div>
-            
-            <h5 className="text-[11px] font-black uppercase text-indigo-600 flex items-center gap-3 italic">
-              <Plus size={18} className="bg-indigo-600 text-white rounded-lg p-0.5" /> Adicionar Roteiro de Visitas
-            </h5>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="space-y-2 relative">
-                <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Unidade</p>
-                <input 
-                  className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" 
-                  placeholder="Buscar Escola..." 
-                  value={buscaUnidade} 
-                  onChange={(e) => searchUnidades(e.target.value)} 
-                />
-                {unidadesSugeridas.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[110] overflow-hidden">
-                    {unidadesSugeridas.map(u => (
-                      <button key={u.id} onClick={() => { setNovoDetalhe({...novoDetalhe, unidade: u.nome}); setBuscaUnidade(u.nome); setUnidadesSugeridas([]); }} className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none">
-                        <p className="text-[10px] font-black uppercase text-indigo-900">{u.nome}</p>
-                      </button>
-                    ))}
+            {(!editingId || canEdit) && (
+              <div className="p-8 bg-white rounded-3xl border-2 border-indigo-100 shadow-sm space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                   <MapPin size={120} />
+                </div>
+                
+                <h5 className="text-[11px] font-black uppercase text-indigo-600 flex items-center gap-3 italic">
+                  <Plus size={18} className="bg-indigo-600 text-white rounded-lg p-0.5" /> Adicionar Roteiro de Visitas
+                </h5>
+    
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="space-y-2 relative">
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Unidade</p>
+                    <input 
+                      className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" 
+                      placeholder="Buscar Escola..." 
+                      value={buscaUnidade} 
+                      onChange={(e) => searchUnidades(e.target.value)} 
+                    />
+                    {unidadesSugeridas.length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[110] overflow-hidden">
+                        {unidadesSugeridas.map(u => (
+                          <button key={u.id} onClick={() => { setNovoDetalhe({...novoDetalhe, unidade: u.nome}); setBuscaUnidade(u.nome); setUnidadesSugeridas([]); }} className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none">
+                            <p className="text-[10px] font-black uppercase text-indigo-900">{u.nome}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Entrada</p>
+                    <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="08:00" value={novoDetalhe.entrada} onChange={(e) => setNovoDetalhe({...novoDetalhe, entrada: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Saída</p>
+                    <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="12:00" value={novoDetalhe.saida} onChange={(e) => setNovoDetalhe({...novoDetalhe, saida: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Motivo</p>
+                    <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="Substituição" value={novoDetalhe.motivo} onChange={(e) => setNovoDetalhe({...novoDetalhe, motivo: e.target.value})} />
+                  </div>
+                </div>
+    
+                <button 
+                  onClick={addDetalhe} 
+                  disabled={formData.detalhes.length >= 2}
+                  className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                >
+                  {formData.detalhes.length >= 2 ? 'Limite de 2 Unidades Atingido' : 'Confirmar Unidade no Roteiro'}
+                </button>
               </div>
-              <div className="space-y-2">
-                <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Entrada</p>
-                <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="08:00" value={novoDetalhe.entrada} onChange={(e) => setNovoDetalhe({...novoDetalhe, entrada: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Saída</p>
-                <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="12:00" value={novoDetalhe.saida} onChange={(e) => setNovoDetalhe({...novoDetalhe, saida: e.target.value})} />
-              </div>
-              <div className="space-y-2">
-                <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Motivo</p>
-                <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="Substituição" value={novoDetalhe.motivo} onChange={(e) => setNovoDetalhe({...novoDetalhe, motivo: e.target.value})} />
-              </div>
-            </div>
-
-            <button 
-              onClick={addDetalhe} 
-              disabled={formData.detalhes.length >= 2}
-              className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
-            >
-              {formData.detalhes.length >= 2 ? 'Limite de 2 Unidades Atingido' : 'Confirmar Unidade no Roteiro'}
-            </button>
-          </div>
+            )}
 
           {formData.detalhes.length > 0 && (
             <div className="space-y-6">
@@ -447,9 +450,11 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                          <Clock size={12} /> {d.entrada} às {d.saida || '...'}
                       </p>
                     </div>
-                    <button onClick={() => removeDetalhe(i)} className="w-10 h-10 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                       <Trash2 size={18} />
-                    </button>
+                    {(!editingId || canEdit) && (
+                      <button onClick={() => removeDetalhe(i)} className="w-10 h-10 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                        <Trash2 size={18} />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -457,13 +462,22 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
           )}
 
           <div className="pt-10">
-            <button onClick={handleSalvar} disabled={loading} className="w-full h-20 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-4">
-              {loading ? (
-                <> <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div> PROCESSANDO... </>
-              ) : (
-                <> <Save size={24} /> {editingId ? 'ATUALIZAR ESCALA' : 'SALVAR ESCALA DIÁRIA'} </>
-              )}
-            </button>
+            {(!editingId || canEdit) ? (
+              <button onClick={handleSalvar} disabled={loading} className="w-full h-20 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-4">
+                {loading ? (
+                  <> <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div> PROCESSANDO... </>
+                ) : (
+                  <> <Save size={24} /> {editingId ? 'ATUALIZAR ESCALA' : 'SALVAR ESCALA DIÁRIA'} </>
+                )}
+              </button>
+            ) : (
+              <div className="p-8 bg-amber-50 rounded-2xl border-2 border-dashed border-amber-200 flex flex-col items-center justify-center gap-3">
+                <TrendingUp size={32} className="text-amber-500" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 text-center">
+                  MODO DE CONSULTA: Apenas a gerência operacional pode alterar escalas já registradas.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </AdaptiveModal>
