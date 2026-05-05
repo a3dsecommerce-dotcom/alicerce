@@ -336,12 +336,17 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     
     doc.line(20, finalY, 90, finalY);
     doc.setFontSize(8);
-    doc.text("ASSINATURA DO ACIDENTADO", 55, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.text(data.colaborador_nome.toUpperCase(), 55, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
     doc.text(`CPF: ${data.colaborador_cpf || '__________'}`, 55, finalY + 10, { align: "center" });
     
     doc.line(120, finalY, 190, finalY);
-    doc.text("ENCARREGADO RESPONSAVEL (ROTA)", 155, finalY + 5, { align: "center" });
-    doc.text(`NOME: ${user.nome.toUpperCase()}`, 155, finalY + 10, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text(user.nome.toUpperCase(), 155, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("ENCARREGADO RESPONSAVEL", 155, finalY + 10, { align: "center" });
 
     // Date of report
     doc.setFontSize(7);
