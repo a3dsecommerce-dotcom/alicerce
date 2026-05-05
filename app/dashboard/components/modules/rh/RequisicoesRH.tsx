@@ -115,7 +115,7 @@ export default function RequisicoesRH({ user }: { user: any }) {
         item: novoProd.item.toUpperCase(),
         categoria: 'ESCRITORIO',
         unidade_medida: novoProd.unidade_medida,
-        quantidade_atual: 0,
+        quantidade: 0,
         estoque_minimo: 0
       }]).select().single();
 
@@ -266,6 +266,11 @@ export default function RequisicoesRH({ user }: { user: any }) {
                       </td>
                       <td className="p-8 text-center">
                         <span className="text-[10px] font-black text-slate-500 uppercase px-3 py-1 bg-slate-100 rounded-lg">{i.unidade_medida}</span>
+                      </td>
+                      <td className="p-8 text-center">
+                        <span className={`text-sm font-black ${i.quantidade < (i.estoque_minimo || 5) ? 'text-red-600' : 'text-slate-900'}`}>
+                          {i.quantidade || 0}
+                        </span>
                       </td>
                       <td className="p-8">
                         <div className="flex items-center justify-center gap-4">
