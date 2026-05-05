@@ -11,10 +11,12 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import UnidadesTable from "./operacional/UnidadesTable";
+import VolantesEscala from "./rh/VolantesEscala";
+import { Truck } from "lucide-react";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const { loading: loadingGerencia, logs, stats } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA">((initialTab?.toUpperCase() as any) || "VISAO");
+  const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
+  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -209,6 +211,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
         <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-md overflow-x-auto w-full lg:w-auto">
           {[
             { id: "VISAO", label: "Visão Geral", icon: LayoutDashboard },
+            { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
             { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
             { id: "AUDITORIA", label: "Auditoria", icon: Shield },
             { id: "CONFIG", label: "Configurações", icon: Settings },
@@ -297,6 +300,17 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
                 />
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === "VOLANTES" && (
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+            <VolantesEscala 
+              volantes={volantes}
+              requisicoes={requisicoesVolantes}
+              refresh={refresh}
+              user={user}
+            />
           </div>
         )}
 

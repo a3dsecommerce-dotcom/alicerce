@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 export function useGerenciaData() {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
+  const [volantes, setVolantes] = useState<any[]>([]);
+  const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalColaboradores: 0,
     totalRequisicoes: 0,
@@ -24,7 +26,23 @@ export function useGerenciaData() {
       
       if (logsData) setLogs(logsData);
 
-      // 2. Fetch Stats
+      // 2. Fetch Volantes (Usuarios com tipo volante)
+      const { data: volData } = await supabase
+        .from('escala_volantes')
+        .select('*')
+        .order('data', { ascending: false });
+      
+      if (volData) setVolantes(volData);
+
+      // 3. Fetch Requisições de Volantes
+      const { data: reqVolData } = await supabase
+        .from('requisicoes_volantes')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (reqVolData) setRequisicoesVolantes(reqVolData);
+
+      // 4. Fetch Stats
       const [colabs, reqs, vagas, tickets] = await Promise.all([
         supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'ATIVO'),
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
@@ -53,6 +71,8 @@ export function useGerenciaData() {
   return {
     loading,
     logs,
+    volantes,
+    requisicoesVolantes,
     stats,
     refresh: fetchGerencia
   };
