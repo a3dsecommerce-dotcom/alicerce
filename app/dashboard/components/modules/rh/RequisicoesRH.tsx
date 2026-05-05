@@ -111,7 +111,6 @@ export default function RequisicoesRH({ user }: { user: any }) {
     
     setLoadingAcao(true);
     try {
-      // Cadastra no banco de consulta
       const { data: newProd, error: prodErr } = await supabase.from('almox_escritorio').insert([{
         item: novoProd.item.toUpperCase(),
         categoria: 'ESCRITORIO',
@@ -122,7 +121,6 @@ export default function RequisicoesRH({ user }: { user: any }) {
 
       if (prodErr) throw prodErr;
 
-      // Já faz a requisição imediata
       const protocolo = `REQ-RH-NEW-${Math.floor(100000 + Math.random() * 900000)}`;
       const { error: reqErr } = await supabase.from('requisicoes').insert([{
         item_id: newProd.id,
@@ -159,7 +157,7 @@ export default function RequisicoesRH({ user }: { user: any }) {
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       {/* Hero Section */}
-      <div className="bg-indigo-700 p-10 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-indigo-700 p-10 rounded-3xl text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none transform rotate-12">
            <ShoppingCart size={180} />
         </div>
@@ -216,11 +214,11 @@ export default function RequisicoesRH({ user }: { user: any }) {
         <div className="flex flex-col gap-8 animate-fade-in">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-2">O que você precisa?</label>
+              <label className="text-[11px] font-black uppercase text-slate-400 ml-2">O que você precisa?</label>
               <div className="relative">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                 <input 
-                  className="input-field !h-16 pl-16 !rounded-2xl border-2 focus:border-indigo-500 bg-slate-50" 
+                  className="input-field !h-16 pl-16 !rounded-2xl border-2 focus:border-indigo-500 bg-slate-50 font-black text-sm" 
                   placeholder="Caneta, papel, cartucho..." 
                   value={buscaMaterial}
                   onChange={(e) => setBuscaMaterial(e.target.value)}
@@ -228,9 +226,9 @@ export default function RequisicoesRH({ user }: { user: any }) {
               </div>
             </div>
             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-              <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Justificativa ou Observação</label>
+              <label className="text-[11px] font-black uppercase text-slate-400 ml-2">Justificativa ou Observação</label>
               <input 
-                className="input-field !h-16 !rounded-2xl border-2 focus:border-indigo-500 bg-slate-50" 
+                className="input-field !h-16 !rounded-2xl border-2 focus:border-indigo-500 bg-slate-50 font-bold text-sm" 
                 placeholder="Ex: Para uso no setor de DP..." 
                 value={observacaoGeral}
                 onChange={(e) => setObservacaoGeral(e.target.value)}
@@ -238,22 +236,22 @@ export default function RequisicoesRH({ user }: { user: any }) {
             </div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="p-8 text-[10px] font-black uppercase tracking-widest text-slate-400 pl-12">Descrição do Material</th>
-                    <th className="p-8 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Unidade</th>
-                    <th className="p-8 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Quantidade</th>
-                    <th className="p-8 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Ação</th>
+                    <th className="p-8 text-[11px] font-black uppercase tracking-widest text-slate-400 pl-12">Descrição do Material</th>
+                    <th className="p-8 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Unidade</th>
+                    <th className="p-8 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Quantidade</th>
+                    <th className="p-8 text-[11px] font-black uppercase tracking-widest text-slate-400 text-center">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filtradosCatalogo.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="p-20 text-center">
-                        <p className="text-xs font-black text-slate-300 uppercase italic">Nenhum material encontrado. Clique em "Outro Material" para adicionar.</p>
+                        <p className="text-sm font-black text-slate-300 uppercase italic tracking-widest">Nenhum material encontrado. Clique em "Outro Material" para adicionar.</p>
                       </td>
                     </tr>
                   ) : filtradosCatalogo.map((i) => (
@@ -263,11 +261,11 @@ export default function RequisicoesRH({ user }: { user: any }) {
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${volumes[i.id] > 0 ? 'bg-indigo-500 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
                              <LayoutGrid size={20} />
                           </div>
-                          <span className="text-sm font-black text-slate-900 uppercase">{i.item}</span>
+                          <span className="text-sm font-black text-slate-900 uppercase tracking-tight leading-tight">{i.item}</span>
                         </div>
                       </td>
                       <td className="p-8 text-center">
-                        <span className="text-[10px] font-black text-slate-500 uppercase">{i.unidade_medida}</span>
+                        <span className="text-[10px] font-black text-slate-500 uppercase px-3 py-1 bg-slate-100 rounded-lg">{i.unidade_medida}</span>
                       </td>
                       <td className="p-8">
                         <div className="flex items-center justify-center gap-4">
@@ -306,10 +304,10 @@ export default function RequisicoesRH({ user }: { user: any }) {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-2xl overflow-hidden animate-fade-in">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden animate-fade-in">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-black uppercase tracking-widest text-slate-400">
                 <tr>
                   <th className="p-8 pl-12">Protocolo</th>
                   <th className="p-8">Material</th>
@@ -323,16 +321,16 @@ export default function RequisicoesRH({ user }: { user: any }) {
                   <tr key={req.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-8 pl-12">
                       <div className="flex flex-col">
-                        <span className="text-xs font-black text-slate-900">{req.protocolo}</span>
+                        <span className="text-xs font-black text-slate-900 leading-tight">{req.protocolo}</span>
                         <span className="text-[10px] font-bold text-slate-400 uppercase italic mt-1">{format(new Date(req.data_solicitacao), "dd/MM/yyyy")}</span>
                       </div>
                     </td>
                     <td className="p-8">
-                      <p className="text-sm font-black text-slate-900 uppercase">{req.item_nome}</p>
+                      <p className="text-sm font-black text-slate-900 uppercase leading-tight">{req.item_nome}</p>
                     </td>
                     <td className="p-8 text-center">
-                      <span className="text-base font-black text-indigo-600">{req.quantidade}</span>
-                      <span className="text-[9px] font-black text-slate-400 uppercase ml-1">{req.unidade_medida}</span>
+                      <span className="text-base font-black text-indigo-600 leading-none">{req.quantidade}</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase ml-1">{req.unidade_medida}</span>
                     </td>
                     <td className="p-8 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border ${
@@ -366,7 +364,7 @@ export default function RequisicoesRH({ user }: { user: any }) {
           <div className="space-y-4">
             <label className="text-[11px] font-black uppercase text-slate-400 ml-2">Descrição do Produto</label>
             <input 
-              className="input-field !h-16 font-black !rounded-2xl border-2 focus:border-indigo-500 uppercase" 
+              className="input-field !h-16 font-black !rounded-2xl border-2 focus:border-indigo-500 uppercase text-sm" 
               placeholder="Ex: TONER HP LASERJET 1020..." 
               value={novoProd.item}
               onChange={e => setNovoProd({...novoProd, item: e.target.value})}
@@ -377,7 +375,7 @@ export default function RequisicoesRH({ user }: { user: any }) {
             <div className="space-y-4">
               <label className="text-[11px] font-black uppercase text-slate-400 ml-2">Unidade</label>
               <select 
-                className="input-field !h-16 font-black !rounded-2xl border-2 focus:border-indigo-500 appearance-none"
+                className="input-field !h-16 font-black !rounded-2xl border-2 focus:border-indigo-500 appearance-none text-sm"
                 value={novoProd.unidade_medida}
                 onChange={e => setNovoProd({...novoProd, unidade_medida: e.target.value})}
               >
@@ -401,7 +399,7 @@ export default function RequisicoesRH({ user }: { user: any }) {
           <div className="space-y-4">
             <label className="text-[11px] font-black uppercase text-slate-400 ml-2">Finalidade / Observação</label>
             <textarea 
-              className="input-field !h-32 p-6 font-bold !rounded-2xl border-2 focus:border-indigo-500 resize-none" 
+              className="input-field !h-32 p-6 font-bold !rounded-2xl border-2 focus:border-indigo-500 resize-none text-sm" 
               placeholder="Descreva para que serve..."
               value={novoProd.observacao}
               onChange={e => setNovoProd({...novoProd, observacao: e.target.value})}

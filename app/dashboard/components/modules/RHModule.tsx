@@ -210,7 +210,7 @@ export default function RHModule({ user }: { user: any }) {
                 ))}
              </div>
 
-             <div className="bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] shadow-2xl flex-1 overflow-hidden flex flex-col">
+             <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] shadow-2xl flex-1 overflow-hidden flex flex-col">
                 <div className="p-8 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-6">
                    <div className="relative flex-1 w-full max-w-md">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
