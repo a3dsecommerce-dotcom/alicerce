@@ -267,13 +267,17 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   };
 
   const handleSaveCAT = async () => {
+    if (!catForm.colaborador_id || !catForm.descricao_ocorrido) {
+      alert("Por favor, selecione o colaborador e descreva o ocorrido.");
+      return;
+    }
     setSaving(true);
-    const { error } = await supabase.from('cat_investigacao').insert([{
+    const { error } = await supabase.from('investigacao_cat').insert([{
       ...catForm,
-      criado_por_id: user.id
+      encarregado_responsavel_id: user.id
     }]);
     if (!error) {
-      alert("CAT registrada com sucesso!");
+      alert("Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
       setCatForm({
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
         data_ocorrido: new Date().toISOString().split('T')[0],
