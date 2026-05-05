@@ -144,8 +144,13 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       .update({
         secretaria: unidadeEditando.secretaria,
         endereco: unidadeEditando.endereco,
-        contato_nome: unidadeEditando.contato_nome,
-        contato_telefone: unidadeEditando.contato_telefone
+        responsavel_nome: unidadeEditando.responsavel_nome,
+        responsavel_telefone: unidadeEditando.responsavel_telefone,
+        quantidade_alunos: parseInt(unidadeEditando.quantidade_alunos) || 0,
+        is_integral: unidadeEditando.is_integral,
+        horario_funcionamento: unidadeEditando.horario_funcionamento,
+        tem_cozinheira_efetiva: unidadeEditando.tem_cozinheira_efetiva,
+        quantidade_cozinheiras: parseInt(unidadeEditando.quantidade_cozinheiras) || 0
       })
       .eq('id', unidadeEditando.id);
 
@@ -754,15 +759,27 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                 </div>
              </div>
 
-             <div className="space-y-6">
-                <div>
-                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Secretaria / Órgão</label>
-                   <input 
-                      className="input-field w-full" 
-                      value={unidadeEditando?.secretaria || ""} 
-                      onChange={e => setUnidadeEditando({...unidadeEditando, secretaria: e.target.value.toUpperCase()})}
-                   />
+             <div className="space-y-6 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Secretaria / Órgão</label>
+                      <input 
+                         className="input-field w-full" 
+                         value={unidadeEditando?.secretaria || ""} 
+                         onChange={e => setUnidadeEditando({...unidadeEditando, secretaria: e.target.value.toUpperCase()})}
+                      />
+                   </div>
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Horário de Funcionamento</label>
+                      <input 
+                         className="input-field w-full" 
+                         placeholder="Ex: 07:00 as 17:00"
+                         value={unidadeEditando?.horario_funcionamento || ""} 
+                         onChange={e => setUnidadeEditando({...unidadeEditando, horario_funcionamento: e.target.value.toUpperCase()})}
+                      />
+                   </div>
                 </div>
+
                 <div>
                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Endereço Completo</label>
                    <input 
@@ -771,31 +788,80 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                       onChange={e => setUnidadeEditando({...unidadeEditando, endereco: e.target.value.toUpperCase()})}
                    />
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                    <div>
-                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Ponto de Contato</label>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Responsável Unidade</label>
                       <input 
                          className="input-field w-full" 
-                         value={unidadeEditando?.contato_nome || ""} 
-                         onChange={e => setUnidadeEditando({...unidadeEditando, contato_nome: e.target.value.toUpperCase()})}
+                         value={unidadeEditando?.responsavel_nome || unidadeEditando?.contato_nome || ""} 
+                         onChange={e => setUnidadeEditando({...unidadeEditando, responsavel_nome: e.target.value.toUpperCase()})}
                       />
                    </div>
                    <div>
-                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone Contato</label>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone Responsável</label>
                       <input 
                          className="input-field w-full" 
-                         value={unidadeEditando?.contato_telefone || ""} 
-                         onChange={e => setUnidadeEditando({...unidadeEditando, contato_telefone: e.target.value})}
+                         value={unidadeEditando?.responsavel_telefone || unidadeEditando?.contato_telefone || ""} 
+                         onChange={e => setUnidadeEditando({...unidadeEditando, responsavel_telefone: e.target.value})}
                       />
+                   </div>
+                </div>
+
+                <div className="p-6 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                         <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-[var(--text-primary)]">Quantidade de Alunos</span>
+                            <input 
+                               type="number"
+                               className="w-20 p-2 bg-white border border-[var(--border)] rounded-lg text-xs font-black text-center"
+                               value={unidadeEditando?.quantidade_alunos || 0}
+                               onChange={e => setUnidadeEditando({...unidadeEditando, quantidade_alunos: e.target.value})}
+                            />
+                         </div>
+                         <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-[var(--text-primary)]">Ensino Integral?</span>
+                            <button 
+                               onClick={() => setUnidadeEditando({...unidadeEditando, is_integral: !unidadeEditando?.is_integral})}
+                               className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${unidadeEditando?.is_integral ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}
+                            >
+                               {unidadeEditando?.is_integral ? 'SIM' : 'NÃO'}
+                            </button>
+                         </div>
+                      </div>
+
+                      <div className="space-y-4 border-l border-[var(--border)] pl-8">
+                         <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-black uppercase text-[var(--text-primary)]">Tem Cozinheira Efetiva?</span>
+                            <button 
+                               onClick={() => setUnidadeEditando({...unidadeEditando, tem_cozinheira_efetiva: !unidadeEditando?.tem_cozinheira_efetiva})}
+                               className={`px-4 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${unidadeEditando?.tem_cozinheira_efetiva ? 'bg-indigo-500 text-white' : 'bg-slate-200 text-slate-500'}`}
+                            >
+                               {unidadeEditando?.tem_cozinheira_efetiva ? 'SIM' : 'NÃO'}
+                            </button>
+                         </div>
+                         {unidadeEditando?.tem_cozinheira_efetiva && (
+                            <div className="flex items-center justify-between animate-fade-in">
+                               <span className="text-[10px] font-black uppercase text-[var(--text-primary)]">Qtd. Cozinheiras</span>
+                               <input 
+                                  type="number"
+                                  className="w-20 p-2 bg-white border border-[var(--border)] rounded-lg text-xs font-black text-center"
+                                  value={unidadeEditando?.quantidade_cozinheiras || 0}
+                                  onChange={e => setUnidadeEditando({...unidadeEditando, quantidade_cozinheiras: e.target.value})}
+                               />
+                            </div>
+                         )}
+                      </div>
                    </div>
                 </div>
 
                 <button 
                    onClick={handleSaveUnidade}
                    disabled={saving}
-                   className="w-full py-4 bg-[var(--brand)] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-[var(--brand)]/20"
+                   className="w-full py-5 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.01] transition-all shadow-xl shadow-[var(--brand)]/20"
                 >
-                   {saving ? "Salvando..." : "Salvar Alterações"}
+                   {saving ? "Salvando Informações..." : "Atualizar Cadastro da Unidade"}
                 </button>
              </div>
           </div>
