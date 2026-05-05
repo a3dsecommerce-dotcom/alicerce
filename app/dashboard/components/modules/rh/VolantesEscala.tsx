@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Truck, Calendar, MapPin, User, FileText, Plus, X, Clock, Save, Trash2, TrendingUp } from "lucide-react";
+import { Truck, Calendar, MapPin, User, FileText, Plus, X, Clock, Save, Trash2, TrendingUp, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
@@ -194,12 +194,13 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
       </div>
 
       {/* Seção de Requisições de Unidades */}
-      {requisicoes.filter(r => r.status === 'PENDENTE' || r.status === 'EM_CURSO').length > 0 && (
-        <div className="animate-fade-in space-y-4">
-          <div className="flex items-center gap-3 ml-2">
-            <TrendingUp size={16} className="text-amber-500" />
-            <h3 className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Requisições de Ajuda Pendentes</h3>
-          </div>
+      <div className="animate-fade-in space-y-4">
+        <div className="flex items-center gap-3 ml-2">
+          <TrendingUp size={16} className="text-amber-500" />
+          <h3 className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Requisições de Ajuda Pendentes</h3>
+        </div>
+        
+        {requisicoes.filter(r => r.status === 'PENDENTE' || r.status === 'EM_CURSO').length > 0 ? (
           <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
             {requisicoes.filter(r => r.status === 'PENDENTE' || r.status === 'EM_CURSO').map((req) => (
               <div key={req.id} className="min-w-[320px] bg-white border border-amber-200 rounded-3xl p-6 shadow-sm flex flex-col gap-4 border-l-8 border-l-amber-500 relative overflow-hidden group hover:shadow-xl transition-all">
@@ -252,8 +253,13 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="p-10 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 opacity-60">
+            <CheckCircle size={32} className="text-green-500" />
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nenhuma unidade solicitando ajuda no momento</p>
+          </div>
+        )}
+      </div>
 
       <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-xl overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
