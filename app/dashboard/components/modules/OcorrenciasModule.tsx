@@ -175,7 +175,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   };
 
   return (
-    <div className="flex flex-col gap-10 animate-fade-in h-full px-4 md:px-10 py-6 max-w-[1600px] mx-auto">
+    <div className="flex flex-col gap-6 animate-fade-in h-full px-2 md:px-6 py-4 max-w-[1600px] mx-auto">
       
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)] shadow-sm">
@@ -208,11 +208,11 @@ export default function OcorrenciasModule({ user }: { user: any }) {
             <table className="w-full text-left">
                <thead className="bg-[var(--bg-base)]/40 border-b border-[var(--border)]">
                   <tr>
-                     <th className="p-5 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Identificação / Assunto</th>
-                     <th className="p-5 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Setor / Citado</th>
-                     <th className="p-5 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Prazos (Solic. vs Acord.)</th>
-                     <th className="p-5 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
-                     <th className="p-5 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right whitespace-nowrap">Gestão</th>
+                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-6">Identificação / Assunto</th>
+                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Setor / Citado</th>
+                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Prazos</th>
+                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
+                     <th className="p-3 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right pr-6 whitespace-nowrap">Gestão</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-[var(--border)]">
@@ -220,36 +220,36 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                      const s = getStatusInfo(t);
                      return (
                         <tr key={t.id} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                           <td className="p-5">
-                              <div className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-tighter mb-1">
-                                 Aberto em {new Date(t.data_abertura).toLocaleDateString()}
+                           <td className="p-3 pl-6 max-w-[250px]">
+                              <div className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-tighter mb-0.5">
+                                 {new Date(t.data_abertura).toLocaleDateString()}
                               </div>
-                              <div className="text-sm font-black text-[var(--text-primary)]">{t.assunto}</div>
-                              <div className="text-[9px] font-bold text-blue-600 mt-1 uppercase">Solicitante: {t.interessado_nome || t.criado_por}</div>
+                              <div className="text-xs font-black text-[var(--text-primary)] truncate" title={t.assunto}>{t.assunto}</div>
+                              <div className="text-[8px] font-bold text-blue-600 uppercase truncate">Req: {t.interessado_nome || t.criado_por}</div>
                            </td>
-                           <td className="p-5">
-                              <div className="text-sm font-black text-red-600 uppercase tracking-tight">{t.setor_destino || 'Setor Geral'}</div>
-                              <div className="text-[10px] font-bold text-[var(--text-muted)] mt-1">
-                                 {t.responsavel_citado_nome ? `Citado: ${t.responsavel_citado_nome}` : '--'}
+                           <td className="p-3">
+                              <div className="text-xs font-black text-red-600 uppercase tracking-tight truncate">{t.setor_destino || 'Geral'}</div>
+                              <div className="text-[9px] font-bold text-[var(--text-muted)] truncate">
+                                 {t.responsavel_citado_nome ? `Cit: ${t.responsavel_citado_nome}` : '--'}
                               </div>
                            </td>
-                           <td className="p-5 text-center">
-                              <div className="flex flex-col items-center">
-                                 <span className="text-sm font-black text-blue-600">{t.prazo_estipulado_dias}d <span className="text-[8px] opacity-60 uppercase font-black">Solicitados</span></span>
+                           <td className="p-3 text-center">
+                              <div className="flex flex-col items-center leading-tight">
+                                 <span className="text-xs font-black text-blue-600">{t.prazo_estipulado_dias}d</span>
                                  {t.prazo_prometido && (
-                                    <span className="text-[10px] font-black text-green-600 border-t border-[var(--border)] pt-1 mt-1">
-                                       Acordado: {new Date(t.prazo_prometido).toLocaleDateString()}
+                                    <span className="text-[8px] font-black text-green-600 mt-0.5">
+                                       {new Date(t.prazo_prometido).toLocaleDateString()}
                                     </span>
                                  )}
                               </div>
                            </td>
-                           <td className="p-5 text-center">
-                              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${s.color}`}>
-                                 <s.icon size={12} /> {s.label}
+                           <td className="p-3 text-center">
+                              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${s.color}`}>
+                                 <s.icon size={10} /> {s.label}
                               </div>
                            </td>
-                           <td className="p-5 text-right space-x-2 whitespace-nowrap">
-                              <button onClick={() => { setSelectedTicket(t); setModalAberto("detalhes"); }} className="p-3 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl border border-[var(--border)] hover:scale-105 transition-all"><Eye size={16}/></button>
+                           <td className="p-3 text-right pr-6 whitespace-nowrap">
+                              <button onClick={() => { setSelectedTicket(t); setModalAberto("detalhes"); }} className="p-2 bg-[var(--bg-base)] text-[var(--brand)] rounded-lg border border-[var(--border)] hover:scale-105 transition-all shadow-sm"><Eye size={14}/></button>
                            </td>
                         </tr>
                      );
