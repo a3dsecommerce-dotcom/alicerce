@@ -11,13 +11,14 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
     if (t === "EQUIPE" || t === "COLABS") return "MY_COLABS";
     if (t === "ADMISSAO" || t === "CADASTRO") return "QUICK_ADMISSION";
     if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
+    if (t === "INFORMATIVOS" || t === "EXTRAS" || t === "REPORTS") return "REPORTS";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -41,6 +42,43 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const [searchTerm, setSearchTerm] = useState("");
   const [modalUnidade, setModalUnidade] = useState<any>(null);
   const [unidadeEditando, setUnidadeEditando] = useState<any>(null);
+  const [informativo, setInformativo] = useState<any>({
+    tipo: 'EXTRA',
+    unidade: '',
+    data: new Date().toISOString().split('T')[0],
+    periodo: 'DIURNO',
+    horario: '',
+    colaborador_substituto_id: '',
+    colaborador_substituto_nome: '',
+    colaborador_ausente_id: '',
+    colaborador_ausente_nome: '',
+    tem_atestado: false,
+    dias_atestado: 0,
+     justificada: false,
+     sugestao_punicao: '',
+     observacoes: ''
+   });
+   const [buscaColab, setBuscaColab] = useState("");
+   const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
+   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente">("interessado");
+
+   const selecionarColab = (colab: any) => {
+     if (campoBuscaAtivo === "substituto") {
+       setInformativo({
+         ...informativo,
+         colaborador_substituto_id: colab.id,
+         colaborador_substituto_nome: colab.nome
+       });
+     } else if (campoBuscaAtivo === "ausente") {
+       setInformativo({
+         ...informativo,
+         colaborador_ausente_id: colab.id,
+         colaborador_ausente_nome: colab.nome
+       });
+     }
+     setBuscaColab("");
+     setColabsSugeridos([]);
+   };
 
   useEffect(() => {
     if (user) {
@@ -158,6 +196,41 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       alert("Dados da unidade atualizados!");
       setModalUnidade(null);
       fetchEncarregadoData();
+    } else {
+      alert("Erro ao salvar: " + error.message);
+    }
+    setSaving(false);
+  };
+
+  const handleSaveInformativo = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from('informativos_operacionais')
+      .insert([{
+        ...informativo,
+        criado_por_id: user.id,
+        criado_por_nome: user.nome
+      }]);
+
+    if (!error) {
+      alert("Informativo registrado com sucesso!");
+      setInformativo({
+        tipo: 'EXTRA',
+        unidade: '',
+        data: new Date().toISOString().split('T')[0],
+        periodo: 'DIURNO',
+        horario: '',
+        colaborador_substituto_id: '',
+        colaborador_substituto_nome: '',
+        colaborador_ausente_id: '',
+        colaborador_ausente_nome: '',
+        tem_atestado: false,
+        dias_atestado: 0,
+        justificada: false,
+        sugestao_punicao: '',
+        observacoes: ''
+      });
+      setActiveTab("MY_UNITS");
     } else {
       alert("Erro ao salvar: " + error.message);
     }
@@ -458,6 +531,259 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     );
   };
 
+  const renderReports = () => (
+    <div className="flex flex-col gap-8 animate-fade-in pb-20">
+      <div className="flex justify-between items-center bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
+        <div>
+          <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-1 italic">Informativos Operacionais</h3>
+          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Registre extras, faltas e atestados da sua equipe</p>
+        </div>
+        <div className="flex gap-2 bg-[var(--bg-base)] p-1 rounded-2xl border border-[var(--border)]">
+          <button 
+            onClick={() => setInformativo({...informativo, tipo: 'EXTRA'})}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${informativo.tipo === 'EXTRA' ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'}`}
+          >
+            Extras / Subs.
+          </button>
+          <button 
+            onClick={() => setInformativo({...informativo, tipo: 'FALTA'})}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${informativo.tipo === 'FALTA' ? 'bg-red-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'}`}
+          >
+            Faltas / Atestados
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* LADO ESQUERDO: FORMULÁRIO */}
+        <div className="bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-sm space-y-8">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Unidade Atendida</label>
+              <select 
+                className="input-field w-full !h-14 font-black"
+                value={informativo.unidade}
+                onChange={e => setInformativo({...informativo, unidade: e.target.value})}
+              >
+                <option value="">Selecione a Unidade...</option>
+                {myUnits.map((u, i) => <option key={i} value={u}>{u}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Data da Ocorrência</label>
+              <input 
+                type="date"
+                className="input-field w-full !h-14 font-black"
+                value={informativo.data}
+                onChange={e => setInformativo({...informativo, data: e.target.value})}
+              />
+            </div>
+          </div>
+
+          {informativo.tipo === 'EXTRA' ? (
+            <div className="space-y-6 animate-fade-in">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Horário (Ex: 07:00 as 17:00)</label>
+                  <input 
+                    className="input-field w-full !h-14"
+                    value={informativo.horario}
+                    onChange={e => setInformativo({...informativo, horario: e.target.value.toUpperCase()})}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Período</label>
+                  <select 
+                    className="input-field w-full !h-14 font-black"
+                    value={informativo.periodo}
+                    onChange={e => setInformativo({...informativo, periodo: e.target.value})}
+                  >
+                    <option value="DIURNO">DIURNO</option>
+                    <option value="NOTURNO">NOTURNO</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-6 bg-blue-500/5 rounded-2xl border border-blue-500/10">
+                  <label className="text-[10px] font-black uppercase text-blue-600 mb-3 block italic">Colaborador que fez o Extra (Substituto)</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
+                    <input 
+                      className="input-field w-full !pl-12 !h-14 bg-white"
+                      placeholder="Pesquisar por nome..."
+                      onChange={e => {
+                        const term = e.target.value.toLowerCase();
+                        if (term.length > 2) {
+                          const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
+                          setColabsSugeridos(suggested.slice(0, 5));
+                          setCampoBuscaAtivo("substituto");
+                        } else setColabsSugeridos([]);
+                      }}
+                    />
+                    {informativo.colaborador_substituto_nome && (
+                      <div className="mt-3 text-[10px] font-black text-blue-600 uppercase flex items-center gap-2">
+                        <CheckCircle size={14} /> Selecionado: {informativo.colaborador_substituto_nome}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-6 bg-red-500/5 rounded-2xl border border-red-500/10">
+                  <label className="text-[10px] font-black uppercase text-red-600 mb-3 block italic">Colaborador que Faltou (Ausente)</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-red-400" size={18} />
+                    <input 
+                      className="input-field w-full !pl-12 !h-14 bg-white"
+                      placeholder="Pesquisar por nome..."
+                      onChange={e => {
+                        const term = e.target.value.toLowerCase();
+                        if (term.length > 2) {
+                          const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
+                          setColabsSugeridos(suggested.slice(0, 5));
+                          setCampoBuscaAtivo("ausente");
+                        } else setColabsSugeridos([]);
+                      }}
+                    />
+                    {informativo.colaborador_ausente_nome && (
+                      <div className="mt-3 text-[10px] font-black text-red-600 uppercase flex items-center gap-2">
+                        <CheckCircle size={14} /> Selecionado: {informativo.colaborador_ausente_nome}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6 animate-fade-in">
+              <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Colaborador Ausente</label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+                  <input 
+                    className="input-field w-full !pl-12 !h-14"
+                    placeholder="Pesquisar por nome..."
+                    onChange={e => {
+                      const term = e.target.value.toLowerCase();
+                      if (term.length > 2) {
+                        const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
+                        setColabsSugeridos(suggested.slice(0, 5));
+                        setCampoBuscaAtivo("ausente");
+                      } else setColabsSugeridos([]);
+                    }}
+                  />
+                  {informativo.colaborador_ausente_nome && (
+                    <div className="mt-3 text-[10px] font-black text-[var(--brand)] uppercase flex items-center gap-2">
+                      <CheckCircle size={14} /> Selecionado: {informativo.colaborador_ausente_nome}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                 <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)] flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase text-[var(--text-primary)] italic">Tem Atestado?</span>
+                    <button 
+                      onClick={() => setInformativo({...informativo, tem_atestado: !informativo.tem_atestado})}
+                      className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${informativo.tem_atestado ? 'bg-green-500 text-white shadow-md shadow-green-500/20' : 'bg-slate-200 text-slate-500'}`}
+                    >
+                      {informativo.tem_atestado ? 'SIM' : 'NÃO'}
+                    </button>
+                 </div>
+                 {informativo.tem_atestado && (
+                   <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)] flex items-center justify-between animate-fade-in">
+                      <span className="text-[10px] font-black uppercase text-[var(--text-primary)] italic">Dias</span>
+                      <input 
+                        type="number"
+                        className="w-20 p-2 bg-white border border-[var(--border)] rounded-lg text-center font-black"
+                        value={informativo.dias_atestado}
+                        onChange={e => setInformativo({...informativo, dias_atestado: e.target.value})}
+                      />
+                   </div>
+                 )}
+              </div>
+
+              {!informativo.tem_atestado && (
+                <div className="p-8 bg-amber-500/5 rounded-3xl border border-amber-500/20 animate-fade-in">
+                   <div className="flex items-center gap-3 mb-6">
+                      <AlertTriangle className="text-amber-500" size={20} />
+                      <span className="text-[10px] font-black uppercase text-amber-700 italic tracking-widest">Sugestão de Medida Disciplinar</span>
+                   </div>
+                   <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: 'VERBAL', label: 'Advertência Verbal' },
+                        { id: 'ESCRITA', label: 'Advertência Escrita' },
+                        { id: 'SUSPENSAO', label: 'Suspensão' },
+                        { id: 'JUSTA_CAUSA', label: 'Justa Causa' }
+                      ].map(m => (
+                        <button 
+                          key={m.id}
+                          onClick={() => setInformativo({...informativo, sugestao_punicao: m.id})}
+                          className={`p-4 rounded-2xl text-[9px] font-black uppercase transition-all border ${informativo.sugestao_punicao === m.id ? 'bg-amber-500 text-white border-amber-600 shadow-lg' : 'bg-white text-[var(--text-muted)] border-[var(--border)] hover:border-amber-400'}`}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+             <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Observações / Reforço Mensagem</label>
+             <textarea 
+               className="input-field w-full !h-32 p-6"
+               placeholder="Descreva detalhes importantes..."
+               value={informativo.observacoes}
+               onChange={e => setInformativo({...informativo, observacoes: e.target.value})}
+             />
+          </div>
+
+          <button 
+             onClick={handleSaveInformativo}
+             disabled={saving}
+             className="w-full py-6 bg-[var(--brand)] text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-2xl shadow-[var(--brand)]/30"
+          >
+             {saving ? "Registrando Informativo..." : "Finalizar e Enviar Informativo"}
+          </button>
+        </div>
+
+        {/* LADO DIREITO: SUGESTÕES DE COLAB (SE ESTIVER BUSCANDO) */}
+        <div className="space-y-6">
+           {colabsSugeridos.length > 0 ? (
+             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] animate-fade-in shadow-xl">
+                <p className="text-[10px] font-black uppercase text-[var(--brand)] mb-6 flex items-center gap-2 italic">
+                   <Search size={14} /> Selecionar {campoBuscaAtivo === 'substituto' ? 'Substituto' : 'Ausente'}
+                </p>
+                <div className="grid grid-cols-1 gap-3">
+                   {colabsSugeridos.map((c, idx) => (
+                     <button 
+                       key={idx}
+                       onClick={() => selecionarColab(c)}
+                       className="p-5 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-2xl border border-[var(--border)] transition-all text-left group"
+                     >
+                        <p className="text-xs font-black uppercase">{c.nome}</p>
+                        <p className="text-[9px] font-bold opacity-60 uppercase">{c.unidade_alocacao || 'Sem Unidade'}</p>
+                     </button>
+                   ))}
+                </div>
+             </div>
+           ) : (
+             <div className="bg-[var(--bg-card)]/50 p-10 rounded-[3rem] border border-dashed border-[var(--border)] flex flex-col items-center justify-center text-center py-20">
+                <div className="w-20 h-20 rounded-[2rem] bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
+                   <Users className="text-[var(--text-muted)] opacity-30" size={32} />
+                </div>
+                <p className="text-xs font-black uppercase text-[var(--text-muted)] tracking-widest leading-loose">
+                   Utilize o campo de busca <br /> para selecionar os colaboradores
+                </p>
+             </div>
+           )}
+        </div>
+      </div>
+    </div>
+  );
+
   const handleSalvarAdmissao = async () => {
     if (!admissao.nome || !admissao.telefone || !admissao.unidade) {
       alert("Por favor, preencha todos os campos.");
@@ -712,6 +1038,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "MY_UNITS", label: "Minhas Unidades", icon: Building2 },
            { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
            { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
+           { id: "REPORTS", label: "Informativos", icon: Send },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
@@ -736,6 +1063,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            {activeTab === "MY_COLABS" && renderMyColabs()}
            {activeTab === "QUICK_ADMISSION" && renderQuickAdmission()}
            {activeTab === "TICKETS" && renderTickets()}
+           {activeTab === "REPORTS" && renderReports()}
         </div>
       )}
 
