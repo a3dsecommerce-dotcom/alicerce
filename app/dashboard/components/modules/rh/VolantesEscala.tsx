@@ -211,52 +211,54 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
                 <tr key={idx} className="hover:bg-[var(--brand-alpha)] transition-all group">
                   <td className="p-6 pl-8 w-48">
                     <div className="flex flex-col">
-                      <span className="text-xs font-black text-[var(--text-primary)]">{format(new Date(v.data), "dd/MM/yyyy")}</span>
+                      <span className="text-sm font-black text-[var(--text-primary)]">{format(new Date(v.data), "dd/MM/yyyy")}</span>
                       <div className="flex items-center gap-1 mt-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                        <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">ID-{v.id.substring(0,4)}</span>
+                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">ID-{v.id.substring(0,4)}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="p-6 w-72">
+                  <td className="p-6 w-80">
                     <div 
-                      className="flex items-center gap-4 cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all"
+                      className="flex items-center gap-4 cursor-pointer hover:bg-white/50 p-3 rounded-2xl transition-all border border-transparent hover:border-indigo-100"
                       onClick={() => handleEdit(v)}
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black text-sm border border-indigo-500/10 shadow-inner">
+                      <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black text-lg border border-indigo-500/10 shadow-inner">
                         {v.colaborador_nome?.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tight group-hover:text-indigo-600 transition-colors">{v.colaborador_nome}</p>
-                        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-0.5">Base: {v.unidade_original || 'OPERAÇÃO'}</p>
+                        <p className="text-sm font-black text-[var(--text-primary)] uppercase tracking-tight group-hover:text-indigo-600 transition-colors leading-tight">{v.colaborador_nome}</p>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase mt-0.5">Base: {v.unidade_original || 'OPERAÇÃO'}</p>
                       </div>
                     </div>
                   </td>
                   <td className="p-6">
-                    <div className="grid grid-cols-2 gap-4 max-w-[600px]">
-                      {[0, 1].map(i => {
-                        const d = v.detalhes_visitas[i];
-                        if (d) {
-                          return (
-                            <div key={i} className="p-4 bg-white border border-[var(--border)] rounded-2xl flex flex-col gap-1 shadow-sm border-l-4 border-l-indigo-500 min-h-[80px]">
-                              <div className="flex items-center justify-between gap-3 mb-1">
-                                <span className="text-[10px] font-black text-indigo-600 uppercase flex items-center gap-1.5"><MapPin size={12} /> {d.unidade}</span>
-                                <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
-                                   <Clock size={10} /> {d.entrada}-{d.saida || '...'}
+                    <div className="flex justify-center w-full">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full max-w-[700px]">
+                        {[0, 1].map(i => {
+                          const d = v.detalhes_visitas[i];
+                          if (d) {
+                            return (
+                              <div key={i} className="p-5 bg-white border border-[var(--border)] rounded-2xl flex flex-col gap-2 shadow-sm border-l-8 border-l-indigo-500 min-h-[100px] justify-center">
+                                <div className="flex items-center justify-between gap-4">
+                                  <span className="text-[12px] font-black text-indigo-600 uppercase flex items-center gap-2"><MapPin size={14} /> {d.unidade}</span>
+                                  <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
+                                     <Clock size={12} /> {d.entrada}-{d.saida || '...'}
+                                  </div>
                                 </div>
+                                <p className="text-[11px] font-bold text-slate-600 leading-relaxed italic truncate px-1">
+                                   "{d.motivo || 'Substituição'}"
+                                </p>
                               </div>
-                              <p className="text-[9px] font-semibold text-slate-600 leading-relaxed italic truncate">
-                                 {d.motivo || 'Substituição'}
-                              </p>
+                            );
+                          }
+                          return (
+                            <div key={i} className="p-5 bg-[var(--bg-base)]/50 border-2 border-dashed border-[var(--border)] rounded-2xl flex items-center justify-center opacity-40 min-h-[100px]">
+                               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Slot Disponível</span>
                             </div>
                           );
-                        }
-                        return (
-                          <div key={i} className="p-4 bg-[var(--bg-base)]/50 border border-dashed border-[var(--border)] rounded-2xl flex items-center justify-center opacity-40 min-h-[80px]">
-                             <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Sem 2ª Unidade</span>
-                          </div>
-                        );
-                      })}
+                        })}
+                      </div>
                     </div>
                   </td>
                   <td className="p-6 text-right pr-8">
