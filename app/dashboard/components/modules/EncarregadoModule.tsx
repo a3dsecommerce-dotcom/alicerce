@@ -428,20 +428,6 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
   const renderMyUnits = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="kpi-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] overflow-hidden">
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 px-1">Minhas Unidades</p>
-          <h4 className="text-4xl font-black text-[var(--text-primary)] px-1">{myUnits.length}</h4>
-        </div>
-        <div className="kpi-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] overflow-hidden">
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 px-1">Meus Colaboradores</p>
-          <h4 className="text-4xl font-black text-[var(--text-primary)] px-1">{myColabs.length}</h4>
-        </div>
-        <div className="kpi-card bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] overflow-hidden">
-          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2 px-1">Média p/ Rota</p>
-          <h4 className="text-4xl font-black text-[var(--neon-blue)] px-1">{myUnits.length > 0 ? (myColabs.length / myUnits.length).toFixed(1) : 0}</h4>
-        </div>
-      </div>
 
       <div className="flex justify-between items-center bg-[var(--bg-card)] p-10 rounded-[2.5rem] border border-[var(--border)] shadow-sm">
         <div>
