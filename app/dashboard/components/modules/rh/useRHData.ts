@@ -7,6 +7,7 @@ export function useRHData(user: any) {
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [candidatos, setCandidatos] = useState<any[]>([]);
   const [vagas, setVagas] = useState<any[]>([]);
+  const [cats, setCats] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -35,6 +36,10 @@ export function useRHData(user: any) {
       // 3. Fetch Vagas
       const { data: vagasDb } = await supabase.from('vagas').select('*').order('created_at', { ascending: false });
       if (vagasDb) setVagas(vagasDb);
+
+      // 4. Fetch CATs
+      const { data: catsDb } = await supabase.from('investigacao_cat').select('*').order('created_at', { ascending: false });
+      if (catsDb) setCats(catsDb);
     } catch (err) {
       console.error("Erro no carregamento do RH:", err);
     } finally {
@@ -85,6 +90,7 @@ export function useRHData(user: any) {
     colaboradores,
     candidatos,
     vagas,
+    cats,
     refresh: fetchData,
     updateStatus,
     finalizarAdmissao

@@ -1,29 +1,34 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
 import TalentosGrid from "./rh/TalentosGrid";
+import CATSList from "./rh/CATSList";
 import AdmissaoModals from "./rh/AdmissaoModals";
 import FichaColaborador360 from "../FichaColaborador360";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { supabase } from "@/lib/supabase";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "DOCS";
+type MasterTab = "DP" | "DOCS" | "CATS";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, candidatos, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
+  const { loading, colaboradores, candidatos, cats, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
   const [selecionado, setSelecionado] = useState<any>(null);
+  const [selecionadaCAT, setSelecionadaCAT] = useState<any>(null);
   
   // Estados de Modais (Passados para subcomponentes)
   const [modalAdmissao, setModalAdmissao] = useState<any>(null);
@@ -89,10 +94,76 @@ export default function RHModule({ user }: { user: any }) {
        status: 'AFASTADO',
        metadados: { motivo_afastamento: afastamentoData.motivo, tempo_afastamento: afastamentoData.tempo, data_afastamento: new Date().toISOString() }
     }).eq('id', modalAfastamento.id);
+     if (!error) {
+        setModalAfastamento(null);
+        refresh();
+        toast.warning("Afastamento registrado no sistema.");
+     }
+  };
+
+  const handleUpdateCATStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from('investigacao_cat').update({ status }).eq('id', id);
     if (!error) {
-       setModalAfastamento(null);
-       refresh();
-       toast.warning("Afastamento registrado no sistema.");
+      toast.success("Status da CAT atualizado!");
+      setSelecionadaCAT(null);
+      refresh();
+    } else {
+      toast.error("Erro ao atualizar status da CAT");
+    }
+  };
+
+  const handleGerarPDFCAT = (cat: any) => {
+    const doc = new jsPDF();
+    
+    // Título e Cabeçalho
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("INVESTIGAÇÃO E ANÁLISE DE ACIDENTE (CAT)", 14, 22);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 30);
+
+    // Tabela de Dados Gerais
+    autoTable(doc, {
+      startY: 40,
+      head: [['Campo', 'Informação']],
+      body: [
+        ['Colaborador', cat.colaborador_nome],
+        ['CPF', cat.colaborador_cpf || '---'],
+        ['Cargo', cat.colaborador_cargo],
+        ['Unidade', cat.unidade_alocada],
+        ['Data do Ocorrido', cat.data_ocorrido],
+        ['Horário', cat.horario_ocorrido],
+        ['Local', cat.local_ocorrido],
+        ['Tipo de Acidente', cat.tipo_acidente],
+        ['Parte do Corpo', cat.parte_corpo_atingida || '---'],
+        ['Agente Causador', cat.agente_causador || '---']
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [185, 28, 28] } // Red 700
+    });
+
+    // Narrativa
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIÇÃO DO OCORRIDO", 14, finalY);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const splitDesc = doc.splitTextToSize(cat.descricao_ocorrido, 180);
+    doc.text(splitDesc, 14, finalY + 7);
+
+    doc.save(`CAT_${cat.colaborador_nome.replace(/\s+/g, '_')}.pdf`);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'EM_ANALISE': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'FINALIZADO': return 'bg-green-100 text-green-700 border-green-200';
+      case 'ENVIADO_RH': return 'bg-blue-100 text-blue-700 border-blue-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
@@ -109,7 +180,8 @@ export default function RHModule({ user }: { user: any }) {
         <div className="flex flex-wrap gap-8 border-b border-[var(--border)] pb-4">
           {[
             { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
-            { id: "DOCS", label: "Documentos", icon: FileText }
+            { id: "DOCS", label: "Documentos", icon: FileText },
+            { id: "CATS", label: "CATs", icon: ShieldCheck }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> {t.label}
@@ -158,6 +230,10 @@ export default function RHModule({ user }: { user: any }) {
              </div>
           </div>
         )}
+
+        {masterTab === "CATS" && (
+           <CATSList cats={cats} onSelect={setSelecionadaCAT} />
+        )}
       </div>
 
       <AdmissaoModals 
@@ -168,6 +244,79 @@ export default function RHModule({ user }: { user: any }) {
       />
 
       <FichaColaborador360 colabId={selecionado?.id} isOpen={!!selecionado} onClose={() => setSelecionado(null)} canEdit={true} restrictLevel={user.nivel < 3} />
+
+      {/* Modal de Detalhes da CAT */}
+      <AdaptiveModal isOpen={!!selecionadaCAT} onClose={() => setSelecionadaCAT(null)} title="Investigação de Acidente (CAT)">
+         <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div className="flex items-center gap-6 p-6 bg-red-50 rounded-2xl border border-red-100">
+               <div className="w-12 h-12 rounded-xl bg-red-500 text-white flex items-center justify-center shadow-lg">
+                  <ShieldCheck size={24} />
+               </div>
+               <div>
+                  <h4 className="text-base font-black text-red-900 uppercase">{selecionadaCAT?.colaborador_nome}</h4>
+                  <p className="text-[10px] font-bold text-red-700 uppercase tracking-widest">{selecionadaCAT?.colaborador_cargo} • {selecionadaCAT?.unidade_alocada}</p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
+                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Data/Hora</p>
+                  <p className="text-xs font-black uppercase text-[var(--text-primary)]">
+                    {selecionadaCAT?.data_ocorrido && format(new Date(selecionadaCAT.data_ocorrido), "dd/MM/yyyy")} às {selecionadaCAT?.horario_ocorrido}
+                  </p>
+               </div>
+               <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
+                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Tipo de Acidente</p>
+                  <p className="text-xs font-black uppercase text-red-600 italic">{selecionadaCAT?.tipo_acidente}</p>
+               </div>
+               <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
+                  <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Status Atual</p>
+                  <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${getStatusColor(selecionadaCAT?.status)}`}>
+                     {selecionadaCAT?.status?.replace('_', ' ')}
+                  </span>
+               </div>
+            </div>
+
+            <div className="space-y-4">
+               <h5 className="text-[10px] font-black uppercase text-[var(--brand)] flex items-center gap-2 italic">
+                  <FileText size={14} /> Narrativa da Ocorrência
+               </h5>
+               <div className="p-6 bg-white border border-[var(--border)] rounded-2xl">
+                  <p className="text-xs font-medium text-[var(--text-primary)] leading-relaxed">{selecionadaCAT?.descricao_ocorrido}</p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase text-[var(--brand)] italic">Ações Tomadas</h5>
+                  <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] min-h-[80px]">
+                     <p className="text-[11px] font-medium text-[var(--text-secondary)]">{selecionadaCAT?.acoes_tomadas || "Nenhuma ação registrada."}</p>
+                  </div>
+               </div>
+               <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase text-[var(--brand)] italic">Parte do Corpo Atingida</h5>
+                  <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] min-h-[80px]">
+                     <p className="text-[11px] font-medium text-[var(--text-secondary)]">{selecionadaCAT?.parte_corpo_atingida || "Não informado."}</p>
+                  </div>
+               </div>
+            </div>
+
+            <div className="pt-8 border-t border-[var(--border)] flex flex-wrap gap-4">
+               <button 
+                  onClick={() => handleUpdateCATStatus(selecionadaCAT.id, 'FINALIZADO')}
+                  className="flex-1 py-4 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all flex items-center justify-center gap-2"
+               >
+                  <CheckCircle size={16} /> Finalizar Processo
+               </button>
+               <button 
+                  onClick={() => handleGerarPDFCAT(selecionadaCAT)}
+                  className="flex-1 py-4 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2"
+               >
+                  <FileText size={16} /> Gerar PDF Investigação
+               </button>
+            </div>
+         </div>
+      </AdaptiveModal>
     </div>
   );
 }
