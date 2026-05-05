@@ -92,7 +92,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
          const { data: dbNotifs, error } = await supabase
            .from('notificacoes')
            .select('*')
-           .or(`user_id.eq.${user.id},setor_destino.eq.${user.secretaria || 'Setor Geral'}`)
+           .or(`user_id.eq.${user.id}${user.secretaria ? `,setor_destino.eq.${user.secretaria}` : ''}`)
            .eq('lida', false)
            .order('created_at', { ascending: false })
            .limit(10);
@@ -114,10 +114,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
     fetchNotifs();
     
-    // Refresh a cada 1 minuto para ser mais dinâmico
+    // Inscrição Realtime para notificações instantâneas
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notificacoes'
+        },
+        (payload) => {
+          const newNotif = payload.new as any;
+          // Verifica se a notificação é para este usuário ou seu setor
+          if (newNotif.user_id === user.id || newNotif.setor_destino === (user.secretaria || 'Setor Geral')) {
+            fetchNotifs();
+          }
+        }
+      )
+      .subscribe();
+
     const interval = setInterval(fetchNotifs, 60000);
-    return () => clearInterval(interval);
-  }, [user]);
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.secretaria]);
 
   return (
     <div className="flex h-screen overflow-hidden p-4 gap-4 relative z-10">
