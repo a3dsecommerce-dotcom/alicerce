@@ -130,13 +130,29 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const getStatusInfo = (t: any) => {
     const agora = new Date();
     const abertura = new Date(t.data_abertura);
-    const diffDias = Math.floor((agora.getTime() - abertura.getTime()) / (1000 * 60 * 60 * 24));
     
-    let isAtrasado = diffDias >= (t.prazo_estipulado_dias || 1);
+    // Prazo prometido pelo setor (se houver)
+    const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
     
+    // Prazo estipulado originalmente (em dias)
+    const diffDiasSolicitado = Math.floor((agora.getTime() - abertura.getTime()) / (1000 * 60 * 60 * 24));
+    const isAtrasadoSolicitado = diffDiasSolicitado >= (t.prazo_estipulado_dias || 1);
+
     if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle2 };
-    if (isAtrasado && t.status !== 'RESOLVIDO') return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white animate-pulse', icon: ShieldAlert };
-    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
+    
+    // Se estourou o prazo que o PRÓPRIO setor prometeu: FALIT
+    if (deadlineAcordado && agora > deadlineAcordado && t.status !== 'RESOLVIDO') {
+      return { label: 'FALIT (Não Cumprido)', color: 'bg-black text-white border-2 border-red-600 animate-pulse', icon: ShieldAlert };
+    }
+
+    if (isAtrasadoSolicitado && t.status !== 'RESOLVIDO') {
+      return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white shadow-lg shadow-red-600/40', icon: ShieldAlert };
+    }
+    
+    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') {
+      return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
+    }
+    
     return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: AlertTriangle };
   };
 
@@ -338,16 +354,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                       <p className="text-sm font-black">{new Date(selectedTicket.data_abertura).toLocaleDateString()}</p>
                    </div>
                    <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo SLA</p>
-                      <p className="text-sm font-black text-red-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo Solicitado</p>
+                      <p className="text-sm font-black text-blue-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
                    </div>
                    <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Secretaria</p>
-                      <p className="text-sm font-black">{selectedTicket.secretaria || 'N/A'}</p>
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo Acordado</p>
+                      <p className={`text-sm font-black ${selectedTicket.prazo_prometido ? 'text-green-600' : 'text-[var(--text-muted)] italic'}`}>
+                         {selectedTicket.prazo_prometido ? new Date(selectedTicket.prazo_prometido).toLocaleDateString() : 'Aguardando...'}
+                      </p>
                    </div>
                    <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Unidade</p>
-                      <p className="text-sm font-black truncate">{selectedTicket.unidade || 'N/A'}</p>
+                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Setor Destino</p>
+                      <p className="text-sm font-black truncate">{selectedTicket.setor_destino || 'Setor Geral'}</p>
                    </div>
                 </div>
 
