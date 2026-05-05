@@ -136,7 +136,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     
     if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle2 };
     if (isAtrasado && t.status !== 'RESOLVIDO') return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white animate-pulse', icon: ShieldAlert };
-    if (t.status === 'RECEBIDO') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
+    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
     return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: AlertTriangle };
   };
 
@@ -395,7 +395,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                   </div>
                )}
 
-               {selectedTicket.status === 'RECEBIDO' && (
+               {(selectedTicket.status === 'RECEBIDO' || selectedTicket.status === 'EM ANALISE') && (
                   <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
                      <p className="text-[10px] font-black uppercase text-green-700 mb-4">Finalizar Demanda</p>
                      <div className="flex flex-col gap-4">
