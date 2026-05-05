@@ -260,6 +260,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         ['UNIDADE ATENDIDA:', data.unidade_alocada],
       ],
       theme: 'grid',
+      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 3 }
     });
@@ -276,6 +277,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         ['DESCRICAO DO LOCAL:', data.descricao_local],
       ],
       theme: 'grid',
+      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 3 }
     });
@@ -293,6 +295,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         [{ content: data.relato_pessoal || 'NAO INFORMADO', styles: { halign: 'justify' } }],
       ],
       theme: 'grid',
+      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 4 }
     });
@@ -307,6 +310,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         ['ACOMPANHAMENTO ATUAL:', data.acompanhamento_medico],
       ],
       theme: 'grid',
+      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 3 }
     });
@@ -322,6 +326,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         [{ content: data.solucoes_propostas, styles: { halign: 'justify' } }],
       ],
       theme: 'grid',
+      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 4 }
     });
