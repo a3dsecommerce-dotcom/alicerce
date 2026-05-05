@@ -19,6 +19,7 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
   const [modalNovo, setModalNovo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     colaborador_id: "",
@@ -27,6 +28,19 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
     observacoes: "",
     detalhes: [] as any[]
   });
+
+  const handleEdit = (v: any) => {
+    setEditingId(v.id);
+    setFormData({
+      colaborador_id: v.colaborador_id,
+      colaborador_nome: v.colaborador_nome,
+      data: v.data,
+      observacoes: v.observacoes || "",
+      detalhes: v.detalhes_visitas || []
+    });
+    setBuscaColab(v.colaborador_nome);
+    setModalNovo(true);
+  };
 
   const [novoDetalhe, setNovoDetalhe] = useState({
     unidade: "",
@@ -79,19 +93,33 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
     if (!formData.colaborador_id || formData.detalhes.length === 0) return toast.error("Preencha o colaborador e ao menos uma unidade.");
     
     setLoading(true);
-    const { error } = await supabase.from('escala_volantes').insert([{
+    
+    const payload = {
       colaborador_id: formData.colaborador_id,
       colaborador_nome: formData.colaborador_nome,
       data: formData.data,
       detalhes_visitas: formData.detalhes,
       observacoes: formData.observacoes,
-      criado_por_id: user.id,
-      criado_por_nome: user.name || user.nome
-    }]);
+      updated_at: new Date()
+    };
+
+    let error;
+    if (editingId) {
+      const { error: err } = await supabase.from('escala_volantes').update(payload).eq('id', editingId);
+      error = err;
+    } else {
+      const { error: err } = await supabase.from('escala_volantes').insert([{
+        ...payload,
+        criado_por_id: user.id,
+        criado_por_nome: user.name || user.nome
+      }]);
+      error = err;
+    }
 
     if (!error) {
-      toast.success("Escala registrada!");
+      toast.success(editingId ? "Escala atualizada!" : "Escala registrada!");
       setModalNovo(false);
+      setEditingId(null);
       setFormData({ colaborador_id: "", colaborador_nome: "", data: format(new Date(), "yyyy-MM-dd"), observacoes: "", detalhes: [] });
       setBuscaColab("");
       setBuscaUnidade("");
@@ -191,12 +219,15 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
                     </div>
                   </td>
                   <td className="p-6 w-72">
-                    <div className="flex items-center gap-4">
+                    <div 
+                      className="flex items-center gap-4 cursor-pointer hover:bg-white/50 p-2 rounded-2xl transition-all"
+                      onClick={() => handleEdit(v)}
+                    >
                       <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black text-sm border border-indigo-500/10 shadow-inner">
                         {v.colaborador_nome?.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tight">{v.colaborador_nome}</p>
+                        <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tight group-hover:text-indigo-600 transition-colors">{v.colaborador_nome}</p>
                         <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-0.5">Base: {v.unidade_original || 'OPERAÇÃO'}</p>
                       </div>
                     </div>
@@ -251,7 +282,7 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
         </div>
       </div>
 
-      <AdaptiveModal isOpen={modalNovo} onClose={() => setModalNovo(false)} title="Nova Escala Diária">
+      <AdaptiveModal isOpen={modalNovo} onClose={() => { setModalNovo(false); setEditingId(null); setFormData({ colaborador_id: "", colaborador_nome: "", data: format(new Date(), "yyyy-MM-dd"), observacoes: "", detalhes: [] }); setBuscaColab(""); }} title={editingId ? "Editar Escala Diária" : "Nova Escala Diária"}>
         <div className="p-6 md:p-10 space-y-10 max-h-[85vh] overflow-y-auto custom-scrollbar bg-[var(--bg-base)]/30">
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -365,7 +396,7 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
               {loading ? (
                 <> <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div> PROCESSANDO... </>
               ) : (
-                <> <Save size={24} /> SALVAR ESCALA DIÁRIA </>
+                <> <Save size={24} /> {editingId ? 'ATUALIZAR ESCALA' : 'SALVAR ESCALA DIÁRIA'} </>
               )}
             </button>
           </div>
