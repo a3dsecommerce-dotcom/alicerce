@@ -11,14 +11,15 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
     if (t === "EQUIPE" || t === "COLABS") return "MY_COLABS";
     if (t === "ADMISSAO" || t === "CADASTRO") return "QUICK_ADMISSION";
     if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
-    if (t === "INFORMATIVOS" || t === "EXTRAS" || t === "REPORTS") return "REPORTS";
+    if (t === "INFORMATIVOS" || t === "REPORTS") return "REPORTS";
+    if (t === "CAT" || t === "ACIDENTE") return "CAT";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -58,9 +59,28 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
      sugestao_punicao: '',
      observacoes: ''
    });
+
+   const [catForm, setCatForm] = useState<any>({
+    colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
+    data_ocorrido: new Date().toISOString().split('T')[0],
+    horario_ocorrido: '08:00',
+    local_ocorrido: '',
+    descricao_local: '',
+    tipo_acidente: 'TIPICO',
+    descricao_ocorrido: '',
+    relato_pessoal: '',
+    tem_testemunha: false,
+    testemunhas_detalhes: '',
+    acoes_tomadas: '',
+    agente_causador: '',
+    parte_corpo_atingida: '',
+    acompanhamento_medico: '',
+    real_motivo: '',
+    solucoes_propostas: ''
+  });
    const [buscaColab, setBuscaColab] = useState("");
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
-   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente">("interessado");
+   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado">("interessado");
 
    const selecionarColab = (colab: any) => {
      if (campoBuscaAtivo === "substituto") {
@@ -74,6 +94,15 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
          ...informativo,
          colaborador_ausente_id: colab.id,
          colaborador_ausente_nome: colab.nome
+       });
+     } else if (campoBuscaAtivo === "acidentado") {
+       setCatForm({
+         ...catForm,
+         colaborador_id: colab.id,
+         colaborador_nome: colab.nome,
+         colaborador_cpf: colab.cpf || "",
+         colaborador_cargo: colab.cargo || colab.funcao || "",
+         unidade_alocada: colab.unidade_alocacao || ""
        });
      }
      setBuscaColab("");
@@ -234,6 +263,37 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     } else {
       alert("Erro ao salvar: " + error.message);
     }
+    setSaving(false);
+  };
+
+  const handleSaveCAT = async () => {
+    setSaving(true);
+    const { error } = await supabase.from('cat_investigacao').insert([{
+      ...catForm,
+      criado_por_id: user.id
+    }]);
+    if (!error) {
+      alert("CAT registrada com sucesso!");
+      setCatForm({
+        colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
+        data_ocorrido: new Date().toISOString().split('T')[0],
+        horario_ocorrido: '08:00',
+        local_ocorrido: '',
+        descricao_local: '',
+        tipo_acidente: 'TIPICO',
+        descricao_ocorrido: '',
+        relato_pessoal: '',
+        tem_testemunha: false,
+        testemunhas_detalhes: '',
+        acoes_tomadas: '',
+        agente_causador: '',
+        parte_corpo_atingida: '',
+        acompanhamento_medico: '',
+        real_motivo: '',
+        solucoes_propostas: ''
+      });
+      setActiveTab("MY_UNITS");
+    } else alert("Erro ao salvar CAT: " + error.message);
     setSaving(false);
   };
 
@@ -418,6 +478,232 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
              </table>
           </div>
        </div>
+    </div>
+  );
+
+  const renderCAT = () => (
+    <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1200px] mx-auto w-full">
+      <div className="bg-[var(--bg-card)] p-12 rounded-[3.5rem] border border-[var(--border)] shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/5 rounded-full blur-[100px] -mr-48 -mt-48 pointer-events-none" />
+        
+        <div className="flex justify-between items-start mb-12 relative z-10">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-[2rem] bg-red-500/10 flex items-center justify-center text-red-600 shadow-inner">
+              <ShieldCheck size={32} />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase italic tracking-tighter">Investigação de CAT</h3>
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-1">Protocolo de Segurança e Saúde do Trabalho (SST)</p>
+            </div>
+          </div>
+          <div className="bg-red-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
+            Prazo Crítico: 24 Horas
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10">
+          <div className="lg:col-span-8 space-y-10">
+            {/* BLOCO 1: IDENTIFICAÇÃO */}
+            <div className="space-y-6">
+               <p className="text-[10px] font-black uppercase text-red-600 flex items-center gap-2 italic">
+                  <Users size={14} /> 1. Identificação do Acidentado
+               </p>
+               <div className="p-8 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] group transition-all hover:border-red-400">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-4 block">Pesquisar Colaborador</label>
+                  <div className="relative">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={20} />
+                    <input 
+                      className="input-field w-full !pl-14 !h-16 !bg-white border-none shadow-sm"
+                      placeholder="Busque por nome..."
+                      onChange={e => {
+                        const term = e.target.value.toLowerCase();
+                        if (term.length > 2) {
+                          const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
+                          setColabsSugeridos(suggested.slice(0, 5));
+                          setCampoBuscaAtivo("acidentado");
+                        } else setColabsSugeridos([]);
+                      }}
+                    />
+                  </div>
+                  {catForm.colaborador_nome && (
+                    <div className="mt-6 grid grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-red-100 animate-fade-in">
+                       <div>
+                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Colaborador</p>
+                          <p className="text-xs font-black text-[var(--text-primary)] uppercase">{catForm.colaborador_nome}</p>
+                       </div>
+                       <div>
+                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">CPF</p>
+                          <p className="text-xs font-black text-[var(--text-primary)]">{catForm.colaborador_cpf || 'Não Informado'}</p>
+                       </div>
+                       <div className="mt-2">
+                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Cargo</p>
+                          <p className="text-xs font-black text-[var(--text-primary)] uppercase">{catForm.colaborador_cargo}</p>
+                       </div>
+                       <div className="mt-2">
+                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Unidade</p>
+                          <p className="text-xs font-black text-[var(--text-primary)] uppercase">{catForm.unidade_alocada}</p>
+                       </div>
+                    </div>
+                  )}
+               </div>
+            </div>
+
+            {/* BLOCO 2: OCORRÊNCIA */}
+            <div className="space-y-6">
+               <p className="text-[10px] font-black uppercase text-red-600 flex items-center gap-2 italic">
+                  <Clock size={14} /> 2. Detalhes da Ocorrência
+               </p>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Data do Ocorrido</label>
+                    <input type="date" className="input-field w-full !h-14 font-black" value={catForm.data_ocorrido} onChange={e => setCatForm({...catForm, data_ocorrido: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Horário</label>
+                    <input type="time" className="input-field w-full !h-14 font-black" value={catForm.horario_ocorrido} onChange={e => setCatForm({...catForm, horario_ocorrido: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Tipo de Acidente</label>
+                    <select className="input-field w-full !h-14 font-black" value={catForm.tipo_acidente} onChange={e => setCatForm({...catForm, tipo_acidente: e.target.value})}>
+                      <option value="TIPICO">TÍPICO (NA UNIDADE)</option>
+                      <option value="TRAJETO">TRAJETO (CASA-TRABALHO)</option>
+                      <option value="DOENCA">DOENÇA OCUPACIONAL</option>
+                    </select>
+                  </div>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Local (Unidade/Posto)</label>
+                    <input className="input-field w-full !h-14 font-black" placeholder="Onde exatamente?" value={catForm.local_ocorrido} onChange={e => setCatForm({...catForm, local_ocorrido: e.target.value.toUpperCase()})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição do Local</label>
+                    <input className="input-field w-full !h-14 font-black" placeholder="Ex: Cozinha, Pátio, Escada Norte" value={catForm.descricao_local} onChange={e => setCatForm({...catForm, descricao_local: e.target.value.toUpperCase()})} />
+                  </div>
+               </div>
+            </div>
+
+            {/* BLOCO 3: NARRATIVA E TESTEMUNHAS */}
+            <div className="space-y-6">
+               <p className="text-[10px] font-black uppercase text-red-600 flex items-center gap-2 italic">
+                  <Activity size={14} /> 3. Narrativa da Investigação
+               </p>
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Descrição Detalhada do Ocorrido</label>
+                  <textarea className="input-field w-full !h-40 p-6 font-medium" placeholder="Como aconteceu? Quais ferramentas estavam envolvidas?..." value={catForm.descricao_ocorrido} onChange={e => setCatForm({...catForm, descricao_ocorrido: e.target.value})}></textarea>
+               </div>
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Ações Tomadas Durante a Ocorrência</label>
+                  <textarea className="input-field w-full !h-32 p-6 font-medium" placeholder="Primeiros socorros, isolamento da área, etc..." value={catForm.acoes_tomadas} onChange={e => setCatForm({...catForm, acoes_tomadas: e.target.value})}></textarea>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                    <div className="flex items-center justify-between mb-4">
+                       <span className="text-[10px] font-black uppercase text-[var(--text-primary)] italic">Há Testemunhas?</span>
+                       <button 
+                         onClick={() => setCatForm({...catForm, tem_testemunha: !catForm.tem_testemunha})}
+                         className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${catForm.tem_testemunha ? 'bg-green-500 text-white shadow-md' : 'bg-slate-200 text-slate-500'}`}
+                       >
+                         {catForm.tem_testemunha ? 'SIM' : 'NÃO'}
+                       </button>
+                    </div>
+                    {catForm.tem_testemunha && (
+                      <textarea className="input-field w-full !h-24 !text-[10px] p-4 bg-white" placeholder="Nome/Telefone e breve depoimento das testemunhas..." value={catForm.testemunhas_detalhes} onChange={e => setCatForm({...catForm, testemunhas_detalhes: e.target.value})}></textarea>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Relato Pessoal do Acidentado</label>
+                    <textarea className="input-field w-full !h-32 p-6 font-medium" placeholder="O que o colaborador diz sobre o acidente..." value={catForm.relato_pessoal} onChange={e => setCatForm({...catForm, relato_pessoal: e.target.value})}></textarea>
+                  </div>
+               </div>
+            </div>
+
+            {/* BLOCO 4: ANÁLISE TÉCNICA */}
+            <div className="space-y-6">
+               <p className="text-[10px] font-black uppercase text-red-600 flex items-center gap-2 italic">
+                  <Settings size={14} /> 4. Análise e Acompanhamento
+               </p>
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Agente Causador</label>
+                    <input className="input-field w-full !h-14 font-black" placeholder="Ex: Piso Escorregadio" value={catForm.agente_causador} onChange={e => setCatForm({...catForm, agente_causador: e.target.value.toUpperCase()})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Parte do Corpo Atingida</label>
+                    <input className="input-field w-full !h-14 font-black" placeholder="Ex: Mão Direita" value={catForm.parte_corpo_atingida} onChange={e => setCatForm({...catForm, parte_corpo_atingida: e.target.value.toUpperCase()})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Acompanhamento Atual</label>
+                    <input className="input-field w-full !h-14 font-black" placeholder="Ex: Hospital X / Em casa" value={catForm.acompanhamento_medico} onChange={e => setCatForm({...catForm, acompanhamento_medico: e.target.value.toUpperCase()})} />
+                  </div>
+               </div>
+            </div>
+
+            {/* BLOCO 5: CONCLUSÃO */}
+            <div className="space-y-6 p-8 bg-amber-500/5 rounded-[2.5rem] border border-amber-500/10">
+               <p className="text-[10px] font-black uppercase text-amber-600 flex items-center gap-2 italic mb-4">
+                  <AlertTriangle size={14} /> 5. Conclusão da Investigação
+               </p>
+               <div className="space-y-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-amber-700 mb-3 block italic">Qual foi o Real Motivo? (Causa Raiz)</label>
+                    <textarea className="input-field w-full !h-32 p-6 font-bold bg-white" placeholder="Sua visão profissional sobre o motivo real..." value={catForm.real_motivo} onChange={e => setCatForm({...catForm, real_motivo: e.target.value})}></textarea>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-amber-700 mb-3 block italic">Soluções para Evitar Recorrência</label>
+                    <textarea className="input-field w-full !h-32 p-6 font-bold bg-white" placeholder="O que deve ser feito para não acontecer novamente?..." value={catForm.solucoes_propostas} onChange={e => setCatForm({...catForm, solucoes_propostas: e.target.value})}></textarea>
+                  </div>
+               </div>
+            </div>
+
+            <button 
+              onClick={handleSaveCAT}
+              disabled={saving}
+              className="w-full py-8 bg-red-600 text-white rounded-[2.5rem] text-sm font-black uppercase tracking-[0.2em] hover:scale-[1.01] transition-all shadow-2xl shadow-red-500/40"
+            >
+               {saving ? "Registrando Protocolo Crítico..." : "Finalizar e Enviar Investigação de CAT"}
+            </button>
+          </div>
+
+          <div className="lg:col-span-4 space-y-8">
+             {colabsSugeridos.length > 0 ? (
+               <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] animate-fade-in shadow-xl">
+                  <p className="text-[10px] font-black uppercase text-red-600 mb-6 flex items-center gap-2 italic">
+                     <Search size={14} /> Selecionar Acidentado
+                  </p>
+                  <div className="grid grid-cols-1 gap-3">
+                     {colabsSugeridos.map((c, idx) => (
+                       <button 
+                         key={idx}
+                         onClick={() => selecionarColab(c)}
+                         className="p-5 bg-[var(--bg-base)] hover:bg-red-600 hover:text-white rounded-2xl border border-[var(--border)] transition-all text-left group"
+                       >
+                          <p className="text-xs font-black uppercase">{c.nome}</p>
+                          <p className="text-[9px] font-bold opacity-60 uppercase">{c.unidade_alocacao || 'Sem Unidade'}</p>
+                       </button>
+                     ))}
+                  </div>
+               </div>
+             ) : (
+               <div className="bg-red-500/5 p-10 rounded-[3rem] border border-dashed border-red-500/20 text-center py-20">
+                  <ShieldCheck className="text-red-500 mx-auto mb-6 opacity-30" size={48} />
+                  <p className="text-[11px] font-black uppercase text-red-700 tracking-widest leading-loose">
+                     A investigação de acidente <br /> é um dever legal <br /> (Lei 8.213/91)
+                  </p>
+               </div>
+             )}
+
+             <div className="bg-amber-600 p-8 rounded-[2.5rem] text-white shadow-xl">
+                <h4 className="text-xs font-black uppercase mb-4 italic flex items-center gap-2">
+                   <Activity size={18} /> Importante
+                </h4>
+                <p className="text-[9px] font-bold uppercase leading-relaxed opacity-90">
+                   A emissão da CAT é obrigatória mesmo que não haja afastamento. O preenchimento correto deste relatório protege a empresa e o colaborador, evitando multas e garantindo o nexo causal correto.
+                </p>
+             </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -1039,6 +1325,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
            { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
            { id: "REPORTS", label: "Informativos", icon: Send },
+           { id: "CAT", label: "Investigação CAT", icon: ShieldCheck },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
@@ -1064,6 +1351,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            {activeTab === "QUICK_ADMISSION" && renderQuickAdmission()}
            {activeTab === "TICKETS" && renderTickets()}
            {activeTab === "REPORTS" && renderReports()}
+           {activeTab === "CAT" && renderCAT()}
         </div>
       )}
 
