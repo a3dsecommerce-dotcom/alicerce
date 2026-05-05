@@ -39,6 +39,8 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [modalUnidade, setModalUnidade] = useState<any>(null);
+  const [unidadeEditando, setUnidadeEditando] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -134,6 +136,29 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     return { totalOcorrencias, emAberto, citadas, falit };
   }, [ocorrencias, user.id]);
 
+  const handleSaveUnidade = async () => {
+    if (!unidadeEditando) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('unidades')
+      .update({
+        secretaria: unidadeEditando.secretaria,
+        endereco: unidadeEditando.endereco,
+        contato_nome: unidadeEditando.contato_nome,
+        contato_telefone: unidadeEditando.contato_telefone
+      })
+      .eq('id', unidadeEditando.id);
+
+    if (!error) {
+      alert("Dados da unidade atualizados!");
+      setModalUnidade(null);
+      fetchEncarregadoData();
+    } else {
+      alert("Erro ao salvar: " + error.message);
+    }
+    setSaving(false);
+  };
+
   const renderMyUnits = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -190,21 +215,21 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
               <div className="pt-6 border-t border-[var(--border)] flex gap-2">
                  <button 
-                   onClick={() => {
-                     const unitObj = fullUnits.find(u => u.nome === unit);
-                     setAdmissao({ ...admissao, unidade: unit, secretaria: unitObj?.secretaria || 'SEMED' });
-                     setActiveTab("QUICK_ADMISSION");
-                   }}
-                   className="flex-1 py-3 bg-[var(--brand)]/10 text-[var(--brand)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all"
-                 >
-                    Vincular Colaborador
-                 </button>
-                 <button 
-                   onClick={() => { setFiltroUnidadeOcorrencia(unit); setActiveTab("TICKETS"); }}
-                   className="px-4 py-3 bg-[var(--bg-card)] text-[var(--text-muted)] rounded-xl border border-[var(--border)] text-[9px] font-black uppercase hover:border-[var(--brand)] transition-all"
-                 >
-                    Chamados
-                 </button>
+                    onClick={() => {
+                      const unitObj = fullUnits.find(u => u.nome === unit);
+                      setUnidadeEditando(unitObj || { nome: unit });
+                      setModalUnidade(true);
+                    }}
+                    className="flex-1 py-3 bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all flex items-center justify-center gap-2"
+                  >
+                     <Settings size={14} /> Editar Unidade
+                  </button>
+                  <button 
+                    onClick={() => { setFiltroUnidadeOcorrencia(unit); setActiveTab("TICKETS"); }}
+                    className="px-4 py-3 bg-[var(--bg-card)] text-[var(--text-muted)] rounded-xl border border-[var(--border)] text-[9px] font-black uppercase hover:border-[var(--brand)] transition-all"
+                  >
+                     Chamados
+                  </button>
               </div>
             </div>
           ))}
@@ -709,13 +734,72 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         </div>
       )}
 
-      <FichaColaborador360 
-        colabId={editandoColab?.id} 
-        isOpen={!!editandoColab} 
-        onClose={() => { setEditandoColab(null); setJustificativa(""); }} 
-        canEdit={true}
-        onUpdate={fetchEncarregadoData}
-      />
+       <FichaColaborador360 
+         colabId={editandoColab?.id} 
+         isOpen={!!editandoColab} 
+         onClose={() => { setEditandoColab(null); setJustificativa(""); }} 
+         canEdit={true}
+         onUpdate={fetchEncarregadoData}
+       />
+
+       <AdaptiveModal isOpen={!!modalUnidade} onClose={() => setModalUnidade(null)}>
+          <div className="p-8">
+             <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+                   <Settings size={24} />
+                </div>
+                <div>
+                   <h3 className="text-lg font-black text-[var(--text-primary)] uppercase">Editar Unidade</h3>
+                   <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{unidadeEditando?.nome}</p>
+                </div>
+             </div>
+
+             <div className="space-y-6">
+                <div>
+                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Secretaria / Órgão</label>
+                   <input 
+                      className="input-field w-full" 
+                      value={unidadeEditando?.secretaria || ""} 
+                      onChange={e => setUnidadeEditando({...unidadeEditando, secretaria: e.target.value.toUpperCase()})}
+                   />
+                </div>
+                <div>
+                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Endereço Completo</label>
+                   <input 
+                      className="input-field w-full" 
+                      value={unidadeEditando?.endereco || ""} 
+                      onChange={e => setUnidadeEditando({...unidadeEditando, endereco: e.target.value.toUpperCase()})}
+                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Ponto de Contato</label>
+                      <input 
+                         className="input-field w-full" 
+                         value={unidadeEditando?.contato_nome || ""} 
+                         onChange={e => setUnidadeEditando({...unidadeEditando, contato_nome: e.target.value.toUpperCase()})}
+                      />
+                   </div>
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone Contato</label>
+                      <input 
+                         className="input-field w-full" 
+                         value={unidadeEditando?.contato_telefone || ""} 
+                         onChange={e => setUnidadeEditando({...unidadeEditando, contato_telefone: e.target.value})}
+                      />
+                   </div>
+                </div>
+
+                <button 
+                   onClick={handleSaveUnidade}
+                   disabled={saving}
+                   className="w-full py-4 bg-[var(--brand)] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-[var(--brand)]/20"
+                >
+                   {saving ? "Salvando..." : "Salvar Alterações"}
+                </button>
+             </div>
+          </div>
+       </AdaptiveModal>
     </div>
   );
 }
