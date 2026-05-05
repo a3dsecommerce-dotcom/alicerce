@@ -188,9 +188,11 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
           <button onClick={handleGerarPDFMensal} className="h-12 px-6 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-lg">
              <FileText size={16} /> Escala Mensal PDF
           </button>
-          <button onClick={() => setModalNovo(true)} className="h-12 px-8 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-indigo-600/20">
-            <Plus size={16} /> Novo Registro
-          </button>
+          {canEdit && (
+            <button onClick={() => setModalNovo(true)} className="h-12 px-8 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-indigo-600/20">
+              <Plus size={16} /> Novo Registro
+            </button>
+          )}
         </div>
       </div>
 
@@ -237,19 +239,21 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                      </div>
                      <span className="text-[10px] font-black text-slate-400 uppercase">Volantes</span>
                    </div>
-                   <button 
-                    onClick={() => {
-                      setFormData({
-                        ...formData,
-                        data: format(new Date(req.data_inicio), "yyyy-MM-dd"),
-                        detalhes: [{ unidade: req.unidade_destino, entrada: "08:00", saida: "17:00", motivo: req.motivo }]
-                      });
-                      setModalNovo(true);
-                    }}
-                    className="h-10 px-4 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all"
-                   >
-                     Atender Pedido
-                   </button>
+                   {canEdit && (
+                     <button 
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          data: format(new Date(req.data_inicio), "yyyy-MM-dd"),
+                          detalhes: [{ unidade: req.unidade_destino, entrada: "08:00", saida: "17:00", motivo: req.motivo }]
+                        });
+                        setModalNovo(true);
+                      }}
+                      className="h-10 px-4 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                     >
+                       Atender Pedido
+                     </button>
+                   )}
                 </div>
               </div>
             ))}
@@ -462,7 +466,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
           )}
 
           <div className="pt-10">
-            {(!editingId || canEdit) ? (
+            {canEdit ? (
               <button onClick={handleSalvar} disabled={loading} className="w-full h-20 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-indigo-600/40 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-4">
                 {loading ? (
                   <> <div className="animate-spin rounded-full h-6 w-6 border-4 border-white/20 border-t-white"></div> PROCESSANDO... </>
@@ -474,8 +478,8 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
               <div className="p-8 bg-amber-50 rounded-2xl border-2 border-dashed border-amber-200 flex flex-col items-center justify-center gap-3">
                 <TrendingUp size={32} className="text-amber-500" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 text-center leading-relaxed">
-                  MODO DE CONSULTA: Seu nível de acesso permite apenas o registro e consulta. <br/>
-                  Alterações em escalas consolidadas exigem autorização da Gerência ou Master (Nível 3+).
+                  MODO DE CONSULTA: Seu nível de acesso permite apenas a consulta das escalas. <br/>
+                  O registro e alterações são realizados exclusivamente pela Gerência ou Master (Nível 3+).
                 </p>
               </div>
             )}
