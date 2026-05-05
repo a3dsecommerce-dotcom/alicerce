@@ -49,10 +49,26 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
     }
   };
 
+  // Busca de unidades
+  const [buscaUnidade, setBuscaUnidade] = useState("");
+  const [unidadesSugeridas, setUnidadesSugeridas] = useState<any[]>([]);
+
+  const searchUnidades = async (val: string) => {
+    setBuscaUnidade(val);
+    if (val.length > 1) {
+      const { data } = await supabase.from('unidades').select('*').ilike('nome', `%${val}%`).limit(5);
+      if (data) setUnidadesSugeridas(data);
+    } else {
+      setUnidadesSugeridas([]);
+    }
+  };
+
   const addDetalhe = () => {
     if (!novoDetalhe.unidade || !novoDetalhe.entrada) return toast.error("Preencha unidade e entrada");
+    if (formData.detalhes.length >= 2) return toast.error("Máximo de 2 unidades por dia.");
     setFormData({ ...formData, detalhes: [...formData.detalhes, novoDetalhe] });
     setNovoDetalhe({ unidade: "", entrada: "", saida: "", motivo: "" });
+    setBuscaUnidade("");
   };
 
   const removeDetalhe = (idx: number) => {
@@ -78,6 +94,7 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
       setModalNovo(false);
       setFormData({ colaborador_id: "", colaborador_nome: "", data: format(new Date(), "yyyy-MM-dd"), observacoes: "", detalhes: [] });
       setBuscaColab("");
+      setBuscaUnidade("");
       refresh();
     } else {
       toast.error("Erro ao salvar escala.");
@@ -104,15 +121,16 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
 
     autoTable(doc, {
       startY: 40,
-      head: [['Data', 'Colaborador', 'Roteiro / Unidades']],
+      head: [['Data', 'Colaborador', 'Unidade 1', 'Unidade 2']],
       body: filtrados.map(v => [
         format(new Date(v.data), "dd/MM/yyyy"),
         v.colaborador_nome,
-        v.detalhes_visitas.map((d: any) => `${d.unidade} (${d.entrada}-${d.saida || '...'})`).join('\n')
+        v.detalhes_visitas[0] ? `${v.detalhes_visitas[0].unidade} (${v.detalhes_visitas[0].entrada}-${v.detalhes_visitas[0].saida || '...'})` : '-',
+        v.detalhes_visitas[1] ? `${v.detalhes_visitas[1].unidade} (${v.detalhes_visitas[1].entrada}-${v.detalhes_visitas[1].saida || '...'})` : '-'
       ]),
       theme: 'grid',
       headStyles: { fillColor: [79, 70, 229] }, // Indigo 600
-      styles: { fontSize: 8, font: "helvetica" }
+      styles: { fontSize: 7, font: "helvetica" }
     });
 
     doc.save(`Escala_Volantes_${format(selectedMonth, "MM_yyyy")}.pdf`);
@@ -153,7 +171,7 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
               <tr>
                 <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] pl-8">Data / Registro</th>
                 <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Colaborador Volante</th>
-                <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Roteiro e Detalhes</th>
+                <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Roteiro Diário (Máx 2 Unidades)</th>
                 <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right pr-8">Opções</th>
               </tr>
             </thead>
@@ -184,20 +202,30 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
                     </div>
                   </td>
                   <td className="p-6">
-                    <div className="flex flex-wrap gap-3">
-                      {v.detalhes_visitas?.map((d: any, i: number) => (
-                        <div key={i} className="p-4 bg-white border border-[var(--border)] rounded-2xl flex flex-col gap-1 min-w-[220px] shadow-sm group-hover:shadow-md transition-all border-l-4 border-l-indigo-500">
-                          <div className="flex items-center justify-between gap-3 mb-1.5">
-                            <span className="text-[10px] font-black text-indigo-600 uppercase flex items-center gap-1.5"><MapPin size={12} /> {d.unidade}</span>
-                            <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
-                               <Clock size={10} /> {d.entrada} - {d.saida || '...'}
+                    <div className="grid grid-cols-2 gap-4 max-w-[600px]">
+                      {[0, 1].map(i => {
+                        const d = v.detalhes_visitas[i];
+                        if (d) {
+                          return (
+                            <div key={i} className="p-4 bg-white border border-[var(--border)] rounded-2xl flex flex-col gap-1 shadow-sm border-l-4 border-l-indigo-500 min-h-[80px]">
+                              <div className="flex items-center justify-between gap-3 mb-1">
+                                <span className="text-[10px] font-black text-indigo-600 uppercase flex items-center gap-1.5"><MapPin size={12} /> {d.unidade}</span>
+                                <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
+                                   <Clock size={10} /> {d.entrada}-{d.saida || '...'}
+                                </div>
+                              </div>
+                              <p className="text-[9px] font-semibold text-slate-600 leading-relaxed italic truncate">
+                                 {d.motivo || 'Substituição'}
+                              </p>
                             </div>
+                          );
+                        }
+                        return (
+                          <div key={i} className="p-4 bg-[var(--bg-base)]/50 border border-dashed border-[var(--border)] rounded-2xl flex items-center justify-center opacity-40 min-h-[80px]">
+                             <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Sem 2ª Unidade</span>
                           </div>
-                          <p className="text-[9px] font-semibold text-slate-600 leading-relaxed italic pr-2">
-                             {d.motivo || 'Motivo não informado'}
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </td>
                   <td className="p-6 text-right pr-8">
@@ -268,9 +296,23 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
             </h5>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Unidade</p>
-                <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="Ex: Escola X" value={novoDetalhe.unidade} onChange={(e) => setNovoDetalhe({...novoDetalhe, unidade: e.target.value})} />
+                <input 
+                  className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" 
+                  placeholder="Buscar Escola..." 
+                  value={buscaUnidade} 
+                  onChange={(e) => searchUnidades(e.target.value)} 
+                />
+                {unidadesSugeridas.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[110] overflow-hidden">
+                    {unidadesSugeridas.map(u => (
+                      <button key={u.id} onClick={() => { setNovoDetalhe({...novoDetalhe, unidade: u.nome}); setBuscaUnidade(u.nome); setUnidadesSugeridas([]); }} className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none">
+                        <p className="text-[10px] font-black uppercase text-indigo-900">{u.nome}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Entrada</p>
@@ -286,8 +328,12 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
               </div>
             </div>
 
-            <button onClick={addDetalhe} className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
-              Confirmar Unidade no Roteiro
+            <button 
+              onClick={addDetalhe} 
+              disabled={formData.detalhes.length >= 2}
+              className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+            >
+              {formData.detalhes.length >= 2 ? 'Limite de 2 Unidades Atingido' : 'Confirmar Unidade no Roteiro'}
             </button>
           </div>
 
