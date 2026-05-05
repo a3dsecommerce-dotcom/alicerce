@@ -21,7 +21,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const canEdit = Number(user?.nivel) >= 3;
+  const canEdit = Number(user?.nivel || user?.nivel_acesso) >= 3;
   
   const [formData, setFormData] = useState({
     colaborador_id: "",
