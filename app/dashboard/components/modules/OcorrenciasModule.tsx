@@ -101,10 +101,11 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     if (!receberData.prazo_prometido) return alert("Informe sua previsão de entrega.");
     setLoading(true);
     const { error } = await supabase.from('tickets_sla').update({
-      status: 'RECEBIDO',
+      status: 'EM ANALISE',
       data_recebimento: new Date().toISOString(),
       prazo_prometido: receberData.prazo_prometido,
-      atribuido_a: user.name || 'Técnico'
+      recebido_por_id: user.id,
+      recebido_por_nome: user.name || user.nome
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
     else { setModalAberto(null); fetchTickets(); }
@@ -117,7 +118,9 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     const { error } = await supabase.from('tickets_sla').update({
       status: 'RESOLVIDO',
       data_fechamento: new Date().toISOString(),
-      solucao_descricao: resolverData.solucao
+      solucao_descricao: resolverData.solucao,
+      resolvido_por_id: user.id,
+      resolvido_por_nome: user.name || user.nome
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
     else { setModalAberto(null); fetchTickets(); }
@@ -356,11 +359,28 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                    </div>
                    {selectedTicket.representante_nome && (
                       <div className="text-right">
-                         <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1">Representante</p>
+                         <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1">Representante (Abertura)</p>
                          <p className="text-sm font-black text-[var(--text-secondary)]">{selectedTicket.representante_nome}</p>
                       </div>
                    )}
                 </div>
+
+                {(selectedTicket.recebido_por_nome || selectedTicket.resolvido_por_nome) && (
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedTicket.recebido_por_nome && (
+                         <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                            <p className="text-[8px] font-black uppercase text-blue-600 mb-1">Recebido por</p>
+                            <p className="text-xs font-black text-blue-900">{selectedTicket.recebido_por_nome}</p>
+                         </div>
+                      )}
+                      {selectedTicket.resolvido_por_nome && (
+                         <div className="p-4 bg-green-50 rounded-2xl border border-green-100">
+                            <p className="text-[8px] font-black uppercase text-green-600 mb-1">Resolvido por</p>
+                            <p className="text-xs font-black text-green-900">{selectedTicket.resolvido_por_nome}</p>
+                         </div>
+                      )}
+                   </div>
+                )}
 
                {selectedTicket.status === 'PENDENTE' && (
                   <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
