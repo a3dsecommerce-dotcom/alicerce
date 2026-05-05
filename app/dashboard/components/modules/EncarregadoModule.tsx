@@ -4,7 +4,7 @@ import {
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut
+  Settings, Save, Lock, LogOut, Send
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
