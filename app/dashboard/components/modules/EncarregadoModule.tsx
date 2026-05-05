@@ -7,6 +7,8 @@ import {
   Settings, Save, Lock, LogOut, Send
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
@@ -231,6 +233,104 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     setSaving(false);
   };
 
+  const generateCATPDF = (data: any) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Header
+    doc.setFillColor(31, 41, 55); // Dark Slate
+    doc.rect(0, 0, pageWidth, 40, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("ALICERCE - SEGURANCA DO TRABALHO", pageWidth / 2, 20, { align: "center" });
+    doc.setFontSize(10);
+    doc.text("RELATORIO DE INVESTIGACAO DE ACIDENTE DE TRABALHO (CAT)", pageWidth / 2, 30, { align: "center" });
+
+    // 1. Identificação
+    autoTable(doc, {
+      startY: 50,
+      head: [['1. IDENTIFICACAO DO ACIDENTADO', '']],
+      body: [
+        ['Nome:', data.colaborador_nome],
+        ['CPF:', data.colaborador_cpf || 'N/A'],
+        ['Cargo:', data.colaborador_cargo],
+        ['Unidade:', data.unidade_alocada],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38] }
+    });
+
+    // 2. Ocorrência
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['2. DETALHES DA OCORRENCIA', '']],
+      body: [
+        ['Data:', data.data_ocorrido],
+        ['Horario:', data.horario_ocorrido],
+        ['Tipo:', data.tipo_acidente],
+        ['Local:', data.local_ocorrido],
+        ['Descricao Local:', data.descricao_local],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38] }
+    });
+
+    // 3. Narrativa
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['3. NARRATIVA DA INVESTIGACAO']],
+      body: [
+        ['DESCRICAO DO OCORRIDO:'],
+        [data.descricao_ocorrido],
+        ['ACOES TOMADAS:'],
+        [data.acoes_tomadas || 'N/A'],
+        ['RELATO PESSOAL:'],
+        [data.relato_pessoal || 'N/A'],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38] }
+    });
+
+    // 4. Analise Tecnica
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['4. ANALISE TECNICA E ACOMPANHAMENTO', '']],
+      body: [
+        ['Agente Causador:', data.agente_causador],
+        ['Parte do Corpo:', data.parte_corpo_atingida],
+        ['Acompanhamento:', data.acompanhamento_medico],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38] }
+    });
+
+    // 5. Conclusao
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 10,
+      head: [['5. CONCLUSAO E SOLUCOES']],
+      body: [
+        ['REAL MOTIVO (CAUSA RAIZ):'],
+        [data.real_motivo],
+        ['SOLUCOES PROPOSTAS:'],
+        [data.solucoes_propostas],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [180, 83, 9] } // Amber
+    });
+
+    // Signatures
+    const finalY = (doc as any).lastAutoTable.finalY + 30;
+    doc.line(20, finalY, 90, finalY);
+    doc.text("Assinatura do Colaborador", 55, finalY + 5, { align: "center" });
+    
+    doc.line(120, finalY, 190, finalY);
+    doc.text("Responsavel (Encarregado)", 155, finalY + 5, { align: "center" });
+
+    doc.save(`CAT_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrido}.pdf`);
+  };
+
   const handleSaveInformativo = async () => {
     setSaving(true);
     const { error } = await supabase
@@ -278,6 +378,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     }]);
     if (!error) {
       alert("Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
+      generateCATPDF(catForm);
       setCatForm({
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
         data_ocorrido: new Date().toISOString().split('T')[0],
