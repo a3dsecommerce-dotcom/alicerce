@@ -640,9 +640,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                <div className="p-8 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] group transition-all hover:border-red-400">
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-4 block">Pesquisar Colaborador</label>
                   <div className="relative">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={20} />
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={22} />
                     <input 
-                      className="input-field w-full !pl-14 !h-16 !bg-white border-none shadow-sm"
+                      className="input-field w-full !pl-20 !h-16 !bg-white border-none shadow-sm"
                       placeholder="Busque por nome..."
                       onChange={e => {
                         const term = e.target.value.toLowerCase();
@@ -1023,9 +1023,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                 <div className="p-6 bg-blue-500/5 rounded-2xl border border-blue-500/10">
                   <label className="text-[10px] font-black uppercase text-blue-600 mb-3 block italic">Colaborador que fez o Extra (Substituto)</label>
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
                     <input 
-                      className="input-field w-full !pl-12 !h-14 bg-white"
+                      className="input-field w-full !pl-16 !h-14 bg-white"
                       placeholder="Pesquisar por nome..."
                       onChange={e => {
                         const term = e.target.value.toLowerCase();
@@ -1047,9 +1047,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                 <div className="p-6 bg-red-500/5 rounded-2xl border border-red-500/10">
                   <label className="text-[10px] font-black uppercase text-red-600 mb-3 block italic">Colaborador que Faltou (Ausente)</label>
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-red-400" size={18} />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-red-400" size={18} />
                     <input 
-                      className="input-field w-full !pl-12 !h-14 bg-white"
+                      className="input-field w-full !pl-16 !h-14 bg-white"
                       placeholder="Pesquisar por nome..."
                       onChange={e => {
                         const term = e.target.value.toLowerCase();
@@ -1074,9 +1074,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
               <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Colaborador Ausente</label>
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
                   <input 
-                    className="input-field w-full !pl-12 !h-14"
+                    className="input-field w-full !pl-16 !h-14"
                     placeholder="Pesquisar por nome..."
                     onChange={e => {
                       const term = e.target.value.toLowerCase();
