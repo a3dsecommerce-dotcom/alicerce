@@ -24,7 +24,7 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "VOLANTES" | "REQUISICOES";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, candidatos, cats, extras, volantes, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
+  const { loading, colaboradores, candidatos, cats, extras, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
@@ -245,7 +245,7 @@ export default function RHModule({ user }: { user: any }) {
         )}
 
         {masterTab === "VOLANTES" && (
-           <VolantesEscala volantes={volantes} refresh={refresh} user={user} />
+           <VolantesEscala volantes={volantes} requisicoes={requisicoesVolantes} refresh={refresh} user={user} />
         )}
 
         {masterTab === "REQUISICOES" && (

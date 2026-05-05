@@ -11,11 +11,12 @@ import autoTable from "jspdf-autotable";
 
 interface VolantesEscalaProps {
   volantes: any[];
+  requisicoes: any[];
   refresh: () => void;
   user: any;
 }
 
-export default function VolantesEscala({ volantes, refresh, user }: VolantesEscalaProps) {
+export default function VolantesEscala({ volantes, requisicoes = [], refresh, user }: VolantesEscalaProps) {
   const [modalNovo, setModalNovo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
@@ -191,6 +192,68 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
           </button>
         </div>
       </div>
+
+      {/* Seção de Requisições de Unidades */}
+      {requisicoes.filter(r => r.status === 'PENDENTE' || r.status === 'EM_CURSO').length > 0 && (
+        <div className="animate-fade-in space-y-4">
+          <div className="flex items-center gap-3 ml-2">
+            <TrendingUp size={16} className="text-amber-500" />
+            <h3 className="text-[11px] font-black uppercase text-slate-500 tracking-widest">Requisições de Ajuda Pendentes</h3>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+            {requisicoes.filter(r => r.status === 'PENDENTE' || r.status === 'EM_CURSO').map((req) => (
+              <div key={req.id} className="min-w-[320px] bg-white border border-amber-200 rounded-3xl p-6 shadow-sm flex flex-col gap-4 border-l-8 border-l-amber-500 relative overflow-hidden group hover:shadow-xl transition-all">
+                <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform">
+                  <Truck size={80} />
+                </div>
+                
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">{req.prioridade || 'NORMAL'}</p>
+                    <h4 className="text-sm font-black text-slate-900 uppercase leading-tight">{req.unidade_destino}</h4>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${req.status === 'PENDENTE' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {req.status}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3 text-[11px] font-bold text-slate-500">
+                  <Calendar size={14} className="text-slate-400" />
+                  <span>{format(new Date(req.data_inicio), "dd/MM/yyyy")} {req.data_fim ? `até ${format(new Date(req.data_fim), "dd/MM/yyyy")}` : ''}</span>
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] font-medium text-slate-600 italic leading-relaxed">
+                    "{req.motivo || 'Nenhum motivo detalhado'}"
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between mt-2 pt-4 border-t border-slate-100">
+                   <div className="flex items-center gap-2">
+                     <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-black">
+                       {req.quantidade_necessaria}
+                     </div>
+                     <span className="text-[10px] font-black text-slate-400 uppercase">Volantes</span>
+                   </div>
+                   <button 
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        data: format(new Date(req.data_inicio), "yyyy-MM-dd"),
+                        detalhes: [{ unidade: req.unidade_destino, entrada: "08:00", saida: "17:00", motivo: req.motivo }]
+                      });
+                      setModalNovo(true);
+                    }}
+                    className="h-10 px-4 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all"
+                   >
+                     Atender Pedido
+                   </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-xl overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">

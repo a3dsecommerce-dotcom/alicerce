@@ -10,6 +10,7 @@ export function useRHData(user: any) {
   const [cats, setCats] = useState<any[]>([]);
   const [extras, setExtras] = useState<any[]>([]);
   const [volantes, setVolantes] = useState<any[]>([]);
+  const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -50,6 +51,10 @@ export function useRHData(user: any) {
       // 6. Fetch Volantes
       const { data: volantesDb } = await supabase.from('escala_volantes').select('*').order('data', { ascending: false });
       if (volantesDb) setVolantes(volantesDb);
+
+      // 7. Fetch Requisições de Volantes
+      const { data: reqVolantesDb } = await supabase.from('requisicoes_volantes').select('*').order('created_at', { ascending: false });
+      if (reqVolantesDb) setRequisicoesVolantes(reqVolantesDb);
     } catch (err) {
       console.error("Erro no carregamento do RH:", err);
     } finally {
@@ -103,6 +108,7 @@ export function useRHData(user: any) {
     cats,
     extras,
     volantes,
+    requisicoesVolantes,
     refresh: fetchData,
     updateStatus,
     finalizarAdmissao
