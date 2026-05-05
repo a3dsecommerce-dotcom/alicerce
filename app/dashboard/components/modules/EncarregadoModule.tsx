@@ -1621,6 +1621,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            {activeTab === "QUICK_ADMISSION" && renderQuickAdmission()}
            {activeTab === "TICKETS" && renderTickets()}
            {activeTab === "REPORTS" && renderReports()}
+           {activeTab === "EPI" && renderEPI()}
            {activeTab === "CAT" && renderCAT()}
         </div>
       )}
