@@ -25,7 +25,11 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     prazo_estipulado_dias: 7, 
     setor_destino: "Gerência Operacional",
     funcao: "",
-    responsavel_citado_id: "",
+    interessado_id: null,
+    interessado_nome: "",
+    unidade: "",
+    secretaria: "",
+    responsavel_citado_id: null,
     responsavel_citado_nome: ""
   });
   const [receberData, setReceberData] = useState({ prazo_prometido: "" });
@@ -96,13 +100,17 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const handleNovaOcorrencia = async () => {
     if (!formData.assunto || !formData.descricao) return alert("Preencha todos os campos.");
     setLoading(true);
-    const { error } = await supabase.from('tickets_sla').insert([{
+    const payload = {
       ...formData,
+      interessado_id: formData.interessado_id || null,
+      responsavel_citado_id: formData.responsavel_citado_id || null,
       criado_por: user.name || user.nome || 'Setor Admin',
-      representante_id: user.id,
+      representante_id: user.id || null,
       representante_nome: user.name || user.nome,
       status: 'PENDENTE'
-    }]);
+    };
+
+    const { error } = await supabase.from('tickets_sla').insert([payload]);
     if (error) alert(error.message);
     else { supabase.from("notificacoes").insert([{ setor_destino: formData.setor_destino, titulo: "Nova OcorrÃªncia", mensagem: "Demanda: " + formData.assunto, link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
     setLoading(false);
