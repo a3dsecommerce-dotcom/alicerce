@@ -203,16 +203,16 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       </div>
 
       {/* TABELA DE OCORRÊNCIAS - DESIGN PREMIUM CENTRADO */}
-      <div className="bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] overflow-hidden shadow-2xl flex flex-col flex-1">
+      <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden shadow-2xl flex flex-col flex-1">
          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left table-fixed border-separate border-spacing-0">
                <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
                   <tr>
-                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-8 w-[35%]">Identificação / Assunto</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-10 w-[35%]">Identificação / Assunto</th>
                      <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest w-[25%]">Setor / Citado</th>
                      <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[15%]">Prazos</th>
                      <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[15%]">Status</th>
-                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right pr-8 w-[10%]">Gestão</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right pr-10 w-[10%]">Gestão</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-[var(--border)]">
@@ -220,7 +220,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                      const s = getStatusInfo(t);
                      return (
                         <tr key={t.id} className="hover:bg-[var(--brand-alpha)] transition-all group">
-                           <td className="p-4 pl-8">
+                           <td className="p-4 pl-10">
                               <div className="flex flex-col">
                                  <span className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">{new Date(t.data_abertura).toLocaleDateString()}</span>
                                  <div className="text-xs font-black text-[var(--text-primary)] truncate pr-4" title={t.assunto}>{t.assunto}</div>
@@ -250,7 +250,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                                  <s.icon size={10} /> {s.label}
                               </div>
                            </td>
-                           <td className="p-4 text-right pr-8">
+                           <td className="p-4 text-right pr-10">
                               <button 
                                  onClick={() => { setSelectedTicket(t); setModalAberto("detalhes"); }} 
                                  className="p-2.5 bg-[var(--bg-base)] text-[var(--brand)] rounded-xl border border-[var(--border)] hover:bg-[var(--brand)] hover:text-white hover:border-transparent transition-all shadow-sm group-hover:scale-110"
