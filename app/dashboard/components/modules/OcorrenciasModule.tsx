@@ -124,12 +124,17 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const handleResolverOcorrencia = async () => {
     if (!resolverData.solucao) return alert("Descreva a solução aplicada.");
     setLoading(true);
+    const agora = new Date();
+    const deadlineAcordado = selectedTicket.prazo_prometido ? new Date(selectedTicket.prazo_prometido) : null;
+    const isFalit = deadlineAcordado && agora > deadlineAcordado;
+
     const { error } = await supabase.from('tickets_sla').update({
-      status: 'RESOLVIDO',
-      data_fechamento: new Date().toISOString(),
+      status: isFalit ? 'RESOLVIDO_COM_ATRASO' : 'RESOLVIDO',
+      data_fechamento: agora.toISOString(),
       solucao_descricao: resolverData.solucao,
       resolvido_por_id: user.id,
-      resolvido_por_nome: user.name || user.nome
+      resolvido_por_nome: user.name || user.nome,
+      atrasado_na_entrega: isFalit // Campo extra opcional para auditoria
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
     else { setModalAberto(null); fetchTickets(); }
@@ -149,12 +154,16 @@ export default function OcorrenciasModule({ user }: { user: any }) {
 
     if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle2 };
     
+    if (t.status === 'RESOLVIDO_COM_ATRASO') {
+      return { label: 'Resolvido (FORA DO PRAZO)', color: 'bg-amber-100 text-amber-700 border border-amber-300', icon: CheckCircle2 };
+    }
+
     // Se estourou o prazo que o PRÓPRIO setor prometeu: FALIT
-    if (deadlineAcordado && agora > deadlineAcordado && t.status !== 'RESOLVIDO') {
+    if (deadlineAcordado && agora > deadlineAcordado && !t.status.startsWith('RESOLVIDO')) {
       return { label: 'FALIT (Não Cumprido)', color: 'bg-black text-white border-2 border-red-600 animate-pulse', icon: ShieldAlert };
     }
 
-    if (isAtrasadoSolicitado && t.status !== 'RESOLVIDO') {
+    if (isAtrasadoSolicitado && !t.status.startsWith('RESOLVIDO')) {
       return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white shadow-lg shadow-red-600/40', icon: ShieldAlert };
     }
     
