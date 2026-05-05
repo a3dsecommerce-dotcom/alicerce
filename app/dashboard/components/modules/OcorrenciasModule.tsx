@@ -208,8 +208,8 @@ export default function OcorrenciasModule({ user }: { user: any }) {
             <table className="w-full text-left table-fixed border-separate border-spacing-0">
                <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
                   <tr>
-                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-6 w-[20%]">Identificação / Assunto</th>
-                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest w-[35%]">Setor / Citado</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest pl-12 w-[40%]">Identificação / Assunto</th>
+                     <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest w-[15%]">Setor / Citado</th>
                      <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[15%]">Prazos</th>
                      <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[20%]">Status</th>
                      <th className="p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right pr-6 w-[10%]">Gestão</th>
@@ -220,7 +220,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                      const s = getStatusInfo(t);
                      return (
                         <tr key={t.id} className="hover:bg-[var(--brand-alpha)] transition-all group">
-                           <td className="p-4 pl-6">
+                           <td className="p-4 pl-12">
                               <div className="flex flex-col">
                                  <span className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">{new Date(t.data_abertura).toLocaleDateString()}</span>
                                  <div className="text-xs font-black text-[var(--text-primary)] truncate pr-4" title={t.assunto}>{t.assunto}</div>
