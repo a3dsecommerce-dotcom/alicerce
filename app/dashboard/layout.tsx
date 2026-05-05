@@ -85,70 +85,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     async function fetchNotifs() {
-       if (!user?.role) return;
-       const safeRole = String(user.role).toUpperCase();
-       const newNotifs: any[] = [];
-
+       if (!user?.id) return;
+       const safeRole = String(user.role || '').toUpperCase();
+       
        try {
-         if (safeRole === 'COMPRADOR') {
-            // 1. Pedidos Aprovados ou com alteração de status
-            const { data: reqs } = await supabase
-              .from('requisicoes')
-              .select('protocolo, status, item_nome')
-              .eq('unidade_destino', (user as any).unidade_alocacao)
-              .neq('status', 'SOLICITADO')
-              .order('data_solicitacao', { ascending: false })
-              .limit(5);
-            
-            // Agrupar por protocolo para não poluir
-            const protosSet = new Set();
-            reqs?.forEach(r => {
-               if (!protosSet.has(r.protocolo)) {
-                  newNotifs.push({ 
-                    text: `Pedido ${r.protocolo}: Status atualizado para ${r.status}`, 
-                    type: r.status === 'ENTREGUE' ? 'success' : 'info', 
-                    time: 'Recente' 
-                  });
-                  protosSet.add(r.protocolo);
-               }
-            });
-
-            // 2. Reposição de Estoque (Novas Mercadorias)
-            const { data: reposicoes } = await supabase
-              .from('historico_gestao')
-              .select('*')
-              .eq('tipo_acao', 'REPOSICAO_ESTOQUE')
-              .order('created_at', { ascending: false })
-              .limit(2);
-            
-            reposicoes?.forEach(r => {
-               newNotifs.push({ text: `Estoque: Nova mercadoria chegou no Almoxarifado`, type: 'success', time: 'Agora' });
-            });
-         } else if (safeRole === 'ADMIN' || safeRole === 'DIRETORIA') {
-            newNotifs.push(
-               { text: "Estoque de Luva abaixo do mínimo", type: "warning", time: "5 min" },
-               { text: "Nova denúncia anônima recebida", type: "danger", time: "15 min" },
-               { text: "Relatório semanal de custos disponível", type: "info", time: "1h" }
-            );
+         const { data: dbNotifs, error } = await supabase
+           .from('notificacoes')
+           .select('*')
+           .or(`user_id.eq.${user.id},setor_destino.eq.${user.secretaria || 'Setor Geral'}`)
+           .eq('lida', false)
+           .order('created_at', { ascending: false })
+           .limit(10);
+         
+         if (dbNotifs && dbNotifs.length > 0) {
+            setNotificacoes(dbNotifs.map(n => ({
+               id: n.id,
+               text: n.mensagem,
+               type: n.tipo || 'info',
+               time: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+               title: n.titulo
+            })));
          } else {
-            newNotifs.push(
-               { text: "Sincronização de ponto concluída", type: "success", time: "10 min" },
-               { text: "Verifique seu quadro de avisos", type: "info", time: "2h" }
-            );
+            setNotificacoes([{ text: "Nenhuma notificação nova", type: "info", time: "--" }]);
          }
        } catch (err) {
-         console.error("Erro ao carregar notificações", err);
+         console.error("Erro ao carregar notificações reais", err);
        }
-       
-       if (newNotifs.length === 0) {
-         newNotifs.push({ text: "Nenhuma notificação nova", type: "info", time: "--" });
-       }
-       setNotificacoes(newNotifs);
     }
     fetchNotifs();
     
-    // Refresh a cada 2 minutos
-    const interval = setInterval(fetchNotifs, 120000);
+    // Refresh a cada 1 minuto para ser mais dinâmico
+    const interval = setInterval(fetchNotifs, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
