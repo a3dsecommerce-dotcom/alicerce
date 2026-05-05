@@ -1,14 +1,25 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
 import TalentosGrid from "./rh/TalentosGrid";
 import CATSList from "./rh/CATSList";
 import ExtrasList from "./rh/ExtrasList";
+import VolantesEscala from "./rh/VolantesEscala";
 import RequisicoesRH from "./rh/RequisicoesRH";
+import AdmissaoModals from "./rh/AdmissaoModals";
+import FichaColaborador360 from "../FichaColaborador360";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
+import TableSkeleton from "@/components/ui/TableSkeleton";
+import { toast } from "sonner";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { supabase } from "@/lib/supabase";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "VOLANTES" | "REQUISICOES";
 
