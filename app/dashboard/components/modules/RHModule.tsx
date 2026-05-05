@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "DOCS" | "CATS" | "EXTRAS";
+type MasterTab = "DP" | "CATS" | "EXTRAS";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, candidatos, cats, extras, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
@@ -181,7 +181,6 @@ export default function RHModule({ user }: { user: any }) {
         <div className="flex flex-wrap gap-8 border-b border-[var(--border)] pb-4">
           {[
             { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
-            { id: "DOCS", label: "Documentos", icon: FileText },
             { id: "CATS", label: "CATs", icon: ShieldCheck },
             { id: "EXTRAS", label: "Extras", icon: Clock }
           ].map((t: any) => (
