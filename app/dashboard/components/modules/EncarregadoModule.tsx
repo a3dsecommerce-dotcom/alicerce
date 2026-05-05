@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter,
@@ -73,15 +73,18 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         setMyColabs(colabs || []);
       }
 
-      // 3. Buscar ocorrências das minhas unidades
-      if (unitNames.length > 0) {
-        const { data: tickets } = await supabase
-          .from('tickets_sla')
-          .select('*')
-          .in('unidade', unitNames)
-          .order('criado_em', { ascending: false });
-        setOcorrencias(tickets || []);
-      }
+      // 3. Buscar ocorrências (Minhas Unidades + Onde fui citado + Meu Setor)
+      const orFilter = unitNames.length > 0 
+        ? `unidade.in.(${unitNames.map(u => `"${u}"`).join(',')}),responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`
+        : `responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`;
+
+      const { data: tickets } = await supabase
+        .from('tickets_sla')
+        .select('*')
+        .or(orFilter)
+        .order('data_abertura', { ascending: false });
+      
+      setOcorrencias(tickets || []);
 
       // 4. Buscar Cargos Mestres
       const { data: cargosDb } = await supabase.from('cargos').select('*').order('nome');
@@ -93,6 +96,43 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       setLoading(false);
     }
   };
+
+  const getStatusInfo = (t: any) => {
+    const agora = new Date();
+    const abertura = new Date(t.data_abertura);
+    const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
+    const diffDiasSolicitado = Math.floor((agora.getTime() - abertura.getTime()) / (1000 * 60 * 60 * 24));
+    const isAtrasadoSolicitado = diffDiasSolicitado >= (t.prazo_estipulado_dias || 1);
+
+    if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle };
+    if (t.status === 'RESOLVIDO_COM_ATRASO') return { label: 'Resolvido (Atraso)', color: 'bg-amber-100 text-amber-700 border border-amber-300', icon: CheckCircle };
+    
+    if (deadlineAcordado && agora > deadlineAcordado && !t.status?.startsWith('RESOLVIDO')) {
+      return { label: 'FALIT (Não Cumprido)', color: 'bg-black text-white border-2 border-red-600 animate-pulse', icon: ShieldCheck };
+    }
+    if (isAtrasadoSolicitado && !t.status?.startsWith('RESOLVIDO')) {
+      return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white', icon: AlertTriangle };
+    }
+    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
+    return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: Clock };
+  };
+
+  const stats = useMemo(() => {
+    const agora = new Date();
+    const mesAtual = agora.getMonth();
+    const anoAtual = agora.getFullYear();
+
+    const totalOcorrencias = ocorrencias.length;
+    const emAberto = ocorrencias.filter(o => !o.status?.startsWith('RESOLVIDO')).length;
+    const citadas = ocorrencias.filter(o => o.responsavel_citado_id === user.id).length;
+    const falit = ocorrencias.filter(o => {
+      if (o.atrasado_na_entrega) return true;
+      const deadline = o.prazo_prometido ? new Date(o.prazo_prometido) : null;
+      return deadline && agora > deadline && !o.status?.startsWith('RESOLVIDO');
+    }).length;
+
+    return { totalOcorrencias, emAberto, citadas, falit };
+  }, [ocorrencias, user.id]);
 
   const renderMyUnits = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -323,50 +363,64 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
     return (
       <div className="flex flex-col gap-8 animate-fade-in">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Gestão de Ocorrências</h3>
-            {filtroUnidadeOcorrencia && (
-              <div className="flex items-center gap-2 mt-2">
-                <span className="px-3 py-1 bg-[var(--brand)]/10 text-[var(--brand)] text-[9px] font-black uppercase rounded-lg">Filtro: {filtroUnidadeOcorrencia}</span>
-                <button onClick={() => setFiltroUnidadeOcorrencia("")} className="text-[9px] font-bold text-red-500 hover:underline uppercase">Limpar Filtro</button>
-              </div>
-            )}
+            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-1">Central de Atendimento</h3>
+            <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase">Gestão de chamados e ocorrências das suas rotas</p>
           </div>
-          <div className="text-[10px] font-black text-[var(--text-muted)] uppercase bg-[var(--bg-card)] px-4 py-2 rounded-xl border border-[var(--border)]">
-            Total: {filtered.length} Demandas
+          <div className="flex gap-4">
+             <div className="text-[10px] font-black text-blue-600 uppercase bg-blue-500/10 px-4 py-2 rounded-xl border border-blue-500/20">
+               {ocorrencias.filter(o => o.responsavel_citado_id === user.id).length} Citado
+             </div>
+             <div className="text-[10px] font-black text-red-600 uppercase bg-red-500/10 px-4 py-2 rounded-xl border border-red-500/20 animate-pulse">
+               {ocorrencias.filter(o => o.status?.startsWith('FALIT') || stats.falit > 0).length} Falit
+             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          {filtered.map((ticket, i) => (
-            <div key={i} className="card !p-0 overflow-hidden border-l-4 border-l-[var(--brand)] rounded-3xl">
-              <div className="p-8 flex flex-col md:flex-row justify-between gap-6">
-                <div className="flex gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${ticket.prioridade === 'ALTA' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                    <AlertTriangle size={24} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">{ticket.protocolo}</span>
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${ticket.status === 'ABERTO' ? 'bg-amber-500/10 text-amber-500' : 'bg-green-500/10 text-green-500'}`}>{ticket.status}</span>
+          {filtered.map((ticket, i) => {
+            const s = getStatusInfo(ticket);
+            return (
+              <div key={i} className="bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] overflow-hidden hover:border-[var(--brand)] transition-all group shadow-sm">
+                <div className="p-8 flex flex-col md:flex-row justify-between items-center gap-8">
+                  <div className="flex items-center gap-6 flex-1 min-w-0">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${ticket.prioridade === 'ALTA' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                       <AlertTriangle size={28} />
                     </div>
-                    <h4 className="text-sm font-black text-[var(--text-primary)] uppercase">{ticket.assunto}</h4>
-                    <p className="text-[10px] font-bold text-[var(--text-muted)] mt-1">{ticket.unidade} • {ticket.secretaria}</p>
+                    <div className="flex-1 min-w-0">
+                       <div className="flex items-center gap-3 mb-2">
+                          <span className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">{ticket.protocolo || `#${ticket.id.slice(0,8)}`}</span>
+                          <div className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center gap-1 ${s.color}`}>
+                             <s.icon size={10} /> {s.label}
+                          </div>
+                       </div>
+                       <h4 className="text-base font-black text-[var(--text-primary)] uppercase truncate pr-4">{ticket.assunto}</h4>
+                       <div className="flex items-center gap-4 mt-2">
+                          <span className="text-[10px] font-bold text-red-600 uppercase italic">Unidade: {ticket.unidade}</span>
+                          <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Solic: {ticket.interessado_nome || ticket.criado_por}</span>
+                       </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col md:items-end justify-between gap-2">
-                  <div className="text-[10px] font-black text-[var(--text-muted)] uppercase">Aberto em: {new Date(ticket.criado_em).toLocaleDateString()}</div>
-                  <button className="px-6 py-2 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-xl text-[9px] font-black uppercase transition-all">Ver Detalhes</button>
+                  
+                  <div className="flex items-center gap-6 pr-4">
+                     <div className="text-right">
+                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Abertura</p>
+                        <p className="text-xs font-black text-[var(--text-primary)]">{new Date(ticket.data_abertura).toLocaleDateString()}</p>
+                     </div>
+                     <button className="p-4 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-2xl text-[var(--brand)] transition-all shadow-sm group-hover:scale-105">
+                        <ArrowUpRight size={20} />
+                     </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filtered.length === 0 && (
             <div className="py-20 text-center bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
               <CheckCircle size={48} className="mx-auto mb-4 text-green-500 opacity-20" />
-              <p className="text-xs font-black uppercase text-[var(--text-muted)]">Nenhuma ocorrência encontrada para esta seleção.</p>
+              <p className="text-xs font-black uppercase text-[var(--text-muted)]">Nenhuma ocorrência encontrada.</p>
             </div>
           )}
         </div>
@@ -601,8 +655,27 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   );
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-in pb-20">
+    <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1400px] mx-auto w-full">
       
+      {/* DASHBOARD DE ESTATÍSTICAS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+         {[
+           { label: 'Minhas Unidades', val: myUnits.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+           { label: 'Meus Colaboradores', val: myColabs.length, icon: Users, color: 'text-green-600', bg: 'bg-green-500/10' },
+           { label: 'Citado em Ocorrências', val: stats.citadas, icon: User, color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
+           { label: 'Ocorrências Ativas', val: stats.emAberto, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-500/10' },
+         ].map((s, idx) => (
+            <div key={idx} className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] flex items-center justify-between group hover:scale-[1.02] transition-all cursor-default shadow-sm">
+               <div>
+                  <p className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider mb-1">{s.label}</p>
+                  <h3 className={`text-3xl font-black ${s.color}`}>{s.val}</h3>
+               </div>
+               <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-xl flex items-center justify-center`}>
+                  <s.icon size={22} />
+               </div>
+            </div>
+         ))}
+      </div>
       {/* Navegação Superior do Encarregado */}
       <div className="flex flex-wrap items-center gap-4 bg-[var(--bg-card)] p-3 rounded-2xl border border-[var(--border)] shadow-sm sticky top-0 z-30 backdrop-blur-md overflow-x-auto custom-scrollbar">
          {[
