@@ -632,48 +632,47 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10">
           <div className="lg:col-span-8 space-y-10">
-            {/* BLOCO 1: IDENTIFICAÇÃO */}
             <div className="space-y-6">
                <p className="text-[10px] font-black uppercase text-red-600 flex items-center gap-2 italic">
                   <Users size={14} /> 1. Identificação do Acidentado
                </p>
-               <div className="p-8 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] group transition-all hover:border-red-400">
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-4 block">Pesquisar Colaborador</label>
-                  <div className="relative">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={22} />
+               <div className="p-8 bg-white rounded-[2rem] border border-[var(--border)] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome do Acidentado</label>
                     <input 
-                      className="input-field w-full !pl-20 !h-16 !bg-white border-none shadow-sm"
-                      placeholder="Busque por nome..."
-                      onChange={e => {
-                        const term = e.target.value.toLowerCase();
-                        if (term.length > 2) {
-                          const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
-                          setColabsSugeridos(suggested.slice(0, 5));
-                          setCampoBuscaAtivo("acidentado");
-                        } else setColabsSugeridos([]);
-                      }}
+                      className="input-field w-full !h-14 font-black" 
+                      placeholder="Nome Completo..."
+                      value={catForm.colaborador_nome}
+                      onChange={e => setCatForm({...catForm, colaborador_nome: e.target.value.toUpperCase()})}
                     />
                   </div>
-                  {catForm.colaborador_nome && (
-                    <div className="mt-6 grid grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-red-100 animate-fade-in">
-                       <div>
-                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Colaborador</p>
-                          <p className="text-xs font-black text-[var(--text-primary)] uppercase">{catForm.colaborador_nome}</p>
-                       </div>
-                       <div>
-                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">CPF</p>
-                          <p className="text-xs font-black text-[var(--text-primary)]">{catForm.colaborador_cpf || 'Não Informado'}</p>
-                       </div>
-                       <div className="mt-2">
-                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Cargo</p>
-                          <p className="text-xs font-black text-[var(--text-primary)] uppercase">{catForm.colaborador_cargo}</p>
-                       </div>
-                       <div className="mt-2">
-                          <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Unidade</p>
-                          <p className="text-xs font-black text-[var(--text-primary)] uppercase">{catForm.unidade_alocada}</p>
-                       </div>
-                    </div>
-                  )}
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CPF</label>
+                    <input 
+                      className="input-field w-full !h-14 font-black" 
+                      placeholder="000.000.000-00"
+                      value={catForm.colaborador_cpf}
+                      onChange={e => setCatForm({...catForm, colaborador_cpf: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo / Função</label>
+                    <input 
+                      className="input-field w-full !h-14 font-black" 
+                      placeholder="Ex: Auxiliar de Serviços..."
+                      value={catForm.colaborador_cargo}
+                      onChange={e => setCatForm({...catForm, colaborador_cargo: e.target.value.toUpperCase()})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade Alocada</label>
+                    <input 
+                      className="input-field w-full !h-14 font-black" 
+                      placeholder="Nome da Escola/Unidade..."
+                      value={catForm.unidade_alocada}
+                      onChange={e => setCatForm({...catForm, unidade_alocada: e.target.value.toUpperCase()})}
+                    />
+                  </div>
                </div>
             </div>
 
@@ -795,32 +794,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           </div>
 
           <div className="lg:col-span-4 space-y-8">
-             {colabsSugeridos.length > 0 ? (
-               <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] animate-fade-in shadow-xl">
-                  <p className="text-[10px] font-black uppercase text-red-600 mb-6 flex items-center gap-2 italic">
-                     <Search size={14} /> Selecionar Acidentado
-                  </p>
-                  <div className="grid grid-cols-1 gap-3">
-                     {colabsSugeridos.map((c, idx) => (
-                       <button 
-                         key={idx}
-                         onClick={() => selecionarColab(c)}
-                         className="p-5 bg-[var(--bg-base)] hover:bg-red-600 hover:text-white rounded-2xl border border-[var(--border)] transition-all text-left group"
-                       >
-                          <p className="text-xs font-black uppercase">{c.nome}</p>
-                          <p className="text-[9px] font-bold opacity-60 uppercase">{c.unidade_alocacao || 'Sem Unidade'}</p>
-                       </button>
-                     ))}
-                  </div>
-               </div>
-             ) : (
-               <div className="bg-red-500/5 p-10 rounded-[3rem] border border-dashed border-red-500/20 text-center py-20">
-                  <ShieldCheck className="text-red-500 mx-auto mb-6 opacity-30" size={48} />
-                  <p className="text-[11px] font-black uppercase text-red-700 tracking-widest leading-loose">
-                     A investigação de acidente <br /> é um dever legal <br /> (Lei 8.213/91)
-                  </p>
-               </div>
-             )}
+             <div className="bg-red-500/5 p-10 rounded-[3rem] border border-dashed border-red-500/20 text-center py-20">
+                <ShieldCheck className="text-red-500 mx-auto mb-6 opacity-30" size={48} />
+                <p className="text-[11px] font-black uppercase text-red-700 tracking-widest leading-loose">
+                   Preencha os dados <br /> manualmente para <br /> gerar o relatório legal
+                </p>
+             </div>
 
              <div className="bg-amber-600 p-8 rounded-[2.5rem] text-white shadow-xl">
                 <h4 className="text-xs font-black uppercase mb-4 italic flex items-center gap-2">
@@ -1022,50 +1001,22 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
               <div className="space-y-4">
                 <div className="p-6 bg-blue-500/5 rounded-2xl border border-blue-500/10">
                   <label className="text-[10px] font-black uppercase text-blue-600 mb-3 block italic">Colaborador que fez o Extra (Substituto)</label>
-                  <div className="relative">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-400" size={18} />
-                    <input 
-                      className="input-field w-full !pl-16 !h-14 bg-white"
-                      placeholder="Pesquisar por nome..."
-                      onChange={e => {
-                        const term = e.target.value.toLowerCase();
-                        if (term.length > 2) {
-                          const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
-                          setColabsSugeridos(suggested.slice(0, 5));
-                          setCampoBuscaAtivo("substituto");
-                        } else setColabsSugeridos([]);
-                      }}
-                    />
-                    {informativo.colaborador_substituto_nome && (
-                      <div className="mt-3 text-[10px] font-black text-blue-600 uppercase flex items-center gap-2">
-                        <CheckCircle size={14} /> Selecionado: {informativo.colaborador_substituto_nome}
-                      </div>
-                    )}
-                  </div>
+                  <input 
+                    className="input-field w-full !h-14 bg-white font-black"
+                    placeholder="Digite o nome completo..."
+                    value={informativo.colaborador_substituto_nome}
+                    onChange={e => setInformativo({...informativo, colaborador_substituto_nome: e.target.value.toUpperCase()})}
+                  />
                 </div>
 
                 <div className="p-6 bg-red-500/5 rounded-2xl border border-red-500/10">
                   <label className="text-[10px] font-black uppercase text-red-600 mb-3 block italic">Colaborador que Faltou (Ausente)</label>
-                  <div className="relative">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-red-400" size={18} />
-                    <input 
-                      className="input-field w-full !pl-16 !h-14 bg-white"
-                      placeholder="Pesquisar por nome..."
-                      onChange={e => {
-                        const term = e.target.value.toLowerCase();
-                        if (term.length > 2) {
-                          const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
-                          setColabsSugeridos(suggested.slice(0, 5));
-                          setCampoBuscaAtivo("ausente");
-                        } else setColabsSugeridos([]);
-                      }}
-                    />
-                    {informativo.colaborador_ausente_nome && (
-                      <div className="mt-3 text-[10px] font-black text-red-600 uppercase flex items-center gap-2">
-                        <CheckCircle size={14} /> Selecionado: {informativo.colaborador_ausente_nome}
-                      </div>
-                    )}
-                  </div>
+                  <input 
+                    className="input-field w-full !h-14 bg-white font-black"
+                    placeholder="Digite o nome completo..."
+                    value={informativo.colaborador_ausente_nome}
+                    onChange={e => setInformativo({...informativo, colaborador_ausente_nome: e.target.value.toUpperCase()})}
+                  />
                 </div>
               </div>
             </div>
@@ -1073,26 +1024,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
             <div className="space-y-6 animate-fade-in">
               <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Colaborador Ausente</label>
-                <div className="relative">
-                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-                  <input 
-                    className="input-field w-full !pl-16 !h-14"
-                    placeholder="Pesquisar por nome..."
-                    onChange={e => {
-                      const term = e.target.value.toLowerCase();
-                      if (term.length > 2) {
-                        const suggested = myColabs.filter(c => c.nome.toLowerCase().includes(term));
-                        setColabsSugeridos(suggested.slice(0, 5));
-                        setCampoBuscaAtivo("ausente");
-                      } else setColabsSugeridos([]);
-                    }}
-                  />
-                  {informativo.colaborador_ausente_nome && (
-                    <div className="mt-3 text-[10px] font-black text-[var(--brand)] uppercase flex items-center gap-2">
-                      <CheckCircle size={14} /> Selecionado: {informativo.colaborador_ausente_nome}
-                    </div>
-                  )}
-                </div>
+                <input 
+                  className="input-field w-full !h-14 font-black"
+                  placeholder="Digite o nome completo..."
+                  value={informativo.colaborador_ausente_nome}
+                  onChange={e => setInformativo({...informativo, colaborador_ausente_nome: e.target.value.toUpperCase()})}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-6">
@@ -1164,36 +1101,15 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           </button>
         </div>
 
-        {/* LADO DIREITO: SUGESTÕES DE COLAB (SE ESTIVER BUSCANDO) */}
         <div className="space-y-6">
-           {colabsSugeridos.length > 0 ? (
-             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] animate-fade-in shadow-xl">
-                <p className="text-[10px] font-black uppercase text-[var(--brand)] mb-6 flex items-center gap-2 italic">
-                   <Search size={14} /> Selecionar {campoBuscaAtivo === 'substituto' ? 'Substituto' : 'Ausente'}
-                </p>
-                <div className="grid grid-cols-1 gap-3">
-                   {colabsSugeridos.map((c, idx) => (
-                     <button 
-                       key={idx}
-                       onClick={() => selecionarColab(c)}
-                       className="p-5 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-2xl border border-[var(--border)] transition-all text-left group"
-                     >
-                        <p className="text-xs font-black uppercase">{c.nome}</p>
-                        <p className="text-[9px] font-bold opacity-60 uppercase">{c.unidade_alocacao || 'Sem Unidade'}</p>
-                     </button>
-                   ))}
-                </div>
-             </div>
-           ) : (
              <div className="bg-[var(--bg-card)]/50 p-10 rounded-[3rem] border border-dashed border-[var(--border)] flex flex-col items-center justify-center text-center py-20">
                 <div className="w-20 h-20 rounded-[2rem] bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
-                   <Users className="text-[var(--text-muted)] opacity-30" size={32} />
+                   <Send className="text-[var(--text-muted)] opacity-30" size={32} />
                 </div>
                 <p className="text-xs font-black uppercase text-[var(--text-muted)] tracking-widest leading-loose">
-                   Utilize o campo de busca <br /> para selecionar os colaboradores
+                   Preencha as informações <br /> ao lado para enviar <br /> o informativo operacional
                 </p>
              </div>
-           )}
         </div>
       </div>
     </div>
