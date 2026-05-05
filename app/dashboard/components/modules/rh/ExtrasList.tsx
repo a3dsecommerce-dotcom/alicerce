@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Clock, Calendar, MapPin, User, FileText, Download, TrendingUp } from "lucide-react";
 import { format, isAfter, isBefore, startOfMonth, addMonths, subMonths, setDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface ExtrasListProps {
   extras: any[];
@@ -36,6 +38,40 @@ export default function ExtrasList({ extras }: ExtrasListProps) {
 
   const totalHoras = filtrados.length; // Cada registro é uma extra (simplificação ou contagem)
 
+  const handleGerarPDF = () => {
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("RELATÓRIO DE HORAS EXTRAS - OPERACIONAL", 14, 20);
+    
+    // Subtítulo (Ciclo)
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Período: ${format(start, "dd/MM/yyyy")} até ${format(end, "dd/MM/yyyy")}`, 14, 28);
+    doc.text(`Total de Registros: ${totalHoras}`, 14, 34);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 40);
+
+    // Tabela
+    autoTable(doc, {
+      startY: 48,
+      head: [['Data', 'Colaborador', 'Unidade', 'Período', 'Motivo (Substituído)']],
+      body: filtrados.map(e => [
+        format(new Date(e.data), "dd/MM/yyyy"),
+        e.colaborador_substituto_nome,
+        e.unidade,
+        e.periodo,
+        e.colaborador_ausente_nome || "APOIO / CARGA EXTRA"
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [22, 163, 74] }, // Green 600
+      styles: { fontSize: 8, font: "helvetica" }
+    });
+
+    doc.save(`Relatorio_Extras_${format(start, "MM_yyyy")}.pdf`);
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -61,8 +97,11 @@ export default function ExtrasList({ extras }: ExtrasListProps) {
         </div>
 
         <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm flex items-center justify-center">
-           <button className="flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg">
-              <Download size={16} /> Exportar para Folha
+           <button 
+            onClick={handleGerarPDF}
+            className="flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg"
+           >
+              <FileText size={16} /> Gerar PDF para Impressão
            </button>
         </div>
       </div>
