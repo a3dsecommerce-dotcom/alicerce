@@ -2,9 +2,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { 
   Users, Activity, ShieldCheck, AlertTriangle, 
-  Clock, Package, MapPin, Search, Filter,
+  Clock, Package, MapPin, Search, Filter, Trash2,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut, Send
+  Settings, Save, Lock, LogOut, Send, Archive
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
@@ -13,7 +13,7 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
@@ -22,6 +22,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
     if (t === "INFORMATIVOS" || t === "REPORTS") return "REPORTS";
     if (t === "CAT" || t === "ACIDENTE") return "CAT";
+    if (t === "EPI" || t === "ENTREGA") return "EPI";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -80,6 +81,14 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     real_motivo: '',
     solucoes_propostas: ''
   });
+   const [epiData, setEpiData] = useState<any>({
+     colaborador_nome: '',
+     unidade: '',
+     itens: [] as any[]
+   });
+   const [estoqueEpi, setEstoqueEpi] = useState<any[]>([]);
+   const [entregasEpi, setEntregasEpi] = useState<any[]>([]);
+
    const [buscaColab, setBuscaColab] = useState("");
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
    const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado">("interessado");
@@ -135,7 +144,6 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         setFullUnits(unitsDetail || []);
       }
 
-      // 2. Buscar colaboradores alocados nessas unidades
       if (unitNames.length > 0) {
         const { data: colabs } = await supabase
           .from('usuarios')
@@ -143,6 +151,20 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           .in('unidade_alocacao', unitNames);
         setMyColabs(colabs || []);
       }
+
+      // 4. Buscar estoque de EPIs
+      const { data: epis } = await supabase.from('almox_epi').select('*').gt('quantidade', 0).order('item');
+      setEstoqueEpi(epis || []);
+
+      // 5. Buscar entregas recentes de EPI (Feitas por este encarregado ou para sua equipe)
+      const { data: recentEntregas } = await supabase
+        .from('requisicoes')
+        .select('*')
+        .eq('tipo_item', 'EPI')
+        .eq('status', 'ENTREGUE')
+        .order('data_solicitacao', { ascending: false })
+        .limit(20);
+      setEntregasEpi(recentEntregas || []);
 
       // 3. Buscar ocorrências (Minhas Unidades + Onde fui citado + Meu Setor)
       const orFilter = unitNames.length > 0 
@@ -423,6 +445,46 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       });
       setActiveTab("MY_UNITS");
     } else alert("Erro ao salvar CAT: " + error.message);
+    setSaving(false);
+  };
+
+  const handleSaveEntregaEPI = async () => {
+    if (!epiData.colaborador_nome || epiData.itens.length === 0) {
+      alert("Informe o colaborador e selecione pelo menos um item.");
+      return;
+    }
+    setSaving(true);
+    try {
+      for (const item of epiData.itens) {
+        const { data: req, error: reqErr } = await supabase.from('requisicoes').insert([{
+          item_id: item.id,
+          item_nome: item.item,
+          quantidade: item.qtd_entrega,
+          solicitante: epiData.colaborador_nome,
+          status: 'PENDENTE',
+          tipo_item: 'EPI',
+          unidade_destino: epiData.unidade || 'Entrega via Encarregado',
+          protocolo: `EPI-ENC-${Math.floor(1000 + Math.random() * 9000)}`,
+          data_solicitacao: new Date().toISOString()
+        }]).select().single();
+        if (reqErr) throw reqErr;
+
+        const { error: rpcErr } = await supabase.rpc('processar_entrega_requisicao', {
+          p_req_id: req.id,
+          p_item_id: item.id,
+          p_quantidade_entregue: item.qtd_entrega,
+          p_categoria: 'EPI',
+          p_recebedor: epiData.colaborador_nome,
+          p_status_final: 'ENTREGUE'
+        });
+        if (rpcErr) throw rpcErr;
+      }
+      alert("Entrega de EPI registrada e estoque atualizado com sucesso!");
+      setEpiData({ colaborador_nome: '', unidade: '', itens: [] });
+      fetchEncarregadoData();
+    } catch (e: any) {
+      alert("Erro ao processar entrega: " + e.message);
+    }
     setSaving(false);
   };
 
@@ -798,6 +860,182 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  const renderEPI = () => (
+    <div className="flex flex-col gap-8 animate-fade-in pb-20">
+       <div className="flex justify-between items-center bg-[var(--bg-card)] p-8 rounded-3xl border border-[var(--border)]">
+          <div>
+             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-1 italic">Entrega de EPI Individual</h3>
+             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Registro de entrega direta com baixa automática no estoque central</p>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600 border border-orange-500/20">
+                <Package size={24} />
+             </div>
+          </div>
+       </div>
+
+       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-7 space-y-8">
+             <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-sm space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Colaborador Recebedor</label>
+                      <input 
+                        className="input-field w-full !h-14 font-black"
+                        placeholder="Digite o nome completo..."
+                        value={epiData.colaborador_nome}
+                        onChange={e => setEpiData({...epiData, colaborador_nome: e.target.value.toUpperCase()})}
+                      />
+                   </div>
+                   <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Unidade de Entrega</label>
+                      <select 
+                        className="input-field w-full !h-14 font-black"
+                        value={epiData.unidade}
+                        onChange={e => setEpiData({...epiData, unidade: e.target.value})}
+                      >
+                        <option value="">Selecione a Unidade...</option>
+                        {myUnits.map((u, i) => <option key={i} value={u}>{u}</option>)}
+                      </select>
+                   </div>
+                </div>
+
+                <div className="pt-8 border-t border-[var(--border)]">
+                   <p className="text-[10px] font-black uppercase text-[var(--brand)] mb-6 flex items-center gap-2 italic">
+                      <Plus size={14} /> Adicionar Itens à Entrega
+                   </p>
+                   <div className="grid grid-cols-1 gap-4 mb-8 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                      {estoqueEpi.filter(i => !epiData.itens.find(ei => ei.id === i.id)).map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)] group hover:border-[var(--brand)] transition-all">
+                           <div>
+                              <p className="text-xs font-black uppercase">{item.item}</p>
+                              <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">Estoque: {item.quantidade} {item.unidade_medida}</p>
+                           </div>
+                           <button 
+                             onClick={() => {
+                               setEpiData({
+                                 ...epiData,
+                                 itens: [...epiData.itens, { ...item, qtd_entrega: 1 }]
+                               });
+                             }}
+                             className="h-10 px-4 bg-white text-[var(--text-primary)] rounded-xl border border-[var(--border)] text-[9px] font-black uppercase hover:bg-[var(--brand)] hover:text-white transition-all shadow-sm"
+                           >
+                              Adicionar
+                           </button>
+                        </div>
+                      ))}
+                   </div>
+
+                   {epiData.itens.length > 0 && (
+                     <div className="space-y-4 animate-fade-in">
+                        <p className="text-[10px] font-black uppercase text-slate-400">Itens Selecionados</p>
+                        {epiData.itens.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-5 bg-[var(--brand)]/5 rounded-2xl border border-[var(--brand)]/20 shadow-sm">
+                             <div className="flex items-center gap-4">
+                                <div className="w-8 h-8 rounded-lg bg-[var(--brand)] text-white flex items-center justify-center text-[10px] font-black">
+                                   {idx + 1}
+                                </div>
+                                <span className="text-xs font-black uppercase">{item.item}</span>
+                             </div>
+                             <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2 bg-white rounded-xl border border-[var(--border)] p-1">
+                                   <button 
+                                     onClick={() => {
+                                       const newItens = [...epiData.itens];
+                                       if (newItens[idx].qtd_entrega > 1) {
+                                         newItens[idx].qtd_entrega--;
+                                         setEpiData({...epiData, itens: newItens});
+                                       }
+                                     }}
+                                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"
+                                   >
+                                      -
+                                   </button>
+                                   <span className="w-10 text-center text-xs font-black">{item.qtd_entrega}</span>
+                                   <button 
+                                     onClick={() => {
+                                       const newItens = [...epiData.itens];
+                                       if (newItens[idx].qtd_entrega < item.quantidade) {
+                                         newItens[idx].qtd_entrega++;
+                                         setEpiData({...epiData, itens: newItens});
+                                       }
+                                     }}
+                                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100"
+                                   >
+                                      +
+                                   </button>
+                                </div>
+                                <button 
+                                  onClick={() => {
+                                    setEpiData({
+                                      ...epiData,
+                                      itens: epiData.itens.filter((_, i) => i !== idx)
+                                    });
+                                  }}
+                                  className="text-red-500 hover:bg-red-50 text-xs font-black p-2 rounded-lg"
+                                >
+                                   <Trash2 size={16} />
+                                </button>
+                             </div>
+                          </div>
+                        ))}
+                        
+                        <button 
+                          onClick={handleSaveEntregaEPI}
+                          disabled={saving}
+                          className="w-full py-6 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.01] transition-all shadow-xl shadow-orange-600/20 mt-6"
+                        >
+                           {saving ? "Processando Entrega..." : "Confirmar Entrega de Itens"}
+                        </button>
+                     </div>
+                   )}
+                </div>
+             </div>
+          </div>
+
+          <div className="lg:col-span-5 space-y-6">
+             <div className="bg-[var(--bg-card)] p-8 rounded-[3rem] border border-[var(--border)] shadow-sm">
+                <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-8 flex items-center gap-2 italic">
+                   <Archive size={14} /> Entregas Recentes (SST)
+                </h4>
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                   {entregasEpi.map((reg, idx) => (
+                     <div key={idx} className="p-5 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)] group hover:border-orange-500/50 transition-all">
+                        <div className="flex justify-between items-start mb-3">
+                           <div>
+                              <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest">{reg.protocolo}</p>
+                              <p className="text-xs font-black uppercase text-[var(--text-primary)] mt-1">{reg.solicitante}</p>
+                           </div>
+                           <span className="text-[8px] font-black text-[var(--text-muted)] uppercase">{new Date(reg.data_solicitacao).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+                           <span className="text-[10px] font-bold uppercase text-[var(--text-secondary)]">{reg.item_nome}</span>
+                           <span className="text-[10px] font-black text-[var(--text-primary)]">Qtd: {reg.quantidade}</span>
+                        </div>
+                     </div>
+                   ))}
+                   {entregasEpi.length === 0 && (
+                     <div className="py-20 text-center opacity-30">
+                        <Package size={48} className="mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase">Nenhuma entrega registrada.</p>
+                     </div>
+                   )}
+                </div>
+             </div>
+
+             <div className="bg-orange-600 p-8 rounded-[2.5rem] text-white shadow-xl">
+                <h4 className="text-xs font-black uppercase mb-4 italic flex items-center gap-2">
+                   <ShieldCheck size={18} /> Compliance SST
+                </h4>
+                <p className="text-[9px] font-bold uppercase leading-relaxed opacity-90">
+                   Todas as entregas de EPI realizadas via módulo encarregado são registradas no histórico de SST para fins de fiscalização e proteção jurídica. O desconto no estoque central é automático.
+                </p>
+             </div>
+          </div>
+       </div>
     </div>
   );
 
@@ -1356,6 +1594,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
            { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
            { id: "REPORTS", label: "Informativos", icon: Send },
+           { id: "EPI", label: "Entrega EPI", icon: Package },
            { id: "CAT", label: "Investigação CAT", icon: ShieldCheck },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
