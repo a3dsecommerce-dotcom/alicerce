@@ -13,6 +13,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
+  const [filtroSetor, setFiltroSetor] = useState("TODOS");
   
   const [modalAberto, setModalAberto] = useState<null | "nova" | "detalhes" | "receber" | "resolver">(null);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -249,7 +250,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       </div>
 
       {/* FILTROS */}
-      <div className="flex justify-end">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex gap-2 p-1 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-x-auto custom-scrollbar w-full md:w-auto">
+          {["TODOS", "Gerência Operacional", "RH Recursos Humanos", "Almoxarifado", "Técnico Segurança", "Gerência Regional"].map(s => (
+            <button 
+              key={s} 
+              onClick={() => setFiltroSetor(s)}
+              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all whitespace-nowrap ${filtroSetor === s ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              {s.split(' ')[0]}
+            </button>
+          ))}
+        </div>
         <div className="relative w-full md:w-80">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input className="input-field !pl-14 !h-12 text-xs" placeholder="Pesquisar por assunto ou solicitante..." value={busca} onChange={e => setBusca(e.target.value)} />
@@ -270,7 +282,10 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                   </tr>
                </thead>
                <tbody className="divide-y divide-[var(--border)]">
-                  {tickets.filter(t => t.assunto?.toLowerCase().includes(busca.toLowerCase()) || t.criado_por?.toLowerCase().includes(busca.toLowerCase())).map(t => {
+                  {tickets
+                    .filter(t => filtroSetor === "TODOS" || t.setor_destino === filtroSetor)
+                    .filter(t => t.assunto?.toLowerCase().includes(busca.toLowerCase()) || t.criado_por?.toLowerCase().includes(busca.toLowerCase()))
+                    .map(t => {
                      const s = getStatusInfo(t);
                      return (
                         <tr key={t.id} className="hover:bg-[var(--brand-alpha)] transition-all group">
