@@ -237,96 +237,110 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
-    // Header
-    doc.setFillColor(31, 41, 55); // Dark Slate
-    doc.rect(0, 0, pageWidth, 40, 'F');
-    
-    doc.setTextColor(255, 255, 255);
+    // Header - Clean for B&W
+    doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("ALICERCE - SEGURANCA DO TRABALHO", pageWidth / 2, 20, { align: "center" });
-    doc.setFontSize(10);
-    doc.text("RELATORIO DE INVESTIGACAO DE ACIDENTE DE TRABALHO (CAT)", pageWidth / 2, 30, { align: "center" });
+    doc.setFontSize(20);
+    doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
+    doc.setFontSize(14);
+    doc.text("INVESTIGACAO DE ACIDENTE DE TRABALHO (CAT)", pageWidth / 2, 25, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("DOCUMENTO INTERNO PARA CONTROLE DE SEGURANCA E SAUDE DO TRABALHO", pageWidth / 2, 32, { align: "center" });
+    doc.line(15, 38, pageWidth - 15, 38);
 
     // 1. Identificação
     autoTable(doc, {
-      startY: 50,
+      startY: 45,
       head: [['1. IDENTIFICACAO DO ACIDENTADO', '']],
       body: [
-        ['Nome:', data.colaborador_nome],
-        ['CPF:', data.colaborador_cpf || 'N/A'],
-        ['Cargo:', data.colaborador_cargo],
-        ['Unidade:', data.unidade_alocada],
+        ['NOME COMPLETO:', data.colaborador_nome],
+        ['CPF:', data.colaborador_cpf || 'NAO INFORMADO'],
+        ['CARGO:', data.colaborador_cargo],
+        ['UNIDADE ATENDIDA:', data.unidade_alocada],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38] }
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3 }
     });
 
     // 2. Ocorrência
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: (doc as any).lastAutoTable.finalY + 8,
       head: [['2. DETALHES DA OCORRENCIA', '']],
       body: [
-        ['Data:', data.data_ocorrido],
-        ['Horario:', data.horario_ocorrido],
-        ['Tipo:', data.tipo_acidente],
-        ['Local:', data.local_ocorrido],
-        ['Descricao Local:', data.descricao_local],
+        ['DATA DO ACIDENTE:', data.data_ocorrido],
+        ['HORARIO:', data.horario_ocorrido],
+        ['TIPO:', data.tipo_acidente],
+        ['LOCAL EXATO:', data.local_ocorrido],
+        ['DESCRICAO DO LOCAL:', data.descricao_local],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38] }
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // 3. Narrativa
+    // 3. Narrativa - Justified Text
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: (doc as any).lastAutoTable.finalY + 8,
       head: [['3. NARRATIVA DA INVESTIGACAO']],
       body: [
-        ['DESCRICAO DO OCORRIDO:'],
-        [data.descricao_ocorrido],
-        ['ACOES TOMADAS:'],
-        [data.acoes_tomadas || 'N/A'],
-        ['RELATO PESSOAL:'],
-        [data.relato_pessoal || 'N/A'],
+        [{ content: 'DESCRICAO DETALHADA DO OCORRIDO:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
+        [{ content: data.descricao_ocorrido, styles: { halign: 'justify' } }],
+        [{ content: 'ACOES TOMADAS DURANTE A OCORRENCIA:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
+        [{ content: data.acoes_tomadas || 'NAO INFORMADO', styles: { halign: 'justify' } }],
+        [{ content: 'RELATO PESSOAL DO ACIDENTADO:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
+        [{ content: data.relato_pessoal || 'NAO INFORMADO', styles: { halign: 'justify' } }],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38] }
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 4 }
     });
 
     // 4. Analise Tecnica
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
+      startY: (doc as any).lastAutoTable.finalY + 8,
       head: [['4. ANALISE TECNICA E ACOMPANHAMENTO', '']],
       body: [
-        ['Agente Causador:', data.agente_causador],
-        ['Parte do Corpo:', data.parte_corpo_atingida],
-        ['Acompanhamento:', data.acompanhamento_medico],
+        ['AGENTE CAUSADOR:', data.agente_causador],
+        ['PARTE DO CORPO ATINGIDA:', data.parte_corpo_atingida],
+        ['ACOMPANHAMENTO ATUAL:', data.acompanhamento_medico],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38] }
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // 5. Conclusao
+    // 5. Conclusao - Justified Text
     autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 10,
-      head: [['5. CONCLUSAO E SOLUCOES']],
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [['5. CONCLUSAO E MEDIDAS PREVENTIVAS']],
       body: [
-        ['REAL MOTIVO (CAUSA RAIZ):'],
-        [data.real_motivo],
-        ['SOLUCOES PROPOSTAS:'],
-        [data.solucoes_propostas],
+        [{ content: 'REAL MOTIVO (CAUSA RAIZ):', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
+        [{ content: data.real_motivo, styles: { halign: 'justify' } }],
+        [{ content: 'SOLUCOES PROPOSTAS PARA EVITAR RECORRENCIA:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
+        [{ content: data.solucoes_propostas, styles: { halign: 'justify' } }],
       ],
       theme: 'grid',
-      headStyles: { fillColor: [180, 83, 9] } // Amber
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 4 }
     });
 
     // Signatures
-    const finalY = (doc as any).lastAutoTable.finalY + 30;
+    const finalY = (doc as any).lastAutoTable.finalY + 35;
+    
     doc.line(20, finalY, 90, finalY);
-    doc.text("Assinatura do Colaborador", 55, finalY + 5, { align: "center" });
+    doc.setFontSize(8);
+    doc.text("ASSINATURA DO ACIDENTADO", 55, finalY + 5, { align: "center" });
+    doc.text(`CPF: ${data.colaborador_cpf || '__________'}`, 55, finalY + 10, { align: "center" });
     
     doc.line(120, finalY, 190, finalY);
-    doc.text("Responsavel (Encarregado)", 155, finalY + 5, { align: "center" });
+    doc.text("ENCARREGADO RESPONSAVEL (ROTA)", 155, finalY + 5, { align: "center" });
+    doc.text(`NOME: ${user.nome.toUpperCase()}`, 155, finalY + 10, { align: "center" });
+
+    // Date of report
+    doc.setFontSize(7);
+    doc.text(`Relatorio gerado em: ${new Date().toLocaleString('pt-BR')}`, 15, 285);
 
     doc.save(`CAT_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrido}.pdf`);
   };
