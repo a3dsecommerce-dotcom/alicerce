@@ -200,7 +200,6 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
                 <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] pl-8">Data / Registro</th>
                 <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Colaborador Volante</th>
                 <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Roteiro Diário (Máx 2 Unidades)</th>
-                <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right pr-8">Opções</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -261,11 +260,6 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
                       </div>
                     </div>
                   </td>
-                  <td className="p-6 text-right pr-8">
-                    <button className="w-10 h-10 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-indigo-600 hover:bg-indigo-50 border border-[var(--border)] transition-all inline-flex items-center justify-center">
-                       <FileText size={18} />
-                    </button>
-                  </td>
                 </tr>
               ))}
                {volantes.filter(v => {
@@ -273,7 +267,7 @@ export default function VolantesEscala({ volantes, refresh, user }: VolantesEsca
                 return d.getMonth() === selectedMonth.getMonth() && d.getFullYear() === selectedMonth.getFullYear();
               }).length === 0 && (
                 <tr>
-                  <td colSpan={4} className="p-20 text-center opacity-30">
+                  <td colSpan={3} className="p-20 text-center opacity-30">
                     <Truck size={48} className="mx-auto mb-4" />
                     <p className="text-xs font-black uppercase tracking-widest">Nenhuma escala para este mês.</p>
                   </td>
