@@ -4,8 +4,9 @@ import {
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter, Trash2,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut, Send, Archive, Plus
+  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy
 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -13,7 +14,7 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
@@ -23,6 +24,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     if (t === "INFORMATIVOS" || t === "REPORTS") return "REPORTS";
     if (t === "CAT" || t === "ACIDENTE") return "CAT";
     if (t === "EPI" || t === "ENTREGA") return "EPI";
+    if (t === "MISSOES" || t === "MISSIONS") return "MY_MISSIONS";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -1604,6 +1606,122 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     </div>
   );
 
+  const renderMyMissions = () => {
+    const [missoesAtivas, setMissoesAtivas] = useState<any[]>([]);
+    const [selectedMissao, setSelectedMissao] = useState<any>(null);
+    const [respostas, setRespostas] = useState<any>({});
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+      fetchMissions();
+    }, []);
+
+    const fetchMissions = async () => {
+      const { data: activeMissoes } = await supabase.from('missoes').select('*').eq('ativa', true).order('created_at', { ascending: false });
+      const { data: myAnswers } = await supabase.from('missoes_respostas').select('*').eq('usuario_id', user.id);
+      
+      const combined = activeMissoes?.map(m => ({
+        ...m,
+        concluida: myAnswers?.some(ans => ans.missao_id === m.id && ans.status === 'CONCLUIDO')
+      })) || [];
+
+      setMissoesAtivas(combined);
+    };
+
+    const handleAnswer = async () => {
+      if (!selectedMissao) return;
+      setSubmitting(true);
+      
+      const { error } = await supabase.from('missoes_respostas').upsert([{
+        missao_id: selectedMissao.id,
+        usuario_id: user.id,
+        respostas,
+        status: 'CONCLUIDO',
+        updated_at: new Date().toISOString()
+      }], { onConflict: 'missao_id,usuario_id' });
+
+      if (!error) {
+        toast.success("Missão cumprida! Parabéns!");
+        setSelectedMissao(null);
+        fetchMissions();
+      } else {
+        toast.error("Erro ao enviar: " + error.message);
+      }
+      setSubmitting(false);
+    };
+
+    return (
+      <div className="flex flex-col gap-8 animate-fade-in pb-20">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-10 rounded-[3rem] shadow-xl text-white relative overflow-hidden">
+           <Trophy className="absolute top-0 right-0 p-10 opacity-10" size={140} />
+           <div className="relative z-10">
+              <h3 className="text-3xl font-black italic tracking-tighter">Radar de Missões Operacionais</h3>
+              <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] mt-2">Complete os desafios semanais para garantir a excelência da sua rota</p>
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           {missoesAtivas.map(m => (
+             <div key={m.id} className={`bg-[var(--bg-card)] p-8 rounded-[2.5rem] border ${m.concluida ? 'border-green-500/20' : 'border-[var(--border)]'} shadow-xl flex flex-col justify-between group`}>
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${m.frequencia === 'SEMANAL' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}>
+                      {m.frequencia}
+                    </div>
+                    {m.concluida && <CheckCircle className="text-green-500" size={20} />}
+                  </div>
+                  <h4 className="text-lg font-black text-[var(--text-primary)] italic leading-tight">{m.titulo}</h4>
+                  <p className="text-xs font-medium text-[var(--text-muted)] mt-2 line-clamp-2">{m.descricao}</p>
+                </div>
+
+                <button 
+                  disabled={m.concluida}
+                  onClick={() => { setSelectedMissao(m); setRespostas({}); }}
+                  className={`w-full mt-8 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${m.concluida ? 'bg-green-500/10 text-green-600 cursor-default' : 'bg-orange-600 text-white shadow-xl shadow-orange-600/20 hover:scale-[1.02]'}`}
+                >
+                  {m.concluida ? "Missão Cumprida" : <><Trophy size={16}/> Aceitar Missão</>}
+                </button>
+             </div>
+           ))}
+        </div>
+
+        {selectedMissao && (
+          <AdaptiveModal isOpen={!!selectedMissao} onClose={() => setSelectedMissao(null)} title={selectedMissao.titulo}>
+            <div className="p-10 space-y-8">
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
+                <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Objetivo da Missão</p>
+                <p className="text-sm font-bold text-slate-700 leading-relaxed">{selectedMissao.descricao}</p>
+              </div>
+
+              <div className="space-y-6">
+                <p className="text-[10px] font-black uppercase text-[var(--brand)]">Checklist de Campo</p>
+                {selectedMissao.checklist?.map((item: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                    <span className="text-xs font-black uppercase">{item.task}</span>
+                    <button 
+                      onClick={() => setRespostas({...respostas, [item.task]: !respostas[item.task]})}
+                      className={`w-14 h-8 rounded-lg flex items-center justify-center transition-all ${respostas[item.task] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}
+                    >
+                      {respostas[item.task] ? 'OK' : 'Pendente'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                disabled={submitting}
+                onClick={handleAnswer}
+                className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3"
+              >
+                {submitting ? "Sincronizando..." : "Concluir Missão e Enviar Evidências"}
+              </button>
+            </div>
+          </AdaptiveModal>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1400px] mx-auto w-full">
       
@@ -1635,6 +1753,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "REPORTS", label: "Informativos", icon: Send },
            { id: "EPI", label: "Entrega EPI", icon: Package },
            { id: "CAT", label: "Investigação CAT", icon: ShieldCheck },
+           { id: "MY_MISSIONS", label: "Minhas Missões", icon: Trophy },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
@@ -1661,7 +1780,8 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            {activeTab === "TICKETS" && renderTickets()}
            {activeTab === "REPORTS" && renderReports()}
            {activeTab === "EPI" && renderEPI()}
-           {activeTab === "CAT" && renderCAT()}
+           { activeTab === "CAT" && renderCAT() }
+           { activeTab === "MY_MISSIONS" && renderMyMissions() }
         </div>
       )}
 
