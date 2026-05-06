@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  ShoppingBag, Truck, Package, User, Send, Box, Activity, Clock, Printer
+  ShoppingBag, Truck, Package, User, Send, Box, Printer
 } from "lucide-react";
 import { useComprasData } from "./compras/useComprasData";
 import CatalogoTable from "./compras/CatalogoTable";
@@ -24,8 +24,6 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
   const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
   const [tipoPedido, setTipoPedido] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportFilter, setReportFilter] = useState({ start: '', end: '', protocol: '' });
 
   // Guard para evitar quebra caso o usuário demore a sincronizar
   if (!user) return (
@@ -130,62 +128,8 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
            </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsReportModalOpen(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all border border-[var(--border)] shadow-sm"
-          >
-            <Activity size={16} /> Centro de Relatórios
-          </button>
-        </div>
       </div>
 
-      {/* MODAL DE RELATÓRIOS */}
-      <AdaptiveModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} title="Centro de Relatórios de Compras" width="600px">
-        <div className="p-10 space-y-8">
-          <p className="text-[11px] font-bold text-[var(--text-muted)] leading-relaxed bg-[var(--bg-base)] p-5 rounded-2xl border border-[var(--border)]">
-            Selecione os filtros abaixo para gerar um relatório consolidado de requisições. O sistema agrupará todos os itens aprovados e pendentes conforme o critério escolhido.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data Inicial</label>
-              <input 
-                type="date" 
-                className="input-field w-full h-14 font-bold bg-white/10 dark:bg-white/5 pointer-events-auto relative z-20 focus:ring-2 focus:ring-orange-500"
-                value={reportFilter.start}
-                onChange={e => setReportFilter({...reportFilter, start: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data Final</label>
-              <input 
-                type="date" 
-                className="input-field w-full h-14 font-bold bg-white/10 dark:bg-white/5 pointer-events-auto relative z-20 focus:ring-2 focus:ring-orange-500"
-                value={reportFilter.end}
-                onChange={e => setReportFilter({...reportFilter, end: e.target.value})}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Protocolo Específico (Opcional)</label>
-            <input 
-              className="input-field w-full h-14 font-bold bg-white/10 dark:bg-white/5 pointer-events-auto relative z-20 focus:ring-2 focus:ring-orange-500"
-              placeholder="Ex: REQ-123456"
-              value={reportFilter.protocol}
-              onChange={e => setReportFilter({...reportFilter, protocol: e.target.value.toUpperCase()})}
-            />
-          </div>
-
-          <button 
-            onClick={() => {
-              const filtered = requisicoesAgrupadas.filter(g => {
-                const data = new Date(g.data_raw);
-                const start = reportFilter.start ? new Date(reportFilter.start) : null;
-                const end = reportFilter.end ? new Date(reportFilter.end) : null;
-                
-      </div>
 
       <div className="flex flex-col gap-8">
         {activeTab === "CATALOGO" ? (
