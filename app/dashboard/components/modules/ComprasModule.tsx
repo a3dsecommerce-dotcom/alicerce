@@ -123,7 +123,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                 </span>
               </h2>
               <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1 flex items-center gap-2">
-                <Package size={14} className="text-[var(--brand)]" /> {requisicoesRaw.length} Requisições Visíveis
+                <Package size={14} className="text-[var(--brand)]" /> {requisicoesAgrupadas.length} Requisições Visíveis
               </p>
            </div>
         </div>
