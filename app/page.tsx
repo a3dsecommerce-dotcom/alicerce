@@ -313,7 +313,7 @@ export default function LoginPage() {
               <div className="space-y-5 animate-in slide-in-from-right-4 duration-500">
                 <div className="input-group">
                   <label className="input-label">Nome Completo</label>
-                  <input type="text" className="modern-input" placeholder="Seu nome" value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} />
+                  <input type="text" className="modern-input" placeholder="Seu nome completo" value={candidato.nome} onChange={e => setCandidato({...candidato, nome: e.target.value})} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="input-group">
@@ -321,29 +321,169 @@ export default function LoginPage() {
                     <input type="date" className="modern-input" value={candidato.data_nascimento} onChange={e => setCandidato({...candidato, data_nascimento: e.target.value})} />
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Sexo</label>
-                    <select className="modern-input" value={candidato.sexo} onChange={e => setCandidato({...candidato, sexo: e.target.value})}>
-                      <option value="M">Masculino</option>
-                      <option value="F">Feminino</option>
+                    <label className="input-label">Estado Civil</label>
+                    <select className="modern-input" value={candidato.estado_civil} onChange={e => setCandidato({...candidato, estado_civil: e.target.value})}>
+                      <option value="">Selecione</option>
+                      <option value="SOLTEIRO">Solteiro(a)</option>
+                      <option value="CASADO">Casado(a)</option>
+                      <option value="DIVORCIADO">Divorciado(a)</option>
+                      <option value="VIUVO">Viúvo(a)</option>
                     </select>
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Sexo</label>
+                  <div className="flex gap-4">
+                    {["M", "F"].map(s => (
+                      <button 
+                        key={s}
+                        onClick={() => setCandidato({...candidato, sexo: s})}
+                        className={`flex-1 p-4 rounded-2xl border-2 transition-all font-bold text-xs ${candidato.sexo === s ? 'border-orange-600 bg-orange-600/10 text-orange-600' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
+                      >
+                        {s === "M" ? "Masculino" : "Feminino"}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             )}
-            {/* ... Demais passos do modal seguindo o mesmo estilo (Simplificado para brevidade) ... */}
-            {step > 1 && step < 5 && (
-              <div className="text-center p-10 text-[var(--text-secondary)] font-bold italic animate-in fade-in">
-                Continuando formulário no estilo smartphone...
+
+            {step === 2 && (
+              <div className="space-y-5 animate-in slide-in-from-right-4 duration-500">
+                <div className="input-group">
+                  <label className="input-label">CPF</label>
+                  <input type="text" className="modern-input" placeholder="000.000.000-00" value={candidato.cpf} onChange={e => setCandidato({...candidato, cpf: e.target.value})} />
+                </div>
+                <div className="input-group">
+                  <label className="input-label">RG</label>
+                  <input type="text" className="modern-input" placeholder="Número do RG" value={candidato.rg} onChange={e => setCandidato({...candidato, rg: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="input-group">
+                    <label className="input-label">PIS</label>
+                    <input type="text" className="modern-input" placeholder="PIS" value={candidato.pis} onChange={e => setCandidato({...candidato, pis: e.target.value})} />
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Título Eleitor</label>
+                    <input type="text" className="modern-input" placeholder="Título" value={candidato.titulo_eleitor} onChange={e => setCandidato({...candidato, titulo_eleitor: e.target.value})} />
+                  </div>
+                </div>
               </div>
             )}
+
+            {step === 3 && (
+              <div className="space-y-5 animate-in slide-in-from-right-4 duration-500 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="input-group">
+                    <label className="input-label">Telefone (WhatsApp)</label>
+                    <input type="tel" className="modern-input" placeholder="(00) 00000-0000" value={candidato.telefone} onChange={e => setCandidato({...candidato, telefone: e.target.value})} />
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">E-mail</label>
+                    <input type="email" className="modern-input" placeholder="seu@email.com" value={candidato.email} onChange={e => setCandidato({...candidato, email: e.target.value})} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-1 input-group">
+                    <label className="input-label">CEP</label>
+                    <input type="text" className="modern-input" placeholder="00000-000" value={candidato.cep} onChange={e => setCandidato({...candidato, cep: e.target.value})} />
+                  </div>
+                  <div className="col-span-2 input-group">
+                    <label className="input-label">Rua</label>
+                    <input type="text" className="modern-input" placeholder="Nome da rua" value={candidato.rua} onChange={e => setCandidato({...candidato, rua: e.target.value})} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                   <div className="input-group">
+                    <label className="input-label">Nº</label>
+                    <input type="text" className="modern-input" placeholder="00" value={candidato.numero} onChange={e => setCandidato({...candidato, numero: e.target.value})} />
+                  </div>
+                  <div className="col-span-2 input-group">
+                    <label className="input-label">Bairro</label>
+                    <input type="text" className="modern-input" placeholder="Bairro" value={candidato.bairro} onChange={e => setCandidato({...candidato, bairro: e.target.value})} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-5 animate-in slide-in-from-right-4 duration-500">
+                <div className="input-group">
+                  <label className="input-label">Cargo Pretendido</label>
+                  <select className="modern-input" value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
+                    <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
+                    <option value="ALMOXARIFE">Almoxarife</option>
+                    <option value="ADMINISTRATIVO">Administrativo</option>
+                    <option value="COORDENADOR">Coordenador de Área</option>
+                    <option value="OUTRO">Outro</option>
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label className="input-label">Escolaridade</label>
+                  <select className="modern-input" value={candidato.escolaridade} onChange={e => setCandidato({...candidato, escolaridade: e.target.value})}>
+                    <option value="Ensino Fundamental">Ensino Fundamental</option>
+                    <option value="Ensino Médio Incompleto">Ensino Médio Incompleto</option>
+                    <option value="Ensino Médio Completo">Ensino Médio Completo</option>
+                    <option value="Ensino Superior">Ensino Superior</option>
+                  </select>
+                </div>
+                <div className="p-5 rounded-2xl bg-white/5 border border-[var(--border)]">
+                  <label className="flex items-center justify-between cursor-pointer group">
+                    <span className="text-[11px] font-black uppercase text-[var(--text-secondary)]">Possui Experiência Prévia?</span>
+                    <input 
+                      type="checkbox" 
+                      className="w-5 h-5 rounded accent-orange-600" 
+                      checked={candidato.experiencia} 
+                      onChange={() => setCandidato({...candidato, experiencia: !candidato.experiencia})} 
+                    />
+                  </label>
+                  {candidato.experiencia && (
+                    <div className="mt-4 space-y-4 animate-in fade-in duration-300">
+                      <input type="text" className="modern-input" placeholder="Última Empresa" value={candidato.ultimo_emprego} onChange={e => setCandidato({...candidato, ultimo_emprego: e.target.value})} />
+                      <input type="text" className="modern-input" placeholder="Tempo (ex: 2 anos)" value={candidato.tempo_experiencia} onChange={e => setCandidato({...candidato, tempo_experiencia: e.target.value})} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {step === 5 && (
                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="input-group">
+                      <label className="input-label">Camisa</label>
+                      <select className="modern-input" value={candidato.tamanho_camisa} onChange={e => setCandidato({...candidato, tamanho_camisa: e.target.value})}>
+                        {['PP','P','M','G','GG','XG'].map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Calça</label>
+                      <input type="number" className="modern-input text-center" value={candidato.tamanho_calca} onChange={e => setCandidato({...candidato, tamanho_calca: e.target.value})} />
+                    </div>
+                    <div className="input-group">
+                      <label className="input-label">Calçado</label>
+                      <input type="number" className="modern-input text-center" value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} />
+                    </div>
+                  </div>
+
                   <div className="p-6 rounded-3xl bg-orange-600/5 border border-orange-600/10">
-                    <p className="text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-3">Declaração</p>
-                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed font-medium">Declaro que as informações são verdadeiras e estou ciente das políticas de privacidade.</p>
-                    <label className="flex items-center gap-3 mt-6 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded border-[var(--border)] accent-orange-600" checked={candidato.declaracao} onChange={() => setCandidato({...candidato, declaracao: !candidato.declaracao})} />
-                      <span className="text-xs font-black text-[var(--text-primary)]">Aceito os Termos</span>
+                    <p className="text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <Shield size={14} /> Declaração e Termos
+                    </p>
+                    <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed font-medium">
+                      Declaro que todas as informações acima são verdadeiras. Estou ciente de que meu cadastro passará por análise da equipe de RH e poderei ser convocado via WhatsApp para entrevista presencial.
+                    </p>
+                    <label className="flex items-center gap-3 mt-6 cursor-pointer group">
+                      <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${candidato.declaracao ? 'bg-orange-600 border-orange-600 shadow-lg shadow-orange-600/30' : 'border-[var(--border)] group-hover:border-orange-500'}`}>
+                        <input 
+                          type="checkbox" 
+                          className="hidden" 
+                          checked={candidato.declaracao} 
+                          onChange={() => setCandidato({...candidato, declaracao: !candidato.declaracao})} 
+                        />
+                        {candidato.declaracao && <CheckCircle2 size={16} className="text-white" />}
+                      </div>
+                      <span className="text-xs font-black text-[var(--text-primary)]">Aceito os Termos e Condições</span>
                     </label>
                   </div>
                </div>
