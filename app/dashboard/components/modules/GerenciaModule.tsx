@@ -13,10 +13,11 @@ import UnidadesTable from "./operacional/UnidadesTable";
 import VolantesEscala from "./rh/VolantesEscala";
 import VisaoGeral from "./gerencia/VisaoGeral";
 import MissoesManager from "./gerencia/MissoesManager";
+import DenunciasManager from "./gerencia/DenunciasManager";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -242,6 +243,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             <ShieldAlert size={16} /> Auditoria
           </button>
           <button 
+            onClick={() => setActiveTab("DENUNCIAS")}
+            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "DENUNCIAS" ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "text-red-500 hover:bg-red-50"}`}
+          >
+            <ShieldAlert size={16} /> Canal Ético
+          </button>
+          <button 
             onClick={() => setActiveTab("DB")}
             className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
           >
@@ -258,6 +265,10 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
         {activeTab === "MISSOES" && (
            <MissoesManager />
+        )}
+
+        {activeTab === "DENUNCIAS" && (
+           <DenunciasManager />
         )}
 
         {activeTab === "ROTAS" && (

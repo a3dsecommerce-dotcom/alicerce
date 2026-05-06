@@ -30,6 +30,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   });
   const [user, setUser] = useState({ name: "Diretoria", role: "ADMIN" });
 
+  // ESTADOS PARA DENÚNCIA ANÔNIMA
+  const [naturezaDenuncia, setNaturezaDenuncia] = useState("Conduta Ética / Assédio");
+  const [detalheDenuncia, setDetalheDenuncia] = useState("");
+  const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
+
   useEffect(() => {
     async function syncUser() {
       try {
@@ -362,7 +367,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex flex-col gap-5">
               <div>
                 <label className="text-[0.7rem] font-black text-[var(--text-muted)] uppercase mb-2 block">Natureza do Relato</label>
-                <select className="input-field w-full appearance-none">
+                <select 
+                  className="input-field w-full appearance-none"
+                  value={naturezaDenuncia}
+                  onChange={e => setNaturezaDenuncia(e.target.value)}
+                >
                   <option>Conduta Ética / Assédio</option>
                   <option>Fraude / Desvio de Patrimônio</option>
                   <option>Segurança do Trabalho (Risco)</option>
@@ -374,6 +383,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <textarea 
                   className="input-field w-full min-h-[150px] resize-none" 
                   placeholder="Por favor, relate o ocorrido com o máximo de detalhes possível (nomes, locais, datas)..."
+                  value={detalheDenuncia}
+                  onChange={e => setDetalheDenuncia(e.target.value)}
                 />
               </div>
               <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-dashed border-[var(--border)] flex items-start gap-3">
@@ -385,10 +396,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex gap-4 mt-10">
               <button className="flex-1 btn-ghost" onClick={() => setDenunciaOpen(false)}>Cancelar</button>
               <button 
-                className="flex-1 btn-brand !bg-[var(--danger)] shadow-[var(--danger)]/20" 
-                onClick={() => { n8n.trigger('denuncia-anonima', { data: new Date() }); alert("Protocolo registrado com sucesso."); setDenunciaOpen(false); }}
+                className="flex-1 btn-brand !bg-[var(--danger)] shadow-[var(--danger)]/20 disabled:opacity-50" 
+                disabled={enviandoDenuncia || !detalheDenuncia}
+                onClick={async () => { 
+                  setEnviandoDenuncia(true);
+                  const protocolo = `ETI-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+                  
+                  const { error } = await supabase.from('denuncias_anonimas').insert([{
+                    natureza: naturezaDenuncia,
+                    detalhamento: detalheDenuncia,
+                    protocolo
+                  }]);
+
+                  if (!error) {
+                    toast.success(`Protocolo ${protocolo} registrado com sucesso.`);
+                    setDenunciaOpen(false);
+                    setDetalheDenuncia("");
+                  } else {
+                    toast.error("Erro ao registrar: " + error.message);
+                  }
+                  setEnviandoDenuncia(false);
+                }}
               >
-                Enviar Protocolo
+                {enviandoDenuncia ? "Enviando..." : "Enviar Protocolo"}
               </button>
             </div>
           </div>
