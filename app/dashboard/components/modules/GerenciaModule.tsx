@@ -16,7 +16,7 @@ import { Truck } from "lucide-react";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES">((initialTab?.toUpperCase() as any) || "VOLANTES");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -210,7 +210,6 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
         <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-md overflow-x-auto w-full lg:w-auto">
           {[
-            { id: "VISAO", label: "Visão Geral", icon: LayoutDashboard },
             { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
             { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
             { id: "AUDITORIA", label: "Auditoria", icon: Shield },
@@ -225,37 +224,6 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
       </div>
 
       <div className="flex-1 flex flex-col gap-10 overflow-hidden">
-        {activeTab === "VISAO" && (
-          <>
-            <StatsCards stats={stats} />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 flex-1 overflow-hidden min-h-[600px]">
-              <div className="lg:col-span-2 flex flex-col">
-                <ActivitiesLog logs={logs} />
-              </div>
-              <div className="space-y-8 flex flex-col">
-                <div className="bg-black text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 blur-3xl" />
-                  <h4 className="text-lg font-black uppercase italic relative z-10">Status do Sistema</h4>
-                  <div className="mt-8 space-y-6 relative z-10">
-                    <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                      <span className="text-[10px] font-bold text-white/50 uppercase">Uptime VPS</span>
-                      <span className="text-xs font-black text-green-400 uppercase">99.8%</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                      <span className="text-[10px] font-bold text-white/50 uppercase">Integridade DB</span>
-                      <span className="text-xs font-black text-blue-400 uppercase">Excelente</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-white/50 uppercase">Segurança RLS</span>
-                      <span className="text-xs font-black text-orange-400 uppercase">Ativo</span>
-                    </div>
-                  </div>
-                  <button className="w-full h-12 bg-white/10 hover:bg-white/20 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all mt-10">Relatório Forense</button>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
 
         {activeTab === "ROTAS" && (
           <div className="flex flex-col gap-8">
