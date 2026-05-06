@@ -13,6 +13,13 @@ import { toast } from "sonner";
 export default function ComprasModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading, catalogo, requisicoesRaw, qtdAsg, enviarRequisicao } = useComprasData(user);
   const [activeTab, setActiveTab] = useState<"CATALOGO" | "TRACKING">((initialTab?.toUpperCase() as any) || "CATALOGO");
+  
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab.toUpperCase() as any);
+    }
+  }, [initialTab]);
+
   const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
   const [tipoPedido, setTipoPedido] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
