@@ -11,10 +11,16 @@ export type NavItem = {
 
 export const ALL_NAV: NavItem[] = [
   {
-    label: 'Gestão de Compras',
-    icon: ShoppingCart,
+    label: 'Catálogo de Compras',
+    icon: ShoppingBag,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
-    href: '/dashboard?module=COMPRAS'
+    href: '/dashboard?module=COMPRAS&tab=CATALOGO'
+  },
+  {
+    label: 'Acompanhamento de Pedidos',
+    icon: Truck,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
+    href: '/dashboard?module=COMPRAS&tab=TRACKING'
   },
   {
     label: 'Almoxarifado',

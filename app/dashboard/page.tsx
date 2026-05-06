@@ -208,7 +208,7 @@ function CockpitContent() {
             </div>
           }>
             { activeModule === "RH" && <RHModule user={user} />}
-            { activeModule === "COMPRAS" && <ComprasModule user={user} />}
+            { activeModule === "COMPRAS" && <ComprasModule user={user} initialTab={tabParam as any} />}
             { activeModule === "ALMOXARIFADO" && <AlmoxarifadoModule reducao={reducaoGeral} setReducao={setReducaoGeral} /> }
             { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
             { activeModule === "OCORRENCIAS" && <OcorrenciasModule user={user} /> }

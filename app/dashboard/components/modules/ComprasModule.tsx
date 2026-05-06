@@ -10,9 +10,9 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 
-export default function ComprasModule({ user }: { user: any }) {
+export default function ComprasModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading, catalogo, requisicoesRaw, qtdAsg, enviarRequisicao } = useComprasData(user);
-  const [activeTab, setActiveTab] = useState<"CATALOGO" | "TRACKING">("CATALOGO");
+  const [activeTab, setActiveTab] = useState<"CATALOGO" | "TRACKING">((initialTab?.toUpperCase() as any) || "CATALOGO");
   const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
   const [tipoPedido, setTipoPedido] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
@@ -119,13 +119,8 @@ export default function ComprasModule({ user }: { user: any }) {
            </div>
         </div>
 
-        <div className="flex gap-2 p-1.5 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
-          <button onClick={() => setActiveTab("CATALOGO")} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "CATALOGO" ? 'bg-white text-[var(--brand)] shadow-md border border-[var(--border)]' : 'text-[var(--text-muted)] hover:bg-white/50'}`}>
-            <ShoppingBag size={16} /> Catálogo
-          </button>
-          <button onClick={() => setActiveTab("TRACKING")} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === "TRACKING" ? 'bg-white text-[var(--brand)] shadow-md border border-[var(--border)]' : 'text-[var(--text-muted)] hover:bg-white/50'}`}>
-            <Truck size={16} /> Acompanhamento
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Navegação interna removida em favor da Sidebar lateral para evitar redundância */}
         </div>
       </div>
 
