@@ -207,18 +207,8 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
           </p>
         </div>
 
-        <div className="flex gap-2 p-1.5 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-md overflow-x-auto w-full lg:w-auto">
-          {[
-            { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
-            { id: "ROTAS", label: "Gestão de Rotas", icon: MapPin },
-            { id: "AUDITORIA", label: "Auditoria", icon: Shield },
-            { id: "CONFIG", label: "Configurações", icon: Settings },
-            { id: "DB", label: "Banco de Dados", icon: Database }
-          ].map(t => (
-            <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[13px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
-              <t.icon size={16} /> {t.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          {/* Navegação interna removida em favor da Sidebar lateral para evitar redundância */}
         </div>
       </div>
 
@@ -284,12 +274,10 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
         {(activeTab === "CONFIG" || activeTab === "DB" || activeTab === "AUDITORIA") && (
           <div className="flex-1 flex items-center justify-center p-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)] opacity-40">
             <div className="text-center">
-              {activeTab === "AUDITORIA" ? <Shield size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" /> : <Settings size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" />}
-              <h3 className="text-xl font-black uppercase italic">Módulo {activeTab === "AUDITORIA" ? "de Auditoria" : "em Desenvolvimento"}</h3>
-              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.3em] mt-2">
-                {activeTab === "AUDITORIA" 
-                  ? "Logs de auditoria e monitoramento forense estão sendo processados." 
-                  : "As configurações de sistema estão sendo migradas para a nova arquitetura."}
+              <Shield size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" />
+              <h3 className="text-xl font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Módulo em Desenvolvimento</h3>
+              <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
+                As funcionalidades avançadas de {activeTab === "DB" ? "Gerenciamento de Dados" : activeTab === "CONFIG" ? "Configurações" : "Auditoria"} estão sendo implementadas.
               </p>
             </div>
           </div>

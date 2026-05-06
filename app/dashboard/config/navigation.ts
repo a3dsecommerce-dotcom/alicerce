@@ -29,6 +29,12 @@ export const ALL_NAV: NavItem[] = [
     href: '/dashboard?module=RH'
   },
   {
+    label: 'Escala de Volantes',
+    icon: Truck,
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
+    href: '/dashboard?module=COMMAND&tab=VOLANTES'
+  },
+  {
     label: 'Gestão de Rotas',
     icon: MapPin,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
