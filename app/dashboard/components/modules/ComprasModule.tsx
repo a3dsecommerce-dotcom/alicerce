@@ -24,6 +24,8 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
   const [volumesExtra, setVolumesExtra] = useState<Record<string, number>>({});
   const [tipoPedido, setTipoPedido] = useState<"MENSAL" | "EMERGENCIAL">("MENSAL");
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportFilter, setReportFilter] = useState({ start: '', end: '', protocol: '' });
 
   // Guard para evitar quebra caso o usuário demore a sincronizar
   if (!user) return (
@@ -129,9 +131,155 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Navegação interna removida em favor da Sidebar lateral para evitar redundância */}
+          <button 
+            onClick={() => setIsReportModalOpen(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-[var(--brand)] hover:text-white transition-all border border-[var(--border)] shadow-sm"
+          >
+            <Activity size={16} /> Centro de Relatórios
+          </button>
         </div>
       </div>
+
+      {/* MODAL DE RELATÓRIOS */}
+      <AdaptiveModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} title="Centro de Relatórios de Compras" width="600px">
+        <div className="p-10 space-y-8">
+          <p className="text-[11px] font-bold text-[var(--text-muted)] leading-relaxed bg-[var(--bg-base)] p-5 rounded-2xl border border-[var(--border)]">
+            Selecione os filtros abaixo para gerar um relatório consolidado de requisições. O sistema agrupará todos os itens aprovados e pendentes conforme o critério escolhido.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data Inicial</label>
+              <input 
+                type="date" 
+                className="input-field w-full h-14 font-bold"
+                value={reportFilter.start}
+                onChange={e => setReportFilter({...reportFilter, start: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data Final</label>
+              <input 
+                type="date" 
+                className="input-field w-full h-14 font-bold"
+                value={reportFilter.end}
+                onChange={e => setReportFilter({...reportFilter, end: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Protocolo Específico (Opcional)</label>
+            <input 
+              className="input-field w-full h-14 font-bold"
+              placeholder="Ex: REQ-123456"
+              value={reportFilter.protocol}
+              onChange={e => setReportFilter({...reportFilter, protocol: e.target.value.toUpperCase()})}
+            />
+          </div>
+
+          <button 
+            onClick={() => {
+              const filtered = requisicoesAgrupadas.filter(g => {
+                const data = new Date(g.data_raw);
+                const start = reportFilter.start ? new Date(reportFilter.start) : null;
+                const end = reportFilter.end ? new Date(reportFilter.end) : null;
+                
+                const matchesDate = (!start || data >= start) && (!end || data <= end);
+                const matchesProtocol = !reportFilter.protocol || g.protocolo.includes(reportFilter.protocol);
+                
+                return matchesDate && matchesProtocol;
+              });
+
+              if (filtered.length === 0) return toast.error("Nenhuma requisição encontrada para os filtros selecionados.");
+
+              const printWindow = window.open('', '_blank');
+              if (printWindow) {
+                const html = `
+                  <html>
+                    <head>
+                      <title>Relatório Consolidado de Compras</title>
+                      <style>
+                        body { font-family: sans-serif; padding: 40px; color: #333; }
+                        .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+                        .logo { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
+                        .report-title { text-align: center; font-size: 18px; font-weight: 900; text-transform: uppercase; margin-bottom: 40px; padding: 10px; background: #f5f5f5; }
+                        .summary { margin-bottom: 30px; font-size: 12px; font-weight: bold; }
+                        .req-block { margin-bottom: 50px; page-break-inside: avoid; }
+                        .req-header { background: #000; color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th { background: #eee; text-align: left; padding: 10px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
+                        td { padding: 10px; font-size: 11px; border: 1px solid #ddd; }
+                        .total-row { background: #fdfdfd; font-weight: bold; text-align: right; padding: 10px; font-size: 10px; border: 1px solid #ddd; border-top: none; }
+                        .footer { position: fixed; bottom: 0; left: 0; right: 0; font-size: 9px; text-align: center; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="header">
+                        <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
+                        <div style="text-align: right; font-size: 10px; font-weight: bold;">GERADO EM: ${new Date().toLocaleString()}</div>
+                      </div>
+
+                      <div class="report-title">Relatório de Requisições de Compras</div>
+                      
+                      <div class="summary">
+                        PERÍODO: ${reportFilter.start || 'INÍCIO'} ATÉ ${reportFilter.end || 'FIM'}<br>
+                        TOTAL DE REQUISIÇÕES: ${filtered.length}
+                      </div>
+
+                      ${filtered.map(g => `
+                        <div class="req-block">
+                          <div class="req-header">
+                            <span>PROTOCOLO: ${g.protocolo}</span>
+                            <span>DATA: ${g.data}</span>
+                          </div>
+                          <div style="padding: 10px; font-size: 10px; border: 1px solid #ddd; border-top: none;">
+                            <strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino || 'N/A'} | 
+                            <strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante || 'N/A'} |
+                            <strong>TIPO:</strong> ${g.tipo_pedido}
+                          </div>
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Item</th>
+                                <th style="text-align: center;">Qtd</th>
+                                <th style="text-align: center;">Und</th>
+                                <th style="text-align: center;">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              ${g.itens.map((it:any) => `
+                                <tr>
+                                  <td>${it.item_nome}</td>
+                                  <td style="text-align: center;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
+                                  <td style="text-align: center;">${it.unidade_medida || 'UN'}</td>
+                                  <td style="text-align: center; color: #ea580c; font-weight: bold;">${it.status}</td>
+                                </tr>
+                              `).join('')}
+                            </tbody>
+                          </table>
+                          <div class="total-row">Total de itens: ${g.itens.length}</div>
+                        </div>
+                      `).join('')}
+
+                      <div class="footer">Este documento é um relatório gerencial do sistema Alicerce ERP.</div>
+
+                      <script>
+                        window.onload = () => { window.print(); };
+                      </script>
+                    </body>
+                  </html>
+                `;
+                printWindow.document.write(html);
+                printWindow.document.close();
+              }
+            }}
+            className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
+          >
+            <Printer size={18} /> Gerar Relatório Consolidado
+          </button>
+        </div>
+      </AdaptiveModal>
 
       <div className="flex flex-col gap-8">
         {activeTab === "CATALOGO" ? (
