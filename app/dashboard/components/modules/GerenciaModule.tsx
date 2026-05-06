@@ -217,81 +217,8 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
       <div className="flex-1 flex flex-col gap-10 overflow-hidden">
 
-        {activeTab === "VISAO" && (
-           <VisaoGeral stats={stats} logs={logs} />
-        )}
-
         {activeTab === "MISSOES" && (
            <MissoesManager />
-        )}
-
-        {activeTab === "ROTAS" && (
-          <div className="flex flex-col gap-8">
-            <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex flex-col gap-2">
-                <h3 className="text-xl font-black text-[var(--text-primary)] italic">Unidades Operacionais</h3>
-                <button 
-                  onClick={() => setIsConfigModalOpen(true)}
-                  className="px-3 py-1.5 bg-[var(--brand)]/10 text-[var(--brand)] rounded-lg text-[9px] font-black uppercase border border-[var(--brand)]/20 hover:bg-[var(--brand)] hover:text-white transition-all flex items-center gap-2 w-fit"
-                >
-                  <Settings size={12} /> Configurar Responsáveis
-                </button>
-              </div>
-              <div className="flex items-center gap-4 w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                  <input 
-                    className="input-field w-full pl-11 !h-12 text-[10px] font-black uppercase" 
-                    placeholder="Filtrar Unidades..." 
-                    value={busca}
-                    onChange={e => setBusca(e.target.value)}
-                  />
-                </div>
-                <button 
-                  onClick={() => { resetForm(); setIsModalOpen(true); }}
-                  className="h-12 px-8 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-xl shadow-[var(--brand)]/20"
-                >
-                  <Plus size={18} /> Cadastrar Unidade
-                </button>
-              </div>
-            </div>
-
-            {loading ? (
-              <TableSkeleton rows={8} cols={5} />
-            ) : (
-              <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden">
-                <UnidadesTable 
-                  unidades={unidades} 
-                  busca={busca} 
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "VOLANTES" && (
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-            <VolantesEscala 
-              volantes={volantes}
-              requisicoes={requisicoesVolantes}
-              refresh={refresh}
-              user={user}
-            />
-          </div>
-        )}
-
-        {(activeTab === "CONFIG" || activeTab === "DB" || activeTab === "AUDITORIA") && (
-          <div className="flex-1 flex items-center justify-center p-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)] opacity-40">
-            <div className="text-center">
-              <Shield size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" />
-              <h3 className="text-xl font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Módulo em Desenvolvimento</h3>
-              <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
-                As funcionalidades avançadas de {activeTab === "DB" ? "Gerenciamento de Dados" : activeTab === "CONFIG" ? "Configurações" : "Auditoria"} estão sendo implementadas.
-              </p>
-            </div>
-          </div>
         )}
       </div>
 
