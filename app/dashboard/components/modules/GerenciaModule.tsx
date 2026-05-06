@@ -1,18 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  Activity, Shield, Settings, Database, Loader, LayoutDashboard, MapPin, Plus, Building2, User, Phone, Map, Users, Search
+  Shield, Settings, Database, Loader, MapPin, Plus, Building2, User, Phone, Map, Users, Search, Truck
 } from "lucide-react";
 import { useGerenciaData } from "./gerencia/useGerenciaData";
-import StatsCards from "./gerencia/StatsCards";
-import ActivitiesLog from "./gerencia/ActivitiesLog";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import UnidadesTable from "./operacional/UnidadesTable";
 import VolantesEscala from "./rh/VolantesEscala";
-import { Truck } from "lucide-react";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
@@ -86,8 +83,10 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
   };
 
   useEffect(() => {
-    if (initialTab) {
+    if (initialTab && initialTab.toUpperCase() !== "VISAO") {
       setActiveTab(initialTab.toUpperCase() as any);
+    } else {
+      setActiveTab("VOLANTES");
     }
   }, [initialTab]);
 
