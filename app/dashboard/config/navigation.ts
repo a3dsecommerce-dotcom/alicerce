@@ -13,7 +13,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Painel de Controle',
     icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
+    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO'],
     href: '/dashboard?module=COMMAND'
   },
   {
