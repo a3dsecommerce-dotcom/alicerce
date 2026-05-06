@@ -192,14 +192,9 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     setSaving(false);
   };
 
-  if (loadingGerencia && activeTab !== "ROTAS") return (
-    <div className="p-20">
-      <TableSkeleton rows={12} cols={4} />
-    </div>
-  );
-
   return (
     <div className="flex flex-col gap-10 animate-fade-in h-full px-4 lg:px-20 py-10">
+      <div className="bg-orange-500 text-white p-2 text-[8px] font-black uppercase text-center rounded-lg">CENTRAL OPS ACTIVE</div>
       
       {/* HEADER GESTÃO */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
