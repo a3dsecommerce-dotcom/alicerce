@@ -314,106 +314,179 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                    <h4 className="text-2xl font-black italic">Protocolo {selectedProtocol?.protocolo}</h4>
                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Solicitado em: {selectedProtocol?.data}</p>
                 </div>
-                <button 
-                  onClick={() => {
-                    const g = selectedProtocol;
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow) {
-                      const html = `
-                        <html>
-                          <head>
-                            <title>Requisição ${g.protocolo}</title>
-                            <style>
-                              body { font-family: sans-serif; padding: 40px; color: #333; }
-                              .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-                              .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
-                              .title { text-align: center; text-transform: uppercase; font-weight: 900; margin-bottom: 40px; }
-                              .info-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
-                              .info-item { font-size: 12px; }
-                              .info-label { font-weight: bold; text-transform: uppercase; color: #666; font-size: 10px; }
-                              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                              th { background: #f5f5f5; text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
-                              td { padding: 12px; font-size: 11px; border: 1px solid #ddd; }
-                              .footer { margin-top: 60px; display: flex; justify-content: space-between; border-top: 1px solid #eee; pt: 20px; font-size: 10px; color: #999; }
-                            </style>
-                          </head>
-                          <body>
-                            <div class="header">
-                              <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
-                              <div style="text-align: right">
-                                <div style="font-weight: bold; font-size: 14px;">PROT: ${g.protocolo}</div>
-                                <div style="font-size: 10px; color: #666;">EMITIDO EM: ${new Date().toLocaleString()}</div>
+                <div className="flex items-center gap-3">
+                   <button 
+                    onClick={() => {
+                      const g = selectedProtocol;
+                      const printWindow = window.open('', '_blank');
+                      if (printWindow) {
+                        const html = `
+                          <html>
+                            <head>
+                              <title>Acompanhamento de Entrega - ${g.protocolo}</title>
+                              <style>
+                                body { font-family: sans-serif; padding: 40px; color: #333; }
+                                .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+                                .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+                                .title { text-align: center; text-transform: uppercase; font-weight: 900; margin-bottom: 40px; }
+                                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                                th { background: #f5f5f5; text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
+                                td { padding: 12px; font-size: 11px; border: 1px solid #ddd; }
+                                .progress-container { width: 100px; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+                                .progress-bar { height: 100%; background: #ea580c; }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="header">
+                                <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
+                                <div style="text-align: right">
+                                  <div style="font-weight: bold; font-size: 14px;">PROT: ${g.protocolo}</div>
+                                  <div style="font-size: 10px; color: #666;">EMITIDO EM: ${new Date().toLocaleString()}</div>
+                                </div>
                               </div>
-                            </div>
-
-                            <div class="title">Requisição de Materiais (${g.tipo_pedido})</div>
-
-                            <div class="info-grid">
-                              <div class="info-item">
-                                <div class="info-label">Unidade de Destino</div>
-                                <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.unidade_destino || 'UNIDADE NÃO INFORMADA'}</div>
+                              <div class="title">Relatório de Evolução de Entrega</div>
+                              <div style="margin-bottom: 30px; font-size: 12px;">
+                                <strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino}<br>
+                                <strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante}
                               </div>
-                              <div class="info-item">
-                                <div class="info-label">Secretaria</div>
-                                <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.secretaria_destino || 'SEMED'}</div>
-                              </div>
-                              <div class="info-item">
-                                <div class="info-label">Solicitante</div>
-                                <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.solicitante || 'COORDENADOR'}</div>
-                              </div>
-                              <div class="info-item">
-                                <div class="info-label">Data da Solicitação</div>
-                                <div style="font-size: 14px; font-weight: bold;">${g.data}</div>
-                              </div>
-                            </div>
-
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>Item / Descrição</th>
-                                  <th style="text-align: center; width: 80px;">Qtd</th>
-                                  <th style="text-align: center; width: 60px;">UND</th>
-                                  <th style="text-align: center; width: 100px;">Status</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                ${g.itens.map((it:any) => `
+                              <table>
+                                <thead>
                                   <tr>
-                                    <td style="font-weight: bold;">${it.item_nome}</td>
-                                    <td style="text-align: center; font-weight: bold;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
-                                    <td style="text-align: center;">${it.unidade_medida || 'UN'}</td>
-                                    <td style="text-align: center; font-size: 9px; font-weight: bold; color: #ea580c;">${it.status}</td>
+                                    <th>Item</th>
+                                    <th style="text-align: center;">Solicitado</th>
+                                    <th style="text-align: center;">Entregue</th>
+                                    <th style="text-align: center;">Evolução</th>
                                   </tr>
-                                `).join('')}
-                              </tbody>
-                            </table>
+                                </thead>
+                                <tbody>
+                                  ${g.itens.map((it:any) => {
+                                    const total = (it.quantidade || 0) + (it.quantidade_extra || 0);
+                                    const entregue = it.quantidade_entregue || 0;
+                                    const perc = Math.min(100, Math.round((entregue / total) * 100));
+                                    return `
+                                      <tr>
+                                        <td>${it.item_nome}</td>
+                                        <td style="text-align: center;">${total}</td>
+                                        <td style="text-align: center;">${entregue}</td>
+                                        <td style="text-align: center;">${perc}%</td>
+                                      </tr>
+                                    `;
+                                  }).join('')}
+                                </tbody>
+                              </table>
+                              <script>window.onload = () => { window.print(); };</script>
+                            </body>
+                          </html>
+                        `;
+                        printWindow.document.write(html);
+                        printWindow.document.close();
+                      }
+                    }}
+                    className="px-6 py-3 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:bg-[var(--brand)] hover:text-white transition-all border border-[var(--border)] shadow-sm"
+                  >
+                    <Printer size={16} /> Imprimir Acompanhamento
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const g = selectedProtocol;
+                      const printWindow = window.open('', '_blank');
+                      if (printWindow) {
+                        const html = `
+                          <html>
+                            <head>
+                              <title>Requisição ${g.protocolo}</title>
+                              <style>
+                                body { font-family: sans-serif; padding: 40px; color: #333; }
+                                .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+                                .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+                                .title { text-align: center; text-transform: uppercase; font-weight: 900; margin-bottom: 40px; }
+                                .info-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+                                .info-item { font-size: 12px; }
+                                .info-label { font-weight: bold; text-transform: uppercase; color: #666; font-size: 10px; }
+                                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                                th { background: #f5f5f5; text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
+                                td { padding: 12px; font-size: 11px; border: 1px solid #ddd; }
+                                .footer { margin-top: 60px; display: flex; justify-content: space-between; border-top: 1px solid #eee; pt: 20px; font-size: 10px; color: #999; }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="header">
+                                <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
+                                <div style="text-align: right">
+                                  <div style="font-weight: bold; font-size: 14px;">PROT: ${g.protocolo}</div>
+                                  <div style="font-size: 10px; color: #666;">EMITIDO EM: ${new Date().toLocaleString()}</div>
+                                </div>
+                              </div>
 
-                            <div style="margin-top: 50px; border: 1px dashed #ccc; padding: 20px; font-size: 10px; color: #666;">
-                              <strong>OBSERVAÇÕES:</strong><br>
-                              Esta requisição foi gerada eletronicamente pelo Sistema Alicerce ERP. A entrega dos materiais está sujeita à disponibilidade em estoque e conferência da equipe de logística.
-                            </div>
+                              <div class="title">Requisição de Materiais (${g.tipo_pedido})</div>
 
-                            <div class="footer">
-                              <div>Página 1 de 1</div>
-                              <div>Alicerce ERP - Módulo de Gestão de Compras</div>
-                            </div>
+                              <div class="info-grid">
+                                <div class="info-item">
+                                  <div class="info-label">Unidade de Destino</div>
+                                  <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.unidade_destino || 'UNIDADE NÃO INFORMADA'}</div>
+                                </div>
+                                <div class="info-item">
+                                  <div class="info-label">Secretaria</div>
+                                  <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.secretaria_destino || 'SEMED'}</div>
+                                </div>
+                                <div class="info-item">
+                                  <div class="info-label">Solicitante</div>
+                                  <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.solicitante || 'COORDENADOR'}</div>
+                                </div>
+                                <div class="info-item">
+                                  <div class="info-label">Data da Solicitação</div>
+                                  <div style="font-size: 14px; font-weight: bold;">${g.data}</div>
+                                </div>
+                              </div>
 
-                            <script>
-                              window.onload = () => {
-                                window.print();
-                              };
-                            </script>
-                          </body>
-                        </html>
-                      `;
-                      printWindow.document.write(html);
-                      printWindow.document.close();
-                    }
-                  }}
-                  className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30"
-                >
-                  <Printer size={16} /> Imprimir Requisição
-                </button>
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th>Item / Descrição</th>
+                                    <th style="text-align: center; width: 80px;">Qtd</th>
+                                    <th style="text-align: center; width: 60px;">UND</th>
+                                    <th style="text-align: center; width: 100px;">Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  ${g.itens.map((it:any) => `
+                                    <tr>
+                                      <td style="font-weight: bold;">${it.item_nome}</td>
+                                      <td style="text-align: center; font-weight: bold;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
+                                      <td style="text-align: center;">${it.unidade_medida || 'UN'}</td>
+                                      <td style="text-align: center; font-size: 9px; font-weight: bold; color: #ea580c;">${it.status}</td>
+                                    </tr>
+                                  `).join('')}
+                                </tbody>
+                              </table>
+
+                              <div style="margin-top: 50px; border: 1px dashed #ccc; padding: 20px; font-size: 10px; color: #666;">
+                                <strong>OBSERVAÇÕES:</strong><br>
+                                Esta requisição foi gerada eletronicamente pelo Sistema Alicerce ERP. A entrega dos materiais está sujeita à disponibilidade em estoque e conferência da equipe de logística.
+                              </div>
+
+                              <div class="footer">
+                                <div>Página 1 de 1</div>
+                                <div>Alicerce ERP - Módulo de Gestão de Compras</div>
+                              </div>
+
+                              <script>
+                                window.onload = () => {
+                                  window.print();
+                                };
+                              </script>
+                            </body>
+                          </html>
+                        `;
+                        printWindow.document.write(html);
+                        printWindow.document.close();
+                      }
+                    }}
+                    className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-lg shadow-orange-600/30"
+                  >
+                    <Printer size={16} /> Imprimir Requisição
+                  </button>
+                </div>
              </div>
              <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden shadow-2xl">
                 <table className="w-full text-left">
@@ -421,17 +494,43 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                       <tr>
                          <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Produto</th>
                          <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Solicitado</th>
-                         <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Status</th>
+                         <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Entregue</th>
+                         <th className="p-10 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-center">Evolução</th>
                       </tr>
                    </thead>
                    <tbody className="divide-y divide-[var(--border)]">
-                      {selectedProtocol?.itens.map((it: any, idx: number) => (
-                         <tr key={idx} className="hover:bg-[var(--bg-base)]/30 transition-all">
-                            <td className="px-10 py-8 text-xs font-black">{it.item_nome}</td>
-                            <td className="px-10 py-8 text-center text-xs font-black">{(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
-                            <td className="px-10 py-8 text-center"><span className="px-4 py-1.5 rounded-full text-[8px] font-black uppercase bg-orange-50 text-orange-600">{it.status}</span></td>
-                         </tr>
-                      ))}
+                      {selectedProtocol?.itens.map((it: any, idx: number) => {
+                         const total = (it.quantidade || 0) + (it.quantidade_extra || 0);
+                         const entregue = it.quantidade_entregue || 0;
+                         const percentual = Math.min(100, Math.round((entregue / total) * 100));
+                         
+                         return (
+                          <tr key={idx} className="hover:bg-[var(--bg-base)]/30 transition-all">
+                             <td className="px-10 py-8">
+                                <div className="text-xs font-black">{it.item_nome}</div>
+                                <div className="text-[9px] text-[var(--text-muted)] font-bold uppercase mt-1">Status: {it.status}</div>
+                             </td>
+                             <td className="px-10 py-8 text-center text-xs font-black">{total} {it.unidade_medida}</td>
+                             <td className="px-10 py-8 text-center text-xs font-black text-green-600">{entregue} {it.unidade_medida}</td>
+                             <td className="px-10 py-8 text-center w-[250px]">
+                                <div className="flex flex-col gap-2">
+                                   <div className="flex justify-between items-center text-[9px] font-black uppercase">
+                                      <span>{percentual}% Concluído</span>
+                                      <span className={percentual === 100 ? 'text-green-600' : 'text-orange-600'}>
+                                        {entregue}/{total}
+                                      </span>
+                                   </div>
+                                   <div className="w-full h-2.5 bg-[var(--bg-base)] rounded-full overflow-hidden border border-[var(--border)] shadow-inner">
+                                      <div 
+                                        className={`h-full transition-all duration-1000 ${percentual === 100 ? 'bg-green-500' : 'bg-orange-500'}`} 
+                                        style={{ width: `${percentual}%` }}
+                                      />
+                                   </div>
+                                </div>
+                             </td>
+                          </tr>
+                         );
+                      })}
                    </tbody>
                 </table>
              </div>
