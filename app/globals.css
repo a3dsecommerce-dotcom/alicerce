@@ -283,6 +283,16 @@ body::after {
   box-shadow: 0 0 0 3px rgba(234,88,12,0.1);
 }
 
+/* Remove number input arrows */
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.no-spinner {
+  -moz-appearance: textfield;
+}
+
 textarea.input-field {
   height: auto;
   min-height: 110px;

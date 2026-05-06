@@ -69,7 +69,7 @@ export default function CatalogoTable({
                           const val = Math.min(Number(e.target.value), cotaMaxima);
                           setVolumes({...volumes, [prod.id]: val});
                         }} 
-                        className="w-24 h-12 px-2 mx-auto rounded-xl border-2 border-transparent bg-[var(--bg-base)] text-center text-sm font-black outline-none focus:border-blue-500 text-[var(--text-primary)] transition-all block relative z-30 pointer-events-auto cursor-text" 
+                        className="w-24 h-12 px-2 mx-auto rounded-xl border-2 border-transparent bg-[var(--bg-base)] text-center text-sm font-black outline-none focus:border-blue-500 text-[var(--text-primary)] transition-all block relative z-30 pointer-events-auto cursor-text no-spinner" 
                         placeholder="0" 
                       />
                     </td>
@@ -81,7 +81,7 @@ export default function CatalogoTable({
                         onChange={(e) => {
                           setVolumesExtra({...volumesExtra, [prod.id]: Number(e.target.value)});
                         }} 
-                        className="w-24 h-12 px-2 mx-auto rounded-xl border-2 border-orange-200 bg-white text-orange-600 text-center text-sm font-black outline-none focus:border-orange-500 transition-all block shadow-sm shadow-orange-500/10 relative z-30 pointer-events-auto cursor-text" 
+                        className="w-24 h-12 px-2 mx-auto rounded-xl border-2 border-orange-200 bg-white text-orange-600 text-center text-sm font-black outline-none focus:border-orange-500 transition-all block shadow-sm shadow-orange-500/10 relative z-30 pointer-events-auto cursor-text no-spinner" 
                         placeholder="0" 
                       />
                     </td>
