@@ -238,17 +238,17 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                         <div class="req-block">
                           <div class="req-header">
                             <span>PROT: ${g.protocolo}</span>
-                            <span>DATA: ${g.data}</span>
                           </div>
-                          <div class="req-meta" style="grid-template-cols: 1fr 1fr 1fr 1fr; font-weight: bold;">
+                          <div class="req-meta" style="font-weight: bold;">
                             <div><strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino || 'N/A'}</div>
-                            <div><strong>SECRETARIA:</strong> ${g.itens[0]?.secretaria_destino || 'SEMED'}</div>
+                            <div><strong>SEC:</strong> ${g.itens[0]?.secretaria_destino || 'SEMED'}</div>
                             <div><strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante || 'N/A'}</div>
-                            <div><strong>REF:</strong> ${(() => {
+                            <div><strong>MÊS REF:</strong> ${(() => {
                               const d = new Date(g.itens[0]?.data_solicitacao);
                               d.setMonth(d.getMonth() + 1);
                               return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
                             })()}</div>
+                            <div style="text-align: right;"><strong>DATA:</strong> ${g.data}</div>
                           </div>
                           <table>
                             <thead>
@@ -270,7 +270,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                               `).join('')}
                             </tbody>
                           </table>
-                          <div class="total-row">Total de itens: ${g.itens.length} | DATA PEDIDO: ${g.data}</div>
+                          <div class="total-row">Total de itens: ${g.itens.length}</div>
                         </div>
                       `).join('')}
 
@@ -349,7 +349,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                                 .logo span { color: #ea580c; }
                                 .header-info { text-align: right; font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; }
                                 .title { text-align: center; font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; padding: 8px; background: #f8f8f8; border-radius: 4px; border: 1px solid #eee; }
-                                .meta-grid { display: grid; grid-template-cols: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 25px; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fafafa; }
+                                .meta-grid { display: grid; grid-template-columns: 1.2fr 0.8fr 1fr 1fr 0.7fr; gap: 10px; margin-bottom: 25px; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fafafa; align-items: center; }
                                 .meta-item { font-size: 9px; }
                                 .meta-label { font-weight: 900; text-transform: uppercase; color: #999; font-size: 8px; margin-bottom: 2px; }
                                 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -369,12 +369,13 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                               <div class="meta-grid">
                                 <div class="meta-item"><div class="meta-label">Unidade</div><strong>${g.itens[0]?.unidade_destino}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Secretaria</div><strong>${g.itens[0]?.secretaria_destino}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Mês Ref.</div><strong>${(() => {
                                   const d = new Date(g.itens[0]?.data_solicitacao);
                                   d.setMonth(d.getMonth() + 1);
                                   return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
                                 })()}</strong></div>
-                                <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
+                                <div class="meta-item" style="text-align: right;"><div class="meta-label">Data Pedido</div><strong>${g.data}</strong></div>
                               </div>
                               <table>
                                 <thead>
@@ -401,9 +402,6 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                                   }).join('')}
                                 </tbody>
                               </table>
-
-                              <div style="margin-top: 15px; font-size: 8.5px; color: #666; font-weight: bold;">DATA SOLICITAÇÃO: ${g.data}</div>
-
                               <div class="integrity-box">
                                 <div class="integrity-title">Certificação de Integridade Alicerce ERP:</div>
                                 <div class="integrity-text">
@@ -439,7 +437,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                                 .logo span { color: #ea580c; }
                                 .header-info { text-align: right; font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; }
                                 .title { text-align: center; font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; padding: 8px; background: #f8f8f8; border-radius: 4px; border: 1px solid #eee; }
-                                .meta-grid { display: grid; grid-template-cols: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 25px; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fafafa; }
+                                .meta-grid { display: grid; grid-template-columns: 1.2fr 0.8fr 1fr 1fr 0.7fr; gap: 10px; margin-bottom: 25px; padding: 12px; border: 1px solid #eee; border-radius: 8px; background: #fafafa; align-items: center; }
                                 .meta-item { font-size: 9px; }
                                 .meta-label { font-weight: 900; text-transform: uppercase; color: #999; font-size: 8px; margin-bottom: 2px; }
                                 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -461,12 +459,13 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                               <div class="meta-grid">
                                 <div class="meta-item"><div class="meta-label">Unidade</div><strong>${g.itens[0]?.unidade_destino}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Secretaria</div><strong>${g.itens[0]?.secretaria_destino}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Mês Ref.</div><strong>${(() => {
                                   const d = new Date(g.itens[0]?.data_solicitacao);
                                   d.setMonth(d.getMonth() + 1);
                                   return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
                                 })()}</strong></div>
-                                <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
+                                <div class="meta-item" style="text-align: right;"><div class="meta-label">Data Pedido</div><strong>${g.data}</strong></div>
                               </div>
 
                               <table>
@@ -489,8 +488,6 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                                   `).join('')}
                                 </tbody>
                               </table>
-
-                              <div style="margin-top: 15px; font-size: 8.5px; color: #666; font-weight: bold;">DATA SOLICITAÇÃO: ${g.data}</div>
 
                               <div class="integrity-box">
                                 <div class="integrity-title">Certificação de Integridade Alicerce ERP:</div>
