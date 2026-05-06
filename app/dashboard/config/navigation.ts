@@ -11,18 +11,6 @@ export type NavItem = {
 
 export const ALL_NAV: NavItem[] = [
   {
-    label: 'Visão Geral',
-    icon: LayoutDashboard,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO'],
-    href: '/dashboard?module=COMMAND&tab=VISAO'
-  },
-  {
-    label: 'Operacional',
-    icon: Truck,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
-    href: '/dashboard?module=OPERACIONAL'
-  },
-  {
     label: 'Gestão de Compras',
     icon: ShoppingCart,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
@@ -39,12 +27,6 @@ export const ALL_NAV: NavItem[] = [
     icon: Users,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'RH_DP'],
     href: '/dashboard?module=RH'
-  },
-  {
-    label: 'Auditoria & Seg.',
-    icon: ShieldAlert,
-    roles: ['ADMIN', 'DIRETORIA', 'GERENTE'],
-    href: '/dashboard?module=COMMAND&tab=AUDITORIA'
   },
   {
     label: 'Gestão de Rotas',
