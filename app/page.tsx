@@ -25,6 +25,8 @@ export default function LoginPage() {
     cargo: "ASG", escolaridade: "Ensino Médio Completo", experiencia: false, ultimo_emprego: "", tempo_experiencia: "",
     // Passo 5 - Uniformes e SST
     tamanho_camisa: "M", tamanho_calca: "38", tamanho_calcado: "40", possui_nr: false, declaracao: false,
+    curriculo_file: null as File | null,
+    curriculo_url: "",
   });
 
   async function handleLogin(e: React.FormEvent) {
@@ -81,6 +83,27 @@ export default function LoginPage() {
   async function handleCadastroCandidato() {
     setLoading(true);
     try {
+      let curriculoUrl = "";
+      
+      // Upload do Currículo se existir
+      if (candidato.curriculo_file) {
+        const fileExt = candidato.curriculo_file.name.split('.').pop();
+        const fileName = `${candidato.cpf.replace(/\D/g, "")}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `resumes/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('curriculos')
+          .upload(filePath, candidato.curriculo_file);
+
+        if (uploadError) throw new Error("Erro ao enviar arquivo: " + uploadError.message);
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('curriculos')
+          .getPublicUrl(filePath);
+          
+        curriculoUrl = publicUrl;
+      }
+
       const { error } = await supabase.from('candidatos').insert([{
         nome: candidato.nome,
         data_nascimento: candidato.data_nascimento || null,
@@ -103,6 +126,7 @@ export default function LoginPage() {
         tamanho_camisa: candidato.tamanho_camisa,
         tamanho_calca: candidato.tamanho_calca,
         tamanho_calcado: parseInt(candidato.tamanho_calcado) || null,
+        curriculo_url: curriculoUrl
       }]);
       if (error) throw error;
       alert("✅ Inscrição realizada com sucesso! Entraremos em contato pelo WhatsApp.");
@@ -463,6 +487,34 @@ export default function LoginPage() {
                     <div className="input-group">
                       <label className="input-label">Calçado</label>
                       <input type="number" className="modern-input text-center" value={candidato.tamanho_calcado} onChange={e => setCandidato({...candidato, tamanho_calcado: e.target.value})} />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label className="input-label">Currículo (PDF)</label>
+                    <div className={`relative border-2 border-dashed rounded-2xl p-6 transition-all ${candidato.curriculo_file ? 'border-green-500 bg-green-500/5' : 'border-[var(--border)] hover:border-orange-500 bg-white/5'}`}>
+                      <input 
+                        type="file" 
+                        accept=".pdf" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && file.type === 'application/pdf') {
+                            setCandidato({...candidato, curriculo_file: file});
+                          } else {
+                            alert("Por favor, selecione um arquivo PDF.");
+                          }
+                        }}
+                      />
+                      <div className="flex flex-col items-center gap-2 text-center pointer-events-none">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${candidato.curriculo_file ? 'bg-green-500 text-white' : 'bg-orange-600/10 text-orange-600'}`}>
+                          {candidato.curriculo_file ? <CheckCircle2 size={20} /> : <Zap size={20} />}
+                        </div>
+                        <span className="text-xs font-black uppercase text-[var(--text-primary)]">
+                          {candidato.curriculo_file ? candidato.curriculo_file.name : "Clique ou arraste seu PDF"}
+                        </span>
+                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Tamanho máx: 5MB</p>
+                      </div>
                     </div>
                   </div>
 
