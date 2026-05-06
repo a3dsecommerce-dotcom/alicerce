@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Trophy, Target, Plus, Clock, CheckCircle2, AlertCircle, Trash2, Send } from "lucide-react";
+import { Trophy, Target, Plus, Clock, CheckCircle, AlertTriangle, Trash2, Send } from "lucide-react";
 import { toast } from "sonner";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
@@ -113,7 +113,7 @@ export default function MissoesManager() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => toggleStatus(missao.id, missao.ativa)} className="p-2 hover:bg-[var(--bg-base)] rounded-lg transition-colors">
-                      {missao.ativa ? <CheckCircle2 size={16} className="text-green-500" /> : <AlertCircle size={16} className="text-slate-400" />}
+                      {missao.ativa ? <CheckCircle size={16} className="text-green-500" /> : <AlertTriangle size={16} className="text-slate-400" />}
                     </button>
                     <button onClick={() => deleteMissao(missao.id)} className="p-2 hover:bg-red-500/10 rounded-lg transition-colors text-red-500 opacity-0 group-hover:opacity-100">
                       <Trash2 size={16} />
