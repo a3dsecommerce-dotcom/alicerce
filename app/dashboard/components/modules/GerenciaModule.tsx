@@ -16,7 +16,7 @@ import MissoesManager from "./gerencia/MissoesManager";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES">("MISSOES");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -210,43 +210,8 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-[var(--bg-base)] p-2 rounded-2xl border border-[var(--border)]">
-          <button 
-            onClick={() => setActiveTab("VISAO")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "VISAO" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <LayoutDashboard size={16} /> Visão Geral
-          </button>
-          <button 
-            onClick={() => setActiveTab("VOLANTES")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "VOLANTES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <ClipboardList size={16} /> Escala
-          </button>
-          <button 
-            onClick={() => setActiveTab("ROTAS")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "ROTAS" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <Truck size={16} /> Unidades
-          </button>
-          <button 
-            onClick={() => setActiveTab("MISSOES")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "MISSOES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <Trophy size={16} /> Missões
-          </button>
-          <button 
-            onClick={() => setActiveTab("AUDITORIA")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "AUDITORIA" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <ShieldAlert size={16} /> Auditoria
-          </button>
-          <button 
-            onClick={() => setActiveTab("DB")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <Database size={16} /> Dados
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Navegação interna simplificada conforme solicitado: Foco em Missões */}
         </div>
       </div>
 
