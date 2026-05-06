@@ -152,7 +152,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data Inicial</label>
               <input 
                 type="date" 
-                className="input-field w-full h-14 font-bold"
+                className="input-field w-full h-14 font-bold bg-white/10 dark:bg-white/5 pointer-events-auto relative z-20 focus:ring-2 focus:ring-orange-500"
                 value={reportFilter.start}
                 onChange={e => setReportFilter({...reportFilter, start: e.target.value})}
               />
@@ -161,7 +161,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data Final</label>
               <input 
                 type="date" 
-                className="input-field w-full h-14 font-bold"
+                className="input-field w-full h-14 font-bold bg-white/10 dark:bg-white/5 pointer-events-auto relative z-20 focus:ring-2 focus:ring-orange-500"
                 value={reportFilter.end}
                 onChange={e => setReportFilter({...reportFilter, end: e.target.value})}
               />
@@ -171,7 +171,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Protocolo Específico (Opcional)</label>
             <input 
-              className="input-field w-full h-14 font-bold"
+              className="input-field w-full h-14 font-bold bg-white/10 dark:bg-white/5 pointer-events-auto relative z-20 focus:ring-2 focus:ring-orange-500"
               placeholder="Ex: REQ-123456"
               value={reportFilter.protocol}
               onChange={e => setReportFilter({...reportFilter, protocol: e.target.value.toUpperCase()})}
