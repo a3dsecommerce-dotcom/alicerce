@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, Truck, Zap, AlertTriangle, Clock, Settings, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, ShoppingBag, Truck, Zap, AlertTriangle, Clock, Settings, MapPin } from 'lucide-react';
 
 export type NavItem = {
   href?: string;
