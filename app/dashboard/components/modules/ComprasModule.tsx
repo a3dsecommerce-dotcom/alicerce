@@ -200,60 +200,67 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                     <head>
                       <title>Relatório Consolidado de Compras</title>
                       <style>
-                        body { font-family: sans-serif; padding: 40px; color: #333; }
-                        .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-                        .logo { font-size: 28px; font-weight: 900; letter-spacing: -1px; }
-                        .report-title { text-align: center; font-size: 18px; font-weight: 900; text-transform: uppercase; margin-bottom: 40px; padding: 10px; background: #f5f5f5; }
-                        .summary { margin-bottom: 30px; font-size: 12px; font-weight: bold; }
-                        .req-block { margin-bottom: 50px; page-break-inside: avoid; }
-                        .req-header { background: #000; color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-                        th { background: #eee; text-align: left; padding: 10px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
-                        td { padding: 10px; font-size: 11px; border: 1px solid #ddd; }
-                        .total-row { background: #fdfdfd; font-weight: bold; text-align: right; padding: 10px; font-size: 10px; border: 1px solid #ddd; border-top: none; }
-                        .footer { position: fixed; bottom: 0; left: 0; right: 0; font-size: 9px; text-align: center; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+                        @page { size: A4 portrait; margin: 12mm; }
+                        body { font-family: 'Inter', sans-serif; padding: 0; color: #1a1a1a; line-height: 1.4; }
+                        .header { border-bottom: 3px solid #ea580c; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .logo { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+                        .logo span { color: #ea580c; }
+                        .header-info { text-align: right; font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; }
+                        .report-title { text-align: center; font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; padding: 8px; background: #f8f8f8; border-radius: 4px; border: 1px solid #eee; }
+                        .summary { margin-bottom: 20px; font-size: 10px; font-weight: 700; padding: 10px; border-left: 4px solid #ea580c; background: #fffaf5; }
+                        .req-block { margin-bottom: 30px; page-break-inside: avoid; border: 1px solid #eee; border-radius: 6px; overflow: hidden; }
+                        .req-header { background: #1a1a1a; color: #fff; padding: 6px 15px; display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; }
+                        .req-meta { padding: 8px 15px; font-size: 9px; background: #fafafa; border-bottom: 1px solid #eee; display: grid; grid-template-cols: 1fr 1fr 1fr; gap: 10px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th { background: #f4f4f4; text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; border-bottom: 2px solid #ddd; font-weight: 800; }
+                        td { padding: 8px 12px; font-size: 10px; border-bottom: 1px solid #eee; }
+                        .total-row { background: #fff; font-weight: 800; text-align: right; padding: 8px 12px; font-size: 9px; text-transform: uppercase; color: #666; }
+                        .integrity-box { margin-top: 40px; border: 1px solid #ddd; padding: 15px; border-radius: 6px; background: #fcfcfc; }
+                        .integrity-title { font-size: 9px; font-weight: 900; color: #ea580c; margin-bottom: 5px; text-transform: uppercase; }
+                        .integrity-text { font-size: 8.5px; line-height: 1.5; color: #444; font-style: italic; }
+                        .footer { position: fixed; bottom: 10mm; left: 12mm; right: 12mm; font-size: 8px; text-align: center; color: #aaa; border-top: 1px solid #eee; pt: 5px; }
                       </style>
                     </head>
                     <body>
                       <div class="header">
-                        <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
-                        <div style="text-align: right; font-size: 10px; font-weight: bold;">GERADO EM: ${new Date().toLocaleString()}</div>
+                        <div class="logo">ALICERCE <span>ERP</span></div>
+                        <div class="header-info">EMISSÃO: ${new Date().toLocaleString()} | RELATÓRIO GERENCIAL</div>
                       </div>
 
-                      <div class="report-title">Relatório de Requisições de Compras</div>
+                      <div class="report-title">Relatório Consolidado de Requisições</div>
                       
                       <div class="summary">
-                        PERÍODO: ${reportFilter.start || 'INÍCIO'} ATÉ ${reportFilter.end || 'FIM'}<br>
-                        TOTAL DE REQUISIÇÕES: ${filtered.length}
+                        FILTRO: ${reportFilter.start || 'INÍCIO'} ➔ ${reportFilter.end || 'FIM'}<br>
+                        TOTAL DE REQUISIÇÕES LOCALIZADAS: ${filtered.length}
                       </div>
 
                       ${filtered.map(g => `
                         <div class="req-block">
                           <div class="req-header">
-                            <span>PROTOCOLO: ${g.protocolo}</span>
+                            <span>PROT: ${g.protocolo}</span>
                             <span>DATA: ${g.data}</span>
                           </div>
-                          <div style="padding: 10px; font-size: 10px; border: 1px solid #ddd; border-top: none;">
-                            <strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino || 'N/A'} | 
-                            <strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante || 'N/A'} |
-                            <strong>TIPO:</strong> ${g.tipo_pedido}
+                          <div class="req-meta">
+                            <div><strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino || 'N/A'}</div>
+                            <div><strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante || 'N/A'}</div>
+                            <div><strong>TIPO:</strong> ${g.tipo_pedido}</div>
                           </div>
                           <table>
                             <thead>
                               <tr>
-                                <th>Item</th>
-                                <th style="text-align: center;">Qtd</th>
-                                <th style="text-align: center;">Und</th>
-                                <th style="text-align: center;">Status</th>
+                                <th>Item / Descrição</th>
+                                <th style="text-align: center; width: 60px;">Qtd</th>
+                                <th style="text-align: center; width: 60px;">Und</th>
+                                <th style="text-align: center; width: 100px;">Status</th>
                               </tr>
                             </thead>
                             <tbody>
                               ${g.itens.map((it:any) => `
                                 <tr>
-                                  <td>${it.item_nome}</td>
-                                  <td style="text-align: center;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
+                                  <td style="font-weight: 700;">${it.item_nome}</td>
+                                  <td style="text-align: center; font-weight: 800;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
                                   <td style="text-align: center;">${it.unidade_medida || 'UN'}</td>
-                                  <td style="text-align: center; color: #ea580c; font-weight: bold;">${it.status}</td>
+                                  <td style="text-align: center; color: #ea580c; font-weight: 800; font-size: 9px;">${it.status}</td>
                                 </tr>
                               `).join('')}
                             </tbody>
@@ -262,11 +269,16 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                         </div>
                       `).join('')}
 
-                      <div class="footer">Este documento é um relatório gerencial do sistema Alicerce ERP.</div>
+                      <div class="integrity-box">
+                        <div class="integrity-title">Certificação de Integridade Alicerce ERP:</div>
+                        <div class="integrity-text">
+                          Este documento foi gerado e auditado automaticamente pelo ecossistema Alicerce ERP. As informações aqui contidas refletem dados oficiais consolidados em tempo real, assegurando máxima transparência, agilidade e segurança institucional. Todas as operações logísticas são protegidas por logs de auditoria contínua e rotinas de redundância com backups diários, garantindo a total rastreabilidade e integridade jurídica das informações apresentadas.
+                        </div>
+                      </div>
 
-                      <script>
-                        window.onload = () => { window.print(); };
-                      </script>
+                      <div class="footer">Alicerce ERP - Módulo de Gestão de Compras | Impresso por ${user.nome || user.name}</div>
+
+                      <script>window.onload = () => { window.print(); };</script>
                     </body>
                   </html>
                 `;
@@ -325,37 +337,43 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                             <head>
                               <title>Acompanhamento de Entrega - ${g.protocolo}</title>
                               <style>
-                                body { font-family: sans-serif; padding: 40px; color: #333; }
-                                .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-                                .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
-                                .title { text-align: center; text-transform: uppercase; font-weight: 900; margin-bottom: 40px; }
-                                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                                th { background: #f5f5f5; text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
-                                td { padding: 12px; font-size: 11px; border: 1px solid #ddd; }
-                                .progress-container { width: 100px; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
-                                .progress-bar { height: 100%; background: #ea580c; }
+                                @page { size: A4 portrait; margin: 12mm; }
+                                body { font-family: sans-serif; padding: 0; color: #1a1a1a; line-height: 1.4; }
+                                .header { border-bottom: 3px solid #ea580c; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+                                .logo { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+                                .logo span { color: #ea580c; }
+                                .header-info { text-align: right; font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; }
+                                .title { text-align: center; font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; padding: 8px; background: #f8f8f8; border-radius: 4px; border: 1px solid #eee; }
+                                .meta-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 15px; margin-bottom: 25px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+                                .meta-item { font-size: 10px; }
+                                .meta-label { font-weight: 900; text-transform: uppercase; color: #666; font-size: 8.5px; margin-bottom: 2px; }
+                                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                                th { background: #f4f4f4; text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; border-bottom: 2px solid #ddd; font-weight: 800; }
+                                td { padding: 10px 12px; font-size: 10px; border-bottom: 1px solid #eee; }
+                                .integrity-box { margin-top: 40px; border: 1px solid #ddd; padding: 15px; border-radius: 6px; background: #fcfcfc; }
+                                .integrity-title { font-size: 9px; font-weight: 900; color: #ea580c; margin-bottom: 5px; text-transform: uppercase; }
+                                .integrity-text { font-size: 8.5px; line-height: 1.5; color: #444; font-style: italic; }
                               </style>
                             </head>
                             <body>
                               <div class="header">
-                                <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
-                                <div style="text-align: right">
-                                  <div style="font-weight: bold; font-size: 14px;">PROT: ${g.protocolo}</div>
-                                  <div style="font-size: 10px; color: #666;">EMITIDO EM: ${new Date().toLocaleString()}</div>
-                                </div>
+                                <div class="logo">ALICERCE <span>ERP</span></div>
+                                <div class="header-info">PROT: ${g.protocolo} | EVOLUÇÃO LOGÍSTICA</div>
                               </div>
                               <div class="title">Relatório de Evolução de Entrega</div>
-                              <div style="margin-bottom: 30px; font-size: 12px;">
-                                <strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino}<br>
-                                <strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante}
+                              <div class="meta-grid">
+                                <div class="meta-item"><div class="meta-label">Unidade de Destino</div><strong>${g.itens[0]?.unidade_destino}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Secretaria</div><strong>${g.itens[0]?.secretaria_destino}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Data Solicitação</div><strong>${g.data}</strong></div>
                               </div>
                               <table>
                                 <thead>
                                   <tr>
-                                    <th>Item</th>
-                                    <th style="text-align: center;">Solicitado</th>
-                                    <th style="text-align: center;">Entregue</th>
-                                    <th style="text-align: center;">Evolução</th>
+                                    <th>Item / Descrição</th>
+                                    <th style="text-align: center; width: 70px;">Ped</th>
+                                    <th style="text-align: center; width: 70px;">Entr</th>
+                                    <th style="text-align: center; width: 70px;">%</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -365,15 +383,22 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                                     const perc = Math.min(100, Math.round((entregue / total) * 100));
                                     return `
                                       <tr>
-                                        <td>${it.item_nome}</td>
-                                        <td style="text-align: center;">${total}</td>
-                                        <td style="text-align: center;">${entregue}</td>
-                                        <td style="text-align: center;">${perc}%</td>
+                                        <td style="font-weight: 700;">${it.item_nome}</td>
+                                        <td style="text-align: center; font-weight: 700;">${total}</td>
+                                        <td style="text-align: center; color: #16a34a; font-weight: 800;">${entregue}</td>
+                                        <td style="text-align: center; font-weight: 900;">${perc}%</td>
                                       </tr>
                                     `;
                                   }).join('')}
                                 </tbody>
                               </table>
+
+                              <div class="integrity-box">
+                                <div class="integrity-title">Certificação de Integridade Alicerce ERP:</div>
+                                <div class="integrity-text">
+                                  Este documento foi gerado e auditado automaticamente pelo ecossistema Alicerce ERP. As informações aqui contidas refletem dados oficiais consolidados em tempo real, assegurando máxima transparência, agilidade e segurança institucional. Todas as operações logísticas são protegidas por logs de auditoria contínua e rotinas de redundância com backups diários, garantindo a total rastreabilidade e integridade jurídica das informações apresentadas.
+                                </div>
+                              </div>
                               <script>window.onload = () => { window.print(); };</script>
                             </body>
                           </html>
@@ -396,85 +421,68 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                             <head>
                               <title>Requisição ${g.protocolo}</title>
                               <style>
-                                body { font-family: sans-serif; padding: 40px; color: #333; }
-                                .header { border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-                                .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
-                                .title { text-align: center; text-transform: uppercase; font-weight: 900; margin-bottom: 40px; }
-                                .info-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
-                                .info-item { font-size: 12px; }
-                                .info-label { font-weight: bold; text-transform: uppercase; color: #666; font-size: 10px; }
-                                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                                th { background: #f5f5f5; text-align: left; padding: 12px; font-size: 10px; text-transform: uppercase; border: 1px solid #ddd; }
-                                td { padding: 12px; font-size: 11px; border: 1px solid #ddd; }
-                                .footer { margin-top: 60px; display: flex; justify-content: space-between; border-top: 1px solid #eee; pt: 20px; font-size: 10px; color: #999; }
+                                @page { size: A4 portrait; margin: 12mm; }
+                                body { font-family: sans-serif; padding: 0; color: #1a1a1a; line-height: 1.4; }
+                                .header { border-bottom: 3px solid #ea580c; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+                                .logo { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+                                .logo span { color: #ea580c; }
+                                .header-info { text-align: right; font-size: 9px; font-weight: 700; color: #666; text-transform: uppercase; }
+                                .title { text-align: center; font-size: 14px; font-weight: 900; text-transform: uppercase; margin-bottom: 20px; padding: 8px; background: #f8f8f8; border-radius: 4px; border: 1px solid #eee; }
+                                .meta-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 15px; margin-bottom: 25px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+                                .meta-item { font-size: 10px; }
+                                .meta-label { font-weight: 900; text-transform: uppercase; color: #666; font-size: 8.5px; margin-bottom: 2px; }
+                                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                                th { background: #f4f4f4; text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; border-bottom: 2px solid #ddd; font-weight: 800; }
+                                td { padding: 10px 12px; font-size: 10px; border-bottom: 1px solid #eee; }
+                                .integrity-box { margin-top: 40px; border: 1px solid #ddd; padding: 15px; border-radius: 6px; background: #fcfcfc; }
+                                .integrity-title { font-size: 9px; font-weight: 900; color: #ea580c; margin-bottom: 5px; text-transform: uppercase; }
+                                .integrity-text { font-size: 8.5px; line-height: 1.5; color: #444; font-style: italic; }
                               </style>
                             </head>
                             <body>
                               <div class="header">
-                                <div class="logo">ALICERCE <span style="color: #ea580c">ERP</span></div>
-                                <div style="text-align: right">
-                                  <div style="font-weight: bold; font-size: 14px;">PROT: ${g.protocolo}</div>
-                                  <div style="font-size: 10px; color: #666;">EMITIDO EM: ${new Date().toLocaleString()}</div>
-                                </div>
+                                <div class="logo">ALICERCE <span>ERP</span></div>
+                                <div class="header-info">PROT: ${g.protocolo} | REQUISIÇÃO OFICIAL</div>
                               </div>
 
                               <div class="title">Requisição de Materiais (${g.tipo_pedido})</div>
 
-                              <div class="info-grid">
-                                <div class="info-item">
-                                  <div class="info-label">Unidade de Destino</div>
-                                  <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.unidade_destino || 'UNIDADE NÃO INFORMADA'}</div>
-                                </div>
-                                <div class="info-item">
-                                  <div class="info-label">Secretaria</div>
-                                  <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.secretaria_destino || 'SEMED'}</div>
-                                </div>
-                                <div class="info-item">
-                                  <div class="info-label">Solicitante</div>
-                                  <div style="font-size: 14px; font-weight: bold;">${g.itens[0]?.solicitante || 'COORDENADOR'}</div>
-                                </div>
-                                <div class="info-item">
-                                  <div class="info-label">Data da Solicitação</div>
-                                  <div style="font-size: 14px; font-weight: bold;">${g.data}</div>
-                                </div>
+                              <div class="meta-grid">
+                                <div class="meta-item"><div class="meta-label">Unidade de Destino</div><strong>${g.itens[0]?.unidade_destino}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Secretaria</div><strong>${g.itens[0]?.secretaria_destino}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Data Solicitação</div><strong>${g.data}</strong></div>
                               </div>
 
                               <table>
                                 <thead>
                                   <tr>
                                     <th>Item / Descrição</th>
-                                    <th style="text-align: center; width: 80px;">Qtd</th>
-                                    <th style="text-align: center; width: 60px;">UND</th>
+                                    <th style="text-align: center; width: 70px;">Qtd</th>
+                                    <th style="text-align: center; width: 70px;">Und</th>
                                     <th style="text-align: center; width: 100px;">Status</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   ${g.itens.map((it:any) => `
                                     <tr>
-                                      <td style="font-weight: bold;">${it.item_nome}</td>
-                                      <td style="text-align: center; font-weight: bold;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
+                                      <td style="font-weight: 700;">${it.item_nome}</td>
+                                      <td style="text-align: center; font-weight: 800;">${(it.quantidade || 0) + (it.quantidade_extra || 0)}</td>
                                       <td style="text-align: center;">${it.unidade_medida || 'UN'}</td>
-                                      <td style="text-align: center; font-size: 9px; font-weight: bold; color: #ea580c;">${it.status}</td>
+                                      <td style="text-align: center; font-size: 9px; font-weight: 800; color: #ea580c;">${it.status}</td>
                                     </tr>
                                   `).join('')}
                                 </tbody>
                               </table>
 
-                              <div style="margin-top: 50px; border: 1px dashed #ccc; padding: 20px; font-size: 10px; color: #666;">
-                                <strong>OBSERVAÇÕES:</strong><br>
-                                Esta requisição foi gerada eletronicamente pelo Sistema Alicerce ERP. A entrega dos materiais está sujeita à disponibilidade em estoque e conferência da equipe de logística.
+                              <div class="integrity-box">
+                                <div class="integrity-title">Certificação de Integridade Alicerce ERP:</div>
+                                <div class="integrity-text">
+                                  Este documento foi gerado e auditado automaticamente pelo ecossistema Alicerce ERP. As informações aqui contidas refletem dados oficiais consolidados em tempo real, assegurando máxima transparência, agilidade e segurança institucional. Todas as operações logísticas são protegidas por logs de auditoria contínua e rotinas de redundância com backups diários, garantindo a total rastreabilidade e integridade jurídica das informações apresentadas.
+                                </div>
                               </div>
 
-                              <div class="footer">
-                                <div>Página 1 de 1</div>
-                                <div>Alicerce ERP - Módulo de Gestão de Compras</div>
-                              </div>
-
-                              <script>
-                                window.onload = () => {
-                                  window.print();
-                                };
-                              </script>
+                              <script>window.onload = () => { window.print(); };</script>
                             </body>
                           </html>
                         `;
