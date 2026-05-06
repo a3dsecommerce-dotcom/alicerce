@@ -244,7 +244,11 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                             <div><strong>UNIDADE:</strong> ${g.itens[0]?.unidade_destino || 'N/A'}</div>
                             <div><strong>SECRETARIA:</strong> ${g.itens[0]?.secretaria_destino || 'SEMED'}</div>
                             <div><strong>SOLICITANTE:</strong> ${g.itens[0]?.solicitante || 'N/A'}</div>
-                            <div><strong>REF:</strong> ${new Date(g.itens[0]?.data_solicitacao).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</div>
+                            <div><strong>REF:</strong> ${(() => {
+                              const d = new Date(g.itens[0]?.data_solicitacao);
+                              d.setMonth(d.getMonth() + 1);
+                              return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+                            })()}</div>
                           </div>
                           <table>
                             <thead>
@@ -266,7 +270,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                               `).join('')}
                             </tbody>
                           </table>
-                          <div class="total-row">Total de itens: ${g.itens.length} | DATA: ${g.data}</div>
+                          <div class="total-row">Total de itens: ${g.itens.length} | DATA PEDIDO: ${g.data}</div>
                         </div>
                       `).join('')}
 
@@ -365,7 +369,11 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                               <div class="meta-grid">
                                 <div class="meta-item"><div class="meta-label">Unidade</div><strong>${g.itens[0]?.unidade_destino}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Secretaria</div><strong>${g.itens[0]?.secretaria_destino}</strong></div>
-                                <div class="meta-item"><div class="meta-label">Mês Ref.</div><strong>${new Date(g.itens[0]?.data_solicitacao).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Mês Ref.</div><strong>${(() => {
+                                  const d = new Date(g.itens[0]?.data_solicitacao);
+                                  d.setMonth(d.getMonth() + 1);
+                                  return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+                                })()}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
                               </div>
                               <table>
@@ -453,7 +461,11 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                               <div class="meta-grid">
                                 <div class="meta-item"><div class="meta-label">Unidade</div><strong>${g.itens[0]?.unidade_destino}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Secretaria</div><strong>${g.itens[0]?.secretaria_destino}</strong></div>
-                                <div class="meta-item"><div class="meta-label">Mês Ref.</div><strong>${new Date(g.itens[0]?.data_solicitacao).toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase()}</strong></div>
+                                <div class="meta-item"><div class="meta-label">Mês Ref.</div><strong>${(() => {
+                                  const d = new Date(g.itens[0]?.data_solicitacao);
+                                  d.setMonth(d.getMonth() + 1);
+                                  return d.toLocaleString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+                                })()}</strong></div>
                                 <div class="meta-item"><div class="meta-label">Solicitante</div><strong>${g.itens[0]?.solicitante}</strong></div>
                               </div>
 
