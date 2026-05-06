@@ -95,6 +95,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
    const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado" | "epi_recebedor">("interessado");
 
+   // MISSIONS STATE (Top level to avoid Error #310)
+   const [missoesAtivas, setMissoesAtivas] = useState<any[]>([]);
+   const [selectedMissao, setSelectedMissao] = useState<any>(null);
+   const [respostasMissao, setRespostasMissao] = useState<any>({});
+   const [submittingMissao, setSubmittingMissao] = useState(false);
+
    const selecionarColab = (colab: any) => {
      if (campoBuscaAtivo === "substituto") {
        setInformativo({
@@ -1606,36 +1612,33 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     </div>
   );
 
-  const renderMyMissions = () => {
-    const [missoesAtivas, setMissoesAtivas] = useState<any[]>([]);
-    const [selectedMissao, setSelectedMissao] = useState<any>(null);
-    const [respostas, setRespostas] = useState<any>({});
-    const [submitting, setSubmitting] = useState(false);
+  const fetchMissions = async () => {
+    const { data: activeMissoes } = await supabase.from('missoes').select('*').eq('ativa', true).order('created_at', { ascending: false });
+    const { data: myAnswers } = await supabase.from('missoes_respostas').select('*').eq('usuario_id', user.id);
+    
+    const combined = activeMissoes?.map(m => ({
+      ...m,
+      concluida: myAnswers?.some(ans => ans.missao_id === m.id && ans.status === 'CONCLUIDO')
+    })) || [];
 
-    useEffect(() => {
+    setMissoesAtivas(combined);
+  };
+
+  useEffect(() => {
+    if (activeTab === "MY_MISSIONS") {
       fetchMissions();
-    }, []);
+    }
+  }, [activeTab]);
 
-    const fetchMissions = async () => {
-      const { data: activeMissoes } = await supabase.from('missoes').select('*').eq('ativa', true).order('created_at', { ascending: false });
-      const { data: myAnswers } = await supabase.from('missoes_respostas').select('*').eq('usuario_id', user.id);
-      
-      const combined = activeMissoes?.map(m => ({
-        ...m,
-        concluida: myAnswers?.some(ans => ans.missao_id === m.id && ans.status === 'CONCLUIDO')
-      })) || [];
-
-      setMissoesAtivas(combined);
-    };
-
+  const renderMyMissions = () => {
     const handleAnswer = async () => {
       if (!selectedMissao) return;
-      setSubmitting(true);
+      setSubmittingMissao(true);
       
       const { error } = await supabase.from('missoes_respostas').upsert([{
         missao_id: selectedMissao.id,
         usuario_id: user.id,
-        respostas,
+        respostas: respostasMissao,
         status: 'CONCLUIDO',
         updated_at: new Date().toISOString()
       }], { onConflict: 'missao_id,usuario_id' });
@@ -1647,7 +1650,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       } else {
         toast.error("Erro ao enviar: " + error.message);
       }
-      setSubmitting(false);
+      setSubmittingMissao(false);
     };
 
     return (
@@ -1676,7 +1679,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
                 <button 
                   disabled={m.concluida}
-                  onClick={() => { setSelectedMissao(m); setRespostas({}); }}
+                  onClick={() => { setSelectedMissao(m); setRespostasMissao({}); }}
                   className={`w-full mt-8 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${m.concluida ? 'bg-green-500/10 text-green-600 cursor-default' : 'bg-orange-600 text-white shadow-xl shadow-orange-600/20 hover:scale-[1.02]'}`}
                 >
                   {m.concluida ? "Missão Cumprida" : <><Trophy size={16}/> Aceitar Missão</>}
@@ -1699,21 +1702,21 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                   <div key={idx} className="flex items-center justify-between p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
                     <span className="text-xs font-black uppercase">{item.task}</span>
                     <button 
-                      onClick={() => setRespostas({...respostas, [item.task]: !respostas[item.task]})}
-                      className={`w-14 h-8 rounded-lg flex items-center justify-center transition-all ${respostas[item.task] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}
+                      onClick={() => setRespostasMissao({...respostasMissao, [item.task]: !respostasMissao[item.task]})}
+                      className={`w-14 h-8 rounded-lg flex items-center justify-center transition-all ${respostasMissao[item.task] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}`}
                     >
-                      {respostas[item.task] ? 'OK' : 'Pendente'}
+                      {respostasMissao[item.task] ? 'OK' : 'Pendente'}
                     </button>
                   </div>
                 ))}
               </div>
 
               <button 
-                disabled={submitting}
+                disabled={submittingMissao}
                 onClick={handleAnswer}
                 className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3"
               >
-                {submitting ? "Sincronizando..." : "Concluir Missão e Enviar Evidências"}
+                {submittingMissao ? "Sincronizando..." : "Concluir Missão e Enviar Evidências"}
               </button>
             </div>
           </AdaptiveModal>
