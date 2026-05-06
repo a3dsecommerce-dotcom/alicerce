@@ -78,6 +78,8 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
     
     if (itensParaPedir.length === 0) return toast.warning("Selecione quantidades antes de enviar.");
     
+    const batchProtocol = `REQ-${Math.floor(100000 + Math.random() * 900000)}`;
+    
     const payload = itensParaPedir.map(id => {
       const item = catalogo.find(c => String(c.id) === id);
       return {
@@ -90,7 +92,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
         status: 'SOLICITADO',
         item_nome: item?.item || 'Item',
         unidade_medida: item?.unidade_medida || 'UN',
-        protocolo: `REQ-${Math.floor(100000 + Math.random() * 900000)}`,
+        protocolo: batchProtocol,
         tipo_item: item?.categoria || 'SUPRIMENTO',
         tipo_pedido: tipoPedido,
         data_solicitacao: new Date().toISOString(),
