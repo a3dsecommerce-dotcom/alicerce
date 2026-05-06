@@ -55,6 +55,7 @@ export default function AdaptiveModal({ title, isOpen, onClose, children, width 
           /* Desktop: Modal style */
           lg:rounded-2xl lg:w-auto lg:h-auto
         `}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Drag Handle Indicator */}
         <div className="lg:hidden flex justify-center py-3">
