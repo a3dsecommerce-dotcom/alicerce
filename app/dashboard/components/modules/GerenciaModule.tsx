@@ -89,7 +89,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     if (initialTab) {
       setActiveTab(initialTab.toUpperCase() as any);
     } else {
-      setActiveTab("VISAO");
+      setActiveTab("MISSOES");
     }
   }, [initialTab]);
 
