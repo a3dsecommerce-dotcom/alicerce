@@ -155,7 +155,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {sidebarOpen && (
             <div className="overflow-hidden animate-fade-in">
               <div className="text-[1rem] font-black text-[var(--text-primary)] leading-none">Alicerce</div>
-              <div className="text-[0.65rem] font-bold text-[var(--brand)] tracking-widest uppercase mt-1">CRM Operacional</div>
+              <div className="text-[0.65rem] font-bold text-[var(--brand)] tracking-widest uppercase mt-1">ERP Operacional</div>
             </div>
           )}
         </div>
