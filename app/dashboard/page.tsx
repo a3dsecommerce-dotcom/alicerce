@@ -189,18 +189,7 @@ function CockpitContent() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex bg-[var(--bg-base)] p-1 rounded-xl border border-[var(--border)] overflow-x-auto max-w-[500px] custom-scrollbar flex-nowrap">
-             {filteredModules.map(m => (
-               <button 
-                key={m.id}
-                onClick={() => handleModuleChange(m.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-[0.7rem] font-black uppercase tracking-wider transition-all whitespace-nowrap ${activeModule === m.id ? 'bg-[var(--brand)] text-white shadow-md' : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)]'}`}
-               >
-                 <m.icon size={14} />
-                 <span>{m.label}</span>
-               </button>
-             ))}
-          </div>
+          {/* Módulos agora são acessados exclusivamente via Sidebar para evitar redundância */}
         </div>
       </div>
 
