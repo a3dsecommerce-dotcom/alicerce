@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   ShoppingBag, Truck, Package, User, Send, Box, Activity, Clock
 } from "lucide-react";
