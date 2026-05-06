@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  Shield, Settings, Database, Loader, MapPin, Plus, Building2, User, Phone, Map, Users, Search, Truck
+  Shield, Settings, Database, Loader, MapPin, Plus, Building2, User, Phone, Map, Users, Search, Truck,
+  LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target
 } from "lucide-react";
 import { useGerenciaData } from "./gerencia/useGerenciaData";
 import TableSkeleton from "@/components/ui/TableSkeleton";
@@ -12,7 +13,6 @@ import UnidadesTable from "./operacional/UnidadesTable";
 import VolantesEscala from "./rh/VolantesEscala";
 import VisaoGeral from "./gerencia/VisaoGeral";
 import MissoesManager from "./gerencia/MissoesManager";
-import { LayoutDashboard, Truck, ClipboardList, Database, ShieldAlert, Trophy, Target } from "lucide-react";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
