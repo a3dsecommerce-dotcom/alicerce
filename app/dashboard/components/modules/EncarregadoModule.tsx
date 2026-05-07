@@ -375,13 +375,19 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
   const handleSaveInformativo = async () => {
     setSaving(true);
+    
+    // Tratamento para evitar "invalid input syntax for type uuid" com strings vazias
+    const payload = {
+      ...informativo,
+      colaborador_substituto_id: informativo.colaborador_substituto_id || null,
+      colaborador_ausente_id: informativo.colaborador_ausente_id || null,
+      criado_por_id: user.id,
+      criado_por_nome: user.nome
+    };
+
     const { error } = await supabase
       .from('informativos_operacionais')
-      .insert([{
-        ...informativo,
-        criado_por_id: user.id,
-        criado_por_nome: user.nome
-      }]);
+      .insert([payload]);
 
     if (!error) {
       alert("Informativo registrado com sucesso!");
