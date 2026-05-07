@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import AdaptiveModal from '@/components/ui/AdaptiveModal';
 import { supabase } from '@/lib/supabase';
 import { n8n } from '@/lib/n8n';
+import { OfflineSync } from "@/lib/offlineSync";
 import { Loader, Send, AlertTriangle, Package, User, CheckCircle2, ChevronRight, ChevronLeft, MapPin, Truck, ShieldCheck } from 'lucide-react';
 
 export default function GlobalActionsModals({ isOpen, onClose, modalActive, user: propUser }: any) {
@@ -379,22 +380,27 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
                 }
 
                 try {
-                  await supabase.from('checkins_operacionais').insert({
+                  const result = await OfflineSync.insertSafe('checkins_operacionais', {
                     usuario_id: user?.id,
                     usuario_nome: user?.nome || "Usuário Mobile",
                     latitude: lat,
                     longitude: lng,
                     dispositivo: `Unidade: ${checkin.unidade} | Obs: ${checkin.observacao}`
                   });
+
+                  await OfflineSync.triggerSafe('checkin-fiscalizacao', { ...checkin, usuario: user?.nome, lat, lng, timestamp: new Date() });
+                  
+                  setLoading(false);
+                  if (result.offline) {
+                    alert("⚠️ Você está offline. Check-in salvo localmente e será sincronizado quando houver internet.");
+                  } else {
+                    alert("✅ Check-in geolocalizado com sucesso! Sua presença foi registrada no banco de dados.");
+                  }
+                  onClose();
                 } catch (dbError) {
                   console.error("Erro ao salvar checkin", dbError);
+                  setLoading(false);
                 }
-
-                n8n.trigger('checkin-fiscalizacao', { ...checkin, usuario: user?.nome, lat, lng, timestamp: new Date() });
-                
-                setLoading(false);
-                alert("Check-in geolocalizado com sucesso! Sua presença foi registrada no banco de dados.");
-                onClose();
               }}
               disabled={loading || !checkin.unidade}
             >
@@ -452,16 +458,20 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
               className="flex-[2] btn-brand !bg-[var(--info)] !h-14" 
               onClick={async () => {
                 setLoading(true);
-                await supabase.from('tickets_sla').insert({
+                const result = await OfflineSync.insertSafe('tickets_sla', {
                   assunto: `PEDIDO DE SUPRIMENTOS`,
                   descricao: `Item Solicitado: ${reposicao.item} | Quantidade: ${reposicao.quantidade}`,
                   prioridade: 'NORMAL', status: 'PENDENTE',
                   setor_destino: 'Almoxarifado',
                   criado_por: user?.nome || "Usuário Mobile"
                 });
-                n8n.trigger('solicitacao-reposicao', { ...reposicao, solicitado_por: user?.nome });
+                await OfflineSync.triggerSafe('solicitacao-reposicao', { ...reposicao, solicitado_por: user?.nome });
                 setLoading(false);
-                alert("Pedido enviado! O almoxarifado já recebeu sua solicitação.");
+                if (result.offline) {
+                  alert("⚠️ Sem conexão. Seu pedido foi salvo no celular e será enviado assim que a rede voltar.");
+                } else {
+                  alert("✅ Pedido enviado! O almoxarifado já recebeu sua solicitação.");
+                }
                 onClose();
               }}
               disabled={loading || !reposicao.item}

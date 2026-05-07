@@ -32,28 +32,28 @@
   --info-alpha: rgba(0, 210, 255, 0.15);
 }
 
-/* TEMA ESCURO PREMIUM (Obrigatório para Gerência) */
+/* TEMA ESCURO PREMIUM (OLED Pitch Black Mode para Bateria) */
 [data-theme='dark'], :root:not([data-theme='light']) {
-  --bg-base: #151521;
-  --bg-surface: #1e1e2d;
-  --bg-card: #1e1e2d;
-  --bg-card-hover: #232336;
+  --bg-base: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-card: #0a0a0a;
+  --bg-card-hover: #141414;
 
   --text-primary: #ffffff;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;
 
-  --border: rgba(255, 255, 255, 0.05);
-  --border-light: rgba(255, 255, 255, 0.03);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
   --border-brand: rgba(255, 106, 0, 0.3);
 
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.8);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.8);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.9);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 1);
   --shadow-brand: 0 0 30px rgba(255, 106, 0, 0.2);
 
-  --glass-bg: rgba(30, 30, 45, 0.8);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(0, 0, 0, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(24px);
 }
 
