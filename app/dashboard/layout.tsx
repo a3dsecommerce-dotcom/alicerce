@@ -164,15 +164,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside 
         className={`no-print hidden lg:flex flex-col glass border border-[var(--border)] transition-all duration-500 ease-in-out z-50 shadow-xl rounded-lg ml-4 my-2 ${sidebarOpen ? "w-[300px]" : "w-[90px]"}`}
       >
-        {/* Logo - Alinhado com pl-12 */}
-        <div className="pl-12 pr-6 border-b border-[var(--border)] flex items-center gap-4 h-[70px]">
-          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg shadow-sm overflow-hidden p-1">
-            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain brightness-0 invert" />
+        {/* Logo — sem filtro para preservar cores da marca */}
+        <div className="pl-5 pr-6 border-b border-[var(--border)] flex items-center gap-4 h-[70px]">
+          <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-white rounded-lg shadow-sm overflow-hidden p-1 border border-[var(--border)]">
+            <img src="/logo.png" alt="Alicerce Logo" className="w-full h-full object-contain" />
           </div>
           {sidebarOpen && (
             <div className="overflow-hidden animate-fade-in">
-              <div className="text-[1rem] font-black text-[var(--text-primary)] leading-none">Alicerce</div>
-              <div className="text-[0.65rem] font-bold text-[var(--brand)] tracking-widest uppercase mt-1">ERP Operacional</div>
+              <div className="text-[0.95rem] font-bold text-[var(--text-primary)] leading-none tracking-tight">Alicerce</div>
+              <div className="text-[0.62rem] font-semibold text-[var(--brand)] tracking-widest uppercase mt-1">ERP Operacional</div>
             </div>
           )}
         </div>
@@ -254,16 +254,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
+        {/* Bloco de Versão e Histórico de Atualizações */}
+        {sidebarOpen && (
+          <div className="px-5 py-3 border-t border-[var(--border)] bg-[var(--bg-base)]/30">
+            <div className="flex items-center justify-between">
+              <span className="text-[0.6rem] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Versão</span>
+              <span className="text-[0.6rem] font-bold text-[var(--brand)] bg-[var(--brand)]/10 px-2 py-0.5 rounded border border-[var(--brand)]/20">v1.0</span>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-[0.6rem] font-semibold text-[var(--text-muted)] uppercase tracking-widest">Atualização</span>
+              {/* ⬇ ATUALIZAR ESTA DATA A CADA DEPLOY */}
+              <span className="text-[0.6rem] font-medium text-[var(--text-muted)]">06/05/2026</span>
+            </div>
+          </div>
+        )}
+
         {/* User Card - Alinhado com pl-12 */}
-        <div className="pl-12 pr-6 py-6 border-t border-[var(--border)] glass-bg">
+        <div className="pl-5 pr-6 py-5 border-t border-[var(--border)] glass-bg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--brand)] to-[var(--brand-dark)] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-[var(--brand)]/20 flex-shrink-0">
               {(user?.name || user?.nome || "U").charAt(0).toUpperCase()}
             </div>
             {sidebarOpen && (
               <div className="flex-1 overflow-hidden">
-                <div className="text-[0.85rem] font-black text-[var(--text-primary)] truncate">{user?.name || user?.nome || "Usuário"}</div>
-                <div className="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase">{user?.role || "ADMIN"}</div>
+                <div className="text-[0.85rem] font-bold text-[var(--text-primary)] truncate">{user?.name || user?.nome || "Usuário"}</div>
+                <div className="text-[0.65rem] font-medium text-[var(--text-muted)] uppercase">{user?.role || "ADMIN"}</div>
               </div>
             )}
             {sidebarOpen && (
