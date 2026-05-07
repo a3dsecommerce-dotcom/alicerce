@@ -33,8 +33,8 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     responsavel_citado_id: null,
     responsavel_citado_nome: ""
   });
-  const [receberData, setReceberData] = useState({ prazo_prometido: "" });
-  const [resolverData, setResolverData] = useState({ solucao: "" });
+  const [cancelarData, setCancelarData] = useState({ motivo: "", showForm: false });
+  const [resolverData, setResolverData] = useState({ solucao: "", showForm: false });
 
   // Busca de colaboradores
   const [buscaColab, setBuscaColab] = useState("");
@@ -130,18 +130,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setLoading(false);
   };
 
-  const handleMarcarRecebido = async () => {
-    if (!receberData.prazo_prometido) return alert("Informe sua previsão de entrega.");
+  const handleCancelarOcorrencia = async () => {
+    if (!cancelarData.motivo) return alert("Descreva o motivo do cancelamento/rejeição.");
     setLoading(true);
     const { error } = await supabase.from('tickets_sla').update({
-      status: 'EM ANALISE',
-      data_recebimento: new Date().toISOString(),
-      prazo_prometido: receberData.prazo_prometido,
-      recebido_por_id: user.id,
-      recebido_por_nome: user.name || user.nome
+      status: 'REJEITADO',
+      solucao_descricao: "MOTIVO DO CANCELAMENTO: " + cancelarData.motivo,
+      resolvido_por_id: user.id,
+      resolvido_por_nome: user.name || user.nome,
+      data_fechamento: new Date().toISOString()
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
-    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "OcorrÃªncia Recebida", mensagem: "Sua demanda foi recebida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "Ocorrência Rejeitada", mensagem: "Sua demanda foi cancelada.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
     setLoading(false);
   };
 
@@ -166,40 +166,48 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   };
 
   const getStatusInfo = (t: any) => {
-    const agora = new Date();
+    if (t.status === 'ARQUIVADO_FINAL') return { label: 'Arquivado', color: 'bg-slate-100 text-slate-500', icon: Archive, percent: 0, textHour: '-' };
+    if (t.status === 'REJEITADO' || t.status === 'CANCELADO') return { label: 'Cancelado', color: 'bg-gray-800 text-white', icon: ShieldAlert, percent: 0, textHour: 'X' };
+
     const abertura = new Date(t.data_abertura);
+    const horaFim = t.data_fechamento ? new Date(t.data_fechamento) : new Date();
     
-    // Prazo prometido pelo setor (se houver)
-    const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
+    const horasDecorridas = (horaFim.getTime() - abertura.getTime()) / (1000 * 60 * 60);
+    const horasSLA = (t.prazo_estipulado_dias || 1) * 24;
+    const porcentagem = (horasDecorridas / horasSLA) * 100;
     
-    // Prazo estipulado originalmente (em dias)
-    const diffDiasSolicitado = Math.floor((agora.getTime() - abertura.getTime()) / (1000 * 60 * 60 * 24));
-    const isAtrasadoSolicitado = diffDiasSolicitado >= (t.prazo_estipulado_dias || 1);
-
-    if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle2 };
+    const isResolvido = t.status?.startsWith('RESOLVIDO');
     
-    if (t.status === 'RESOLVIDO_COM_ATRASO') {
-      return { label: 'Resolvido (FORA DO PRAZO)', color: 'bg-amber-100 text-amber-700 border border-amber-300', icon: CheckCircle2 };
+    let color = 'bg-green-100 text-green-700 border-transparent';
+    let icon = Clock;
+    
+    if (porcentagem > 100) {
+      color = isResolvido ? 'bg-red-100 text-red-700 border-red-300' : 'bg-red-600 text-white border-red-800 animate-pulse shadow-lg shadow-red-600/50';
+      icon = AlertOctagon;
+    } else if (porcentagem > 80) {
+      color = isResolvido ? 'bg-orange-100 text-orange-700 border-transparent' : 'bg-orange-500 text-white border-orange-600 shadow-md shadow-orange-500/40';
+      icon = AlertTriangle;
+    } else if (porcentagem > 50) {
+      color = 'bg-yellow-100 text-yellow-800 border-transparent';
     }
 
-    // Se estourou o prazo que o PRÓPRIO setor prometeu: FALIT
-    if (deadlineAcordado && agora > deadlineAcordado && !t.status.startsWith('RESOLVIDO')) {
-      return { label: 'FALIT (Não Cumprido)', color: 'bg-black text-white border-2 border-red-600 animate-pulse', icon: ShieldAlert };
+    if (isResolvido) {
+       return { 
+         label: porcentagem > 100 ? 'Resolvido (Atrasado)' : 'Resolvido', 
+         color: porcentagem > 100 ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-green-100 text-green-700', 
+         icon: CheckCircle2, 
+         percent: porcentagem, 
+         textHour: `${Math.floor(horasDecorridas)}h` 
+       };
     }
 
-    if (isAtrasadoSolicitado && !t.status.startsWith('RESOLVIDO')) {
-      return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white shadow-lg shadow-red-600/40', icon: ShieldAlert };
-    }
-    
-    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') {
-      return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
-    }
-    
-    if (t.status === 'ARQUIVADO_FINAL') {
-      return { label: 'Arquivado (Estatística)', color: 'bg-slate-100 text-slate-500', icon: Archive };
-    }
-    
-    return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: AlertTriangle };
+    return { 
+      label: porcentagem > 100 ? 'FALIT (Estourado)' : 'Pendente', 
+      color, 
+      icon, 
+      percent: Math.min(porcentagem, 100), 
+      textHour: `${Math.floor(horasDecorridas)}h / ${horasSLA}h` 
+    };
   };
   
   const stats = useMemo(() => {
@@ -225,11 +233,9 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     const falit = tickets.filter(t => {
       if (t.atrasado_na_entrega) return true;
       const abertura = new Date(t.data_abertura);
-      const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
-      if (deadlineAcordado && agora > deadlineAcordado && !t.status?.startsWith('RESOLVIDO')) {
-        return true;
-      }
-      return false;
+      const horasSLA = (t.prazo_estipulado_dias || 1) * 24;
+      const horasDecorridas = ((t.data_fechamento ? new Date(t.data_fechamento) : agora).getTime() - abertura.getTime()) / (1000 * 60 * 60);
+      return horasDecorridas > horasSLA && !t.status?.startsWith('RESOLVIDO');
     }).length;
 
     return { ocorrenciasMes, resolvidasMes, emAberto, falit };
@@ -389,12 +395,15 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                               </div>
                            </td>
                            <td className="p-4 text-center">
-                              <div className="flex flex-col items-center justify-center">
-                                 <span className="text-xs font-black text-blue-600">{t.prazo_estipulado_dias}d</span>
-                                 {t.prazo_prometido && (
-                                    <span className="text-[8px] font-black text-green-600 border-t border-[var(--border)] pt-1 mt-1">
-                                       {new Date(t.prazo_prometido).toLocaleDateString()}
-                                    </span>
+                              <div className="flex flex-col items-center justify-center w-full px-2">
+                                 <span className="text-[10px] font-black text-[var(--text-primary)] mb-1">{s.textHour}</span>
+                                 {t.status !== 'ARQUIVADO_FINAL' && t.status !== 'REJEITADO' && (
+                                   <div className="w-full h-1.5 bg-[var(--border)] rounded-full overflow-hidden flex">
+                                     <div 
+                                       className={`h-full ${s.percent > 100 ? 'bg-red-600' : s.percent > 80 ? 'bg-orange-500' : s.percent > 50 ? 'bg-yellow-500' : 'bg-green-500'} transition-all`} 
+                                       style={{ width: `${Math.min(s.percent, 100)}%` }}
+                                     />
+                                   </div>
                                  )}
                               </div>
                            </td>
@@ -608,53 +617,63 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                    )}
                 </div>
 
-                {(selectedTicket.recebido_por_nome || selectedTicket.resolvido_por_nome) && (
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedTicket.recebido_por_nome && (
-                         <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                            <p className="text-[8px] font-black uppercase text-blue-600 mb-1">Recebido por</p>
-                            <p className="text-xs font-black text-blue-900">{selectedTicket.recebido_por_nome}</p>
+                {['PENDENTE', 'RECEBIDO', 'EM ANALISE'].includes(selectedTicket.status) && (
+                   <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)] flex flex-col gap-4">
+                      <p className="text-[10px] font-black uppercase text-[var(--text-muted)] text-center tracking-widest mb-2">Ações de Gestão do Ticket</p>
+                      
+                      {!resolverData.showForm && !cancelarData.showForm && (
+                        <div className="grid grid-cols-2 gap-4">
+                           <button onClick={() => setResolverData({...resolverData, showForm: true})} className="h-14 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Aceitar e Resolver</button>
+                           <button onClick={() => setCancelarData({...cancelarData, showForm: true})} className="h-14 bg-[var(--bg-card)] text-red-600 border border-red-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-50 transition-all">Recusar / Cancelar</button>
+                        </div>
+                      )}
+
+                      {resolverData.showForm && (
+                         <div className="flex flex-col gap-4 animate-fade-in">
+                            <label className="text-[10px] font-black uppercase text-green-700 mb-1 block">Devolutiva Técnica (Solução Aplicada)</label>
+                            <textarea className="input-field !h-24 p-4 text-xs border-green-200 focus:border-green-500" value={resolverData.solucao} onChange={e => setResolverData({...resolverData, solucao: e.target.value})} placeholder="Descreva como o problema foi resolvido..." />
+                            <div className="flex gap-4">
+                              <button onClick={() => setResolverData({...resolverData, showForm: false})} className="px-6 py-4 bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase">Voltar</button>
+                              <button onClick={handleResolverOcorrencia} className="flex-1 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Confirmar Resolução</button>
+                            </div>
                          </div>
                       )}
-                      {selectedTicket.resolvido_por_nome && (
-                         <div className="p-4 bg-green-50 rounded-2xl border border-green-100">
-                            <p className="text-[8px] font-black uppercase text-green-600 mb-1">Resolvido por</p>
-                            <p className="text-xs font-black text-green-900">{selectedTicket.resolvido_por_nome}</p>
+
+                      {cancelarData.showForm && (
+                         <div className="flex flex-col gap-4 animate-fade-in">
+                            <label className="text-[10px] font-black uppercase text-red-700 mb-1 block">Motivo da Recusa / Cancelamento</label>
+                            <textarea className="input-field !h-24 p-4 text-xs border-red-200 focus:border-red-500" value={cancelarData.motivo} onChange={e => setCancelarData({...cancelarData, motivo: e.target.value})} placeholder="Descreva detalhadamente o porquê desta ocorrência não poder ser atendida..." />
+                            <div className="flex gap-4">
+                              <button onClick={() => setCancelarData({...cancelarData, showForm: false})} className="px-6 py-4 bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase">Voltar</button>
+                              <button onClick={handleCancelarOcorrencia} className="flex-1 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Confirmar Recusa</button>
+                            </div>
                          </div>
                       )}
                    </div>
                 )}
 
-               {selectedTicket.status === 'PENDENTE' && (
-                  <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                     <p className="text-[10px] font-black uppercase text-blue-700 mb-4">Você é o responsável por resolver? Marque como recebido.</p>
-                     <div className="flex flex-col gap-4">
-                        <div>
-                           <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Informe seu Prazo de Entrega (Previsão)</label>
-                           <input type="date" className="input-field" value={receberData.prazo_prometido} onChange={e => setReceberData({prazo_prometido: e.target.value})} />
-                        </div>
-                        <button onClick={handleMarcarRecebido} className="h-14 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Confirmar Recebimento</button>
-                     </div>
-                  </div>
-               )}
+                {selectedTicket.status?.startsWith('RESOLVIDO') && (
+                   <div className="bg-green-50 p-6 rounded-2xl border border-green-200">
+                      <p className="text-[10px] font-black uppercase text-green-700 mb-2">Devolutiva Técnica</p>
+                      <p className="text-xs font-bold text-green-900 leading-relaxed italic">"{selectedTicket.solucao_descricao}"</p>
+                      <div className="mt-4 flex items-center justify-between">
+                         <div className="text-[9px] font-black text-green-600 uppercase">Resolvido em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
+                         <div className="text-[9px] font-black text-green-700 uppercase bg-green-200 px-3 py-1 rounded-full">{selectedTicket.resolvido_por_nome}</div>
+                      </div>
+                   </div>
+                )}
 
-               {(selectedTicket.status === 'RECEBIDO' || selectedTicket.status === 'EM ANALISE') && (
-                  <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-                     <p className="text-[10px] font-black uppercase text-green-700 mb-4">Finalizar Demanda</p>
-                     <div className="flex flex-col gap-4">
-                        <textarea className="input-field !h-24 p-3 text-xs" value={resolverData.solucao} onChange={e => setResolverData({solucao: e.target.value})} placeholder="Descreva a solução aplicada (Devolutiva)..." />
-                        <button onClick={handleResolverOcorrencia} className="h-14 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Marcar como Resolvido</button>
-                     </div>
-                  </div>
-               )}
-
-               {selectedTicket.status === 'RESOLVIDO' && (
-                  <div className="bg-green-50 p-6 rounded-2xl border border-green-200">
-                     <p className="text-[10px] font-black uppercase text-green-700 mb-2">Devolutiva Técnica</p>
-                     <p className="text-xs font-bold text-green-900 leading-relaxed italic">"{selectedTicket.solucao_descricao}"</p>
-                     <div className="mt-4 text-[9px] font-black text-green-600 uppercase">Resolvido em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
-                  </div>
-               )}
+                {(selectedTicket.status === 'REJEITADO' || selectedTicket.status === 'CANCELADO') && (
+                   <div className="bg-gray-800 p-6 rounded-2xl border border-gray-600 text-white">
+                      <p className="text-[10px] font-black uppercase text-red-400 mb-2">Ocorrência Recusada / Cancelada</p>
+                      <p className="text-xs font-bold leading-relaxed italic">"{selectedTicket.solucao_descricao}"</p>
+                      <div className="mt-4 flex items-center justify-between">
+                         <div className="text-[9px] font-black uppercase opacity-60">Em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
+                         <div className="text-[9px] font-black uppercase bg-gray-700 px-3 py-1 rounded-full">{selectedTicket.resolvido_por_nome}</div>
+                      </div>
+                   </div>
+                )}
+             </div>
             </div>
          )}
       </AdaptiveModal>
