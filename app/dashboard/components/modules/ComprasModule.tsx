@@ -83,7 +83,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
     const payload = itensParaPedir.map(id => {
       const item = catalogo.find(c => String(c.id) === id);
       return {
-        item_id: id,
+        item_id: item?.id || id, // Usa o tipo original (UUID/Int) para evitar erro de sintaxe
         solicitante: user?.nome || user?.name || 'Comprador',
         unidade_destino: user?.unidade_alocacao || 'Unidade',
         secretaria_destino: user?.secretaria || 'SEMED',
