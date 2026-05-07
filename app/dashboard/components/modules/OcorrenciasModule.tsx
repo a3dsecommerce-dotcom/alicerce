@@ -62,11 +62,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setBuscando(true);
     let query = supabase.from('usuarios').select('*');
     
-    // Se for busca para "citado" e o input estiver vazio, busca por dicas do subsetor
-    if (campoBuscaAtivo === "citado" && buscaColab.length < 2) {
-       const term = formData.subsetor_destino.split(" ")[0]; // Pega a primeira palavra chave
-       query = query.or(`funcao.ilike.%${term}%,cargo.ilike.%${term}%,nivel_acesso.ilike.%${term}%`);
+    // Se for busca para "citado", só permitimos Nível 2 ou superior (Encarregados, Gerentes, etc)
+    if (campoBuscaAtivo === "citado") {
+       query = query.gte('nivel_acesso', 2);
+       
+       if (buscaColab.length < 2) {
+         const term = formData.subsetor_destino.split(" ")[0]; // Pega a primeira palavra chave
+         query = query.or(`funcao.ilike.%${term}%,cargo.ilike.%${term}%`);
+       } else {
+         query = query.ilike('nome', `%${buscaColab}%`);
+       }
     } else {
+       // Para outras buscas (ex: Interessado), pode ser qualquer nível
        query = query.ilike('nome', `%${buscaColab}%`);
     }
 
