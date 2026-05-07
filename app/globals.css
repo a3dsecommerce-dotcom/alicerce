@@ -339,29 +339,103 @@ select.input-field option { background: #1a1f2e; color: white; }
 .badge-brand  { background: var(--brand-alpha);   color: var(--brand-light); border: 1px solid var(--border-brand); }
 
 /* ============================================================
-   TABELAS
+   TABELAS — Padrão Enterprise v3.0
+   Hierarquia via peso/cor/fonte, NÃO por tamanho
    ============================================================ */
-.table-header {
-  font-size: 0.68rem;
-  font-weight: 800;
+
+/* Normalização global: intercepta TODOS os <th> e <td> do projeto */
+/* Cobre inline styles de fontSize espalhados por 15+ arquivos */
+table th {
+  font-size: 0.6875rem !important; /* 11px — padrão enterprise */
+  font-weight: 600 !important;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: 1rem 1.5rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.02);
 }
-.table-cell {
-  padding: 1rem 1.5rem;
-  font-size: 0.85rem;
+
+table td {
+  font-size: 0.8125rem !important; /* 13px — padrão enterprise */
+  font-weight: 400;
   color: var(--text-secondary);
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
 }
+
+/* Classes de Design System para células */
+.td-primary {
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+}
+
+.td-secondary {
+  font-weight: 400 !important;
+  color: var(--text-secondary) !important;
+}
+
+.td-meta {
+  font-weight: 400 !important;
+  color: var(--text-muted) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.td-mono {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-size: 0.75rem !important; /* 12px para mono */
+  font-weight: 500 !important;
+  color: var(--text-secondary) !important;
+  letter-spacing: 0.02em;
+}
+
+/* Classes base do Design System */
+.table-header {
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+.table-cell {
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 400;
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
 .table-row {
   border-bottom: 1px solid var(--border-light);
-  transition: background 0.2s;
+  transition: background 0.15s ease, border-left-color 0.15s ease;
+  border-left: 2px solid transparent; /* accent linear-style */
 }
-.table-row:hover { background: rgba(234,88,12,0.04); }
+.table-row:hover {
+  background: rgba(234,88,12,0.035);
+  border-left-color: rgba(234,88,12,0.4);
+}
 .table-row:last-child { border-bottom: none; }
+
+/* Coluna de nome/título — sempre weight 600 + cor primária */
+.table-row td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* Tema claro: ajustes de contraste para tabelas */
+[data-theme='light'] table th {
+  background: rgba(0,0,0,0.02);
+  color: var(--text-muted);
+}
+[data-theme='light'] .table-row:hover {
+  background: rgba(234,88,12,0.04);
+}
 
 /* ============================================================
    LABELS
