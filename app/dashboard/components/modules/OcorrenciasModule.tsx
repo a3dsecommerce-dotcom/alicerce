@@ -462,16 +462,16 @@ export default function OcorrenciasModule({ user }: { user: any }) {
 
       {/* MODAL NOVA OCORRÊNCIA */}
       <AdaptiveModal isOpen={modalAberto === "nova"} onClose={() => setModalAberto(null)} title="Abrir Nova Ocorrência / Demanda">
-         <div className="p-10 space-y-6">
+         <div className="p-8 space-y-6">
             <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Assunto da Demanda</label>
-               <input className="input-field !h-14 font-black" value={formData.assunto} onChange={e => setFormData({...formData, assunto: e.target.value})} placeholder="Ex: Ar-condicionado parou de funcionar" />
+               <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Assunto da Demanda</label>
+               <input className="input-field !h-12 font-medium text-sm w-full" value={formData.assunto} onChange={e => setFormData({...formData, assunto: e.target.value})} placeholder="Ex: Ar-condicionado parou de funcionar" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Setor Destino (Macro)</label>
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Setor Destino (Macro)</label>
                   <select 
-                     className="input-field !h-14 font-black" 
+                     className="input-field !h-12 font-medium text-sm w-full" 
                      value={formData.setor_destino} 
                      onChange={e => {
                        const val = e.target.value;
@@ -484,9 +484,9 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                   </select>
                </div>
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Sub-Setor / Especialidade</label>
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Sub-Setor / Especialidade</label>
                   <select 
-                     className="input-field !h-14 font-black border-blue-200 focus:border-blue-500" 
+                     className="input-field !h-12 font-medium text-sm w-full focus:border-[var(--brand)]" 
                      value={formData.subsetor_destino} 
                      onChange={e => setFormData({...formData, subsetor_destino: e.target.value})}
                   >
@@ -497,17 +497,17 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                </div>
             </div>
             <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
-               <textarea className="input-field !h-32 p-4 text-xs font-bold" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} placeholder="Descreva o problema para que o setor possa resolver..." />
+               <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
+               <textarea className="input-field !h-28 p-4 text-sm font-medium w-full resize-none" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} placeholder="Descreva o problema de forma clara para que o setor possa resolver..." />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="relative">
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block italic">Pesquisa Rápida de Colaborador (Interessado)</label>
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Pesquisa de Colaborador (Solicitante)</label>
                   <div className="relative">
-                     <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                     <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
                      <input 
-                       className="input-field !pl-12 !h-14 font-black text-xs" 
-                       placeholder="BUSCAR PELO NOME..." 
+                       className="input-field !pl-12 !h-12 font-medium text-sm w-full" 
+                       placeholder="Buscar pelo nome..." 
                        value={buscaColab}
                        onChange={e => { setBuscaColab(e.target.value); setCampoBuscaAtivo("interessado"); }}
                      />
@@ -518,44 +518,44 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                      )}
                   </div>
                   {colabsSugeridos.length > 0 && campoBuscaAtivo === "interessado" ? (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                       {colabsSugeridos.map(c => (
                         <button 
                           key={c.id}
                           onClick={() => selecionarColab(c)}
-                          className="w-full p-4 flex flex-col items-start gap-1 hover:bg-[var(--brand)]/10 border-b border-[var(--border)] last:border-none transition-colors"
+                          className="w-full p-3 flex flex-col items-start gap-1 hover:bg-[var(--bg-base)] border-b border-[var(--border)] last:border-none transition-colors text-left"
                         >
-                          <span className="text-[11px] font-black uppercase text-[var(--text-primary)]">{c.nome}</span>
-                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.unidade_alocacao || c.unidade || "S/ UNIDADE"} • {c.funcao || c.cargo || "COLABORADOR"}</span>
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">{c.nome}</span>
+                          <span className="text-xs text-[var(--text-muted)]">{c.unidade_alocacao || c.unidade || "Sem unidade"} • {c.funcao || c.cargo || "Colaborador"}</span>
                         </button>
                       ))}
                     </div>
                   ) : (
                     buscaColab.length > 1 && !buscando && campoBuscaAtivo === "interessado" && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-4 shadow-xl z-50 text-center">
-                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase">Nenhum colaborador encontrado</p>
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-4 shadow-xl z-50 text-center">
+                        <p className="text-xs text-[var(--text-muted)]">Nenhum colaborador encontrado</p>
                       </div>
                     )
                   )}
                </div>
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Interessado Selecionado</label>
-                  <div className="input-field !h-14 font-black flex items-center px-4 bg-[var(--bg-base)] text-[var(--brand)] border-dashed border-2">
-                     {formData.interessado_nome || "NENHUM SELECIONADO"}
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Solicitante Selecionado</label>
+                  <div className="input-field !h-12 font-medium text-sm flex items-center px-4 bg-[var(--bg-base)] text-[var(--brand)] border-dashed border-2">
+                     {formData.interessado_nome || "Selecione um solicitante"}
                   </div>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-red-500/5 rounded-3xl border border-red-500/20">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-200 dark:border-red-900/30">
                <div className="relative">
-                  <label className="text-[10px] font-black uppercase text-red-700 mb-2 block font-bold flex items-center gap-2">
-                    <AlertOctagon size={12}/> Responsável para Executar (OBRIGATÓRIO)
+                  <label className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2 block flex items-center gap-2">
+                    <AlertOctagon size={14}/> Responsável para Executar (Obrigatório)
                   </label>
                   <div className="relative">
-                     <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-600" />
+                     <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-500" />
                      <input 
-                       className="input-field !pl-12 !h-14 font-black text-xs border-red-200 focus:border-red-500" 
-                       placeholder="BUSCAR PELO NOME..." 
+                       className="input-field !pl-12 !h-12 font-medium text-sm w-full border-red-200 dark:border-red-900/50 focus:border-red-500" 
+                       placeholder="Buscar responsável pelo nome..." 
                        value={campoBuscaAtivo === "citado" ? buscaColab : ""}
                        onChange={e => { setBuscaColab(e.target.value); setCampoBuscaAtivo("citado"); }}
                        onClick={() => { setCampoBuscaAtivo("citado"); searchColabs(); }}
@@ -567,65 +567,67 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                      )}
                   </div>
                   {colabsSugeridos.length > 0 && campoBuscaAtivo === "citado" && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-60 overflow-y-auto custom-scrollbar">
-                      <div className="px-4 py-2 bg-slate-50 border-b border-[var(--border)]">
-                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sugeridos do Sistema</span>
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-60 overflow-y-auto custom-scrollbar">
+                      <div className="px-4 py-2 bg-[var(--bg-base)] border-b border-[var(--border)]">
+                        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Sugeridos do Sistema</span>
                       </div>
                       {colabsSugeridos.map(c => (
                         <button 
                           key={c.id}
                           onClick={() => selecionarColab(c)}
-                          className="w-full p-4 flex flex-col items-start gap-1 hover:bg-red-500/10 border-b border-[var(--border)] last:border-none transition-colors"
+                          className="w-full p-3 flex flex-col items-start gap-1 hover:bg-red-50 dark:hover:bg-red-900/20 border-b border-[var(--border)] last:border-none transition-colors text-left"
                         >
-                          <span className="text-[11px] font-black uppercase text-red-700">{c.nome}</span>
-                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.funcao || c.nivel_acesso || "OPERAÇÃO"}</span>
+                          <span className="text-sm font-semibold text-red-700 dark:text-red-400">{c.nome}</span>
+                          <span className="text-xs text-[var(--text-muted)]">{c.funcao || c.nivel_acesso || "Operação"}</span>
                         </button>
                       ))}
                     </div>
                   )}
                </div>
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Responsável Designado</label>
-                  <div className={`input-field !h-14 font-black flex items-center px-4 border-dashed border-2 ${formData.responsavel_citado_nome ? 'bg-red-50 text-red-700 border-red-300' : 'bg-[var(--bg-base)] text-[var(--text-muted)] border-[var(--border)]'}`}>
-                     {formData.responsavel_citado_nome || "CLIQUE NA BUSCA PARA SELECIONAR"}
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Responsável Designado</label>
+                  <div className={`input-field !h-12 font-medium text-sm flex items-center px-4 border-dashed border-2 ${formData.responsavel_citado_nome ? 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800' : 'bg-[var(--bg-base)] text-[var(--text-muted)] border-[var(--border)]'}`}>
+                     {formData.responsavel_citado_nome || "Clique na busca para selecionar"}
                   </div>
                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade / Alocação</label>
-                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-xs font-bold" value={formData.unidade} disabled />
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Unidade / Alocação</label>
+                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-sm font-medium" value={formData.unidade} disabled />
                </div>
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Secretaria</label>
-                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-xs font-bold" value={formData.secretaria} disabled />
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Secretaria</label>
+                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-sm font-medium" value={formData.secretaria} disabled />
                </div>
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Função</label>
-                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-xs font-bold" value={formData.funcao} disabled />
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Função</label>
+                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-sm font-medium" value={formData.funcao} disabled />
                </div>
             </div>
 
             <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Prioridade & Prazo de SLA</label>
+               <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Prioridade & Prazo de SLA</label>
                <div className="grid grid-cols-3 gap-4">
                   {[
-                    { id: 'NORMAL', label: 'NORMAL (7 DIAS)', days: 7, color: 'hover:border-blue-500 text-blue-600' },
-                    { id: 'MEDIO', label: 'MÉDIO (3 DIAS)', days: 3, color: 'hover:border-orange-500 text-orange-600' },
-                    { id: 'CRITICO', label: 'CRÍTICO (24HS)', days: 1, color: 'hover:border-red-600 text-red-600' },
+                    { id: 'NORMAL', label: 'Normal (7 Dias)', days: 7, color: 'hover:border-blue-500 text-blue-600' },
+                    { id: 'MEDIO', label: 'Médio (3 Dias)', days: 3, color: 'hover:border-orange-500 text-orange-600' },
+                    { id: 'CRITICO', label: 'Crítico (24hs)', days: 1, color: 'hover:border-red-600 text-red-600' },
                   ].map(p => (
                     <button
                       key={p.id}
                       onClick={() => setFormData({...formData, prioridade: p.id, prazo_estipulado_dias: p.days})}
-                      className={`h-14 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${formData.prioridade === p.id ? 'border-current bg-[var(--bg-base)]' : 'border-[var(--border)] opacity-60'} ${p.color}`}
+                      className={`h-12 rounded-xl border-2 transition-all flex flex-col items-center justify-center gap-1 ${formData.prioridade === p.id ? 'border-current bg-[var(--bg-base)] shadow-sm' : 'border-[var(--border)] opacity-60 hover:opacity-100'} ${p.color}`}
                     >
-                      <span className="text-[10px] font-black tracking-tighter">{p.label}</span>
+                      <span className="text-sm font-semibold tracking-tight">{p.label}</span>
                     </button>
                   ))}
                </div>
             </div>
-            <button onClick={handleNovaOcorrencia} className="w-full h-16 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-red-600/30 hover:scale-[1.02] transition-all">Registrar Ocorrência</button>
+            <button onClick={handleNovaOcorrencia} className="w-full h-14 bg-red-600 text-white rounded-xl text-sm font-semibold tracking-wide shadow-lg shadow-red-600/30 hover:bg-red-700 transition-all">
+               Registrar Ocorrência
+            </button>
          </div>
       </AdaptiveModal>
 
