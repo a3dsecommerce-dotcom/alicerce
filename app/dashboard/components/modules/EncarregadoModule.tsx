@@ -143,60 +143,42 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const fetchEncarregadoData = async () => {
     setLoading(true);
     try {
-      // 1. Buscar unidades sob responsabilidade deste encarregado
-      const { data: units } = await supabase
-        .from('unidades')
-        .select('nome')
-        .eq('encarregado_id', user.id);
+      // Fix #3: queries paralelas para reduzir tempo de carregamento no campo (4G)
+      const [unitsRes, cargosRes, episRes, entregasRes] = await Promise.all([
+        supabase.from('unidades').select('*').eq('encarregado_id', user.id),
+        supabase.from('cargos').select('*').order('nome'),
+        supabase.from('almox_epi').select('*').gt('quantidade', 0).order('item'),
+        supabase.from('requisicoes').select('*').eq('tipo_item', 'EPI').eq('status', 'ENTREGUE')
+          .order('data_solicitacao', { ascending: false }).limit(20)
+      ]);
 
-      const unitNames = units?.map(u => u.nome) || [];
+      const units = unitsRes.data || [];
+      const unitNames = units.map((u: any) => u.nome);
+
       setMyUnits(unitNames);
+      setFullUnits(units);
+      if (cargosRes.data) setCargos(cargosRes.data);
+      setEstoqueEpi(episRes.data || []);
+      setEntregasEpi(entregasRes.data || []);
 
-      // Buscar detalhes das unidades (incluindo secretaria)
+      // Queries dependentes de unitNames
       if (unitNames.length > 0) {
-        const { data: unitsDetail } = await supabase.from('unidades').select('*').in('nome', unitNames);
-        setFullUnits(unitsDetail || []);
+        const [colabsRes, ticketsRes] = await Promise.all([
+          supabase.from('usuarios').select('*').in('unidade_alocacao', unitNames),
+          supabase.from('tickets_sla').select('*')
+            .or(`unidade.in.(${unitNames.map((u: string) => `"${u}"`).join(',')}),responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`)
+            .order('data_abertura', { ascending: false })
+        ]);
+        setMyColabs(colabsRes.data || []);
+        setOcorrencias(ticketsRes.data || []);
+      } else {
+        // Sem unidades: busca só tickets pessoais
+        const { data: tickets } = await supabase
+          .from('tickets_sla').select('*')
+          .or(`responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`)
+          .order('data_abertura', { ascending: false });
+        setOcorrencias(tickets || []);
       }
-
-      if (unitNames.length > 0) {
-        const { data: colabs } = await supabase
-          .from('usuarios')
-          .select('*')
-          .in('unidade_alocacao', unitNames);
-        setMyColabs(colabs || []);
-      }
-
-      // 4. Buscar estoque de EPIs
-      const { data: epis } = await supabase.from('almox_epi').select('*').gt('quantidade', 0).order('item');
-      setEstoqueEpi(epis || []);
-
-      // 5. Buscar entregas recentes de EPI (Feitas por este encarregado ou para sua equipe)
-      const { data: recentEntregas } = await supabase
-        .from('requisicoes')
-        .select('*')
-        .eq('tipo_item', 'EPI')
-        .eq('status', 'ENTREGUE')
-        .order('data_solicitacao', { ascending: false })
-        .limit(20);
-      setEntregasEpi(recentEntregas || []);
-
-      // 3. Buscar ocorrências (Minhas Unidades + Onde fui citado + Meu Setor)
-      const orFilter = unitNames.length > 0 
-        ? `unidade.in.(${unitNames.map(u => `"${u}"`).join(',')}),responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`
-        : `responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`;
-
-      const { data: tickets } = await supabase
-        .from('tickets_sla')
-        .select('*')
-        .or(orFilter)
-        .order('data_abertura', { ascending: false });
-      
-      setOcorrencias(tickets || []);
-
-      // 4. Buscar Cargos Mestres
-      const { data: cargosDb } = await supabase.from('cargos').select('*').order('nome');
-      if (cargosDb) setCargos(cargosDb);
-
     } catch (err) {
       console.error("Erro ao carregar dados do encarregado:", err);
     } finally {
@@ -1747,25 +1729,25 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
             </div>
          ))}
       </div>
-      {/* Navegação Superior do Encarregado */}
-      <div className="flex flex-wrap items-center gap-4 bg-[var(--bg-card)] p-3 rounded-2xl border border-[var(--border)] shadow-sm sticky top-0 z-30 backdrop-blur-md overflow-x-auto custom-scrollbar">
+      {/* Navegação Superior do Encarregado — Fix #8 e #9: mobile-first com scroll */}
+      <div className="flex items-center gap-2 bg-[var(--bg-card)] p-2 rounded-2xl border border-[var(--border)] shadow-sm sticky top-0 z-30 backdrop-blur-md overflow-x-auto custom-scrollbar">
          {[
-           { id: "MY_UNITS", label: "Minhas Unidades", icon: Building2 },
-           { id: "MY_COLABS", label: "Minha Equipe", icon: Users },
-           { id: "QUICK_ADMISSION", label: "Admissão Rápida", icon: UserPlus },
+           { id: "MY_UNITS", label: "Unidades", icon: Building2 },
+           { id: "MY_COLABS", label: "Equipe", icon: Users },
+           { id: "QUICK_ADMISSION", label: "Admissão", icon: UserPlus },
            { id: "REPORTS", label: "Informativos", icon: Send },
-           { id: "EPI", label: "Entrega EPI", icon: Package },
-           { id: "CAT", label: "Investigação CAT", icon: ShieldCheck },
-           { id: "MY_MISSIONS", label: "Minhas Missões", icon: Trophy },
+           { id: "EPI", label: "EPI", icon: Package },
+           { id: "CAT", label: "CAT", icon: ShieldCheck },
+           { id: "MY_MISSIONS", label: "Missões", icon: Trophy },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
              key={tab.id}
              onClick={() => setActiveTab(tab.id as any)}
-             className={`flex items-center gap-3 px-8 py-4 rounded-xl text-[0.7rem] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
+             className={`flex items-center gap-2 px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
            >
-             <tab.icon size={18} />
-             {tab.label}
+             <tab.icon size={15} />
+             <span className="hidden sm:inline">{tab.label}</span>
            </button>
          ))}
       </div>

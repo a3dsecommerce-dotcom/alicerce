@@ -13,6 +13,7 @@ import UnidadesTable from "./operacional/UnidadesTable";
 import VolantesEscala from "./rh/VolantesEscala";
 import VisaoGeral from "./gerencia/VisaoGeral";
 import MissoesManager from "./gerencia/MissoesManager";
+import ActivitiesLog from "./gerencia/ActivitiesLog";
 import DenunciasManager from "./gerencia/DenunciasManager";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
@@ -211,49 +212,52 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-[var(--bg-base)] p-2 rounded-2xl border border-[var(--border)]">
-          <button 
-            onClick={() => setActiveTab("VISAO")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "VISAO" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <LayoutDashboard size={16} /> Visão Geral
-          </button>
-          <button 
-            onClick={() => setActiveTab("VOLANTES")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "VOLANTES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <ClipboardList size={16} /> Escala
-          </button>
-          <button 
-            onClick={() => setActiveTab("ROTAS")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "ROTAS" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <Truck size={16} /> Unidades
-          </button>
-          <button 
-            onClick={() => setActiveTab("MISSOES")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "MISSOES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <Trophy size={16} /> Missões
-          </button>
-          <button 
-            onClick={() => setActiveTab("AUDITORIA")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "AUDITORIA" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <ShieldAlert size={16} /> Auditoria
-          </button>
-          <button 
-            onClick={() => setActiveTab("DENUNCIAS")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "DENUNCIAS" ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "text-red-500 hover:bg-red-50"}`}
-          >
-            <ShieldAlert size={16} /> Canal Ético
-          </button>
-          <button 
-            onClick={() => setActiveTab("DB")}
-            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
-          >
-            <Database size={16} /> Dados
-          </button>
+        {/* Tabs — scrollable para não vazar em telas menores (Fix #1) */}
+        <div className="overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 bg-[var(--bg-base)] p-2 rounded-2xl border border-[var(--border)] min-w-max">
+            <button 
+              onClick={() => setActiveTab("VISAO")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "VISAO" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <LayoutDashboard size={14} /> Visão Geral
+            </button>
+            <button 
+              onClick={() => setActiveTab("VOLANTES")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "VOLANTES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <ClipboardList size={14} /> Escala
+            </button>
+            <button 
+              onClick={() => setActiveTab("ROTAS")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "ROTAS" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <Truck size={14} /> Unidades
+            </button>
+            <button 
+              onClick={() => setActiveTab("MISSOES")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "MISSOES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <Trophy size={14} /> Missões
+            </button>
+            <button 
+              onClick={() => setActiveTab("AUDITORIA")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "AUDITORIA" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <ShieldAlert size={14} /> Auditoria
+            </button>
+            <button 
+              onClick={() => setActiveTab("DENUNCIAS")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DENUNCIAS" ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "text-red-500 hover:bg-red-50 dark:hover:bg-red-950"}`}
+            >
+              <ShieldAlert size={14} /> Canal Ético
+            </button>
+            <button 
+              onClick={() => setActiveTab("DB")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <Database size={14} /> Dados
+            </button>
+          </div>
         </div>
       </div>
 
@@ -328,13 +332,18 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
           </div>
         )}
 
-        {(activeTab === "CONFIG" || activeTab === "DB" || activeTab === "AUDITORIA") && (
+        {/* Fix #6: Auditoria agora mostra logs reais, DB/CONFIG ainda em dev */}
+        {activeTab === "AUDITORIA" && (
+          <ActivitiesLog logs={logs} />
+        )}
+
+        {(activeTab === "CONFIG" || activeTab === "DB") && (
           <div className="flex-1 flex items-center justify-center p-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)] opacity-40">
             <div className="text-center">
               <Shield size={64} className="mx-auto mb-6 text-[var(--brand)] animate-pulse" />
               <h3 className="text-xl font-black uppercase italic tracking-tighter text-[var(--text-primary)]">Módulo em Desenvolvimento</h3>
               <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest mt-2 max-w-xs mx-auto leading-relaxed">
-                As funcionalidades avançadas de {activeTab === "DB" ? "Gerenciamento de Dados" : activeTab === "CONFIG" ? "Configurações" : "Auditoria"} estão sendo implementadas.
+                As funcionalidades avançadas de {activeTab === "DB" ? "Gerenciamento de Dados" : "Configurações"} estão sendo implementadas.
               </p>
             </div>
           </div>

@@ -9,7 +9,15 @@ interface VisaoGeralProps {
   logs: any[];
 }
 
+
 export default function VisaoGeral({ stats, logs }: VisaoGeralProps) {
+  // Fix #4: calcular KPIs reais a partir dos stats
+  const ticketsPendentes = stats?.ticketsAbertos ?? null;
+  const vagas = stats?.totalVagas ?? null;
+  const colaboradores = stats?.totalColaboradores ?? null;
+  const ultimaAtualizacao = new Date().toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const statusCompliance = ticketsPendentes === 0 ? '100% Auditado' : `${ticketsPendentes} pend.`;
+
   return (
     <div className="flex flex-col gap-10 animate-fade-in">
       
@@ -36,25 +44,35 @@ export default function VisaoGeral({ stats, logs }: VisaoGeralProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-6 rounded-3xl bg-[var(--bg-base)] border border-[var(--border)] hover:border-orange-500/30 transition-all">
                   <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Performance de RH</span>
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
-                      <ArrowUpRight size={10} /> +12%
+                    <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Colaboradores Ativos</span>
+                    <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      colaboradores === null ? 'bg-slate-100 text-slate-500' : 'bg-green-500/10 text-green-500'
+                    }`}>
+                      <ArrowUpRight size={10} /> {colaboradores !== null ? colaboradores : '---'}
                     </span>
                   </div>
                   <p className="text-xs font-bold text-[var(--text-secondary)] leading-relaxed">
-                    A taxa de preenchimento de vagas aumentou em relação ao mês anterior. Foco atual em <span className="text-orange-600">Almoxarifado</span>.
+                    {colaboradores !== null
+                      ? `${colaboradores} colaboradores com status ATIVO no sistema atualmente.`
+                      : 'Carregando dados...'}
                   </p>
                 </div>
 
                 <div className="p-6 rounded-3xl bg-[var(--bg-base)] border border-[var(--border)] hover:border-blue-500/30 transition-all">
                   <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Fluxo de Compras</span>
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">
-                      <ArrowDownRight size={10} /> -4h
+                    <span className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Tickets Pendentes</span>
+                    <span className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      (ticketsPendentes ?? 1) > 0 ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
+                    }`}>
+                      <ArrowDownRight size={10} /> {ticketsPendentes !== null ? ticketsPendentes : '---'}
                     </span>
                   </div>
                   <p className="text-xs font-bold text-[var(--text-secondary)] leading-relaxed">
-                    Tempo médio de aprovação reduzido. Eficiência operacional em <span className="text-blue-600">92%</span> de conformidade SLA.
+                    {ticketsPendentes !== null
+                      ? ticketsPendentes === 0
+                        ? 'Nenhum ticket pendente. Operação em conformidade.'
+                        : `${ticketsPendentes} ocorrências aguardando atenção da equipe.`
+                      : 'Carregando dados...'}
                   </p>
                 </div>
               </div>
@@ -65,17 +83,17 @@ export default function VisaoGeral({ stats, logs }: VisaoGeralProps) {
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-[2.5rem] shadow-xl text-white">
                <ShieldCheck className="mb-4 text-orange-500" size={32} />
                <h5 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Status Compliance</h5>
-               <p className="text-2xl font-black mt-2 tracking-tighter">100% Auditado</p>
+               <p className="text-2xl font-black mt-2 tracking-tighter">{statusCompliance}</p>
             </div>
             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl">
                <Clock className="mb-4 text-blue-500" size={32} />
-               <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Último Snapshot</h5>
-               <p className="text-2xl font-black mt-2 tracking-tighter text-[var(--text-primary)]">Hoje, 03:00</p>
+               <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Atualizado em</h5>
+               <p className="text-2xl font-black mt-2 tracking-tighter text-[var(--text-primary)]">Hoje, {ultimaAtualizacao}</p>
             </div>
             <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl">
                <Zap className="mb-4 text-green-500" size={32} />
-               <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Saúde do Sistema</h5>
-               <p className="text-2xl font-black mt-2 tracking-tighter text-[var(--text-primary)]">Excelente</p>
+               <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Vagas em Aberto</h5>
+               <p className="text-2xl font-black mt-2 tracking-tighter text-[var(--text-primary)]">{vagas !== null ? vagas : '---'}</p>
             </div>
           </div>
 

@@ -14,12 +14,19 @@ export default function MissoesManager() {
   const [newMissao, setNewMissao] = useState({
     titulo: "",
     descricao: "",
+    tipo: "EPI",
     frequencia: "SEMANAL",
     checklist: [
       { task: "Conferência de EPI", type: "boolean" },
       { task: "Confirmação de Colaboradores", type: "boolean" }
     ]
   });
+
+  // Fix #10: estado para modal de respostas
+  const [viewingMissao, setViewingMissao] = useState<any>(null);
+  const [respostas, setRespostas] = useState<any[]>([]);
+  const [loadingRespostas, setLoadingRespostas] = useState(false);
+
 
   useEffect(() => {
     fetchMissoes();
@@ -52,6 +59,7 @@ export default function MissoesManager() {
       setNewMissao({
         titulo: "",
         descricao: "",
+        tipo: "EPI",
         frequencia: "SEMANAL",
         checklist: [
           { task: "Conferência de EPI", type: "boolean" },
@@ -73,6 +81,19 @@ export default function MissoesManager() {
     if (!confirm("Excluir esta missão permanentemente?")) return;
     const { error } = await supabase.from('missoes').delete().eq('id', id);
     if (!error) fetchMissoes();
+  }
+
+  // Fix #10: busca respostas dos encarregados para uma missão
+  async function handleViewStatus(missao: any) {
+    setViewingMissao(missao);
+    setLoadingRespostas(true);
+    const { data } = await supabase
+      .from('missoes_respostas')
+      .select('*')
+      .eq('missao_id', missao.id)
+      .order('created_at', { ascending: false });
+    setRespostas(data || []);
+    setLoadingRespostas(false);
   }
 
   return (
@@ -129,7 +150,11 @@ export default function MissoesManager() {
                     <Clock size={14} className="text-[var(--brand)]" />
                     <span className="text-[10px] font-black uppercase text-[var(--text-muted)]">Criada em {new Date(missao.created_at).toLocaleDateString()}</span>
                   </div>
-                  <button className="text-[10px] font-black uppercase text-orange-600 hover:underline">Ver Status</button>
+                  <button 
+                  onClick={() => handleViewStatus(missao)}
+                  className="text-[10px] font-black uppercase text-orange-600 hover:underline">
+                  Ver Status
+               </button>
                </div>
             </div>
           ))
@@ -163,7 +188,11 @@ export default function MissoesManager() {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Tipo</label>
-                <select className="input-field w-full h-12 font-bold">
+                <select 
+                  className="input-field w-full h-12 font-bold"
+                  value={newMissao.tipo}
+                  onChange={e => setNewMissao({...newMissao, tipo: e.target.value})}
+                >
                   <option value="EPI">CONFERÊNCIA DE EPI</option>
                   <option value="UNIDADE">STATUS DE UNIDADE</option>
                   <option value="DADOS">ATUALIZAÇÃO DE DADOS</option>
@@ -188,6 +217,39 @@ export default function MissoesManager() {
            >
              {saving ? "Lançando Missão..." : <><Send size={18}/> Disparar Missão para Encarregados</>}
            </button>
+        </div>
+      </AdaptiveModal>
+
+      {/* Fix #10: Modal de Respostas dos Encarregados */}
+      <AdaptiveModal isOpen={!!viewingMissao} onClose={() => setViewingMissao(null)} title={`Status: ${viewingMissao?.titulo || ''}`} width="600px">
+        <div className="p-8 space-y-4">
+          {loadingRespostas ? (
+            <p className="text-center text-[var(--text-muted)] animate-pulse font-black uppercase text-xs">Carregando respostas...</p>
+          ) : respostas.length === 0 ? (
+            <div className="py-16 text-center opacity-40">
+              <Trophy size={40} className="mx-auto mb-4" />
+              <p className="text-xs font-black uppercase">Nenhum encarregado respondeu ainda.</p>
+            </div>
+          ) : (
+            respostas.map(r => (
+              <div key={r.id} className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-sm font-black text-[var(--text-primary)]">{r.encarregado_nome || 'Encarregado'}</span>
+                  <span className="text-[9px] font-black uppercase text-[var(--text-muted)]">{new Date(r.created_at).toLocaleString('pt-BR')}</span>
+                </div>
+                <div className="space-y-2">
+                  {Array.isArray(r.respostas) && r.respostas.map((item: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3 text-xs">
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] ${item.valor ? 'bg-green-500' : 'bg-red-500'}`}>
+                        {item.valor ? '✓' : '✗'}
+                      </span>
+                      <span className="font-bold text-[var(--text-secondary)]">{item.task}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </AdaptiveModal>
 

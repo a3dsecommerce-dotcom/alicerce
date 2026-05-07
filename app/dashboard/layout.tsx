@@ -87,6 +87,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   const [notificacoes, setNotificacoes] = useState<any[]>([]);
+  // Fix #7: contagem de urgencias para badge na sidebar
+  const [badgeCounts, setBadgeCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function fetchNotifs() {
@@ -113,6 +115,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
          } else {
             setNotificacoes([{ text: "Nenhuma notificação nova", type: "info", time: "--" }]);
          }
+
+         // Fix #7: contar itens pendentes para badge na sidebar
+         try {
+           const [ocRes, denRes] = await Promise.all([
+             supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
+             supabase.from('denuncias_anonimas').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
+           ]);
+           setBadgeCounts({ OCORRENCIAS: ocRes.count || 0, CANAL_ETICO: denRes.count || 0 });
+         } catch (_) {}
+
        } catch (err) {
          console.error("Erro ao carregar notificações reais", err);
        }
@@ -233,6 +245,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 Icon={item.icon}
                 active={pathname === item.href}
                 sidebarOpen={sidebarOpen}
+                badge={
+                  item.href?.includes('OCORRENCIAS') ? (badgeCounts['OCORRENCIAS'] || 0) :
+                  item.href?.includes('CANAL') ? (badgeCounts['CANAL_ETICO'] || 0) : 0
+                }
               />
             );
           })}

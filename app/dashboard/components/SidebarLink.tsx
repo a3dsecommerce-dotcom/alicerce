@@ -8,9 +8,10 @@ type SidebarLinkProps = {
   active: boolean;
   sidebarOpen: boolean;
   disabled?: boolean;
+  badge?: number;
 };
 
-function SidebarLink({ href, label, Icon, active, sidebarOpen, disabled }: SidebarLinkProps) {
+function SidebarLink({ href, label, Icon, active, sidebarOpen, disabled, badge }: SidebarLinkProps) {
   return (
     <Link
       href={href}
@@ -22,7 +23,15 @@ function SidebarLink({ href, label, Icon, active, sidebarOpen, disabled }: Sideb
             : "bg-transparent text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]"
       }`}
     >
-      {Icon && <Icon size={20} className="shrink-0" />}
+      {/* Icon with optional urgency badge — Fix #7 */}
+      <div className="relative shrink-0">
+        {Icon && <Icon size={20} />}
+        {(badge ?? 0) > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-red-600 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1 shadow-sm">
+            {badge! > 99 ? '99+' : badge}
+          </span>
+        )}
+      </div>
       {sidebarOpen && <span className="whitespace-nowrap truncate">{label}</span>}
     </Link>
   );
