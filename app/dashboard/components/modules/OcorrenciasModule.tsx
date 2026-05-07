@@ -655,7 +655,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                 {selectedTicket.status?.startsWith('RESOLVIDO') && (
                    <div className="bg-green-50 p-6 rounded-2xl border border-green-200">
                       <p className="text-[10px] font-black uppercase text-green-700 mb-2">Devolutiva Técnica</p>
-                      <p className="text-xs font-bold text-green-900 leading-relaxed italic">"{selectedTicket.solucao_descricao}"</p>
+                      <p className="text-xs font-bold text-green-900 leading-relaxed italic">&quot;{selectedTicket.solucao_descricao}&quot;</p>
                       <div className="mt-4 flex items-center justify-between">
                          <div className="text-[9px] font-black text-green-600 uppercase">Resolvido em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
                          <div className="text-[9px] font-black text-green-700 uppercase bg-green-200 px-3 py-1 rounded-full">{selectedTicket.resolvido_por_nome}</div>
@@ -666,7 +666,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                 {(selectedTicket.status === 'REJEITADO' || selectedTicket.status === 'CANCELADO') && (
                    <div className="bg-gray-800 p-6 rounded-2xl border border-gray-600 text-white">
                       <p className="text-[10px] font-black uppercase text-red-400 mb-2">Ocorrência Recusada / Cancelada</p>
-                      <p className="text-xs font-bold leading-relaxed italic">"{selectedTicket.solucao_descricao}"</p>
+                      <p className="text-xs font-bold leading-relaxed italic">&quot;{selectedTicket.solucao_descricao}&quot;</p>
                       <div className="mt-4 flex items-center justify-between">
                          <div className="text-[9px] font-black uppercase opacity-60">Em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
                          <div className="text-[9px] font-black uppercase bg-gray-700 px-3 py-1 rounded-full">{selectedTicket.resolvido_por_nome}</div>
@@ -674,7 +674,6 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                    </div>
                 )}
              </div>
-            </div>
          )}
       </AdaptiveModal>
     </div>
