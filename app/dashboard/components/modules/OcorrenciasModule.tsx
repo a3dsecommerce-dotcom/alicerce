@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   Search, AlertTriangle, Clock, CheckCircle2, Plus, 
   MessageSquare, User, Calendar, Filter, ArrowRight,
-  ShieldAlert, Send, Info, Save, Eye, TrendingUp, AlertOctagon, Activity
+  ShieldAlert, Send, Info, Save, Eye, TrendingUp, AlertOctagon, Activity, Archive
 } from "lucide-react";
 import { useMemo } from "react";
 import { supabase } from "@/lib/supabase";
@@ -14,6 +14,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtroSetor, setFiltroSetor] = useState("TODOS");
+  const [viewMode, setViewMode] = useState<"ATIVAS" | "ARQUIVO">("ATIVAS");
   
   const [modalAberto, setModalAberto] = useState<null | "nova" | "detalhes" | "receber" | "resolver">(null);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -112,7 +113,20 @@ export default function OcorrenciasModule({ user }: { user: any }) {
 
     const { error } = await supabase.from('tickets_sla').insert([payload]);
     if (error) alert(error.message);
-    else { supabase.from("notificacoes").insert([{ setor_destino: formData.setor_destino, titulo: "Nova OcorrÃªncia", mensagem: "Demanda: " + formData.assunto, link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    else { supabase.from("notificacoes").insert([{ setor_destino: formData.setor_destino, titulo: "Nova Ocorrência", mensagem: "Demanda: " + formData.assunto, link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    setLoading(false);
+  };
+
+  const handleLimparArquivo = async (ticketsAntigos: any[]) => {
+    if (!confirm(`Tem certeza que deseja autorizar a limpeza de ${ticketsAntigos.length} ocorrência(s)? Elas sumirão da tela mas os dados estatísticos serão mantidos no sistema.`)) return;
+    
+    setLoading(true);
+    const ids = ticketsAntigos.map(t => t.id);
+    const { error } = await supabase.from('tickets_sla').update({ status: 'ARQUIVADO_FINAL' }).in('id', ids);
+    
+    if (error) alert(error.message);
+    else fetchTickets();
+    
     setLoading(false);
   };
 
@@ -147,7 +161,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       atrasado_na_entrega: isFalit // Campo extra opcional para auditoria
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
-    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "OcorrÃªncia Resolvida", mensagem: "Sua demanda foi resolvida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "Ocorrência Resolvida", mensagem: "Sua demanda foi resolvida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
     setLoading(false);
   };
 
@@ -181,6 +195,10 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
     }
     
+    if (t.status === 'ARQUIVADO_FINAL') {
+      return { label: 'Arquivado (Estatística)', color: 'bg-slate-100 text-slate-500', icon: Archive };
+    }
+    
     return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: AlertTriangle };
   };
   
@@ -195,7 +213,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     }).length;
 
     const resolvidasMes = tickets.filter(t => {
-      if (!t.status?.startsWith('RESOLVIDO')) return false;
+      if (!t.status?.startsWith('RESOLVIDO') && t.status !== 'ARQUIVADO_FINAL') return false;
       const data = new Date(t.data_fechamento || t.updated_at);
       return data.getMonth() === mesAtual && data.getFullYear() === anoAtual;
     }).length;
@@ -257,22 +275,71 @@ export default function OcorrenciasModule({ user }: { user: any }) {
         </button>
       </div>
 
-      {/* FILTROS */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex gap-2 p-1 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-x-auto custom-scrollbar w-full md:w-auto">
-          {["TODOS", "Gerência", "RH Recursos Humanos", "Almoxarifado", "Técnico Segurança", "Encarregado"].map(s => (
-            <button 
-              key={s} 
-              onClick={() => setFiltroSetor(s)}
-              className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all whitespace-nowrap ${filtroSetor === s ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-            >
-              {s.split(' ')[0]}
-            </button>
-          ))}
+      {/* FILTROS E ABAS */}
+      <div className="flex flex-col gap-6">
+        <div className="flex bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-1 w-full md:w-max mx-auto shadow-sm">
+           <button 
+             onClick={() => setViewMode("ATIVAS")} 
+             className={`flex-1 md:flex-none px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "ATIVAS" ? 'bg-blue-600 text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
+           >
+             Demandas Ativas
+           </button>
+           <button 
+             onClick={() => setViewMode("ARQUIVO")} 
+             className={`flex-1 md:flex-none px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "ARQUIVO" ? 'bg-slate-800 text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
+           >
+             Arquivo (Resolvidas)
+           </button>
         </div>
-        <div className="relative w-full md:w-80">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-          <input className="input-field !pl-14 !h-12 text-xs" placeholder="Pesquisar por assunto ou solicitante..." value={busca} onChange={e => setBusca(e.target.value)} />
+
+        {viewMode === "ARQUIVO" && (() => {
+          const noventaDiasAtras = new Date();
+          noventaDiasAtras.setDate(noventaDiasAtras.getDate() - 90);
+          
+          const ticketsAntigos = tickets.filter(t => 
+             t.status?.startsWith('RESOLVIDO') && 
+             t.data_fechamento && 
+             new Date(t.data_fechamento) < noventaDiasAtras
+          );
+
+          if (ticketsAntigos.length > 0) {
+            return (
+              <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-2xl animate-fade-in shadow-sm">
+                 <div className="flex items-center gap-3">
+                    <ShieldAlert className="text-red-600" />
+                    <div>
+                       <p className="text-[10px] font-black text-red-700 uppercase tracking-widest">Alerta de Limpeza de Arquivo</p>
+                       <p className="text-xs font-bold text-red-900 mt-1">Existem {ticketsAntigos.length} ocorrência(s) resolvida(s) há mais de 90 dias ocupando espaço visual.</p>
+                    </div>
+                 </div>
+                 <button 
+                   onClick={() => handleLimparArquivo(ticketsAntigos)}
+                   className="px-6 py-3 bg-red-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                 >
+                   Autorizar Exclusão Lógica
+                 </button>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex gap-2 p-1 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-x-auto custom-scrollbar w-full md:w-auto">
+            {["TODOS", "Gerência", "RH Recursos Humanos", "Almoxarifado", "Técnico Segurança", "Encarregado"].map(s => (
+              <button 
+                key={s} 
+                onClick={() => setFiltroSetor(s)}
+                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase transition-all whitespace-nowrap ${filtroSetor === s ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+              >
+                {s.split(' ')[0]}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full md:w-80">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <input className="input-field !pl-14 !h-12 text-xs" placeholder="Pesquisar por assunto ou solicitante..." value={busca} onChange={e => setBusca(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -291,6 +358,11 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                </thead>
                <tbody className="divide-y divide-[var(--border)]">
                   {tickets
+                    .filter(t => {
+                      if (viewMode === "ATIVAS") return !t.status?.startsWith('RESOLVIDO') && t.status !== 'ARQUIVADO_FINAL';
+                      if (viewMode === "ARQUIVO") return t.status?.startsWith('RESOLVIDO');
+                      return true;
+                    })
                     .filter(t => {
                       if (filtroSetor === "TODOS") return true;
                       if (filtroSetor === "Gerência") return t.setor_destino?.startsWith("Gerência");
