@@ -33,19 +33,45 @@ export function useComprasData(user: any) {
       const { data: reqData } = await query;
       if (reqData) setRequisicoesRaw(reqData);
 
-      // 3. Detectar ASGs (Cota)
-      if (user?.secretaria === 'SEMED') {
-          setQtdAsg(266);
+      // 3. Detectar ASGs (Cota) via Novo Sistema Híbrido (Manual vs Automático)
+      let cotaDefinida = 1;
+      
+      if (user?.secretaria) {
+        try {
+          const { data: configCota } = await supabase
+            .from('config_cotas_secretaria')
+            .select('*')
+            .eq('secretaria', user.secretaria)
+            .single();
+
+          if (configCota && configCota.modo_calculo === 'MANUAL') {
+            cotaDefinida = configCota.qtd_asg_manual;
+          } else {
+            // AUTOMÁTICO: Conta no banco de dados real
+            const { count } = await supabase
+              .from('usuarios')
+              .select('*', { count: 'exact', head: true })
+              .eq('secretaria', user.secretaria)
+              .ilike('cargo', '%ASG%')
+              .eq('status', 'ATIVO');
+            
+            if (count !== null && count > 0) cotaDefinida = count;
+          }
+        } catch (e) {
+          console.error("Erro ao ler tabela de cotas, usando fallback", e);
+        }
       } else if (user?.unidade_alocacao) {
-          const { count } = await supabase
-            .from('usuarios')
-            .select('*', { count: 'exact', head: true })
-            .eq('unidade_alocacao', user.unidade_alocacao)
-            .eq('cargo', 'ASG')
-            .eq('status', 'ATIVO');
+        const { count } = await supabase
+          .from('usuarios')
+          .select('*', { count: 'exact', head: true })
+          .eq('unidade_alocacao', user.unidade_alocacao)
+          .ilike('cargo', '%ASG%')
+          .eq('status', 'ATIVO');
          
-         if (count !== null) setQtdAsg(count > 0 ? count : 1);
+        if (count !== null && count > 0) cotaDefinida = count;
       }
+      
+      setQtdAsg(cotaDefinida);
     } catch (err) {
       console.error("Erro no carregamento de Compras:", err);
     } finally {

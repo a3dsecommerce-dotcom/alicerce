@@ -14,8 +14,11 @@ INSERT INTO config_cotas_secretaria (secretaria, modo_calculo, qtd_asg_manual) V
 ('GABINETE', 'MANUAL', 10)
 ON CONFLICT (secretaria) DO NOTHING;
 
--- Garantir acesso anon/auth
+-- Garantir acesso sem erro de RLS (já que o ERP usa anon key para operações de banco)
 ALTER TABLE config_cotas_secretaria ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable read access for all users" ON config_cotas_secretaria FOR SELECT USING (true);
-CREATE POLICY "Enable all access for authenticated users" ON config_cotas_secretaria FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Enable read access for all users" ON config_cotas_secretaria;
+DROP POLICY IF EXISTS "Enable all access for authenticated users" ON config_cotas_secretaria;
+DROP POLICY IF EXISTS "Enable all access" ON config_cotas_secretaria;
+
+CREATE POLICY "Enable all access" ON config_cotas_secretaria FOR ALL USING (true) WITH CHECK (true);
