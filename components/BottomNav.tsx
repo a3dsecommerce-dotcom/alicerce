@@ -63,18 +63,18 @@ export function BottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 rounded-xl transition-all ${
+                className={`flex flex-col items-center justify-center gap-1.5 rounded-xl transition-all ${
                   isActive
                     ? "bg-[var(--brand)]/10 text-[var(--brand)]"
                     : "text-[var(--text-muted)] active:bg-[var(--bg-card)]"
                 }`}
-                style={{ minWidth: "60px", height: "52px", padding: "0 8px" }}
+                style={{ minWidth: "64px", height: "60px", padding: "0 8px" }}
               >
                 <item.icon
-                  size={20}
+                  size={24}
                   strokeWidth={isActive ? 2.5 : 1.5}
                 />
-                <span style={{ fontSize: "9px", fontWeight: 500, lineHeight: 1, whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: "10.5px", fontWeight: 600, lineHeight: 1, whiteSpace: "nowrap" }}>
                   {item.label}
                 </span>
               </Link>

@@ -96,7 +96,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overflow: clip; /* 'clip' vs 'hidden': nao bloqueia scroll de modais no iOS Safari */
-  font-size: 0.875rem;
+  font-size: 1rem; /* Atualizado para 16px: padrão de legibilidade Apple HIG / WCAG */
   font-weight: 400;
   line-height: 1.5;
 }
@@ -178,8 +178,8 @@ body::after {
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px; /* Enterprise: 12px vs anterior 14px */
-  padding: 1.25rem;
+  border-radius: 16px; /* Enterprise: 16px orgânico (Squircle) */
+  padding: 1.5rem; /* Respiro interno de luxo (24px) */
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   position: relative;
@@ -195,8 +195,8 @@ body::after {
 .kpi-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px; /* Enterprise: 12px vs anterior 16px */
-  padding: 1.25rem;
+  border-radius: 16px; /* Enterprise: 16px orgânico */
+  padding: 1.5rem; /* 24px de padding */
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -219,17 +219,17 @@ body::after {
   background: linear-gradient(135deg, #ea580c, #c2410c);
   color: white;
   border: none;
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px; /* Enterprise: 8px vs anterior 10px */
-  font-weight: 600; /* Semibold vs anterior 800 */
-  font-size: 0.8rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px; /* Apple HIG: 12px */
+  font-weight: 600;
+  font-size: 0.875rem; /* 14px legível */
   text-transform: uppercase;
   letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 2px 8px rgba(234,88,12,0.25);
   font-family: var(--font-inter, 'Inter', sans-serif);
-  height: 40px;
+  height: 48px; /* Safe Tap Target (48px) */
 }
 .btn-brand:hover {
   transform: translateY(-2px);
@@ -247,14 +247,14 @@ body::after {
   background: rgba(255,255,255,0.06);
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px; /* Enterprise: 8px vs anterior 10px */
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px; /* Apple HIG: 12px */
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: 0.875rem; /* 14px */
   cursor: pointer;
   transition: all 0.2s;
   font-family: var(--font-inter, 'Inter', sans-serif);
-  height: 40px;
+  height: 48px; /* Safe Tap Target (48px) */
 }
 .btn-ghost:hover {
   background: rgba(234,88,12,0.1);
@@ -268,20 +268,19 @@ body::after {
 .input-field {
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  /* Separado: padding-left = 0 para !pl-* do Tailwind funcionar corretamente */
+  border-radius: 12px; /* Apple HIG: 12px */
   padding-top: 0;
   padding-bottom: 0;
-  padding-right: 1rem;
-  padding-left: 1rem; /* padrão sem ícone; sobrescrito por !pl-* quando há ícone */
-  height: 40px;
+  padding-right: 1.25rem;
+  padding-left: 1.25rem;
+  height: 48px; /* Tap target seguro para dedos (48px) */
   color: var(--text-primary);
   font-weight: 400;
   font-family: var(--font-inter, 'Inter', sans-serif);
   transition: all 0.25s;
   width: 100%;
   outline: none;
-  font-size: 0.875rem;
+  font-size: 1rem; /* 16px previne zoom no Safari Mobile */
 }
 .input-field::placeholder { color: var(--text-muted); }
 .input-field:focus {
@@ -456,11 +455,11 @@ table td {
 .sidebar-link {
   display: flex;
   align-items: center;
-  padding: 0.625rem 0.875rem;
-  border-radius: 8px; /* Enterprise: 8px vs anterior 12px */
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
   color: var(--text-muted);
-  font-weight: 500; /* Medium vs anterior 600 semibold */
-  font-size: 0.8rem;
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   cursor: pointer;
@@ -649,7 +648,7 @@ h6 { font-size: 0.8rem;   font-weight: 600; }
 @media (max-width: 1024px) {
   .btn-brand,
   .btn-ghost {
-    min-height: 44px;
+    min-height: 48px;
   }
 
   /* KPI grids de 4 colunas → 2 colunas em mobile */
