@@ -7,15 +7,15 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Início",      icon: LayoutDashboard, href: "/dashboard",             exact: true },
-  { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias"              },
-  { label: "Rota",        icon: MapPin,           href: "/dashboard/rota"                     },
-  { label: "Reuniões",    icon: CalendarDays,     href: "/dashboard/reunioes"                 },
-  { label: "RH",          icon: Users,            href: "/dashboard/rh"                       },
-  { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado"             },
-  { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca"                },
-  { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard/admin/gestao"             },
-  { label: "Config",      icon: Settings,         href: "/dashboard/config"                   },
+  { label: "Início",      icon: LayoutDashboard, href: "/dashboard",              exact: true },
+  { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias"               },
+  { label: "Rota",        icon: MapPin,           href: "/dashboard/rota"                      },
+  { label: "Reuniões",    icon: CalendarDays,     href: "/dashboard/reunioes"                  },
+  { label: "RH",          icon: Users,            href: "/dashboard/rh"                        },
+  { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado"              },
+  { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca"                 },
+  { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND"            },
+  { label: "Config",      icon: Settings,         href: "/dashboard/config"                    },
 ];
 
 export function BottomNav() {
