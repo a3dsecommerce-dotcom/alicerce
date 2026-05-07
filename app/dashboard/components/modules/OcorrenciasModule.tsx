@@ -99,13 +99,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setColabsSugeridos([]);
   };
 
-  // Efeito para auto-sugerir responsáveis quando o modal abre
-  useEffect(() => {
-    if (modalAberto === "nova") {
-       setCampoBuscaAtivo("citado");
-       searchColabs();
-    }
-  }, [formData.setor_destino, modalAberto]);
+  // Removido o efeito de auto-sugestão ao abrir o modal para evitar dropdown persistente sem ação do usuário.
 
   useEffect(() => {
     fetchTickets();
