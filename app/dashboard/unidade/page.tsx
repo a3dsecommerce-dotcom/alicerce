@@ -87,7 +87,7 @@ export default function PortalDiretorPage() {
         <div className="flex flex-col gap-10 overflow-y-auto pr-4 custom-scrollbar">
           
           {/* HEADER PORTAL - AUMENTADO PX PARA EMPURRAR O CONTEÚDO PARA DENTRO */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-10 bg-[var(--bg-card)] px-20 py-14 rounded-[1.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-[var(--bg-card)] px-4 sm:px-10 py-6 sm:py-10 rounded-[1.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
             <div className="absolute top-0 left-0 w-2 h-full bg-[var(--brand)] opacity-20" />
             <div className="min-w-0">
               <div className="flex items-center gap-6 mb-3">
@@ -102,11 +102,11 @@ export default function PortalDiretorPage() {
             </div>
             <div className="flex flex-wrap gap-6 shrink-0">
               {!canEdit(unidadeAtiva.id) && (
-                <div className="flex items-center gap-3 px-8 py-4 bg-amber-100 text-amber-700 rounded-2xl text-[12px] font-black uppercase shadow-sm">
+                <div className="flex items-center gap-3 px-4 py-2 bg-amber-100 text-amber-700 rounded-2xl text-[12px] font-black uppercase shadow-sm">
                   <ShieldAlert size={18} /> Somente Leitura
                 </div>
               )}
-              <button className="px-12 py-5 bg-[var(--brand)] text-white rounded-2xl text-[12px] font-black uppercase tracking-widest shadow-2xl shadow-[var(--brand)]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-4" onClick={() => setAba("acoes")}>
+              <button className="px-6 py-3 bg-[var(--brand)] text-white rounded-2xl text-[12px] font-black uppercase tracking-widest shadow-2xl shadow-[var(--brand)]/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-4" onClick={() => setAba("acoes")}>
                 <Zap size={22} /> Gerar Ocorrência
               </button>
             </div>
@@ -114,7 +114,7 @@ export default function PortalDiretorPage() {
 
           {/* CONTAINER DA TABELA - PX-20 PARA GARANTIR QUE O TEXTO FIQUE LONGE DA BORDA */}
           <div className="bg-[var(--bg-card)] rounded-[1.5rem] border border-[var(--border)] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex flex-wrap px-20 py-8 border-b border-[var(--border)] gap-12 bg-[var(--bg-base)]/10">
+            <div className="flex flex-wrap px-4 sm:px-10 py-4 border-b border-[var(--border)] gap-4 sm:gap-8 bg-[var(--bg-base)]/10 overflow-x-auto">
               {[
                 { id: "equipe", label: "Minha Equipe" },
                 { id: "acoes", label: "Gestão e Volante" },
@@ -123,7 +123,7 @@ export default function PortalDiretorPage() {
                 <button 
                   key={t.id}
                   onClick={() => setAba(t.id as any)} 
-                  className={`px-10 py-5 text-[12px] font-black uppercase tracking-[0.25em] transition-all relative shrink-0 ${aba === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+                  className={`px-5 py-3 text-[12px] font-black uppercase tracking-[0.25em] transition-all relative shrink-0 ${aba === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
                 >
                   {t.label}
                   {aba === t.id && <div className="absolute bottom-[-2px] left-0 w-full h-[4px] bg-[var(--brand)] rounded-full" />}
@@ -131,7 +131,7 @@ export default function PortalDiretorPage() {
               ))}
             </div>
 
-            <div className="px-20 py-16 overflow-auto custom-scrollbar">
+            <div className="px-4 sm:px-10 py-6 sm:py-10 overflow-auto custom-scrollbar">
               {aba === "equipe" && (
                 <table className="w-full text-left">
                   <thead className="border-b border-[var(--border)]">
@@ -184,7 +184,7 @@ export default function PortalDiretorPage() {
 
               {/* ... Outras abas com padding PX-20 garantido ... */}
               {aba === "acoes" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-16">
                   <div className="bg-[var(--bg-card)] p-12 rounded-[2rem] border border-[var(--border)] shadow-xl">
                     <h3 className="text-lg font-black uppercase mb-12 flex items-center gap-5"><UserX size={24} className="text-red-500" /> Registrar Falta</h3>
                     <div className="space-y-10">

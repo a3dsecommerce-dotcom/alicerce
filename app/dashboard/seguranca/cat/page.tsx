@@ -125,7 +125,7 @@ export default function CATInvestigationPage() {
               </div>
             </div>
 
-            <form className="grid grid-cols-2 gap-4">
+            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2">
                 <label className="text-xs font-bold text-white/40 uppercase mb-1.5 block">Colaborador Acidentado</label>
                 <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-red-500 outline-none transition-all">

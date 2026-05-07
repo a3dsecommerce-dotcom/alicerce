@@ -82,7 +82,7 @@ export default function ChecklistUnidadePage() {
                 <MapPin size={18} className="absolute left-4 top-4 text-[var(--text-muted)]" />
                 <select 
                   required
-                  className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl px-12 py-4 text-[var(--text-primary)] focus:border-[var(--brand)] outline-none transition-all appearance-none"
+                  className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl pl-10 pr-4 py-4 text-[var(--text-primary)] focus:border-[var(--brand)] outline-none transition-all appearance-none"
                   value={checklist.unidade_id}
                   onChange={e => setChecklist({...checklist, unidade_id: e.target.value})}
                 >

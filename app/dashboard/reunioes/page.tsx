@@ -136,7 +136,7 @@ export default function ReunioesPage() {
                   <input 
                     placeholder={agendamento.tipo === 'PRESENCIAL' ? "Ex: Sala de Reuniões 1" : "Será gerado automaticamente"}
                     disabled={agendamento.tipo === 'ONLINE'}
-                    className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl px-12 py-3 text-[var(--text-primary)] focus:border-[var(--brand)] outline-none transition-all disabled:opacity-50"
+                    className="w-full bg-[var(--bg-base)] border border-[var(--border)] rounded-xl pl-10 pr-4 py-3 text-[var(--text-primary)] focus:border-[var(--brand)] outline-none transition-all disabled:opacity-50"
                     value={agendamento.local}
                     onChange={e => setAgendamento({...agendamento, local: e.target.value})}
                   />

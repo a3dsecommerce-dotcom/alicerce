@@ -267,7 +267,7 @@ export default function OcorrenciasPage() {
       </div>
 
       {/* Tabs de Navegação */}
-      <div className="flex gap-8 border-b border-[var(--border)] px-4">
+      <div className="flex gap-4 border-b border-[var(--border)] px-4 overflow-x-auto">
         <button 
           onClick={() => setAba("demandas")}
           className={`pb-4 text-xs font-black uppercase tracking-widest transition-all ${aba === "demandas" ? "text-[var(--brand)] border-b-2 border-[var(--brand)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
@@ -330,7 +330,7 @@ export default function OcorrenciasPage() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Setor Destino</label>
               <select className="input-field" value={novaOcorrencia.setor_destino} onChange={e => setNovaOcorrencia({...novaOcorrencia, setor_destino: e.target.value})}>
@@ -395,7 +395,7 @@ export default function OcorrenciasPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl border border-[var(--border)] bg-white/50">
                 <label className="label-sm">Localização</label>
                 <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-primary)]">
