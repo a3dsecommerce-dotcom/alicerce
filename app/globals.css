@@ -1,4 +1,4 @@
-/* @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap'); */
+/* Google Fonts loaded via next/font/google in app/layout.tsx */
 @import "tailwindcss";
 
 /* ============================================================
@@ -90,12 +90,15 @@
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Activated via next/font/google CSS variable (--font-inter) */
+  font-family: var(--font-inter, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overflow: hidden;
-  font-size: 0.9rem;
+  font-size: 0.875rem; /* 14px — padrão enterprise (vs 0.9rem antes) */
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 /* Background com blobs laranja (como o login) */
@@ -175,8 +178,8 @@ body::after {
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1.5rem;
+  border-radius: 12px; /* Enterprise: 12px vs anterior 14px */
+  padding: 1.25rem;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   position: relative;
@@ -192,8 +195,8 @@ body::after {
 .kpi-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 1.5rem;
+  border-radius: 12px; /* Enterprise: 12px vs anterior 16px */
+  padding: 1.25rem;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
@@ -216,17 +219,17 @@ body::after {
   background: linear-gradient(135deg, #ea580c, #c2410c);
   color: white;
   border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 800;
-  font-size: 0.78rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px; /* Enterprise: 8px vs anterior 10px */
+  font-weight: 600; /* Semibold vs anterior 800 */
+  font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 15px rgba(234,88,12,0.35);
-  font-family: 'Inter', sans-serif;
-  height: 42px;
+  box-shadow: 0 2px 8px rgba(234,88,12,0.25);
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  height: 40px;
 }
 .btn-brand:hover {
   transform: translateY(-2px);
@@ -244,14 +247,14 @@ body::after {
   background: rgba(255,255,255,0.06);
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  padding: 0.7rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.78rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px; /* Enterprise: 8px vs anterior 10px */
+  font-weight: 500;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Inter', sans-serif;
-  height: 42px;
+  font-family: var(--font-inter, 'Inter', sans-serif);
+  height: 40px;
 }
 .btn-ghost:hover {
   background: rgba(234,88,12,0.1);
@@ -265,12 +268,12 @@ body::after {
 .input-field {
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0 1.25rem;
-  height: 46px;
+  border-radius: 8px; /* Enterprise: 8px vs anterior 10px */
+  padding: 0 1rem;
+  height: 40px;
   color: var(--text-primary);
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-family: var(--font-inter, 'Inter', sans-serif);
   transition: all 0.25s;
   width: 100%;
   outline: none;
@@ -375,11 +378,11 @@ select.input-field option { background: #1a1f2e; color: white; }
 .sidebar-link {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px; /* Enterprise: 8px vs anterior 12px */
   color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: 500; /* Medium vs anterior 600 semibold */
+  font-size: 0.8rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   cursor: pointer;
@@ -492,4 +495,58 @@ select.input-field option { background: #1a1f2e; color: white; }
   .card, .kpi-card { background: #ffffff; border-color: #e2e8f0; }
   .sidebar-link { color: #64748b; }
   .sidebar-link:hover { background: #f1f5f9; color: var(--brand); }
+}
+
+/* ============================================================
+   ENTERPRISE DESIGN REFRESH v3.0
+   Padrão: Notion · Linear · Vercel · Stripe
+   ============================================================ */
+
+/* 1. TIPOGRAFIA — Remove italic de todos os títulos funcionais */
+h1, h2, h3, h4, h5, h6 {
+  font-style: normal !important;
+  letter-spacing: -0.015em;
+}
+
+h1 { font-size: 1.625rem; font-weight: 700; line-height: 1.2; }
+h2 { font-size: 1.375rem; font-weight: 700; line-height: 1.25; }
+h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.3; }
+h4 { font-size: 1rem;     font-weight: 600; line-height: 1.4; }
+h5 { font-size: 0.875rem; font-weight: 600; }
+h6 { font-size: 0.8rem;   font-weight: 600; }
+
+/* 2. BORDER RADIUS — Normalização Enterprise */
+/* Intercepta valores arbitrários extremos do Tailwind */
+.rounded-\[3rem\]    { border-radius: 1rem     !important; } /* 48px → 16px */
+.rounded-\[2\.5rem\] { border-radius: 0.875rem !important; } /* 40px → 14px */
+.rounded-\[3\.5rem\] { border-radius: 1.125rem !important; } /* 56px → 18px */
+.rounded-\[2rem\]    { border-radius: 0.75rem  !important; } /* 32px → 12px */
+
+/* 3. TAMANHO MÍNIMO — Acessibilidade WCAG AA */
+.text-\[8px\]  { font-size: 11px !important; }
+.text-\[9px\]  { font-size: 11px !important; }
+.text-\[10px\] { font-size: 11px !important; }
+
+/* 4. PESO DE FONTE — Normalização de tabelas e labels */
+.table-header {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.table-cell {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.label-sm {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* 5. SOMBRAS — Calibração (menos glow, mais contraste) */
+.btn-brand:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(234,88,12,0.35);
+  filter: brightness(1.05);
 }
