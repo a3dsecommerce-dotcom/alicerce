@@ -138,9 +138,9 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
           <p className="text-[var(--text-muted)] font-bold">Consolidando vida funcional...</p>
         </div>
       ) : (
-        <div className="flex gap-8 h-[650px]">
+        <div className="flex flex-col md:flex-row gap-6 md:h-[650px]">
           {/* Sidebar de Navegação Interna */}
-          <div className="w-56 flex flex-col gap-2 border-r border-[var(--border)] pr-4">
+          <div className="w-full md:w-56 flex flex-row md:flex-col gap-2 border-b md:border-b-0 md:border-r border-[var(--border)] pb-4 md:pb-0 md:pr-4 overflow-x-auto custom-scrollbar shrink-0">
             {[
               { id: "perfil", label: "Contrato / Cargo", icon: User },
               { id: "pessoal", label: "Vida Pessoal / Docs", icon: FileText },
@@ -152,20 +152,20 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
               <button 
                 key={t.id}
                 onClick={() => setTab(t.id as any)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-md text-[11px] font-bold transition-all ${tab === t.id ? 'bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-md text-[11px] font-bold transition-all whitespace-nowrap shrink-0 ${tab === t.id ? 'bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
               >
                 <t.icon size={16} /> {t.label}
               </button>
             ))}
             
-            <div className="mt-auto p-4 bg-orange-500/5 rounded-2xl border border-orange-500/20 text-center">
+            <div className="mt-2 md:mt-auto p-4 bg-orange-500/5 rounded-2xl border border-orange-500/20 text-center shrink-0">
               <div className="text-[10px] font-bold text-orange-600 uppercase mb-1">Status Atual</div>
               <div className={`badge ${data?.status === 'ATIVO' ? 'badge-green' : 'badge-amber'} w-full justify-center`}>{data?.status || 'OFFLINE'}</div>
             </div>
           </div>
 
           {/* Conteúdo da Tab */}
-          <div className="flex-1 overflow-y-auto pr-2">
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
             
             {/* TAB 1: PERFIL CONTRATUAL */}
             {tab === "perfil" && (

@@ -38,8 +38,17 @@ export default function PortalDiretorPage() {
     setModalAjuste({ colab: colaborador, campo, valor: colaborador[campo] });
   };
 
-  const confirmarAjuste = () => {
+  const confirmarAjuste = async () => {
     if (modalAjuste) {
+      await supabase.from('tickets_sla').insert({
+        assunto: `AJUSTE CADASTRAL: ${modalAjuste.colab.nome}`,
+        descricao: `Unidade: ${unidadeAtiva.nome} | Alteração solicitada: Ajustar ${modalAjuste.campo} de ${modalAjuste.colab[modalAjuste.campo]} para ${modalAjuste.valor}`,
+        prioridade: 'NORMAL', status: 'PENDENTE',
+        setor_destino: 'RH Recursos Humanos',
+        responsavel_citado: modalAjuste.colab.nome,
+        criado_por: "Diretor(a) " + unidadeAtiva.nome
+      });
+
       n8n.trigger('ajuste-colaborador-diretor', {
         colaborador: modalAjuste.colab.nome,
         campo: modalAjuste.campo === 'insalubridade' ? 'Insalubridade' : 'Horário de Trabalho',
@@ -49,7 +58,7 @@ export default function PortalDiretorPage() {
         unidade: unidadeAtiva.nome,
         notificar: ["RH_GERAL", "ENCARREGADO", "GERENCIA"]
       });
-      alert(`Solicitação de ajuste enviada!`);
+      alert(`Solicitação de ajuste enviada para o RH e registrada no sistema!`);
       setModalAjuste(null);
     }
   };
@@ -190,22 +199,44 @@ export default function PortalDiretorPage() {
                     <div className="space-y-10">
                       <div className="space-y-4">
                          <label className="text-[12px] font-black uppercase text-[var(--text-muted)] tracking-widest ml-1">Colaborador</label>
-                         <select className="input-field w-full h-16 px-6">
-                           {equipeFiltrada.map(c => <option key={c.id}>{c.nome}</option>)}
+                         <select className="input-field w-full h-16 px-6" id="selUndFaltaColab">
+                           <option value="">Selecione o Colaborador...</option>
+                           {equipeFiltrada.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
                          </select>
                       </div>
                       <div className="space-y-4">
                          <label className="text-[12px] font-black uppercase text-[var(--text-muted)] tracking-widest ml-1">Motivo</label>
-                         <textarea className="input-field w-full min-h-[150px] p-8" placeholder="Descreva a ocorrência detalhadamente..." />
+                         <textarea className="input-field w-full min-h-[150px] p-8" placeholder="Descreva a ocorrência detalhadamente..." id="txtUndFaltaMotivo" />
                       </div>
-                      <button className="w-full h-18 bg-red-600 text-white rounded-2xl text-[13px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-red-600/30" onClick={() => { alert("Falta registrada."); }}>Confirmar Registro</button>
+                      <button className="w-full h-18 bg-red-600 text-white rounded-2xl text-[13px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-red-600/30" onClick={async () => {
+                        const nome = (document.getElementById('selUndFaltaColab') as HTMLSelectElement).value;
+                        const motivo = (document.getElementById('txtUndFaltaMotivo') as HTMLTextAreaElement).value;
+                        if (!nome) return alert("Por favor, selecione o colaborador.");
+                        await supabase.from('tickets_sla').insert({
+                          assunto: `FALTA: ${nome}`,
+                          descricao: `Unidade: ${unidadeAtiva.nome} | Motivo relatado pela Diretoria: ${motivo}`,
+                          prioridade: 'ALTA', status: 'PENDENTE',
+                          setor_destino: 'RH Recursos Humanos', responsavel_citado: nome,
+                          criado_por: "Diretor(a) " + unidadeAtiva.nome
+                        });
+                        alert("Falta registrada e enviada para a fila de controle do RH!");
+                      }}>Confirmar Registro</button>
                     </div>
                   </div>
                   <div className="bg-[var(--bg-card)] p-12 rounded-[2rem] border border-[var(--border)] shadow-xl">
                     <h3 className="text-lg font-black uppercase mb-12 flex items-center gap-5"><Zap size={24} className="text-orange-500" /> Solicitar Volante</h3>
                     <div className="flex flex-col gap-10">
                        <p className="text-base font-medium text-[var(--text-muted)] leading-relaxed bg-[var(--bg-base)] p-8 rounded-[1.5rem] border border-[var(--border)]">Solicite apoio operacional imediato para cobertura emergencial de postos em aberto nesta unidade específica.</p>
-                       <button className="w-full h-18 bg-orange-500 text-white rounded-2xl text-[13px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-orange-500/30" onClick={() => { alert("Solicitação enviada."); }}>Solicitar agora</button>
+                       <button className="w-full h-18 bg-orange-500 text-white rounded-2xl text-[13px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-orange-500/30" onClick={async () => { 
+                         await supabase.from('tickets_sla').insert({
+                           assunto: `PEDIDO DE VOLANTE: ${unidadeAtiva.nome}`,
+                           descricao: 'Pedido emergencial de cobertura (Volante) acionado pela Diretoria do posto.',
+                           prioridade: 'ALTA', status: 'PENDENTE',
+                           setor_destino: 'Gerência Operacional',
+                           criado_por: "Diretor(a) " + unidadeAtiva.nome
+                         });
+                         alert("Solicitação enviada e registrada na Gerência Operacional!"); 
+                       }}>Solicitar agora</button>
                     </div>
                   </div>
                 </div>
@@ -223,16 +254,29 @@ export default function PortalDiretorPage() {
                   <div className="space-y-10">
                     <div className="space-y-4">
                        <label className="text-[12px] font-black uppercase text-[var(--text-muted)] tracking-widest ml-1">Tipo de Ajuste</label>
-                       <select className="input-field w-full h-16 px-6">
-                         <option>Erro no nome</option>
-                         <option>Cargo incorreto</option>
+                       <select className="input-field w-full h-16 px-6" id="selSuporteTipo">
+                         <option value="ERRO_NOME">Erro no nome</option>
+                         <option value="CARGO_INCORRETO">Cargo incorreto</option>
+                         <option value="OUTROS">Outros</option>
                        </select>
                     </div>
                     <div className="space-y-4">
                        <label className="text-[12px] font-black uppercase text-[var(--text-muted)] tracking-widest ml-1">Descrição</label>
-                       <textarea className="input-field w-full min-h-[180px] p-8" placeholder="Descreva o ajuste detalhadamente para o RH..." />
+                       <textarea className="input-field w-full min-h-[180px] p-8" placeholder="Descreva o ajuste detalhadamente para o RH..." id="txtSuporteDesc" />
                     </div>
-                    <button className="px-16 h-18 bg-[var(--brand)] text-white rounded-2xl text-[13px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-[var(--brand)]/40 flex items-center gap-5"><Send size={24} /> Enviar Ticket</button>
+                    <button className="px-16 h-18 bg-[var(--brand)] text-white rounded-2xl text-[13px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-[var(--brand)]/40 flex items-center justify-center gap-5 w-full md:w-auto" onClick={async () => {
+                      const tipo = (document.getElementById('selSuporteTipo') as HTMLSelectElement).value;
+                      const desc = (document.getElementById('txtSuporteDesc') as HTMLTextAreaElement).value;
+                      if (!desc) return alert("Por favor, descreva o problema.");
+                      await supabase.from('tickets_sla').insert({
+                        assunto: `SUPORTE ADMIN: ${unidadeAtiva.nome}`,
+                        descricao: `Tipo: ${tipo} | Relato da Diretoria: ${desc}`,
+                        prioridade: 'NORMAL', status: 'PENDENTE',
+                        setor_destino: 'RH Recursos Humanos',
+                        criado_por: "Diretor(a) " + unidadeAtiva.nome
+                      });
+                      alert("Ticket de suporte cadastrado com sucesso para o RH!");
+                    }}><Send size={24} /> Enviar Ticket</button>
                   </div>
                 </div>
               )}

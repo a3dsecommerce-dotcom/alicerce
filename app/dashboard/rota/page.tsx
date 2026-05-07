@@ -422,15 +422,39 @@ export default function RotaPage() {
             <option value="ATESTADO">Atestado Médico</option>
           </select>
           <textarea className="input-field w-full" placeholder="Observações da fiscalização..." value={dadosAtestado.motivo} onChange={e => setDadosAtestado({...dadosAtestado, motivo: e.target.value})} />
-          <button className="btn-brand w-full" onClick={() => { n8n.trigger('comunicar-ausencia', dadosAtestado); setModalAtestado(false); alert("Falta registrada!"); }}>Registrar Falta</button>
+          <button className="btn-brand w-full" onClick={async () => { 
+            const colab = equipeNaRota.find(c => c.nome === dadosAtestado.colaborador);
+            if (!colab) return alert("Selecione o colaborador");
+            await supabase.from('tickets_sla').insert({
+              assunto: `FALTA: ${colab.nome}`,
+              descricao: `Unidade: ${colab.unidade_alocacao || "Rota"} | Tipo: ${dadosAtestado.tipo} | Obs: ${dadosAtestado.motivo}`,
+              prioridade: 'ALTA', status: 'PENDENTE',
+              setor_destino: 'RH Recursos Humanos',
+              responsavel_citado: colab.nome,
+              criado_por: supervisorAtual || "Supervisor Mobile"
+            });
+            n8n.trigger('comunicar-ausencia', dadosAtestado);
+            setModalAtestado(false); alert("Falta registrada e enviada para o painel do RH!"); 
+          }}>Registrar Falta</button>
         </div>
       </AdaptiveModal>
 
       <AdaptiveModal title="Requisitar Volante (Apoio)" isOpen={modalVolante} onClose={() => setModalVolante(false)} width="400px">
         <div className="flex flex-col gap-4">
-          <select className="input-field w-full"><option>Unidade Selecionada</option>{unidadesNaRota.map(u => <option key={u.id}>{u.nome}</option>)}</select>
-          <select className="input-field w-full"><option>Imediata</option><option>Turno Seguinte</option></select>
-          <button className="btn-brand w-full" onClick={() => { alert("Volante requisitado!"); setModalVolante(false); }}>Confirmar Pedido</button>
+          <select className="input-field w-full" id="selVolanteUnd"><option value="">Selecione a Unidade</option>{unidadesNaRota.map(u => <option key={u.id} value={u.nome}>{u.nome}</option>)}</select>
+          <select className="input-field w-full" id="selVolanteUrg"><option value="IMEDIATA">Imediata</option><option value="TURNO_SEGUINTE">Turno Seguinte</option></select>
+          <button className="btn-brand w-full" onClick={async () => { 
+            const und = (document.getElementById('selVolanteUnd') as HTMLSelectElement).value;
+            const urg = (document.getElementById('selVolanteUrg') as HTMLSelectElement).value;
+            await supabase.from('tickets_sla').insert({
+              assunto: `PEDIDO DE VOLANTE: ${und || "Não informada"}`,
+              descricao: `Solicitação de cobertura de posto. Unidade: ${und}. Urgência: ${urg}`,
+              prioridade: urg === 'IMEDIATA' ? 'ALTA' : 'NORMAL',
+              status: 'PENDENTE', setor_destino: 'Gerência Operacional',
+              criado_por: supervisorAtual || "Supervisor Mobile"
+            });
+            alert("Volante requisitado e salvo na fila da Gerência!"); setModalVolante(false); 
+          }}>Confirmar Pedido</button>
         </div>
       </AdaptiveModal>
 
@@ -443,29 +467,66 @@ export default function RotaPage() {
             <option value="MEDIA">Advertência Escrita</option>
             <option value="GRAVE">Suspensão (Sugerida)</option>
           </select>
-          <textarea className="input-field w-full" placeholder="Descreva o motivo da punição..." />
-          <button className="btn-brand w-full !bg-red-600" onClick={() => { alert("Pedido de advertência enviado ao RH!"); setModalAdvertencia(false); }}>Enviar para o RH</button>
+          <textarea className="input-field w-full" placeholder="Descreva o motivo da punição..." value={dadosAdvertencia.motivo} onChange={e => setDadosAdvertencia({...dadosAdvertencia, motivo: e.target.value})} />
+          <button className="btn-brand w-full !bg-red-600" onClick={async () => { 
+            const colab = equipeNaRota.find(c => c.nome === dadosAdvertencia.colaborador);
+            await supabase.from('tickets_sla').insert({
+              assunto: `ADVERTÊNCIA (${dadosAdvertencia.gravidade}): ${dadosAdvertencia.colaborador}`,
+              descricao: `Solicitação de Punição Formal. Unidade: ${colab?.unidade_alocacao || "Rota"}. Motivo: ${dadosAdvertencia.motivo}`,
+              prioridade: 'NORMAL', status: 'PENDENTE',
+              setor_destino: 'RH Recursos Humanos', responsavel_citado: dadosAdvertencia.colaborador,
+              criado_por: supervisorAtual || "Supervisor Mobile"
+            });
+            alert("Pedido de advertência aberto no painel do RH!"); setModalAdvertencia(false); 
+          }}>Enviar para o RH</button>
         </div>
       </AdaptiveModal>
 
       <AdaptiveModal title="Ocorrência de Ponto / Horário" isOpen={modalPonto} onClose={() => setModalPonto(false)} width="450px">
         <div className="flex flex-col gap-4">
           <p className="text-xs text-[var(--text-muted)]">Solicite correção de batida de ponto ou ajuste de jornada.</p>
-          <select className="input-field w-full">{equipeNaRota.map((c, i) => <option key={i}>{c.nome}</option>)}</select>
-          <select className="input-field w-full"><option>Esqueceu de bater</option><option>Ajuste de Horário</option><option>Saída Antecipada Autorizada</option></select>
-          <textarea className="input-field w-full" placeholder="Justificativa do Encarregado..." />
-          <button className="btn-brand w-full !bg-orange-500" onClick={() => { alert("Ocorrência de ponto enviada!"); setModalPonto(false); }}>Solicitar Solução</button>
+          <select className="input-field w-full" id="selPontoColab"><option value="">Selecione o Colaborador...</option>{equipeNaRota.map((c, i) => <option key={i} value={c.nome}>{c.nome}</option>)}</select>
+          <select className="input-field w-full" id="selPontoTipo"><option value="ESQUECEU">Esqueceu de bater</option><option value="AJUSTE">Ajuste de Horário</option><option value="SAIDA_ANTECIPADA">Saída Antecipada Autorizada</option></select>
+          <textarea className="input-field w-full" placeholder="Justificativa do Encarregado..." id="txtPontoJust" />
+          <button className="btn-brand w-full !bg-orange-500" onClick={async () => { 
+            const nome = (document.getElementById('selPontoColab') as HTMLSelectElement).value;
+            const tipo = (document.getElementById('selPontoTipo') as HTMLSelectElement).value;
+            const just = (document.getElementById('txtPontoJust') as HTMLTextAreaElement).value;
+            const colab = equipeNaRota.find(c => c.nome === nome);
+            await supabase.from('tickets_sla').insert({
+              assunto: `AJUSTE DE PONTO: ${nome}`,
+              descricao: `Unidade: ${colab?.unidade_alocacao || "Rota"} | Tipo: ${tipo} | Justificativa: ${just}`,
+              prioridade: 'NORMAL', status: 'PENDENTE',
+              setor_destino: 'RH Recursos Humanos', responsavel_citado: nome,
+              criado_por: supervisorAtual || "Supervisor Mobile"
+            });
+            alert("Ocorrência de ponto registrada como Ticket de RH!"); setModalPonto(false); 
+          }}>Solicitar Solução</button>
         </div>
       </AdaptiveModal>
 
       <AdaptiveModal title="Remanejamento / Transferência" isOpen={modalTransfer} onClose={() => setModalTransfer(false)} width="450px">
         <div className="flex flex-col gap-4">
-          <select className="input-field w-full">{equipeNaRota.map((c, i) => <option key={i}>{c.nome}</option>)}</select>
-          <select className="input-field w-full"><option>Nova Unidade Destino...</option>{unidades.map(u => <option key={u.id}>{u.nome}</option>)}</select>
-          <textarea className="input-field w-full" placeholder="Motivo da transferência..." />
-          <button className="btn-brand w-full" onClick={() => { alert("Transferência solicitada!"); setModalTransfer(false); }}>Confirmar Remanejamento</button>
+          <select className="input-field w-full" id="selTransfColab"><option value="">Colaborador a transferir...</option>{equipeNaRota.map((c, i) => <option key={i} value={c.nome}>{c.nome}</option>)}</select>
+          <select className="input-field w-full" id="selTransfDest"><option value="">Nova Unidade Destino...</option>{unidades.map(u => <option key={u.id} value={u.nome}>{u.nome}</option>)}</select>
+          <textarea className="input-field w-full" placeholder="Motivo da transferência..." id="txtTransfMotivo" />
+          <button className="btn-brand w-full" onClick={async () => { 
+            const nome = (document.getElementById('selTransfColab') as HTMLSelectElement).value;
+            const dest = (document.getElementById('selTransfDest') as HTMLSelectElement).value;
+            const just = (document.getElementById('txtTransfMotivo') as HTMLTextAreaElement).value;
+            const colab = equipeNaRota.find(c => c.nome === nome);
+            await supabase.from('tickets_sla').insert({
+              assunto: `TRANSFERÊNCIA DE POSTO: ${nome}`,
+              descricao: `Origem: ${colab?.unidade_alocacao || "Rota"} | Destino Solicitado: ${dest} | Motivo: ${just}`,
+              prioridade: 'NORMAL', status: 'PENDENTE',
+              setor_destino: 'RH Recursos Humanos', responsavel_citado: nome,
+              criado_por: supervisorAtual || "Supervisor Mobile"
+            });
+            alert("Transferência aberta como solicitação no portal do RH!"); setModalTransfer(false); 
+          }}>Confirmar Remanejamento</button>
         </div>
       </AdaptiveModal>
     </div>
+
   );
 }

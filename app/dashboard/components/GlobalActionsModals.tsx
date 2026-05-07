@@ -362,14 +362,39 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
             <button className="flex-1 btn-ghost !h-14" onClick={onClose}>Cancelar</button>
             <button 
               className="flex-[2] btn-brand !h-14" 
-              onClick={() => {
+              onClick={async () => {
                 setLoading(true);
-                n8n.trigger('checkin-fiscalizacao', { ...checkin, usuario: user?.nome, timestamp: new Date() });
-                setTimeout(() => {
-                  setLoading(false);
-                  alert("Check-in realizado com sucesso! Sua presença foi registrada.");
-                  onClose();
-                }, 800);
+                let lat = null;
+                let lng = null;
+                if (navigator.geolocation) {
+                  try {
+                    const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+                      navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+                    });
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                  } catch (e) {
+                    console.warn("Geolocalização não permitida ou falhou.");
+                  }
+                }
+
+                try {
+                  await supabase.from('checkins_operacionais').insert({
+                    usuario_id: user?.id,
+                    usuario_nome: user?.nome || "Usuário Mobile",
+                    latitude: lat,
+                    longitude: lng,
+                    dispositivo: `Unidade: ${checkin.unidade} | Obs: ${checkin.observacao}`
+                  });
+                } catch (dbError) {
+                  console.error("Erro ao salvar checkin", dbError);
+                }
+
+                n8n.trigger('checkin-fiscalizacao', { ...checkin, usuario: user?.nome, lat, lng, timestamp: new Date() });
+                
+                setLoading(false);
+                alert("Check-in geolocalizado com sucesso! Sua presença foi registrada no banco de dados.");
+                onClose();
               }}
               disabled={loading || !checkin.unidade}
             >
@@ -425,14 +450,19 @@ export default function GlobalActionsModals({ isOpen, onClose, modalActive, user
             <button className="flex-1 btn-ghost !h-14" onClick={onClose}>Cancelar</button>
             <button 
               className="flex-[2] btn-brand !bg-[var(--info)] !h-14" 
-              onClick={() => {
+              onClick={async () => {
                 setLoading(true);
+                await supabase.from('tickets_sla').insert({
+                  assunto: `PEDIDO DE SUPRIMENTOS`,
+                  descricao: `Item Solicitado: ${reposicao.item} | Quantidade: ${reposicao.quantidade}`,
+                  prioridade: 'NORMAL', status: 'PENDENTE',
+                  setor_destino: 'Almoxarifado',
+                  criado_por: user?.nome || "Usuário Mobile"
+                });
                 n8n.trigger('solicitacao-reposicao', { ...reposicao, solicitado_por: user?.nome });
-                setTimeout(() => {
-                  setLoading(false);
-                  alert("Pedido enviado! O almoxarifado processará sua solicitação.");
-                  onClose();
-                }, 800);
+                setLoading(false);
+                alert("Pedido enviado! O almoxarifado já recebeu sua solicitação.");
+                onClose();
               }}
               disabled={loading || !reposicao.item}
             >
