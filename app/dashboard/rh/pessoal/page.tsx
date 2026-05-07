@@ -142,7 +142,7 @@ export default function RHPessoalPage() {
                     <tr key={c.id} className="table-row" onClick={() => { setSelecionado(c); setNovoStatus(c.status); }} style={{ cursor: "pointer" }}>
                       <td style={{ padding: "0.875rem 1rem" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "linear-gradient(135deg, var(--brand), var(--brand-dark))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "white", flexShrink: 0 }}>{c.avatar}</div>
+                          <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "linear-gradient(135deg, var(--brand), var(--brand-dark))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, color: "white", flexShrink: 0 }}>{c.avatar}</div>
                           <div>
                             <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{c.nome}</div>
                             <div style={{ fontSize: "0.72rem", color: "var(--brand)", fontWeight: 600 }}>{c.cargo}</div>

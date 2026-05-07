@@ -50,8 +50,8 @@ export default function ColaboradoresTable({
         {colaboradores.map(c => (
           <tr key={c.id} className="hover:bg-[var(--bg-base)]/50 transition-colors group cursor-pointer" onClick={() => onSelect(c)}>
             <td className="p-6">
-              <div className="flex items-center gap-5">
-                <div className="w-12 h-12 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center text-sm font-black">{c.avatar}</div>
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-[var(--brand)] text-white flex items-center justify-center text-[0.6rem] font-black flex-shrink-0">{c.avatar}</div>
                 <span className="text-base font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors">{c.nome}</span>
               </div>
             </td>
