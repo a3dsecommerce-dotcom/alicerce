@@ -202,8 +202,8 @@ export default function RHPrefeituraPage() {
                 <div style={{ display: "flex", gap: "10px" }}>
                    <button className="btn-ghost !h-8 !text-[10px]" onClick={() => alert("Imprimindo quadro de pessoal...")}>Imprimir Lista</button>
                    <div style={{ position: "relative", width: "200px" }}>
-                    <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-                    <input className="input-field" placeholder="Buscar..." style={{ paddingLeft: "2rem", height: "32px", fontSize: "0.75rem" }} />
+                    <Search size={14} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                    <input className="input-field" placeholder="Buscar..." style={{ paddingLeft: "2.25rem", height: "32px", fontSize: "0.75rem" }} />
                   </div>
                 </div>
               </div>

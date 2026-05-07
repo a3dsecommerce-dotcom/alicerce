@@ -112,8 +112,8 @@ export default function RHPessoalPage() {
           {/* Filtros */}
           <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
             <div style={{ flex: 1, maxWidth: "360px", position: "relative" }}>
-              <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-              <input className="input-field !pl-10" placeholder="Buscar por nome, cargo, unidade..." value={busca} onChange={e => setBusca(e.target.value)} />
+              <Search size={14} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input className="input-field" style={{ paddingLeft: "2.25rem" }} placeholder="Buscar por nome, cargo, unidade..." value={busca} onChange={e => setBusca(e.target.value)} />
             </div>
             <div style={{ display: "flex", gap: "4px", background: "var(--bg-card)", borderRadius: "8px", padding: "4px", border: "1px solid var(--border)" }}>
               {["TODOS", "ATIVO", "AFASTADO", "INATIVO"].map(f => (

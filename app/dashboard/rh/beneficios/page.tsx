@@ -70,8 +70,8 @@ export default function RHBeneficiosPage() {
             {aba === "requisicoes" ? "Gestão de Vales Transporte & GED" : "Painel de Conformidade de Documentos Dinâmico"}
           </h2>
           <div style={{ position: "relative", width: "260px" }}>
-            <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-            <input className="input-field" placeholder="Buscar colaborador..." style={{ paddingLeft: "2rem", height: "34px", fontSize: "0.75rem" }} value={busca} onChange={e => setBusca(e.target.value)} />
+            <Search size={14} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input className="input-field" placeholder="Buscar colaborador..." style={{ paddingLeft: "2.25rem", height: "34px", fontSize: "0.75rem" }} value={busca} onChange={e => setBusca(e.target.value)} />
           </div>
         </div>
 

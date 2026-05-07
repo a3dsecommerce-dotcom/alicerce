@@ -268,8 +268,12 @@ body::after {
 .input-field {
   background: rgba(255,255,255,0.06);
   border: 1px solid var(--border);
-  border-radius: 8px; /* Enterprise: 8px vs anterior 10px */
-  padding: 0 1rem;
+  border-radius: 8px;
+  /* Separado: padding-left = 0 para !pl-* do Tailwind funcionar corretamente */
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-right: 1rem;
+  padding-left: 1rem; /* padrão sem ícone; sobrescrito por !pl-* quando há ícone */
   height: 40px;
   color: var(--text-primary);
   font-weight: 400;
@@ -549,4 +553,16 @@ h6 { font-size: 0.8rem;   font-weight: 600; }
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(234,88,12,0.35);
   filter: brightness(1.05);
+}
+
+/* 6. BARRA DE BUSCA — Correção Global de Sobreposição Ícone + Placeholder */
+/* Garante que inputs dentro de containers de busca nunca sobreponham o ícone */
+.relative > .input-field,
+.relative > input.input-field {
+  padding-left: 2.5rem !important; /* 40px — espaço mínimo para ícone de 16px + margem */
+}
+/* Exceção: inputs sem ícone (usam classe 'no-icon') */
+.relative > .input-field.no-icon,
+.relative > input.input-field.no-icon {
+  padding-left: 1rem !important;
 }
