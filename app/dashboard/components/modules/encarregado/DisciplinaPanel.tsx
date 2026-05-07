@@ -43,14 +43,23 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     setLoading(false);
   };
 
-  const handleBuscarColab = (termo: string) => {
+  const handleBuscarColab = async (termo: string) => {
     setBuscaColab(termo);
-    if (termo.length < 2) {
+    if (termo.length < 3) {
       setColabsSugeridos([]);
       return;
     }
-    const encontrados = myColabs.filter(c => c.nome?.toLowerCase().includes(termo.toLowerCase()) || c.cpf?.includes(termo));
-    setColabsSugeridos(encontrados);
+    
+    // Busca global direta no banco de dados para garantir que encontre o colaborador
+    const { data } = await supabase
+      .from('usuarios')
+      .select('id, nome, cpf, cargo, funcao, unidade_alocacao')
+      .or(`nome.ilike.%${termo}%,cpf.ilike.%${termo}%`)
+      .limit(10);
+      
+    if (data) {
+      setColabsSugeridos(data);
+    }
   };
 
   const selecionarColab = async (colab: any) => {
