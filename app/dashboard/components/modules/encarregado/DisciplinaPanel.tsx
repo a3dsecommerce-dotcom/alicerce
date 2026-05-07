@@ -53,7 +53,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     // Busca global direta no banco de dados para garantir que encontre o colaborador
     const { data, error } = await supabase
       .from('usuarios')
-      .select('id, nome, cargo, funcao, unidade_alocacao')
+      .select('*')
       .ilike('nome', `%${termo}%`)
       .limit(10);
       
