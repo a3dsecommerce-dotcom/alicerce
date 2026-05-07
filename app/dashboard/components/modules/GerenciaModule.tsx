@@ -380,8 +380,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
                 <option value="SEMED">SEMED (Educação)</option>
                 <option value="SEMSA">SEMSA (Saúde)</option>
                 <option value="SEMAD">SEMAD (Administração)</option>
-                <option value="SEMOSP">SEMOSP (Obras)</option>
-                <option value="GABINETE">GABINETE</option>
+                <option value="SEMAG">SEMAG</option>
               </select>
             </div>
             <div className="space-y-2">

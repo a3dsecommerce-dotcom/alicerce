@@ -24,8 +24,7 @@ export default function CotasManager() {
           { secretaria: "SEMED", modo_calculo: "MANUAL", qtd_asg_manual: 100 },
           { secretaria: "SEMSA", modo_calculo: "MANUAL", qtd_asg_manual: 50 },
           { secretaria: "SEMAD", modo_calculo: "MANUAL", qtd_asg_manual: 20 },
-          { secretaria: "SEMOSP", modo_calculo: "MANUAL", qtd_asg_manual: 30 },
-          { secretaria: "GABINETE", modo_calculo: "AUTOMATICO", qtd_asg_manual: 0 }
+          { secretaria: "SEMAG", modo_calculo: "MANUAL", qtd_asg_manual: 10 }
         ]);
       } else {
         setCotas(data || []);
