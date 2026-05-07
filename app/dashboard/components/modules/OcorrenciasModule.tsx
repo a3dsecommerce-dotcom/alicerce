@@ -9,6 +9,14 @@ import { useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
+const SETORES_MAP: Record<string, string[]> = {
+  "Gerência Operacional": ["Gerente Regional", "Supervisor Operacional", "Gestão de Frota"],
+  "RH Recursos Humanos": ["Gerência RH", "DP Pessoal", "Benefícios e Documentos", "Gestão e Controle de Ponto"],
+  "Almoxarifado": ["Almoxarife", "Estoque Central"],
+  "Encarregado": ["Encarregado Nível 1", "Encarregado Nível 2", "Encarregado Nível 3"],
+  "Técnico Segurança": ["Segurança do Trabalho", "Meio Ambiente"]
+};
+
 export default function OcorrenciasModule({ user }: { user: any }) {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +33,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     prioridade: "NORMAL", 
     prazo_estipulado_dias: 7, 
     setor_destino: "Gerência Operacional",
+    subsetor_destino: "Gerente Regional",
     funcao: "",
     interessado_id: null,
     interessado_nome: "",
@@ -51,11 +60,17 @@ export default function OcorrenciasModule({ user }: { user: any }) {
 
   async function searchColabs() {
     setBuscando(true);
-    const { data, error } = await supabase
-      .from('usuarios')
-      .select('*')
-      .ilike('nome', `%${buscaColab}%`)
-      .limit(10);
+    let query = supabase.from('usuarios').select('*');
+    
+    // Se for busca para "citado" e o input estiver vazio, busca por dicas do subsetor
+    if (campoBuscaAtivo === "citado" && buscaColab.length < 2) {
+       const term = formData.subsetor_destino.split(" ")[0]; // Pega a primeira palavra chave
+       query = query.or(`funcao.ilike.%${term}%,cargo.ilike.%${term}%,nivel_acesso.ilike.%${term}%`);
+    } else {
+       query = query.ilike('nome', `%${buscaColab}%`);
+    }
+
+    const { data, error } = await query.limit(10);
     
     if (error) console.error("Erro busca:", error);
     if (data) setColabsSugeridos(data);
@@ -86,6 +101,13 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setColabsSugeridos([]);
   };
 
+  // Efeito para auto-sugerir responsáveis quando o subsetor muda
+  useEffect(() => {
+    if (modalAberto === "nova" && formData.subsetor_destino) {
+       setCampoBuscaAtivo("citado");
+       searchColabs();
+    }
+  }, [formData.subsetor_destino, modalAberto]);
 
   useEffect(() => {
     fetchTickets();
@@ -99,10 +121,13 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   }
 
   const handleNovaOcorrencia = async () => {
-    if (!formData.assunto || !formData.descricao) return alert("Preencha todos os campos.");
+    if (!formData.assunto || !formData.descricao) return alert("Preencha o assunto e a descrição.");
+    if (!formData.responsavel_citado_id) return alert("ERRO: É obrigatório definir o Responsável (Citar Alguém) para prosseguir com o ticket. Se o sistema não sugeriu ninguém, busque pelo nome e selecione.");
+    
     setLoading(true);
     const payload = {
       ...formData,
+      setor_destino: `${formData.setor_destino} - ${formData.subsetor_destino}`,
       interessado_id: formData.interessado_id || null,
       responsavel_citado_id: formData.responsavel_citado_id || null,
       criado_por: user.name || user.nome || 'Setor Admin',
@@ -435,16 +460,34 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Assunto da Demanda</label>
                <input className="input-field !h-14 font-black" value={formData.assunto} onChange={e => setFormData({...formData, assunto: e.target.value})} placeholder="Ex: Ar-condicionado parou de funcionar" />
             </div>
-            <div>
-               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Setor Destino / Responsável</label>
-               <select className="input-field !h-14 font-black" value={formData.setor_destino} onChange={e => setFormData({...formData, setor_destino: e.target.value})}>
-                  <option value="Gerência Operacional">Gerência Operacional</option>
-                  <option value="RH Recursos Humanos">RH Recursos Humanos</option>
-                  <option value="Almoxarifado">Almoxarifado</option>
-                  <option value="Encarregado">Encarregado</option>
-                  <option value="Técnico Segurança">Técnico Segurança</option>
-                  <option value="Gerência Regional">Gerência Regional</option>
-               </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Setor Destino (Macro)</label>
+                  <select 
+                     className="input-field !h-14 font-black" 
+                     value={formData.setor_destino} 
+                     onChange={e => {
+                       const val = e.target.value;
+                       setFormData({...formData, setor_destino: val, subsetor_destino: SETORES_MAP[val][0] || ""});
+                     }}
+                  >
+                     {Object.keys(SETORES_MAP).map(setor => (
+                        <option key={setor} value={setor}>{setor}</option>
+                     ))}
+                  </select>
+               </div>
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Sub-Setor / Especialidade</label>
+                  <select 
+                     className="input-field !h-14 font-black border-blue-200 focus:border-blue-500" 
+                     value={formData.subsetor_destino} 
+                     onChange={e => setFormData({...formData, subsetor_destino: e.target.value})}
+                  >
+                     {SETORES_MAP[formData.setor_destino]?.map(sub => (
+                        <option key={sub} value={sub}>{sub}</option>
+                     ))}
+                  </select>
+               </div>
             </div>
             <div>
                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
@@ -496,42 +539,48 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-amber-500/5 rounded-3xl border border-amber-500/10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-red-500/5 rounded-3xl border border-red-500/20">
                <div className="relative">
-                  <label className="text-[10px] font-black uppercase text-amber-600 mb-2 block font-bold">Citar Responsável (Opcional)</label>
+                  <label className="text-[10px] font-black uppercase text-red-700 mb-2 block font-bold flex items-center gap-2">
+                    <AlertOctagon size={12}/> Responsável para Executar (OBRIGATÓRIO)
+                  </label>
                   <div className="relative">
-                     <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-600" />
+                     <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-red-600" />
                      <input 
-                       className="input-field !pl-12 !h-14 font-black text-xs border-amber-200 focus:border-amber-500" 
-                       placeholder="BUSCAR RESPONSÁVEL..." 
+                       className="input-field !pl-12 !h-14 font-black text-xs border-red-200 focus:border-red-500" 
+                       placeholder="BUSCAR PELO NOME..." 
                        value={campoBuscaAtivo === "citado" ? buscaColab : ""}
                        onChange={e => { setBuscaColab(e.target.value); setCampoBuscaAtivo("citado"); }}
+                       onClick={() => { setCampoBuscaAtivo("citado"); searchColabs(); }}
                      />
                      {buscando && campoBuscaAtivo === "citado" && (
                         <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-amber-500 border-t-transparent"></div>
+                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-600 border-t-transparent"></div>
                         </div>
                      )}
                   </div>
                   {colabsSugeridos.length > 0 && campoBuscaAtivo === "citado" && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 max-h-60 overflow-y-auto custom-scrollbar">
+                      <div className="px-4 py-2 bg-slate-50 border-b border-[var(--border)]">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Sugeridos do Sistema</span>
+                      </div>
                       {colabsSugeridos.map(c => (
                         <button 
                           key={c.id}
                           onClick={() => selecionarColab(c)}
-                          className="w-full p-4 flex flex-col items-start gap-1 hover:bg-amber-500/10 border-b border-[var(--border)] last:border-none transition-colors"
+                          className="w-full p-4 flex flex-col items-start gap-1 hover:bg-red-500/10 border-b border-[var(--border)] last:border-none transition-colors"
                         >
-                          <span className="text-[11px] font-black uppercase text-amber-600">{c.nome}</span>
-                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.unidade_alocacao || "OPERAÇÃO"}</span>
+                          <span className="text-[11px] font-black uppercase text-red-700">{c.nome}</span>
+                          <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.funcao || c.nivel_acesso || "OPERAÇÃO"}</span>
                         </button>
                       ))}
                     </div>
                   )}
                </div>
                <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Responsável Citado</label>
-                  <div className="input-field !h-14 font-black flex items-center px-4 bg-white text-amber-600 border-dashed border-2 border-amber-200">
-                     {formData.responsavel_citado_nome || "NINGUÉM CITADO"}
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Responsável Designado</label>
+                  <div className={`input-field !h-14 font-black flex items-center px-4 border-dashed border-2 ${formData.responsavel_citado_nome ? 'bg-red-50 text-red-700 border-red-300' : 'bg-[var(--bg-base)] text-[var(--text-muted)] border-[var(--border)]'}`}>
+                     {formData.responsavel_citado_nome || "CLIQUE NA BUSCA PARA SELECIONAR"}
                   </div>
                </div>
             </div>
