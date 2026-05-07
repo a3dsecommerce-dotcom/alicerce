@@ -4,7 +4,7 @@ import {
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter, Trash2,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy
+  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy, ShieldAlert
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -12,9 +12,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import FichaColaborador360 from "../FichaColaborador360";
+import DisciplinaPanel from "./encarregado/DisciplinaPanel";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
@@ -25,6 +26,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     if (t === "CAT" || t === "ACIDENTE") return "CAT";
     if (t === "EPI" || t === "ENTREGA") return "EPI";
     if (t === "MISSOES" || t === "MISSIONS") return "MY_MISSIONS";
+    if (t === "DISCIPLINA" || t === "ADVERTENCIAS") return "DISCIPLINA";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -1745,6 +1747,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "EPI", label: "EPI", icon: Package },
            { id: "CAT", label: "CAT", icon: ShieldCheck },
            { id: "MY_MISSIONS", label: "Missões", icon: Trophy },
+           { id: "DISCIPLINA", label: "Disciplina", icon: ShieldAlert },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
@@ -1773,6 +1776,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            {activeTab === "EPI" && renderEPI()}
            { activeTab === "CAT" && renderCAT() }
            { activeTab === "MY_MISSIONS" && renderMyMissions() }
+           { activeTab === "DISCIPLINA" && <DisciplinaPanel user={user} myColabs={myColabs} /> }
         </div>
       )}
 
