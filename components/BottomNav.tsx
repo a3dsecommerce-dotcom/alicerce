@@ -10,7 +10,7 @@ import {
 const NAV_ITEMS = [
   { label: "Início",      icon: LayoutDashboard, href: "/dashboard",              exact: true, roles: ["ALL"] },
   { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias",               roles: ["ALL"] },
-  { label: "Rota",        icon: MapPin,           href: "/dashboard/rota",                      roles: ["ALL"] },
+  { label: "Rota",        icon: MapPin,           href: "/dashboard/rota",                      roles: ["ADMIN", "GERENTE", "DIRETORIA", "SUPERVISOR"] },
   { label: "Reuniões",    icon: CalendarDays,     href: "/dashboard/reunioes",                  roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
   { label: "RH",          icon: Users,            href: "/dashboard/rh",                        roles: ["ADMIN", "GERENTE", "DIRETORIA", "RH_DP"] },
   { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado",              roles: ["ADMIN", "GERENTE", "DIRETORIA", "ALMOXARIFADO", "ALMOXARIFE", "COMPRAS", "COMPRADOR"] },
