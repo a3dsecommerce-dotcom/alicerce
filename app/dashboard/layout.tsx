@@ -293,7 +293,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col overflow-hidden relative glass rounded-[2rem] border border-[var(--border)] shadow-xl mr-4 my-2">
         {/* TOPBAR - COM PROTEÇÃO DE BORDA DIREITA */}
-        <header className="no-print h-[80px] flex items-center px-10 lg:px-14 gap-8 glass z-40 border-b border-[var(--border)]">
+        <header className="no-print h-[60px] lg:h-[80px] flex items-center px-4 lg:px-14 gap-2 lg:gap-8 glass z-40 border-b border-[var(--border)]">
           {(!user?.role || !["COMPRADOR", "COMPRAS"].includes(String(user.role).toUpperCase())) && (
             <div className="hidden md:flex flex-1 max-w-[480px] relative group">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-[var(--brand)] transition-colors" />
@@ -334,7 +334,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </button>
               
               {notifOpen && (
-                <div className="absolute right-0 top-[calc(100%+12px)] w-[320px] glass rounded-2xl shadow-2xl z-[100] animate-fade-in overflow-hidden border border-[var(--glass-border)]">
+                <div className="absolute right-0 top-[calc(100%+12px)] w-[min(320px,calc(100vw-1rem))] glass rounded-2xl shadow-2xl z-[100] animate-fade-in overflow-hidden border border-[var(--glass-border)]">
                   <div className="p-4 border-b border-[var(--border)] flex justify-between items-center bg-white/5">
                     <span className="font-black text-[0.85rem] uppercase tracking-wider">Notificações</span>
                     <span className="badge badge-red">Recentes</span>
@@ -366,16 +366,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Denúncia */}
             <button 
               onClick={() => setDenunciaOpen(true)}
-              className="px-6 py-2.5 rounded-xl bg-[var(--danger)]/10 border border-[var(--danger)]/20 text-[var(--danger)] text-[0.75rem] font-black uppercase flex items-center gap-2 hover:bg-[var(--danger)] hover:text-white transition-all shadow-sm mr-4"
+              className="px-3 lg:px-5 py-2 rounded-xl bg-[var(--danger)]/10 border border-[var(--danger)]/20 text-[var(--danger)] text-[0.7rem] font-black uppercase flex items-center gap-2 hover:bg-[var(--danger)] hover:text-white transition-all shadow-sm mr-1 lg:mr-4"
             >
-              <Megaphone size={15} /> Denunciar
+              <Megaphone size={15} /> <span className="hidden sm:inline">Denunciar</span>
             </button>
           </div>
         </header>
 
         {/* SCROLLABLE MAIN VIEW - EQUILÍBRIO REAL */}
-        <main className="flex-1 overflow-y-auto relative p-8 lg:p-12 bg-gradient-to-br from-transparent to-[var(--brand)]/5 scroll-smooth">
-          <div className="max-w-[1600px] mx-auto animate-fade-in flex flex-col gap-12">
+        <main className="flex-1 overflow-y-auto relative p-4 sm:p-6 lg:p-12 pb-24 lg:pb-12 bg-gradient-to-br from-transparent to-[var(--brand)]/5 scroll-smooth">
+          <div className="max-w-[1600px] mx-auto animate-fade-in flex flex-col gap-4 sm:gap-6 lg:gap-12">
             {children}
           </div>
         </main>

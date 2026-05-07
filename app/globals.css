@@ -95,8 +95,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
-  overflow: hidden;
-  font-size: 0.875rem; /* 14px — padrão enterprise (vs 0.9rem antes) */
+  overflow: clip; /* 'clip' vs 'hidden': nao bloqueia scroll de modais no iOS Safari */
+  font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.5;
 }
@@ -627,6 +627,52 @@ h6 { font-size: 0.8rem;   font-weight: 600; }
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(234,88,12,0.35);
   filter: brightness(1.05);
+}
+
+/* ============================================================
+   MOBILE RESPONSIVIDADE
+   ============================================================ */
+
+/* Scrollbar invisível (BottomNav horizontal scroll) */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Tabelas: toque fluido em mobile */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Toque mínimo de 44px em botões (Apple HIG) */
+@media (max-width: 1024px) {
+  .btn-brand,
+  .btn-ghost {
+    min-height: 44px;
+  }
+
+  /* KPI grids de 4 colunas → 2 colunas em mobile */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Reduz padding excesivo em cards no mobile */
+  .card {
+    padding: 1rem;
+  }
+
+  /* Modal seguro: garante espaço acima do BottomNav */
+  .fixed.inset-0 > .card {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Safe-area para modais com p-4 em dispositivos com notch */
+@media (max-width: 768px) {
+  .fixed.inset-0 {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4rem);
+  }
 }
 
 /* 6. BARRA DE BUSCA — Correção Global de Sobreposição Ícone + Placeholder */
