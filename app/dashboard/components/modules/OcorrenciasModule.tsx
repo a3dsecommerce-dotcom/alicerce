@@ -53,9 +53,10 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setBuscando(true);
     let query = supabase.from('usuarios').select('*');
     
-    // Se for busca para "citado", só permitimos Nível 2 ou superior (Encarregados, Gerentes, etc)
+    // Se for busca para "citado", só permitimos Nível 2 ou superior (Encarregados, Gerentes, etc) E da unidade Alicerce
     if (campoBuscaAtivo === "citado") {
-       query = query.gte('nivel_acesso', 2);
+       // Força buscar apenas Nível >= 2 E Unidade Alicerce
+       query = query.gte('nivel_acesso', 2).ilike('unidade_alocacao', '%alicerce%');
        
        if (buscaColab.length < 2) {
          const term = formData.setor_destino.split(" ")[0]; // Pega a primeira palavra chave
