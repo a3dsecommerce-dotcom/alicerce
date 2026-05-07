@@ -468,10 +468,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                   <option value="Gerência Regional">Gerência Regional</option>
                </select>
             </div>
-            <div>
-               <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
-               <textarea className="input-field !h-28 p-4 text-sm font-medium w-full resize-none" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} placeholder="Descreva o problema de forma clara para que o setor possa resolver..." />
-            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="relative">
                   <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Pesquisa de Colaborador (Solicitante)</label>
@@ -517,7 +514,6 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                   </div>
                </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-200 dark:border-red-900/30">
                <div className="relative">
                   <label className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2 block flex items-center gap-2">
@@ -564,19 +560,9 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div>
-                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Unidade / Alocação</label>
-                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-sm font-medium" value={formData.unidade} disabled />
-               </div>
-               <div>
-                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Secretaria</label>
-                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-sm font-medium" value={formData.secretaria} disabled />
-               </div>
-               <div>
-                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Função</label>
-                  <input className="input-field !h-12 !bg-[var(--bg-base)] text-sm font-medium" value={formData.funcao} disabled />
-               </div>
+            <div>
+               <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Descrição Detalhada do Problema</label>
+               <textarea className="input-field !h-28 p-4 text-sm font-medium w-full resize-none" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})} placeholder="Descreva o problema de forma clara para que o setor possa resolver..." />
             </div>
 
             <div>
