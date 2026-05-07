@@ -4,16 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, ShieldAlert, Package, Settings,
-  AlertTriangle, MapPin, CalendarDays, ShieldCheck
+  AlertTriangle, MapPin, CalendarDays, ShieldCheck,
+  ShoppingBag, Truck
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Início",      icon: LayoutDashboard, href: "/dashboard",              exact: true, roles: ["ALL"] },
-  { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias",               roles: ["ALL"] },
+  { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias",               roles: ["ADMIN", "GERENTE", "DIRETORIA", "ENCARREGADO", "ALMOXARIFADO", "ALMOXARIFE", "RH_DP", "SUPERVISOR", "TECNICO_SEGURANCA"] },
   { label: "Rota",        icon: MapPin,           href: "/dashboard/rota",                      roles: ["ADMIN", "GERENTE", "DIRETORIA", "SUPERVISOR"] },
+  { label: "Requisições", icon: ShoppingBag,      href: "/dashboard?module=COMPRAS&tab=CATALOGO",roles: ["ADMIN", "GERENTE", "DIRETORIA", "COMPRAS", "COMPRADOR"] },
+  { label: "Pedidos",     icon: Truck,            href: "/dashboard?module=COMPRAS&tab=TRACKING",roles: ["ADMIN", "GERENTE", "DIRETORIA", "COMPRAS", "COMPRADOR"] },
   { label: "Reuniões",    icon: CalendarDays,     href: "/dashboard/reunioes",                  roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
   { label: "RH",          icon: Users,            href: "/dashboard/rh",                        roles: ["ADMIN", "GERENTE", "DIRETORIA", "RH_DP"] },
-  { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado",              roles: ["ADMIN", "GERENTE", "DIRETORIA", "ALMOXARIFADO", "ALMOXARIFE", "COMPRAS", "COMPRADOR"] },
+  { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado",              roles: ["ADMIN", "GERENTE", "DIRETORIA", "ALMOXARIFADO", "ALMOXARIFE"] },
   { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca",                 roles: ["ADMIN", "GERENTE", "DIRETORIA", "TECNICO_SEGURANCA"] },
   { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND",            roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
   { label: "Config",      icon: Settings,         href: "/dashboard/config",                    roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
