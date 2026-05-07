@@ -9,14 +9,6 @@ import { useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-const SETORES_MAP: Record<string, string[]> = {
-  "Gerência Operacional": ["Gerente Regional", "Supervisor Operacional", "Gestão de Frota"],
-  "RH Recursos Humanos": ["Gerência RH", "DP Pessoal", "Benefícios e Documentos", "Gestão e Controle de Ponto"],
-  "Almoxarifado": ["Almoxarife", "Estoque Central"],
-  "Encarregado": ["Encarregado Nível 1", "Encarregado Nível 2", "Encarregado Nível 3"],
-  "Técnico Segurança": ["Segurança do Trabalho", "Meio Ambiente"]
-};
-
 export default function OcorrenciasModule({ user }: { user: any }) {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +25,6 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     prioridade: "NORMAL", 
     prazo_estipulado_dias: 7, 
     setor_destino: "Gerência Operacional",
-    subsetor_destino: "Gerente Regional",
     funcao: "",
     interessado_id: null,
     interessado_nome: "",
@@ -67,7 +58,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
        query = query.gte('nivel_acesso', 2);
        
        if (buscaColab.length < 2) {
-         const term = formData.subsetor_destino.split(" ")[0]; // Pega a primeira palavra chave
+         const term = formData.setor_destino.split(" ")[0]; // Pega a primeira palavra chave
          query = query.or(`funcao.ilike.%${term}%,cargo.ilike.%${term}%`);
        } else {
          query = query.ilike('nome', `%${buscaColab}%`);
@@ -108,13 +99,13 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setColabsSugeridos([]);
   };
 
-  // Efeito para auto-sugerir responsáveis quando o subsetor muda
+  // Efeito para auto-sugerir responsáveis quando o modal abre
   useEffect(() => {
-    if (modalAberto === "nova" && formData.subsetor_destino) {
+    if (modalAberto === "nova") {
        setCampoBuscaAtivo("citado");
        searchColabs();
     }
-  }, [formData.subsetor_destino, modalAberto]);
+  }, [formData.setor_destino, modalAberto]);
 
   useEffect(() => {
     fetchTickets();
@@ -134,7 +125,6 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     setLoading(true);
     const payload = {
       ...formData,
-      setor_destino: `${formData.setor_destino} - ${formData.subsetor_destino}`,
       interessado_id: formData.interessado_id || null,
       responsavel_citado_id: formData.responsavel_citado_id || null,
       criado_por: user.name || user.nome || 'Setor Admin',
@@ -467,34 +457,16 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Assunto da Demanda</label>
                <input className="input-field !h-12 font-medium text-sm w-full" value={formData.assunto} onChange={e => setFormData({...formData, assunto: e.target.value})} placeholder="Ex: Ar-condicionado parou de funcionar" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div>
-                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Setor Destino (Macro)</label>
-                  <select 
-                     className="input-field !h-12 font-medium text-sm w-full" 
-                     value={formData.setor_destino} 
-                     onChange={e => {
-                       const val = e.target.value;
-                       setFormData({...formData, setor_destino: val, subsetor_destino: SETORES_MAP[val][0] || ""});
-                     }}
-                  >
-                     {Object.keys(SETORES_MAP).map(setor => (
-                        <option key={setor} value={setor}>{setor}</option>
-                     ))}
-                  </select>
-               </div>
-               <div>
-                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Sub-Setor / Especialidade</label>
-                  <select 
-                     className="input-field !h-12 font-medium text-sm w-full focus:border-[var(--brand)]" 
-                     value={formData.subsetor_destino} 
-                     onChange={e => setFormData({...formData, subsetor_destino: e.target.value})}
-                  >
-                     {SETORES_MAP[formData.setor_destino]?.map(sub => (
-                        <option key={sub} value={sub}>{sub}</option>
-                     ))}
-                  </select>
-               </div>
+            <div>
+               <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Setor Destino / Responsável</label>
+               <select className="input-field !h-12 font-medium text-sm w-full" value={formData.setor_destino} onChange={e => setFormData({...formData, setor_destino: e.target.value})}>
+                  <option value="Gerência Operacional">Gerência Operacional</option>
+                  <option value="RH Recursos Humanos">RH Recursos Humanos</option>
+                  <option value="Almoxarifado">Almoxarifado</option>
+                  <option value="Encarregado">Encarregado</option>
+                  <option value="Técnico Segurança">Técnico Segurança</option>
+                  <option value="Gerência Regional">Gerência Regional</option>
+               </select>
             </div>
             <div>
                <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Descrição Detalhada</label>
