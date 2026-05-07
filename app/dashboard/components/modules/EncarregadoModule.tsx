@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
+import UserSearchInput from "@/components/ui/UserSearchInput";
 import FichaColaborador360 from "../FichaColaborador360";
 import DisciplinaPanel from "./encarregado/DisciplinaPanel";
 
@@ -1261,22 +1262,30 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
               <div className="space-y-4">
                 <div className="p-6 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                  <label className="text-[10px] font-black uppercase text-blue-600 mb-3 block italic">Colaborador que fez o Extra (Substituto)</label>
-                  <input 
-                    className="input-field w-full !h-14 bg-white font-black"
+                  <UserSearchInput 
+                    label="Colaborador que fez o Extra (Substituto)"
                     placeholder="Digite o nome completo..."
-                    value={informativo.colaborador_substituto_nome}
-                    onChange={e => setInformativo({...informativo, colaborador_substituto_nome: e.target.value.toUpperCase()})}
+                    valueName={informativo.colaborador_substituto_nome}
+                    className="text-blue-600"
+                    onSelect={(user) => setInformativo({
+                      ...informativo, 
+                      colaborador_substituto_id: user.id,
+                      colaborador_substituto_nome: user.nome
+                    })}
                   />
                 </div>
 
                 <div className="p-6 bg-red-500/5 rounded-2xl border border-red-500/10">
-                  <label className="text-[10px] font-black uppercase text-red-600 mb-3 block italic">Colaborador que Faltou (Ausente)</label>
-                  <input 
-                    className="input-field w-full !h-14 bg-white font-black"
+                  <UserSearchInput 
+                    label="Colaborador que Faltou (Ausente)"
                     placeholder="Digite o nome completo..."
-                    value={informativo.colaborador_ausente_nome}
-                    onChange={e => setInformativo({...informativo, colaborador_ausente_nome: e.target.value.toUpperCase()})}
+                    valueName={informativo.colaborador_ausente_nome}
+                    className="text-red-600"
+                    onSelect={(user) => setInformativo({
+                      ...informativo, 
+                      colaborador_ausente_id: user.id,
+                      colaborador_ausente_nome: user.nome
+                    })}
                   />
                 </div>
               </div>
@@ -1284,12 +1293,16 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           ) : (
             <div className="space-y-6 animate-fade-in">
               <div className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Colaborador Ausente</label>
-                <input 
-                  className="input-field w-full !h-14 font-black"
+                <UserSearchInput 
+                  label="Colaborador Ausente"
                   placeholder="Digite o nome completo..."
-                  value={informativo.colaborador_ausente_nome}
-                  onChange={e => setInformativo({...informativo, colaborador_ausente_nome: e.target.value.toUpperCase()})}
+                  valueName={informativo.colaborador_ausente_nome}
+                  className="text-[var(--text-muted)]"
+                  onSelect={(user) => setInformativo({
+                    ...informativo, 
+                    colaborador_ausente_id: user.id,
+                    colaborador_ausente_nome: user.nome
+                  })}
                 />
               </div>
 
