@@ -7,19 +7,38 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Início",      icon: LayoutDashboard, href: "/dashboard",              exact: true },
-  { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias"               },
-  { label: "Rota",        icon: MapPin,           href: "/dashboard/rota"                      },
-  { label: "Reuniões",    icon: CalendarDays,     href: "/dashboard/reunioes"                  },
-  { label: "RH",          icon: Users,            href: "/dashboard/rh"                        },
-  { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado"              },
-  { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca"                 },
-  { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND"            },
-  { label: "Config",      icon: Settings,         href: "/dashboard/config"                    },
+  { label: "Início",      icon: LayoutDashboard, href: "/dashboard",              exact: true, roles: ["ALL"] },
+  { label: "Ocorrências", icon: AlertTriangle,   href: "/dashboard/ocorrencias",               roles: ["ALL"] },
+  { label: "Rota",        icon: MapPin,           href: "/dashboard/rota",                      roles: ["ALL"] },
+  { label: "Reuniões",    icon: CalendarDays,     href: "/dashboard/reunioes",                  roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
+  { label: "RH",          icon: Users,            href: "/dashboard/rh",                        roles: ["ADMIN", "GERENTE", "DIRETORIA", "RH_DP"] },
+  { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado",              roles: ["ADMIN", "GERENTE", "DIRETORIA", "ALMOXARIFADO", "ALMOXARIFE", "COMPRAS", "COMPRADOR"] },
+  { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca",                 roles: ["ADMIN", "GERENTE", "DIRETORIA", "TECNICO_SEGURANCA"] },
+  { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND",            roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
+  { label: "Config",      icon: Settings,         href: "/dashboard/config",                    roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) {
+        setUser(JSON.parse(saved));
+      }
+    } catch (err) {}
+  }, []);
+
+  const safeRole = user?.role ? String(user.role).toUpperCase() : "";
+  const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole);
+
+  const filteredItems = NAV_ITEMS.filter((item) => {
+    if (item.roles.includes("ALL")) return true;
+    if (isManager) return true;
+    return item.roles.includes(safeRole);
+  });
 
   return (
     <nav
@@ -31,7 +50,7 @@ export function BottomNav() {
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
       >
         <div className="flex gap-0.5 mx-auto">
-          {NAV_ITEMS.map((item) => {
+          {filteredItems.map((item) => {
             const isActive = item.exact
               ? pathname === item.href
               : pathname !== "/dashboard" && pathname.startsWith(item.href);
