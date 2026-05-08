@@ -98,6 +98,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
    const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado" | "epi_recebedor">("interessado");
 
+   const [filtroUnidadeColab, setFiltroUnidadeColab] = useState("");
+   const [filtroCargoColab, setFiltroCargoColab] = useState("");
+
    // MISSIONS STATE (Top level to avoid Error #310)
    const [missoesAtivas, setMissoesAtivas] = useState<any[]>([]);
    const [selectedMissao, setSelectedMissao] = useState<any>(null);
@@ -568,34 +571,58 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const renderMyColabs = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
        <div className="card">
-          <div className="flex justify-between items-center mb-8 bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)]">
-             <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
-                   <Users size={20} />
-                </div>
-                <div>
-                   <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Gestão de Equipe</h3>
-                   <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Visualize e gerencie seus colaboradores de campo</p>
-                </div>
+          <div className="mb-8 bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] flex flex-col gap-6">
+             <div className="flex justify-between items-center">
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+                     <Users size={20} />
+                  </div>
+                  <div>
+                     <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)]">Gestão de Equipe</h3>
+                     <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Visualize e gerencie seus colaboradores de campo</p>
+                  </div>
+               </div>
+               
+               <div className="flex items-center gap-4">
+                  <div className="relative">
+                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
+                     <input 
+                       type="text" 
+                       placeholder="BUSCAR NA EQUIPE..." 
+                       className="input-field !h-10 !pl-10 !text-[10px] w-64" 
+                       value={searchTerm}
+                       onChange={e => setSearchTerm(e.target.value)}
+                     />
+                  </div>
+                  <button 
+                     onClick={() => setActiveTab("QUICK_ADMISSION")}
+                     className="h-10 px-6 bg-[var(--brand)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-[var(--brand)]/20 flex items-center gap-2"
+                  >
+                     <UserPlus size={14} /> Nova Admissão
+                  </button>
+               </div>
              </div>
-             
-             <div className="flex items-center gap-4">
-                <div className="relative">
-                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={14} />
-                   <input 
-                     type="text" 
-                     placeholder="BUSCAR NA EQUIPE..." 
-                     className="input-field !h-10 !pl-10 !text-[10px] w-64" 
-                     value={searchTerm}
-                     onChange={e => setSearchTerm(e.target.value)}
-                   />
-                </div>
-                <button 
-                   onClick={() => setActiveTab("QUICK_ADMISSION")}
-                   className="h-10 px-6 bg-[var(--brand)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-[var(--brand)]/20 flex items-center gap-2"
-                >
-                   <UserPlus size={14} /> Nova Admissão
-                </button>
+             <div className="w-full flex flex-col md:flex-row items-center gap-4 mt-6">
+               <select 
+                 className="input-field !h-10 !text-[10px] bg-[var(--bg-base)] flex-1 min-w-[200px]"
+                 value={filtroUnidadeColab}
+                 onChange={e => setFiltroUnidadeColab(e.target.value)}
+               >
+                 <option value="">TODAS AS UNIDADES</option>
+                 {myUnits.map((u, i) => (
+                   <option key={i} value={u}>{u}</option>
+                 ))}
+               </select>
+               <select 
+                 className="input-field !h-10 !text-[10px] bg-[var(--bg-base)] flex-1 min-w-[200px]"
+                 value={filtroCargoColab}
+                 onChange={e => setFiltroCargoColab(e.target.value)}
+               >
+                 <option value="">TODOS OS CARGOS</option>
+                 {Array.from(new Set(myColabs.map(c => c.funcao || c.cargo || 'OPERACIONAL'))).map((cargo: any, i) => (
+                   <option key={i} value={cargo}>{cargo}</option>
+                 ))}
+               </select>
              </div>
           </div>
           <div className="overflow-x-auto">
@@ -613,8 +640,10 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                 <tbody className="divide-y divide-[var(--border)]">
                    {myColabs
                     .filter(c => 
-                      c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                      c.cpf?.includes(searchTerm)
+                      ((c.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
+                      (c.cpf || "").includes(searchTerm)) &&
+                      (filtroUnidadeColab === "" || c.unidade_alocacao === filtroUnidadeColab) &&
+                      (filtroCargoColab === "" || (c.funcao || c.cargo || 'OPERACIONAL') === filtroCargoColab)
                     )
                     .map((colab, i) => (
                      <tr key={i} className="hover:bg-[var(--bg-base)]/50 transition-colors group cursor-pointer" onClick={() => setEditandoColab(colab)}>
