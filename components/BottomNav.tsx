@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { label: "RH",          icon: Users,            href: "/dashboard/rh",                        roles: ["ADMIN", "GERENTE", "DIRETORIA", "RH_DP"] },
   { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado",              roles: ["ADMIN", "GERENTE", "DIRETORIA", "ALMOXARIFADO", "ALMOXARIFE"] },
   { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca",                 roles: ["ADMIN", "GERENTE", "DIRETORIA", "TECNICO_SEGURANCA"] },
-  { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND",            roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
+  { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND",            roles: ["ADMIN", "GERENTE", "DIRETORIA", "ENCARREGADO"] },
   { label: "Config",      icon: Settings,         href: "/dashboard/config",                    roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
 ];
 

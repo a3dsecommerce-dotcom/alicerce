@@ -54,7 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             if (dbUser) {
               const dbFuncao = dbUser.cargo;
               const rawFuncao = dbFuncao 
-                ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() 
                 : null;
               
               // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
@@ -282,9 +282,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             )}
             {sidebarOpen && (
-              <Link href="/" className="text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors p-1">
+              <button 
+                onClick={() => {
+                  localStorage.removeItem("crm_user");
+                  document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                  window.location.href = "/";
+                }}
+                className="text-[var(--text-muted)] hover:text-[var(--danger)] transition-colors p-1 cursor-pointer"
+                title="Sair do Sistema"
+              >
                 <LogOut size={16} />
-              </Link>
+              </button>
             )}
           </div>
         </div>

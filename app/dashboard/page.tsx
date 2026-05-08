@@ -73,7 +73,7 @@ function CockpitContent() {
             if (dbUser) {
               const dbFuncao = dbUser.cargo;
               const rawFuncao = dbFuncao 
-                ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() 
                 : null;
               
               // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
@@ -136,7 +136,7 @@ function CockpitContent() {
         } else {
           setActiveModule(filteredModules[0].id);
         }
-      } else if (!filteredModules.some(m => m.id === activeModule)) {
+      } else if (filteredModules.length > 0 && !filteredModules.some(m => m.id === activeModule)) {
         setActiveModule(filteredModules[0].id);
       }
     }
