@@ -587,76 +587,76 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       {/* MODAL DETALHES E AÇÃO */}
       <AdaptiveModal isOpen={modalAberto === "detalhes"} onClose={() => setModalAberto(null)} title="Visualização da Ocorrência">
          {selectedTicket && (
-            <div className="p-10 space-y-8">
+            <div className="p-8 space-y-6">
                <div className="border-b border-[var(--border)] pb-6">
-                  <h4 className="text-xl font-black">{selectedTicket.assunto}</h4>
-                  <p className="text-xs text-[var(--text-muted)] font-bold mt-2">{selectedTicket.descricao}</p>
+                  <h4 className="text-xl font-bold text-[var(--text-primary)]">{selectedTicket.assunto}</h4>
+                  <p className="text-sm text-[var(--text-secondary)] font-medium mt-3 leading-relaxed">{selectedTicket.descricao}</p>
                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Aberto em</p>
-                      <p className="text-sm font-black">{new Date(selectedTicket.data_abertura).toLocaleDateString()}</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                   <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] flex flex-col justify-center">
+                      <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-1">Aberto em</p>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{new Date(selectedTicket.data_abertura).toLocaleDateString()}</p>
                    </div>
-                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo Solicitado</p>
-                      <p className="text-sm font-black text-blue-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
+                   <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] flex flex-col justify-center">
+                      <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-1">Prazo Solicitado</p>
+                      <p className="text-sm font-semibold text-blue-600">{selectedTicket.prazo_estipulado_dias} Dias</p>
                    </div>
-                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Prazo Acordado</p>
-                      <p className={`text-sm font-black ${selectedTicket.prazo_prometido ? 'text-green-600' : 'text-[var(--text-muted)] italic'}`}>
+                   <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] flex flex-col justify-center">
+                      <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-1">Prazo Acordado</p>
+                      <p className={`text-sm font-semibold ${selectedTicket.prazo_prometido ? 'text-green-600' : 'text-[var(--text-muted)] italic'}`}>
                          {selectedTicket.prazo_prometido ? new Date(selectedTicket.prazo_prometido).toLocaleDateString() : 'Aguardando...'}
                       </p>
                    </div>
-                   <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)]">Setor Destino</p>
-                      <p className="text-sm font-black truncate">{selectedTicket.setor_destino || 'Setor Geral'}</p>
+                   <div className="p-4 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] flex flex-col justify-center">
+                      <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-1">Setor Destino</p>
+                      <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{selectedTicket.setor_destino || 'Setor Geral'}</p>
                    </div>
                 </div>
 
-                <div className="p-6 bg-[var(--bg-base)] rounded-3xl border border-[var(--border)] flex justify-between items-center">
+                <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)] flex justify-between items-center">
                    <div>
-                      <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1">Interessado (Colaborador)</p>
-                      <p className="text-base font-black text-[var(--text-primary)]">{selectedTicket.interessado_nome || selectedTicket.criado_por}</p>
-                      <p className="text-[10px] font-bold text-[var(--brand)] uppercase tracking-tight">{selectedTicket.funcao || 'OPERACIONAL'}</p>
+                      <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-1">Interessado (Colaborador)</p>
+                      <p className="text-base font-bold text-[var(--text-primary)]">{selectedTicket.interessado_nome || selectedTicket.criado_por}</p>
+                      <p className="text-xs font-semibold text-[var(--brand)]">{selectedTicket.funcao || 'Operacional'}</p>
                    </div>
                    {selectedTicket.representante_nome && (
                       <div className="text-right">
-                         <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1">Representante (Abertura)</p>
-                         <p className="text-sm font-black text-[var(--text-secondary)]">{selectedTicket.representante_nome}</p>
+                         <p className="text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wider mb-1">Representante (Abertura)</p>
+                         <p className="text-sm font-semibold text-[var(--text-secondary)]">{selectedTicket.representante_nome}</p>
                       </div>
                    )}
                 </div>
 
                 {['PENDENTE', 'RECEBIDO', 'EM ANALISE'].includes(selectedTicket.status) && (
-                   <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)] flex flex-col gap-4">
-                      <p className="text-[10px] font-black uppercase text-[var(--text-muted)] text-center tracking-widest mb-2">Ações de Gestão do Ticket</p>
+                   <div className="bg-[var(--bg-base)] p-6 rounded-2xl border border-[var(--border)] flex flex-col gap-5 shadow-sm">
+                      <p className="text-[11px] font-bold uppercase text-[var(--text-muted)] tracking-wider">Ações de Gestão do Ticket</p>
                       
                       {!resolverData.showForm && !cancelarData.showForm && (
                         <div className="grid grid-cols-2 gap-4">
-                           <button onClick={() => setResolverData({...resolverData, showForm: true})} className="h-14 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Aceitar e Resolver</button>
-                           <button onClick={() => setCancelarData({...cancelarData, showForm: true})} className="h-14 bg-[var(--bg-card)] text-red-600 border border-red-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-50 transition-all">Recusar / Cancelar</button>
+                           <button onClick={() => setResolverData({...resolverData, showForm: true})} className="h-12 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-all shadow-sm">Aceitar e Resolver</button>
+                           <button onClick={() => setCancelarData({...cancelarData, showForm: true})} className="h-12 bg-transparent text-red-600 border-2 border-red-200 rounded-xl text-sm font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 dark:border-red-900/50 transition-all">Recusar / Cancelar</button>
                         </div>
                       )}
 
                       {resolverData.showForm && (
-                         <div className="flex flex-col gap-4 animate-fade-in">
-                            <label className="text-[10px] font-black uppercase text-green-700 mb-1 block">Devolutiva Técnica (Solução Aplicada)</label>
-                            <textarea className="input-field !h-24 p-4 text-xs border-green-200 focus:border-green-500" value={resolverData.solucao} onChange={e => setResolverData({...resolverData, solucao: e.target.value})} placeholder="Descreva como o problema foi resolvido..." />
+                         <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-2">
+                            <label className="text-xs font-semibold text-green-700 dark:text-green-500 mb-1 block">Devolutiva Técnica (Solução Aplicada)</label>
+                            <textarea className="input-field !h-28 p-4 text-sm border-green-200 focus:border-green-500 dark:border-green-900/50 resize-none" value={resolverData.solucao} onChange={e => setResolverData({...resolverData, solucao: e.target.value})} placeholder="Descreva claramente como o problema foi resolvido..." />
                             <div className="flex gap-4">
-                              <button onClick={() => setResolverData({...resolverData, showForm: false})} className="px-6 py-4 bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase">Voltar</button>
-                              <button onClick={handleResolverOcorrencia} className="flex-1 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Confirmar Resolução</button>
+                              <button onClick={() => setResolverData({...resolverData, showForm: false})} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Voltar</button>
+                              <button onClick={handleResolverOcorrencia} className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Confirmar Resolução</button>
                             </div>
                          </div>
                       )}
 
                       {cancelarData.showForm && (
-                         <div className="flex flex-col gap-4 animate-fade-in">
-                            <label className="text-[10px] font-black uppercase text-red-700 mb-1 block">Motivo da Recusa / Cancelamento</label>
-                            <textarea className="input-field !h-24 p-4 text-xs border-red-200 focus:border-red-500" value={cancelarData.motivo} onChange={e => setCancelarData({...cancelarData, motivo: e.target.value})} placeholder="Descreva detalhadamente o porquê desta ocorrência não poder ser atendida..." />
+                         <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-2">
+                            <label className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1 block">Motivo da Recusa / Cancelamento</label>
+                            <textarea className="input-field !h-28 p-4 text-sm border-red-200 focus:border-red-500 dark:border-red-900/50 resize-none" value={cancelarData.motivo} onChange={e => setCancelarData({...cancelarData, motivo: e.target.value})} placeholder="Descreva detalhadamente o porquê desta ocorrência não poder ser atendida..." />
                             <div className="flex gap-4">
-                              <button onClick={() => setCancelarData({...cancelarData, showForm: false})} className="px-6 py-4 bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase">Voltar</button>
-                              <button onClick={handleCancelarOcorrencia} className="flex-1 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">Confirmar Recusa</button>
+                              <button onClick={() => setCancelarData({...cancelarData, showForm: false})} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">Voltar</button>
+                              <button onClick={handleCancelarOcorrencia} className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Confirmar Recusa</button>
                             </div>
                          </div>
                       )}
@@ -664,23 +664,23 @@ export default function OcorrenciasModule({ user }: { user: any }) {
                 )}
 
                 {selectedTicket.status?.startsWith('RESOLVIDO') && (
-                   <div className="bg-green-50 p-6 rounded-2xl border border-green-200">
-                      <p className="text-[10px] font-black uppercase text-green-700 mb-2">Devolutiva Técnica</p>
-                      <p className="text-xs font-bold text-green-900 leading-relaxed italic">&quot;{selectedTicket.solucao_descricao}&quot;</p>
-                      <div className="mt-4 flex items-center justify-between">
-                         <div className="text-[9px] font-black text-green-600 uppercase">Resolvido em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
-                         <div className="text-[9px] font-black text-green-700 uppercase bg-green-200 px-3 py-1 rounded-full">{selectedTicket.resolvido_por_nome}</div>
+                   <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-2xl border border-green-200 dark:border-green-900/30">
+                      <p className="text-[11px] font-bold uppercase text-green-700 dark:text-green-500 mb-3 tracking-wider">Devolutiva Técnica</p>
+                      <p className="text-sm font-medium text-green-900 dark:text-green-100 leading-relaxed italic border-l-2 border-green-300 dark:border-green-700 pl-4 py-1">&quot;{selectedTicket.solucao_descricao}&quot;</p>
+                      <div className="mt-6 flex items-center justify-between">
+                         <div className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Resolvido em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
+                         <div className="text-[10px] font-bold text-green-800 dark:text-green-100 uppercase bg-green-200 dark:bg-green-800 px-3 py-1.5 rounded-full">{selectedTicket.resolvido_por_nome}</div>
                       </div>
                    </div>
                 )}
 
                 {(selectedTicket.status === 'REJEITADO' || selectedTicket.status === 'CANCELADO') && (
-                   <div className="bg-gray-800 p-6 rounded-2xl border border-gray-600 text-white">
-                      <p className="text-[10px] font-black uppercase text-red-400 mb-2">Ocorrência Recusada / Cancelada</p>
-                      <p className="text-xs font-bold leading-relaxed italic">&quot;{selectedTicket.solucao_descricao}&quot;</p>
-                      <div className="mt-4 flex items-center justify-between">
-                         <div className="text-[9px] font-black uppercase opacity-60">Em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
-                         <div className="text-[9px] font-black uppercase bg-gray-700 px-3 py-1 rounded-full">{selectedTicket.resolvido_por_nome}</div>
+                   <div className="bg-red-50 dark:bg-red-950/20 p-6 rounded-2xl border border-red-200 dark:border-red-900/30">
+                      <p className="text-[11px] font-bold uppercase text-red-700 dark:text-red-400 mb-3 tracking-wider">Ocorrência Recusada / Cancelada</p>
+                      <p className="text-sm font-medium text-red-900 dark:text-red-100 leading-relaxed italic border-l-2 border-red-300 dark:border-red-700 pl-4 py-1">&quot;{selectedTicket.solucao_descricao}&quot;</p>
+                      <div className="mt-6 flex items-center justify-between">
+                         <div className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Em: {new Date(selectedTicket.data_fechamento).toLocaleString()}</div>
+                         <div className="text-[10px] font-bold text-red-800 dark:text-red-100 uppercase bg-red-200 dark:bg-red-800 px-3 py-1.5 rounded-full">{selectedTicket.resolvido_por_nome}</div>
                       </div>
                    </div>
                 )}
