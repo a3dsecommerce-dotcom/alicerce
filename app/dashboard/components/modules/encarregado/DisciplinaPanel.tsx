@@ -169,11 +169,11 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
                 }}
               />
               {colabsSugeridos.length > 0 && (
-                <div className="absolute top-[100%] mt-2 left-0 w-full bg-white border border-[var(--border)] rounded-xl shadow-2xl z-50 overflow-hidden">
+                <div className="absolute top-[100%] mt-2 left-0 w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-2xl z-50 overflow-hidden">
                   {colabsSugeridos.map(c => (
-                    <div key={c.id} className="p-4 border-b border-[var(--border)] hover:bg-[var(--brand)] hover:text-white cursor-pointer transition-all" onClick={() => selecionarColab(c)}>
-                      <div className="text-xs font-black">{c.nome}</div>
-                      <div className="text-[10px] uppercase opacity-80">{c.cargo || c.funcao} - {c.unidade_alocacao}</div>
+                    <div key={c.id} className="p-4 border-b border-[var(--border)] hover:bg-[var(--bg-base)] cursor-pointer transition-all text-left" onClick={() => selecionarColab(c)}>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">{c.nome}</div>
+                      <div className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mt-1">{c.cargo || c.funcao} - {c.unidade_alocacao}</div>
                     </div>
                   ))}
                 </div>
@@ -198,13 +198,13 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Categoria</label>
-                    <select className="input-field w-full font-black" value={form.categoria_motivo} onChange={e => setForm({...form, categoria_motivo: e.target.value})}>
-                      <option value="ASSIDUIDADE">ASSIDUIDADE (Faltas/Atrasos)</option>
-                      <option value="CONDUTA_INSUBORDINACAO">CONDUTA / INSUBORDINAÇÃO</option>
-                      <option value="SEGURANCA_EPI">SEGURANÇA (EPI / Normas)</option>
-                      <option value="PATRIMONIO">PATRIMÔNIO (Danos/Mau uso)</option>
-                      <option value="OUTROS">OUTROS</option>
+                    <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Categoria</label>
+                    <select className="input-field !h-12 w-full text-sm font-medium bg-[var(--bg-card)]" value={form.categoria_motivo} onChange={e => setForm({...form, categoria_motivo: e.target.value})}>
+                      <option value="ASSIDUIDADE" className="bg-[var(--bg-card)] text-[var(--text-primary)]">ASSIDUIDADE (Faltas/Atrasos)</option>
+                      <option value="CONDUTA_INSUBORDINACAO" className="bg-[var(--bg-card)] text-[var(--text-primary)]">CONDUTA / INSUBORDINAÇÃO</option>
+                      <option value="SEGURANCA_EPI" className="bg-[var(--bg-card)] text-[var(--text-primary)]">SEGURANÇA (EPI / Normas)</option>
+                      <option value="PATRIMONIO" className="bg-[var(--bg-card)] text-[var(--text-primary)]">PATRIMÔNIO (Danos/Mau uso)</option>
+                      <option value="OUTROS" className="bg-[var(--bg-card)] text-[var(--text-primary)]">OUTROS</option>
                     </select>
                   </div>
                   <div>
@@ -229,12 +229,12 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
                     <input className="input-field w-full font-black" placeholder="Nomes..." value={form.testemunhas} onChange={e => setForm({...form, testemunhas: e.target.value})} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Pena Sugerida (Final: Gerência)</label>
-                    <select className="input-field w-full font-black text-orange-700" value={form.nivel_sugerido_encarregado} onChange={e => setForm({...form, nivel_sugerido_encarregado: e.target.value})}>
-                      <option value="VERBAL">VERBAL (Orientação)</option>
-                      <option value="ESCRITA">ADVERTÊNCIA ESCRITA</option>
-                      <option value="SUSPENSAO">SUSPENSÃO</option>
-                      <option value="JUSTA_CAUSA">JUSTA CAUSA</option>
+                    <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Pena Sugerida (Final: Gerência)</label>
+                    <select className="input-field !h-12 w-full text-sm font-semibold text-orange-600 dark:text-orange-400 bg-[var(--bg-card)]" value={form.nivel_sugerido_encarregado} onChange={e => setForm({...form, nivel_sugerido_encarregado: e.target.value})}>
+                      <option value="VERBAL" className="bg-[var(--bg-card)] text-[var(--text-primary)]">VERBAL (Orientação)</option>
+                      <option value="ESCRITA" className="bg-[var(--bg-card)] text-[var(--text-primary)]">ADVERTÊNCIA ESCRITA</option>
+                      <option value="SUSPENSAO" className="bg-[var(--bg-card)] text-[var(--text-primary)]">SUSPENSÃO</option>
+                      <option value="JUSTA_CAUSA" className="bg-[var(--bg-card)] text-red-500">JUSTA CAUSA</option>
                     </select>
                   </div>
                 </div>
