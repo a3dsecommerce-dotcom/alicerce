@@ -199,21 +199,46 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const getStatusInfo = (t: any) => {
     const agora = new Date();
     const abertura = new Date(t.data_abertura);
-    const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
-    const diffDiasSolicitado = Math.floor((agora.getTime() - abertura.getTime()) / (1000 * 60 * 60 * 24));
-    const isAtrasadoSolicitado = diffDiasSolicitado >= (t.prazo_estipulado_dias || 1);
+    
+    // Função para calcular horas úteis decorridas
+    const getBusinessHoursElapsed = (start: Date, end: Date) => {
+      let count = 0;
+      let current = new Date(start);
+      
+      // Itera minuto a minuto (ou hora a hora para performance, mas vamos usar 30 min)
+      const step = 30 * 60 * 1000; // 30 minutos
+      
+      while (current < end) {
+        const day = current.getDay();
+        const hour = current.getHours();
+        const isWeekend = day === 0 || day === 6;
+        const isBusinessHours = hour >= 7 && hour < 17;
+        
+        if (!isWeekend && isBusinessHours) {
+          count += 0.5; // adiciona meia hora
+        }
+        current = new Date(current.getTime() + step);
+      }
+      return count;
+    };
 
-    if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle };
-    if (t.status === 'RESOLVIDO_COM_ATRASO') return { label: 'Resolvido (Atraso)', color: 'bg-amber-100 text-amber-700 border border-amber-300', icon: CheckCircle };
+    const horasUteisDecorridas = getBusinessHoursElapsed(abertura, agora);
+    const prazoEmHoras = (t.prazo_estipulado_dias || 1) * 10; // 1 dia = 10 horas úteis (7h-17h)
+    const isAtrasadoSolicitado = horasUteisDecorridas >= prazoEmHoras;
+
+    const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
+
+    if (t.status === 'RESOLVIDO') return { label: 'Resolvido', color: 'bg-green-100 text-green-700', icon: CheckCircle, horas: horasUteisDecorridas };
+    if (t.status === 'RESOLVIDO_COM_ATRASO') return { label: 'Resolvido (Atraso)', color: 'bg-amber-100 text-amber-700 border border-amber-300', icon: CheckCircle, horas: horasUteisDecorridas };
     
     if (deadlineAcordado && agora > deadlineAcordado && !t.status?.startsWith('RESOLVIDO')) {
-      return { label: 'FALIT (Não Cumprido)', color: 'bg-black text-white border-2 border-red-600 animate-pulse', icon: ShieldCheck };
+      return { label: 'FALIT (Não Cumprido)', color: 'bg-black text-white border-2 border-red-600 animate-pulse', icon: ShieldCheck, horas: horasUteisDecorridas };
     }
     if (isAtrasadoSolicitado && !t.status?.startsWith('RESOLVIDO')) {
-      return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white', icon: AlertTriangle };
+      return { label: 'URGENTE (Atrasado)', color: 'bg-red-600 text-white', icon: AlertTriangle, horas: horasUteisDecorridas };
     }
-    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock };
-    return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: Clock };
+    if (t.status === 'RECEBIDO' || t.status === 'EM ANALISE') return { label: 'Em Atendimento', color: 'bg-blue-100 text-blue-700', icon: Clock, horas: horasUteisDecorridas };
+    return { label: 'Aguardando', color: 'bg-orange-100 text-orange-700', icon: Clock, horas: horasUteisDecorridas };
   };
 
   const stats = useMemo(() => {
@@ -1191,6 +1216,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                        <div className="flex items-center gap-4 mt-2">
                           <span className="text-[10px] font-bold text-red-600 uppercase italic">Unidade: {ticket.unidade}</span>
                           <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Solic: {ticket.interessado_nome || ticket.criado_por}</span>
+                          <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md uppercase tracking-tighter">
+                             SLA Útil: {Math.round(s.horas)}h
+                          </span>
                        </div>
                     </div>
                   </div>
