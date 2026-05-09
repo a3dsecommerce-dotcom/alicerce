@@ -28,7 +28,7 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, deleteExtra, refresh } = useRHData(user);
+  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, deleteExtra, refresh } = useRHData(user);
   const { transferencias, finalizarRH } = useTransferencias(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
@@ -128,6 +128,15 @@ export default function RHModule({ user }: { user: any }) {
       refresh();
     } else {
       toast.error("Erro ao atualizar status da CAT");
+    }
+  };
+
+  const handleUpdateExpDecisionWrapper = async (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => {
+    try {
+      await updateExpDecision(id, stage, decision);
+      toast.success("Decisão registrada!");
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
@@ -265,7 +274,7 @@ export default function RHModule({ user }: { user: any }) {
                     {dpAba === "ativos" ? (
                        <ColaboradoresTable colaboradores={filtradosDP} dpAba={dpAba} onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
                     ) : dpAba === "contratacao" ? (
-                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="contratacao" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
+                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="contratacao" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} onUpdateExpDecision={handleUpdateExpDecisionWrapper} />
                     ) : dpAba === "talentos" ? (
                        <TalentosGrid candidatos={candidatos.filter(c => c.status_candidato !== 'CONTRATADO')} onAdmitir={(c) => { setAdmissaoForm({...admissaoForm, cargo: c.cargo_pretendido || c.cargo || ""}); setModalAdmissao(c); }} />
                     ) : dpAba === "arquivo" ? (

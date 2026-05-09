@@ -34,6 +34,7 @@ interface ColaboradoresTableProps {
   onUpdateStatus: (id: string, status: string) => void;
   onGerarPDF: (c: Colaborador) => void;
   onUpdateDocs?: (id: string, field: string, value: boolean) => void;
+  onUpdateExpDecision?: (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => void;
 }
 
 export default function ColaboradoresTable({ 
@@ -42,8 +43,22 @@ export default function ColaboradoresTable({
   onSelect, 
   onUpdateStatus, 
   onGerarPDF,
-  onUpdateDocs
+  onUpdateDocs,
+  onUpdateExpDecision
 }: ColaboradoresTableProps) {
+  
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '---';
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
+  const getFutureDate = (baseDate: string | null | undefined, days: number) => {
+    if (!baseDate) return '---';
+    const date = new Date(baseDate);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+  };
   
   const getExperienceInfo = (dataAdmissao: string | null | undefined) => {
     if (!dataAdmissao) return null;
@@ -84,6 +99,14 @@ export default function ColaboradoresTable({
               <th className="p-4 text-center">CONTRATO</th>
               <th className="p-4 text-center">FARDA</th>
             </>
+          ) : dpAba === 'contratacao' ? (
+            <>
+              <th className="p-4 text-center">Início</th>
+              <th className="p-4 text-center">Término (30d)</th>
+              <th className="p-4 text-center">Renovar?</th>
+              <th className="p-4 text-center">Término (90d)</th>
+              <th className="p-4 text-center">Efetivar?</th>
+            </>
           ) : (
             <>
               <th className="p-6">Jornada / Horário</th>
@@ -123,6 +146,42 @@ export default function ColaboradoresTable({
                 </td>
                 <td className="p-4 text-center">
                    <input type="checkbox" checked={c.docs?.fardamento} onChange={(e) => onUpdateDocs?.(c.id, 'doc_fardamento', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                </td>
+              </>
+            ) : dpAba === 'contratacao' ? (
+              <>
+                <td className="p-4 text-center text-[10px] font-black text-blue-600">
+                  {formatDate(c.data_admissao)}
+                </td>
+                <td className="p-4 text-center text-[10px] font-bold text-[var(--text-primary)]">
+                  {formatDate(getFutureDate(c.data_admissao, 30))}
+                </td>
+                <td className="p-4 text-center">
+                   <select 
+                     className={`text-[8px] font-black px-2 py-1 rounded border-2 transition-all cursor-pointer ${c.exp1_decisao === 'RENOVADO' ? 'bg-green-100 border-green-300 text-green-700' : c.exp1_decisao === 'DISPENSADO' ? 'bg-red-100 border-red-300 text-red-700' : 'bg-slate-100 border-slate-300 text-slate-700'}`}
+                     value={c.exp1_decisao}
+                     onClick={e => e.stopPropagation()}
+                     onChange={e => onUpdateExpDecision?.(c.id, 'exp1_decisao', e.target.value)}
+                   >
+                     <option value="PENDENTE">Aguardando</option>
+                     <option value="RENOVADO">Sim, Renovar</option>
+                     <option value="DISPENSADO">Não, Dispensar</option>
+                   </select>
+                </td>
+                <td className="p-4 text-center text-[10px] font-bold text-[var(--text-primary)]">
+                  {formatDate(getFutureDate(c.data_admissao, 90))}
+                </td>
+                <td className="p-4 text-center">
+                   <select 
+                     className={`text-[8px] font-black px-2 py-1 rounded border-2 transition-all cursor-pointer ${c.exp2_decisao === 'EFETIVADO' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : c.exp2_decisao === 'DISPENSADO' ? 'bg-red-100 border-red-300 text-red-700' : 'bg-slate-100 border-slate-300 text-slate-700'}`}
+                     value={c.exp2_decisao}
+                     onClick={e => e.stopPropagation()}
+                     onChange={e => onUpdateExpDecision?.(c.id, 'exp2_decisao', e.target.value)}
+                   >
+                     <option value="PENDENTE">Aguardando</option>
+                     <option value="EFETIVADO">Efetivar</option>
+                     <option value="DISPENSADO">Dispensar</option>
+                   </select>
                 </td>
               </>
             ) : (

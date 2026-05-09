@@ -33,6 +33,8 @@ export function useRHData(user: any) {
           telefone: u.telefone || "---",
           admissao: u.data_admissao || null,
           data_admissao: u.data_admissao || null,
+          exp1_decisao: u.exp1_decisao || 'PENDENTE',
+          exp2_decisao: u.exp2_decisao || 'PENDENTE',
           docs: {
             asu: u.doc_asu,
             vt: u.doc_vt,
@@ -142,6 +144,11 @@ export function useRHData(user: any) {
     },
     updateStatus,
     finalizarAdmissao,
+    updateExpDecision: async (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => {
+      const { error } = await supabase.from('usuarios').update({ [stage]: decision }).eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    },
     deleteExtra: async (id: string, justificativa: string) => {
       // 1. Buscar dados do item antes de excluir para o log
       const { data: item } = await supabase.from('informativos_operacionais').select('*').eq('id', id).single();
