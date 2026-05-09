@@ -24,7 +24,7 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "VOLANTES" | "REQUISICOES";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, candidatos, cats, extras, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, refresh } = useRHData(user);
+  const { loading, colaboradores, candidatos, cats, extras, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, deleteExtra, refresh } = useRHData(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
@@ -241,7 +241,16 @@ export default function RHModule({ user }: { user: any }) {
         )}
 
         {masterTab === "EXTRAS" && (
-           <ExtrasList extras={extras} />
+           <ExtrasList extras={extras} onDelete={async (id) => {
+              if(confirm("Deseja realmente excluir este registro de Hora Extra? Esta ação é irreversível.")) {
+                 try {
+                    await deleteExtra(id);
+                    toast.success("Registro de Hora Extra excluído.");
+                 } catch (e: any) {
+                    toast.error("Erro ao excluir: " + e.message);
+                 }
+              }
+           }} />
         )}
 
         {masterTab === "VOLANTES" && (

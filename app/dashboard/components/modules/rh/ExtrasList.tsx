@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Clock, Calendar, MapPin, User, FileText, Download, TrendingUp } from "lucide-react";
+import { Clock, Calendar, MapPin, User, FileText, Download, TrendingUp, Trash2 } from "lucide-react";
 import { format, isAfter, isBefore, startOfMonth, addMonths, subMonths, setDate } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { jsPDF } from "jspdf";
@@ -8,9 +8,10 @@ import autoTable from "jspdf-autotable";
 
 interface ExtrasListProps {
   extras: any[];
+  onDelete?: (id: string) => void;
 }
 
-export default function ExtrasList({ extras }: ExtrasListProps) {
+export default function ExtrasList({ extras, onDelete }: ExtrasListProps) {
   const [selectedCycle, setSelectedCycle] = useState(new Date());
 
   // Lógica de Ciclo: 23 do mês anterior até 22 do mês atual
@@ -146,7 +147,12 @@ export default function ExtrasList({ extras }: ExtrasListProps) {
                     </div>
                   </td>
                   <td className="p-8 text-right pr-10">
-                    <button className="w-12 h-12 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-green-600 hover:bg-green-50 border border-[var(--border)] transition-all inline-flex items-center justify-center shadow-sm"><FileText size={20} /></button>
+                    <button 
+                      onClick={() => onDelete && onDelete(e.id)}
+                      className="w-12 h-12 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 border border-[var(--border)] transition-all inline-flex items-center justify-center shadow-sm"
+                    >
+                      <Trash2 size={20} />
+                    </button>
                   </td>
                 </tr>
               ))}
