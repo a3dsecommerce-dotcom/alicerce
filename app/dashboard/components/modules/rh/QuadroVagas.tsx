@@ -233,73 +233,116 @@ export default function QuadroVagas() {
         <div className="lg:col-span-8">
           {unidadeSelecionada ? (
             <div className="flex flex-col gap-8 animate-slide-up">
-              <div className="flex justify-between items-center bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-10 opacity-5">
-                    <Building2 size={120} />
+              <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-2xl overflow-hidden animate-slide-up">
+                <div className="p-8 lg:p-10 border-b border-[var(--border)] bg-[var(--bg-base)]/30 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-[0.3em] mb-2 italic">Governança Local</p>
+                        <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">{unidadeSelecionada}</h3>
+                    </div>
+                    <button 
+                        onClick={() => openModal(unidadeSelecionada)}
+                        className="flex items-center gap-2 bg-[var(--brand)] text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-[var(--brand)]/30 hover:scale-105 transition-all"
+                    >
+                        <Plus size={18} /> Adicionar Cargo à Unidade
+                    </button>
                 </div>
-                <div className="relative z-10">
-                    <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-[0.3em] mb-2 italic">Unidade Selecionada</p>
-                    <h3 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">{unidadeSelecionada}</h3>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-[var(--bg-base)]/50 border-b border-[var(--border)]">
+                                <th className="px-8 py-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Cargo / Função</th>
+                                <th className="px-6 py-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Escala / Turno</th>
+                                <th className="px-6 py-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Quota (Vagas)</th>
+                                <th className="px-6 py-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Ocupação</th>
+                                <th className="px-6 py-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center">Status</th>
+                                <th className="px-8 py-6 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {getQuadroUnidade(unidadeSelecionada).map(item => (
+                                <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-base)]/30 transition-all group">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-[var(--bg-base)] rounded-xl flex items-center justify-center text-[var(--brand)] border border-[var(--border)]">
+                                                <Briefcase size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] font-black text-[var(--text-primary)] uppercase">{item.cargo}</p>
+                                                {item.insalubridade && item.insalubridade !== 'N/A' && (
+                                                    <p className="text-[8px] font-black text-red-500 uppercase mt-1 italic">Insal. {item.insalubridade}</p>
+                                                )}
+                                                {item.salario > 0 && (
+                                                    <p className="text-[8px] font-black text-green-600 uppercase mt-0.5 italic">R$ {item.salario.toLocaleString('pt-BR')}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-6">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[10px] font-black text-[var(--text-primary)] uppercase">{item.escala}</span>
+                                            <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-tighter italic">{item.turno}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-6">
+                                        <div className="flex justify-center">
+                                            <input 
+                                                type="number"
+                                                min="0"
+                                                className="w-20 px-3 py-2 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-center text-sm font-black text-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/20 outline-none transition-all"
+                                                value={item.vagas_totais}
+                                                onChange={async (e) => {
+                                                    const newVal = parseInt(e.target.value) || 0;
+                                                    // Atualização rápida otimista
+                                                    const updatedQuadro = quadro.map(q => q.id === item.id ? { ...q, vagas_totais: newVal } : q);
+                                                    setQuadro(updatedQuadro);
+                                                    
+                                                    // Salva no banco
+                                                    const { error } = await supabase.from('vagas_quadro').update({ vagas_totais: newVal }).eq('id', item.id);
+                                                    if (error) toast.error("Erro ao atualizar quota");
+                                                }}
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-6">
+                                        <div className="flex flex-col items-center gap-1">
+                                            <p className="text-sm font-black text-blue-600">{item.ocupadas}</p>
+                                            <p className="text-[8px] font-black text-[var(--text-muted)] uppercase">Colaboradores</p>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-6 text-center">
+                                        {item.abertas > 0 ? (
+                                            <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-500/20">
+                                                {item.abertas} VAGAS
+                                            </span>
+                                        ) : item.excesso > 0 ? (
+                                            <span className="px-3 py-1 bg-red-500 text-white rounded-lg text-[9px] font-black uppercase shadow-lg shadow-red-500/20">
+                                                EXCESSO: {item.excesso}
+                                            </span>
+                                        ) : (
+                                            <span className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-lg text-[9px] font-black uppercase border border-blue-500/20">
+                                                COMPLETO
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => openModal(unidadeSelecionada, item)} className="p-3 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button onClick={() => handleDelete(item.id)} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
-                <button 
-                  onClick={() => openModal(unidadeSelecionada)}
-                  className="relative z-10 flex items-center gap-2 bg-[var(--brand)] text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-[var(--brand)]/30 hover:scale-105 transition-all"
-                >
-                  <Plus size={18} /> Acrescentar Cargo
-                </button>
-              </div>
 
-              <div className="grid grid-cols-1 gap-8">
-                {getQuadroUnidade(unidadeSelecionada).map(item => (
-                  <div key={item.id} className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] p-10 md:p-12 shadow-xl flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden group hover:border-[var(--brand)]/30 transition-all">
-                     {/* Indicador visual lateral */}
-                    <div className={`absolute left-0 top-0 h-full w-2 ${item.abertas > 0 ? 'bg-green-500' : item.excesso > 0 ? 'bg-red-500' : 'bg-blue-500'}`} />
-                    
-                    <div className="flex items-center gap-6 flex-1 w-full md:w-auto">
-                        <div className="w-14 h-14 bg-[var(--bg-base)] rounded-2xl flex items-center justify-center text-[var(--brand)] border border-[var(--border)]">
-                            <Briefcase size={24} />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-1">
-                                <h4 className="text-base font-black text-[var(--text-primary)] uppercase tracking-tight">{item.cargo}</h4>
-                                {item.insalubridade && <ShieldAlert size={14} className="text-red-500" />}
-                            </div>
-                            <div className="flex gap-4 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest italic">
-                                <span className="flex items-center gap-1"><Clock size={12} /> {item.escala} • {item.turno}</span>
-                                {item.horario && <span className="flex items-center gap-1">• {item.horario}</span>}
-                                {item.insalubridade && item.insalubridade !== 'N/A' && (
-                                  <span className="flex items-center gap-1 text-red-500">• INSAL. {item.insalubridade}</span>
-                                )}
-                                {item.salario > 0 && (
-                                  <span className="flex items-center gap-1 text-green-600 font-black">• R$ {item.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-10 w-full md:w-auto justify-between md:justify-end px-6 py-4 bg-[var(--bg-base)] rounded-[1.5rem] border border-[var(--border)]">
-                        <div className="text-center min-w-[60px]">
-                            <p className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">Total</p>
-                            <p className="text-xl font-black text-[var(--text-primary)]">{item.vagas_totais}</p>
-                        </div>
-                        <div className="text-center min-w-[60px]">
-                            <p className="text-[8px] font-black text-[var(--text-muted)] uppercase mb-1">Ocup.</p>
-                            <p className="text-xl font-black text-blue-500">{item.ocupadas}</p>
-                        </div>
-                        <div className={`text-center min-w-[60px] ${item.abertas > 0 ? 'text-green-600' : 'text-slate-400'}`}>
-                            <p className="text-[8px] font-black uppercase mb-1">Vagas</p>
-                            <p className="text-xl font-black">{item.abertas}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                        <button onClick={() => openModal(unidadeSelecionada, item)} className="w-10 h-10 flex items-center justify-center bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"><Edit2 size={16} /></button>
-                        <button onClick={() => handleDelete(item.id)} className="w-10 h-10 flex items-center justify-center bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all"><Trash2 size={16} /></button>
-                    </div>
-                  </div>
-                ))}
                 {getQuadroUnidade(unidadeSelecionada).length === 0 && (
-                  <div className="p-40 text-center opacity-30 border-2 border-dashed border-[var(--border)] rounded-[4rem]">
+                  <div className="p-40 text-center opacity-30 bg-[var(--bg-base)]/10">
                     <AlertTriangle size={48} className="mx-auto mb-4 text-orange-500" />
                     <p className="text-sm font-black uppercase tracking-widest">Nenhum cargo configurado para esta unidade</p>
                     <button onClick={() => openModal(unidadeSelecionada)} className="mt-6 text-[10px] font-black text-[var(--brand)] underline uppercase tracking-widest">Configurar Agora</button>
