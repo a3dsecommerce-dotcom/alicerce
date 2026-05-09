@@ -220,6 +220,22 @@ export function useRHData(user: any) {
 
       await fetchData();
     },
+    updateAdmission: async (id: string, field: string, value: any) => {
+      const { data: colab } = await supabase.from('usuarios').select('nome').eq('id', id).single();
+      const { error } = await supabase.from('usuarios').update({ [field]: value }).eq('id', id);
+      if (error) throw error;
+
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.nome || user.name,
+        mensagem: `Pré-Admissão: Atualizou ${field.replace('adm_', '').toUpperCase()} de ${colab?.nome}`,
+        tipo: "RH",
+        created_at: new Date().toISOString()
+      }]);
+
+      await fetchData();
+    },
     addChecklistColumn: async (label: string) => {
       const { error } = await supabase.from('config_checklist_rh').insert([{ label }]);
       if (error) throw error;

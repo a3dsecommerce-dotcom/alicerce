@@ -35,6 +35,33 @@ interface Colaborador {
     ctps_pis: boolean;
     foto: boolean;
   };
+  // Admission fields
+  adm_telefone?: string;
+  adm_entrevista_data?: string;
+  adm_compareceu?: boolean;
+  adm_exame_encaminhamento?: string;
+  adm_docs_entregues?: boolean;
+  adm_docs_completos?: boolean;
+  adm_aso_liberado?: boolean;
+  adm_exame_liberacao_data?: string;
+  adm_entrega_isadora_data?: string;
+  adm_strato_cadastro?: boolean;
+  adm_strato_numero?: string;
+  adm_carta_banco?: boolean;
+  adm_os_epi?: boolean;
+  adm_contrato_liberado?: boolean;
+  adm_ponto_cadastrado?: boolean;
+  adm_boas_vindas_msg?: boolean;
+  adm_assinatura_isadora?: boolean;
+  adm_vt_enviado_dp?: boolean;
+  adm_va_solicitado?: boolean;
+  adm_plano_saude?: boolean;
+  adm_conta_banco_aberta?: boolean;
+  adm_conta_strato_email?: boolean;
+  adm_docs_strato?: boolean;
+  adm_exp1_vencimento?: string;
+  adm_assinatura_encarregado?: boolean;
+  adm_assinatura_2_strato?: boolean;
   // Offboarding fields
   data_demissao?: string;
   desligamento_formato?: string;
@@ -61,6 +88,7 @@ interface ColaboradoresTableProps {
   onUpdateDocs?: (id: string, field: string, value: boolean) => void;
   onUpdateExpDecision?: (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => void;
   onUpdateOffboarding?: (id: string, field: string, value: any) => void;
+  onUpdateAdmission?: (id: string, field: string, value: any) => void;
   configChecklist?: {id: string, label: string}[];
   onUpdateExtraCheck?: (id: string, label: string, value: boolean) => void;
 }
@@ -176,11 +204,34 @@ export default function ColaboradoresTable({
               </>
             ) : dpAba === 'contratacao' ? (
               <>
-                <th className="p-4 text-center">Início</th>
-                <th className="p-4 text-center">Término (30d)</th>
-                <th className="p-4 text-center">Renovar?</th>
-                <th className="p-4 text-center">Término (90d)</th>
-                <th className="p-4 text-center">Efetivar?</th>
+                <th className="p-4 text-center">STATUS</th>
+                <th className="p-4 text-left">TELEFONE</th>
+                <th className="p-4 text-center">ENTREVISTA</th>
+                <th className="p-4 text-center">COMPARECEU?</th>
+                <th className="p-4 text-center">ENCAM. EXAME</th>
+                <th className="p-4 text-center">TROUXE DOCS?</th>
+                <th className="p-4 text-center">DOCS COMPLE.?</th>
+                <th className="p-4 text-center">ASO LIBERADO?</th>
+                <th className="p-4 text-center">DATA LIB. ASO</th>
+                <th className="p-4 text-center">ENTREGA ISADORA</th>
+                <th className="p-4 text-center">STRATO CAD.</th>
+                <th className="p-4 text-center">Nº STRATO</th>
+                <th className="p-4 text-center">ADMISSÃO</th>
+                <th className="p-4 text-center">CARTA BANCO</th>
+                <th className="p-4 text-center">OS/EPI</th>
+                <th className="p-4 text-center">CONTRATO LIB.</th>
+                <th className="p-4 text-center">PONTO CAD.</th>
+                <th className="p-4 text-center">BOAS VINDAS</th>
+                <th className="p-4 text-center">ASSIN. ISADORA</th>
+                <th className="p-4 text-center">VT -> DP</th>
+                <th className="p-4 text-center">SOLIC. VA</th>
+                <th className="p-4 text-center">PLANO SAÚDE</th>
+                <th className="p-4 text-center">ABRIU CONTA?</th>
+                <th className="p-4 text-center">CONTA STRATO/EMAIL</th>
+                <th className="p-4 text-center">DOCS NO STRATO</th>
+                <th className="p-4 text-center">VENC. 1ª EXP</th>
+                <th className="p-4 text-center">ASSIN. ENCARREGADO</th>
+                <th className="p-4 text-center">2ª ASSIN. STRATO</th>
               </>
             ) : (
               <>
@@ -269,22 +320,89 @@ export default function ColaboradoresTable({
                 </>
               ) : dpAba === 'contratacao' ? (
                 <>
-                  <td className="p-4 text-center text-[10px] font-black text-blue-600">{formatDate(c.data_admissao)}</td>
-                  <td className="p-4 text-center text-[10px] font-bold text-[var(--text-primary)]">{formatDate(getFutureDate(c.data_admissao, 30))}</td>
                   <td className="p-4 text-center">
-                     <select className={`text-[8px] font-black px-2 py-1 rounded border-2 transition-all cursor-pointer ${c.exp1_decisao === 'RENOVADO' ? 'bg-green-100 border-green-300 text-green-700' : c.exp1_decisao === 'DISPENSADO' ? 'bg-red-100 border-red-300 text-red-700' : 'bg-slate-100 border-slate-300 text-slate-700'}`} value={c.exp1_decisao} onClick={e => e.stopPropagation()} onChange={e => onUpdateExpDecision?.(c.id, 'exp1_decisao', e.target.value)}>
-                       <option value="PENDENTE">Aguardando</option>
-                       <option value="RENOVADO">Sim, Renovar</option>
-                       <option value="DISPENSADO">Não, Dispensar</option>
-                     </select>
+                    <span className={`px-3 py-1 rounded-full text-[9px] font-bold ${c.status === 'ATIVO' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{c.status}</span>
                   </td>
-                  <td className="p-4 text-center text-[10px] font-bold text-[var(--text-primary)]">{formatDate(getFutureDate(c.data_admissao, 90))}</td>
+                  <td className="p-4">
+                    <input type="text" value={c.adm_telefone || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_telefone', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px] font-black" placeholder="(00) 00000-0000" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4">
+                    <input type="date" value={c.adm_entrevista_data || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_entrevista_data', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
+                  </td>
                   <td className="p-4 text-center">
-                     <select className={`text-[8px] font-black px-2 py-1 rounded border-2 transition-all cursor-pointer ${c.exp2_decisao === 'EFETIVADO' ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : c.exp2_decisao === 'DISPENSADO' ? 'bg-red-100 border-red-300 text-red-700' : 'bg-slate-100 border-slate-300 text-slate-700'}`} value={c.exp2_decisao} onClick={e => e.stopPropagation()} onChange={e => onUpdateExpDecision?.(c.id, 'exp2_decisao', e.target.value)}>
-                       <option value="PENDENTE">Aguardando</option>
-                       <option value="EFETIVADO">Efetivar</option>
-                       <option value="DISPENSADO">Dispensar</option>
-                     </select>
+                    <input type="checkbox" checked={c.adm_compareceu} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_compareceu', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4">
+                    <input type="date" value={c.adm_exame_encaminhamento || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_exame_encaminhamento', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_docs_entregues} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_entregues', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_docs_completos} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_completos', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_aso_liberado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_aso_liberado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4">
+                    <input type="date" value={c.adm_exame_liberacao_data || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_exame_liberacao_data', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4">
+                    <input type="date" value={c.adm_entrega_isadora_data || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_entrega_isadora_data', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_strato_cadastro} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_strato_cadastro', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4">
+                    <input type="text" value={c.adm_strato_numero || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_strato_numero', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px] font-black" placeholder="Nº Strato" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center text-[10px] font-black text-blue-600">
+                    {formatDate(c.data_admissao)}
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_carta_banco} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_carta_banco', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_os_epi} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_os_epi', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_contrato_liberado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_contrato_liberado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_ponto_cadastrado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_ponto_cadastrado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_boas_vindas_msg} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_boas_vindas_msg', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_assinatura_isadora} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_isadora', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_vt_enviado_dp} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_vt_enviado_dp', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_va_solicitado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_va_solicitado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_plano_saude} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_plano_saude', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_conta_banco_aberta} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_conta_banco_aberta', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_conta_strato_email} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_conta_strato_email', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_docs_strato} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_strato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4">
+                    <input type="date" value={c.adm_exp1_vencimento || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_exp1_vencimento', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_assinatura_encarregado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_encarregado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                  </td>
+                  <td className="p-4 text-center">
+                    <input type="checkbox" checked={c.adm_assinatura_2_strato} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_2_strato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                 </>
               ) : (
