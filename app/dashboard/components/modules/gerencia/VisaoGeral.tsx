@@ -1,8 +1,7 @@
 "use client";
 import React from "react";
 import StatsCards from "./StatsCards";
-import ActivitiesLog from "./ActivitiesLog";
-import { TrendingUp, ArrowUpRight, ArrowDownRight, Clock, ShieldCheck, Zap, Users, Briefcase } from "lucide-react";
+import { Users, Briefcase } from "lucide-react";
 
 interface VisaoGeralProps {
   stats: any;
@@ -130,44 +129,6 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos }: Vi
         </div>
       </div>
 
-      {/* Linha inferior: Insights + Log */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-              <TrendingUp size={120} />
-            </div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-orange-600/10 rounded-xl flex items-center justify-center text-orange-600">
-                  <Zap size={20} />
-                </div>
-                <h3 className="text-xl font-black text-[var(--text-primary)] italic">Insights da Diretoria</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-3xl bg-slate-900 text-white">
-                  <ShieldCheck className="mb-4 text-orange-500" size={32} />
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Status Compliance</h5>
-                  <p className="text-2xl font-black mt-2 tracking-tighter">{statusCompliance}</p>
-                </div>
-                <div className="p-6 rounded-3xl bg-[var(--bg-base)] border border-[var(--border)]">
-                  <Clock className="mb-4 text-blue-500" size={32} />
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Atualizado em</h5>
-                  <p className="text-2xl font-black mt-2 tracking-tighter text-[var(--text-primary)]">Hoje, {ultimaAtualizacao}</p>
-                </div>
-                <div className="p-6 rounded-3xl bg-[var(--bg-base)] border border-[var(--border)]">
-                  <Zap className="mb-4 text-green-500" size={32} />
-                  <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Vagas em Aberto</h5>
-                  <p className="text-2xl font-black mt-2 tracking-tighter text-[var(--text-primary)]">{vagas !== null ? vagas : '---'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-6">
-          <ActivitiesLog logs={logs} />
-        </div>
-      </div>
 
     </div>
   );
