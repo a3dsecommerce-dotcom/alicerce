@@ -26,6 +26,14 @@ interface Colaborador {
     ticket: boolean;
     contrato: boolean;
     fardamento: boolean;
+    rg_cpf: boolean;
+    residencia: boolean;
+    escolaridade: boolean;
+    titulo_reservista: boolean;
+    certidoes: boolean;
+    antecedentes: boolean;
+    ctps_pis: boolean;
+    foto: boolean;
   };
   // Offboarding fields
   data_demissao?: string;
@@ -150,6 +158,14 @@ export default function ColaboradoresTable({
                 <th className="p-4 text-center">TICKET</th>
                 <th className="p-4 text-center">CONTRATO</th>
                 <th className="p-4 text-center">FARDA</th>
+                <th className="p-4 text-center">RG/CPF</th>
+                <th className="p-4 text-center">RESID</th>
+                <th className="p-4 text-center">ESCOL</th>
+                <th className="p-4 text-center">TIT/RES</th>
+                <th className="p-4 text-center">CERTID</th>
+                <th className="p-4 text-center">ANTEC</th>
+                <th className="p-4 text-center">CTPS</th>
+                <th className="p-4 text-center">FOTO</th>
               </>
             ) : dpAba === 'contratacao' ? (
               <>
@@ -224,6 +240,14 @@ export default function ColaboradoresTable({
                   <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.ticket} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ticket', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
                   <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.contrato} onChange={(e) => onUpdateDocs?.(c.id, 'doc_contrato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
                   <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.fardamento} onChange={(e) => onUpdateDocs?.(c.id, 'doc_fardamento', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.rg_cpf} onChange={(e) => onUpdateDocs?.(c.id, 'doc_rg_cpf', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.residencia} onChange={(e) => onUpdateDocs?.(c.id, 'doc_residencia', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.escolaridade} onChange={(e) => onUpdateDocs?.(c.id, 'doc_escolaridade', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.titulo_reservista} onChange={(e) => onUpdateDocs?.(c.id, 'doc_titulo_reservista', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.certidoes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_certidoes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.antecedentes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_antecedentes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.ctps_pis} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ctps_pis', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.foto} onChange={(e) => onUpdateDocs?.(c.id, 'doc_foto', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
                 </>
               ) : dpAba === 'contratacao' ? (
                 <>

@@ -249,7 +249,7 @@ export default function RHModule({ user }: { user: any }) {
                    { id: "contratacao", label: "Admitidos (Pré)", count: counts.totalAdmitidos },
                    { id: "ativos", label: "Colab. Ativos", count: counts.totalOficiais },
                    { id: "desligamentos", label: "Desligamentos", count: colaboradores.filter(c => c.status === 'DESLIGADO').length },
-                   { id: "arquivo", label: "Checklist / Arquivo", count: colaboradores.length }
+                   { id: "arquivo", label: "Checklist Documentos", count: colaboradores.length }
                  ].map((t: any) => (
                    <button key={t.id} onClick={() => { setDpAba(t.id); setExpOnly(false); }} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>{t.label} ({t.count})</button>
                  ))}
