@@ -21,7 +21,7 @@ import CotasManager from "./gerencia/CotasManager";
 import QuadroVagas from "./rh/QuadroVagas";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, asgPorSecretaria, cargos, refresh } = useGerenciaData();
+  const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, asgPorSecretaria, cargos, usuariosOnline, refresh } = useGerenciaData();
   const { transferencias, analisarGerencia } = useTransferencias(user);
   const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
