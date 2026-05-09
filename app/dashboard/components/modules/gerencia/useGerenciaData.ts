@@ -33,9 +33,15 @@ export function useGerenciaData(currentUser?: any) {
   const fetchGerencia = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Ping de atividade para o usuário atual
-      if (currentUser) {
-        await pingAtividade();
+      // 1. Ping de atividade (Silencioso)
+      if (currentUser?.id) {
+        await supabase.from('atividades').insert([{
+          usuario_id: currentUser.id,
+          usuario_nome: currentUser.nome || currentUser.email || 'Usuário Gerência',
+          mensagem: "Sessão Ativa no Painel",
+          tipo: "SISTEMA",
+          created_at: new Date().toISOString()
+        }]);
       }
 
       // 2. Fetch Logs (Atividades)
@@ -43,24 +49,32 @@ export function useGerenciaData(currentUser?: any) {
         .from('atividades')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(50);
       if (logsData) setLogs(logsData);
 
-      // 3. Fetch Usuários Online (Interação nos últimos 15 min)
-      const quinzeMinAtras = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      // 3. Usuários Online (Baseado nos logs recentes)
+      // Buscamos os últimos 100 registros e filtramos no JS para evitar erros de timezone do banco
       const { data: recentAtiv } = await supabase
         .from('atividades')
         .select('usuario_id, usuario_nome, created_at')
-        .gt('created_at', quinzeMinAtras)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       
       if (recentAtiv) {
+        const agora = Date.now();
+        const umaHoraEmMs = 60 * 60 * 1000;
+        
         const uniqueUsers: any[] = [];
         const ids = new Set();
+        
         recentAtiv.forEach(a => {
-          if (!ids.has(a.usuario_id)) {
-            ids.add(a.usuario_id);
-            uniqueUsers.push(a);
+          const dataAtividade = new Date(a.created_at).getTime();
+          // Se a atividade foi nos últimos 60 minutos
+          if ((agora - dataAtividade) < umaHoraEmMs && a.usuario_id) {
+            if (!ids.has(a.usuario_id)) {
+              ids.add(a.usuario_id);
+              uniqueUsers.push(a);
+            }
           }
         });
         setUsuariosOnline(uniqueUsers);
