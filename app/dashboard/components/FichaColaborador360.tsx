@@ -87,6 +87,19 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
       }]);
 
       const payload = { ...editForm };
+      
+      // Sanitização de campos numéricos para evitar erro de sintaxe "" no PostgreSQL
+      const numericFields = ['salario_base', 'valor_alimentacao', 'valor_vale_transporte', 'dependentes_qtd', 'nivel_acesso'];
+      numericFields.forEach(field => {
+        if (payload[field] === "" || payload[field] === undefined) {
+          payload[field] = null;
+        } else if (typeof payload[field] === 'string') {
+          // Converte string para número se necessário
+          const num = parseFloat(payload[field]);
+          payload[field] = isNaN(num) ? null : num;
+        }
+      });
+
       if (payload.insalubridade) {
         payload.insalubridade = parseInt(String(payload.insalubridade).replace(/\D/g, "")) || 0;
       }
