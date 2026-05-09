@@ -66,7 +66,7 @@ export function useGerenciaData() {
       // 5. Colaboradores ativos para distribuição
       const { data: allColabs } = await supabase
         .from('usuarios')
-        .select('cargo, secretaria, status')
+        .select('cargo, secretaria, unidade_alocacao, status')
         .eq('status', 'ATIVO');
 
       if (allColabs) {
