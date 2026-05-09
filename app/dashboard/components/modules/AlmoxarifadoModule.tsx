@@ -18,7 +18,7 @@ type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI";
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
     loading, estoque, requisicoes, usuarios, ocorrencias, 
-    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, arquivarRequisicao, refresh 
+    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh 
   } = useAlmoxData();
 
   const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
@@ -44,9 +44,35 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const [entregaParcialQtd, setEntregaParcialQtd] = useState(0);
   const [ocorrenciaData, setOcorrenciaData] = useState({ desc: "", prioridade: "ALTA", dias_solucao: 1, setor_destino: "Gerência Operacional" });
   const [resolucaoData, setResolucaoData] = useState({ id: "", solucao: "" });
-  const [mostrarArquivados, setMostrarArquivados] = useState(false);
-  const [filtroCategoria, setFiltroCategoria] = useState<string>("EPI");
   const [observacao, setObservacao] = useState("");
+  const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
+
+  // Agrupamento para Requisições
+  const requisicoesAgrupadas = (requisicoes || []).reduce((acc: any[], current: any) => {
+    if (!current) return acc;
+    const proto = current.protocolo || 'SEM-PROTOCOLO';
+    let group = acc.find(g => g.protocolo === proto);
+    if (!group) {
+      group = { 
+        protocolo: proto, 
+        data: current.data_solicitacao,
+        solicitante: current.solicitante,
+        unidade_destino: current.unidade_destino,
+        secretaria_destino: current.secretaria_destino,
+        status_geral: current.status || 'SOLICITADO',
+        arquivado: current.arquivado,
+        tipo_pedido: current.tipo_pedido || 'MENSAL',
+        itens: [] 
+      };
+      acc.push(group);
+    }
+    group.itens.push(current);
+    // Se algum item não estiver entregue, o status geral do grupo reflete isso para o almoxarife
+    if (current.status !== 'ENTREGUE' && group.status_geral === 'ENTREGUE') {
+      group.status_geral = current.status;
+    }
+    return acc;
+  }, []);
 
   // Handlers Complexos (que envolvem lógica de UI + Banco)
   const handleSalvarItem = async () => {
@@ -234,15 +260,15 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           )}
           {activeTab === "REQUISICOES" && (
             <RequisicoesTable 
-              requisicoes={requisicoes} 
+              requisicoes={requisicoesAgrupadas} 
               busca={busca} 
               mostrarArquivados={mostrarArquivados}
               calcularDias={calcularDias} 
-              onAnalisar={(r) => { setReqEditando({...r, quantidade_aprovada: r.quantidade}); setModalAberto("editar_req"); }} 
-              onGerenciar={(r) => { setReqEditando(r); setEntregaConfirm({recebedor: r.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} 
-              onArquivar={(id) => {
+              onAnalisar={(r) => { setReqEditando(r); setModalAberto("editar_req"); }} 
+              onGerenciar={(r) => { setReqEditando(r); setEntregaConfirm({recebedor: r.itens?.[0]?.recebedor_nome || ""}); setModalAberto("confirmar_entrega"); }} 
+              onArquivar={(proto) => {
                  if (confirm("Arquivar esta requisição concluída? Ela sairá da tela principal mas continuará disponível para auditoria.")) {
-                    arquivarRequisicao(id);
+                    arquivarProtocolo(proto);
                  }
               }}
             />
@@ -275,38 +301,24 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         }}
         entregaConfirm={entregaConfirm} setEntregaConfirm={setEntregaConfirm} entregaParcialQtd={entregaParcialQtd} setEntregaParcialQtd={setEntregaParcialQtd} 
         onConfirmarEntregaTotal={async () => {
+          // Mantido para compatibilidade se necessário, mas agora usamos o handler individual no modal agrupado
+        }} 
+        onConfirmarEntregaParcialExternal={async (it: any, qtd: number, status: string) => {
           try {
-            const totalAprovado = reqEditando.quantidade_aprovada || (reqEditando.quantidade + (reqEditando.quantidade_extra || 0));
             await processarEntregaRPC({
-              req_id: reqEditando.id,
-              item_id: reqEditando.item_id,
-              quantidade_entregue: totalAprovado - (reqEditando.quantidade_entregue || 0),
-              categoria: reqEditando.tipo_item,
+              req_id: it.id,
+              item_id: it.item_id,
+              quantidade_entregue: qtd,
+              categoria: it.tipo_item,
               recebedor: entregaConfirm.recebedor,
-              status_final: 'ENTREGUE'
+              status_final: status
             });
-            setModalAberto(null);
-            toast.success("Entrega TOTAL realizada e estoque atualizado!");
+            toast.success(`Entrega de ${it.item_nome} registrada!`);
+            refresh();
           } catch (e: any) { toast.error(e.message); }
         }} 
         onConfirmarEntregaParcial={async () => {
-          try {
-            const totalAprovado = reqEditando.quantidade_aprovada || (reqEditando.quantidade + (reqEditando.quantidade_extra || 0));
-            const novaQtdTotal = (reqEditando.quantidade_entregue || 0) + entregaParcialQtd;
-            const statusFinal = novaQtdTotal >= totalAprovado ? 'ENTREGUE' : 'PARCIAL';
-            
-            await processarEntregaRPC({
-              req_id: reqEditando.id,
-              item_id: reqEditando.item_id,
-              quantidade_entregue: entregaParcialQtd,
-              categoria: reqEditando.tipo_item,
-              recebedor: entregaConfirm.recebedor,
-              status_final: statusFinal
-            });
-            setModalAberto(null);
-            setEntregaParcialQtd(0);
-            toast.warning(`Entrega PARCIAL (${entregaParcialQtd} un) registrada.`);
-          } catch (e: any) { toast.error(e.message); }
+          // Mantido para compatibilidade
         }} 
         ocorrenciaData={ocorrenciaData} setOcorrenciaData={setOcorrenciaData} onSalvarOcorrencia={() => toast.error("Ocorrência registrada e enviada para o RH.")}
         resolucaoData={resolucaoData} setResolucaoData={setResolucaoData} onFinalizarResolucao={() => toast.success("Atendimento finalizado.")}

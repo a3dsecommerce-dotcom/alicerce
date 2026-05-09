@@ -25,6 +25,7 @@ interface AlmoxModalsProps {
   setEntregaParcialQtd: (v: number) => void;
   onConfirmarEntregaTotal: () => void;
   onConfirmarEntregaParcial: () => void;
+  onConfirmarEntregaParcialExternal: (it: any, qtd: number, status: string) => Promise<void>;
   ocorrenciaData: any;
   setOcorrenciaData: (v: any) => void;
   onSalvarOcorrencia: () => void;
@@ -40,7 +41,7 @@ export default function AlmoxModals({
   formData, setFormData, onSalvarItem, onExcluirItem,
   entregaData, setEntregaData, buscaFuncionario, setBuscaFuncionario, usuarios, estoque, onConfirmarEntregaEPI,
   reqEditando, setReqEditando, onProcessarReq,
-  entregaConfirm, setEntregaConfirm, entregaParcialQtd, setEntregaParcialQtd, onConfirmarEntregaTotal, onConfirmarEntregaParcial,
+  entregaConfirm, setEntregaConfirm, entregaParcialQtd, setEntregaParcialQtd, onConfirmarEntregaTotal, onConfirmarEntregaParcial, onConfirmarEntregaParcialExternal,
   ocorrenciaData, setOcorrenciaData, onSalvarOcorrencia,
   resolucaoData, setResolucaoData, onFinalizarResolucao,
   onFinalizarRequisicaoInternal,
@@ -344,76 +345,156 @@ export default function AlmoxModals({
          </div>
       </AdaptiveModal>
 
-      {/* MODAL ANÁLISE REQUISIÇÃO */}
-      <AdaptiveModal isOpen={modalAberto === "editar_req"} onClose={() => setModalAberto(null)} title="Análise Técnica de Requisição">
+      {/* MODAL ANÁLISE REQUISIÇÃO (AGRUPADO) */}
+      <AdaptiveModal isOpen={modalAberto === "editar_req"} onClose={() => setModalAberto(null)} title="Análise Técnica de Protocolo" width="1000px">
          {reqEditando && (
            <div className="p-10 space-y-8">
-              <div className="bg-[var(--bg-base)] p-6 rounded-3xl border border-[var(--border)]">
-                 <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2">Item Solicitado</p>
-                 <h4 className="text-xl font-black text-[var(--text-primary)]">{reqEditando.item_nome || reqEditando.item}</h4>
-                 <div className="flex gap-4 mt-4 text-[10px] font-bold uppercase tracking-widest text-orange-600">
-                    <span>Solicitado: {reqEditando.quantidade} {reqEditando.unidade_medida}</span>
-                    <span>|</span>
-                    <span>Estoque Atual: {estoque.find(e => e.id === reqEditando.item_id)?.quantidade || 0}</span>
+              <div className="bg-[var(--bg-base)] p-8 rounded-[2.5rem] border border-[var(--border)] flex justify-between items-center">
+                 <div>
+                    <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 tracking-[0.2em]">Protocolo sob Análise</p>
+                    <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{reqEditando.protocolo}</h4>
+                    <p className="text-[10px] font-bold text-orange-600 uppercase mt-1">{reqEditando.solicitante} • {reqEditando.unidade_destino}</p>
+                 </div>
+                 <div className="flex gap-3">
+                    <button 
+                      onClick={() => {
+                        if(confirm("Deseja APROVAR todos os itens deste protocolo com as quantidades originais?")) {
+                          reqEditando.itens.forEach((it:any) => onProcessarReq(it.id, 'APROVADO', it.quantidade));
+                          setModalAberto(null);
+                        }
+                      }}
+                      className="h-12 px-6 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all"
+                    >
+                      Aprovar Todos
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if(confirm("Deseja REPROVAR todos os itens deste protocolo?")) {
+                          reqEditando.itens.forEach((it:any) => onProcessarReq(it.id, 'REPROVADO'));
+                          setModalAberto(null);
+                        }
+                      }}
+                      className="h-12 px-6 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
+                    >
+                      Reprovar Todos
+                    </button>
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block">Quantidade Real Aprovada</label>
-                    <input type="number" className="input-field !h-16 text-2xl font-black text-center border-blue-200 text-blue-600" value={reqEditando.quantidade_aprovada} onChange={e => setReqEditando({...reqEditando, quantidade_aprovada: Number(e.target.value) })} />
-                 </div>
-                 <div className="flex flex-col gap-3 justify-center">
-                    <button onClick={() => onProcessarReq(reqEditando.id, 'APROVADO', reqEditando.quantidade_aprovada)} className="h-16 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Aprovar com Ajustes</button>
-                    <button onClick={() => onProcessarReq(reqEditando.id, 'REPROVADO')} className="h-12 bg-red-50 text-red-600 rounded-2xl text-[10px] font-black uppercase border border-red-100 hover:bg-red-600 hover:text-white transition-all">Reprovar Totalmente</button>
-                 </div>
+              <div className="space-y-4 max-h-[500px] overflow-auto pr-2 scrollbar-thin">
+                 {reqEditando.itens.map((it:any) => (
+                    <div key={it.id} className="p-6 bg-white rounded-2xl border border-[var(--border)] flex justify-between items-center group hover:border-blue-200 transition-all">
+                       <div className="flex-1">
+                          <h5 className="text-xs font-black text-slate-800 uppercase">{it.item_nome}</h5>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Solicitado: {it.quantidade} {it.unidade_medida} • Categoria: {it.tipo_item}</p>
+                       </div>
+                       <div className="flex items-center gap-6">
+                          <div className="flex flex-col items-center">
+                             <label className="text-[8px] font-black text-slate-400 uppercase mb-1">Qtd. Aprovada</label>
+                             <input 
+                               type="number" 
+                               className="w-20 h-10 bg-slate-50 border-2 border-slate-100 rounded-lg text-center text-xs font-black focus:border-blue-500 transition-all"
+                               defaultValue={it.quantidade}
+                               id={`qtd-apr-${it.id}`}
+                             />
+                          </div>
+                          <div className="flex gap-2">
+                             <button 
+                               onClick={() => {
+                                 const val = (document.getElementById(`qtd-apr-${it.id}`) as HTMLInputElement).value;
+                                 onProcessarReq(it.id, 'APROVADO', Number(val));
+                               }}
+                               className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Aprovar Individual"
+                             >
+                               <CheckCircle2 size={18} />
+                             </button>
+                             <button 
+                               onClick={() => onProcessarReq(it.id, 'REPROVADO')}
+                               className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Reprovar Individual"
+                             >
+                               <Trash2 size={18} />
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+                 ))}
               </div>
            </div>
          )}
       </AdaptiveModal>
 
-      {/* MODAL GESTÃO DE ENTREGA */}
-      <AdaptiveModal isOpen={modalAberto === "confirmar_entrega"} onClose={() => setModalAberto(null)} title="Gestão de Entrega / Logística">
+      {/* MODAL GESTÃO DE ENTREGA (AGRUPADO) */}
+      <AdaptiveModal isOpen={modalAberto === "confirmar_entrega"} onClose={() => setModalAberto(null)} title="Gestão de Logística por Protocolo" width="1000px">
          {reqEditando && (
            <div className="p-10 space-y-10">
               <div className="flex items-center justify-between p-8 bg-[var(--bg-base)] rounded-[2.5rem] border border-[var(--border)]">
                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-orange-600 shadow-sm">
+                    <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center text-orange-600 shadow-sm border border-orange-100">
                        <Truck size={32} />
                     </div>
                     <div>
-                       <h4 className="text-lg font-black uppercase text-[var(--text-primary)]">{reqEditando.item_nome || reqEditando.item}</h4>
+                       <h4 className="text-2xl font-black italic text-[var(--text-primary)]">{reqEditando.protocolo}</h4>
                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
-                          {reqEditando.secretaria_destino ? `${reqEditando.secretaria_destino} • ` : ''}{reqEditando.unidade_destino} • Protocolo: {reqEditando.protocolo}
+                          {reqEditando.solicitante} • Destino: {reqEditando.unidade_destino}
                        </p>
                     </div>
                  </div>
-                 <div className="text-right">
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase mb-1">Status Atual</p>
-                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${reqEditando.status === 'APROVADO' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}>
-                       {reqEditando.status}
-                    </span>
+                 <div className="space-y-3">
+                    <label className="text-[9px] font-black uppercase text-[var(--text-muted)] block tracking-widest text-right">Recebedor Oficial</label>
+                    <input 
+                      className="input-field !h-12 !w-64 font-black text-right" 
+                      value={entregaConfirm.recebedor} 
+                      onChange={e => setEntregaConfirm({recebedor: e.target.value})} 
+                      placeholder="Nome do Recebedor..." 
+                    />
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                 <div className="space-y-6">
-                    <div>
-                       <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block tracking-widest">Responsável pelo Recebimento *</label>
-                       <input className="input-field !h-14 font-black" value={entregaConfirm.recebedor} onChange={e => setEntregaConfirm({recebedor: e.target.value})} placeholder="Ex: João da Silva (Unidade X)" />
-                    </div>
-                 </div>
+              <div className="space-y-4 max-h-[450px] overflow-auto pr-2 scrollbar-thin">
+                 {reqEditando.itens.filter((it:any) => it.status !== 'ENTREGUE').map((it:any) => (
+                    <div key={it.id} className="p-6 bg-white rounded-2xl border border-[var(--border)] flex justify-between items-center hover:border-green-200 transition-all">
+                       <div className="flex-1">
+                          <h5 className="text-xs font-black text-slate-800 uppercase">{it.item_nome}</h5>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                            Aprovado: {it.quantidade_aprovada || it.quantidade} {it.unidade_medida} • 
+                            Entregue: <span className="text-green-600">{it.quantidade_entregue || 0}</span>
+                          </p>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <div className="flex flex-col items-center">
+                             <label className="text-[8px] font-black text-slate-400 uppercase mb-1">Dar Baixa</label>
+                             <input 
+                               type="number" 
+                               className="w-20 h-10 bg-slate-50 border-2 border-slate-100 rounded-lg text-center text-xs font-black focus:border-green-500 transition-all"
+                               defaultValue={(it.quantidade_aprovada || it.quantidade) - (it.quantidade_entregue || 0)}
+                               id={`qtd-ent-${it.id}`}
+                               max={(it.quantidade_aprovada || it.quantidade) - (it.quantidade_entregue || 0)}
+                               min={1}
+                             />
+                          </div>
+                          <button 
+                            onClick={async () => {
+                              if (!entregaConfirm.recebedor) return alert("Informe o recebedor!");
+                              const val = Number((document.getElementById(`qtd-ent-${it.id}`) as HTMLInputElement).value);
+                              const totalAprovado = it.quantidade_aprovada || it.quantidade;
+                              const novaQtdTotal = (it.quantidade_entregue || 0) + val;
+                              const statusFinal = novaQtdTotal >= totalAprovado ? 'ENTREGUE' : 'PARCIAL';
 
-                 <div className="bg-orange-50/30 p-8 rounded-[2.5rem] border border-orange-100/50 flex flex-col justify-center gap-4">
-                    <p className="text-[10px] font-black uppercase text-orange-600 tracking-widest text-center mb-2">Opções de Movimentação</p>
-                    <div className="grid grid-cols-1 gap-3">
-                       <button onClick={onConfirmarEntregaTotal} className="h-14 bg-green-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Confirmar Entrega Total</button>
-                       <div className="flex gap-2">
-                          <input type="number" className="w-1/3 input-field !h-14 text-center font-black" placeholder="Qtd" value={entregaParcialQtd || ''} onChange={e => setEntregaParcialQtd(Number(e.target.value))} />
-                          <button onClick={onConfirmarEntregaParcial} className="flex-1 h-14 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">Entrega Parcial</button>
+                              await onConfirmarEntregaParcialExternal(it, val, statusFinal);
+                            }}
+                            className="h-10 px-6 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:scale-105 transition-all flex items-center gap-2"
+                          >
+                            <CheckCircle2 size={14} /> Confirmar
+                          </button>
                        </div>
                     </div>
-                 </div>
+                 ))}
+                 {reqEditando.itens.filter((it:any) => it.status === 'ENTREGUE').length === reqEditando.itens.length && (
+                    <div className="p-20 text-center flex flex-col items-center gap-4">
+                       <CheckCircle2 size={48} className="text-green-500" />
+                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Todos os itens deste protocolo foram entregues.</p>
+                    </div>
+                 )}
               </div>
            </div>
          )}

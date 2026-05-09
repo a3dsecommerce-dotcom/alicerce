@@ -96,6 +96,12 @@ export function useAlmoxData() {
     await fetchAll();
   };
 
+  const arquivarProtocolo = async (protocolo: string) => {
+    const { error } = await supabase.from('requisicoes').update({ arquivado: true }).eq('protocolo', protocolo);
+    if (error) throw error;
+    await fetchAll();
+  };
+
   return {
     loading,
     estoque,
@@ -108,6 +114,7 @@ export function useAlmoxData() {
     deleteItem,
     processarRequisicao,
     processarEntregaRPC,
-    arquivarRequisicao
+    arquivarRequisicao,
+    arquivarProtocolo
   };
 }

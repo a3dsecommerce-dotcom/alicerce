@@ -19,14 +19,11 @@ export default function RequisicoesTable({
     if (!mostrarArquivados && r.arquivado) return false;
     if (mostrarArquivados && !r.arquivado) return false;
 
-    // Esconde entregas diretas de EPI para não poluir a aba de requisições gerais
-    const isEntregaDiretaEPI = r.tipo_item === 'EPI' && (r.unidade_destino?.includes('Entrega Direta') || r.unidade_destino === 'Almoxarifado Central');
-    if (isEntregaDiretaEPI && r.status === 'ENTREGUE') return false;
-
     return (
       r.protocolo?.toLowerCase().includes(busca.toLowerCase()) || 
-      r.item_nome?.toLowerCase().includes(busca.toLowerCase()) ||
-      r.solicitante?.toLowerCase().includes(busca.toLowerCase())
+      r.solicitante?.toLowerCase().includes(busca.toLowerCase()) ||
+      r.unidade_destino?.toLowerCase().includes(busca.toLowerCase()) ||
+      r.itens?.some((it:any) => it.item_nome?.toLowerCase().includes(busca.toLowerCase()))
     );
   });
 
@@ -35,97 +32,105 @@ export default function RequisicoesTable({
       <table className="w-full text-left">
         <thead className="bg-[var(--bg-base)]/90 border-b border-[var(--border)]">
           <tr>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[80px]">Nº Req.</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-left w-[150px]">Descrição</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[60px]">Ped.</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[60px]">Apr.</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[80px]">Tipo</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-left w-[120px]">Solicitante</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[40px]">D.</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[90px]">Status</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[120px]">Ação</th>
-            <th className="px-3 py-4 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[100px]">Progresso</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest text-center w-[120px]">Protocolo</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-[var(--text-muted)] text-left">Solicitante / Unidade</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[100px]">Itens</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[100px]">Tipo</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[60px]">Aberto</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[100px]">Status</th>
+            <th className="px-6 py-5 text-[10px] font-black uppercase text-muted tracking-widest text-center w-[150px]">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--border)]">
-          {filtradas.map(r => (
-            <tr key={r.id} className="hover:bg-[var(--bg-base)]/30 transition-all group">
-              <td className="px-3 py-4 text-center font-black text-[var(--brand)] text-[10px]">{r.protocolo || '---'}</td>
-              <td className="px-3 py-4">
-                <div className="text-[11px] font-black whitespace-normal w-[150px] leading-tight line-clamp-2">{r.item_nome || r.item}</div>
-                <div className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-0.5 opacity-70 truncate w-[150px]">
-                  {r.secretaria_destino ? (
-                    <span className="text-orange-600">{r.secretaria_destino} • </span>
-                  ) : (
-                    <span className="text-red-500 font-black">S/ SEC • </span>
-                  )}
-                  {r.unidade_destino}
-                </div>
-                {r.observacao && (
-                  <div className="mt-2 p-2 bg-amber-50 rounded-lg border border-amber-100 flex items-start gap-2">
-                    <FileText size={10} className="text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-[8px] font-bold text-amber-800 leading-tight italic uppercase">{r.observacao}</p>
+          {filtradas.map(group => {
+            const totalItens = group.itens?.length || 0;
+            const itensEntregues = group.itens?.filter((it:any) => it.status === 'ENTREGUE').length || 0;
+            const progressoGeral = Math.round((itensEntregues / totalItens) * 100);
+
+            return (
+              <tr key={group.protocolo} className="hover:bg-[var(--bg-base)]/30 transition-all group">
+                <td className="px-6 py-6 text-center">
+                  <div className="bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg font-black text-[11px] border border-orange-100 shadow-sm">
+                    {group.protocolo}
                   </div>
-                )}
-              </td>
-              <td className="px-3 py-4 text-center text-[10px] font-bold text-[var(--text-muted)]">{r.quantidade} {r.unidade_medida}</td>
-              <td className="px-3 py-4 text-center text-xs font-black text-blue-600">{r.quantidade_aprovada ?? '---'}</td>
-              <td className="px-3 py-4 text-center">
-                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${r.tipo_pedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-blue-50 text-blue-600'}`}>
-                  {r.tipo_pedido || 'MENSAL'}
-                </span>
-              </td>
-              <td className="px-3 py-4">
-                <div className="text-[10px] font-black text-slate-700 truncate w-[120px]">{r.solicitante}</div>
-                <div className="text-[7px] font-bold text-slate-400 uppercase">{r.secretaria_origem || '---'}</div>
-              </td>
-              <td className="px-3 py-4 text-center">
-                 <div className="flex flex-col items-center gap-0.5">
-                    <Clock size={10} className="text-orange-500" />
-                    <span className="text-[9px] font-black uppercase text-orange-600">{calcularDias(r.data_solicitacao)}</span>
-                 </div>
-              </td>
-              <td className="px-3 py-4 text-center">
-                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${r.status === 'SOLICITADO' ? 'bg-orange-100 text-orange-700' : r.status === 'APROVADO' ? 'bg-blue-100 text-blue-700' : r.status === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {r.status}
-                </span>
-              </td>
-              <td className="px-3 py-4 text-center">
-                <div className="flex justify-center gap-2">
-                  {r.status === 'SOLICITADO' ? (
-                    <button onClick={() => onAnalisar(r)} className="px-4 py-1.5 bg-black text-white rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all">Analisar</button>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      <button onClick={() => onGerenciar(r)} className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase hover:scale-105 transition-all flex items-center gap-2 ${r.status === 'ENTREGUE' ? 'bg-gray-100 text-gray-400' : (r.unidade_destino === 'Almoxarifado Central' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white')}`} disabled={r.status === 'ENTREGUE'}>
-                        {r.unidade_destino === 'Almoxarifado Central' ? <Package size={12}/> : <Truck size={12}/>}
-                        {r.unidade_destino === 'Almoxarifado Central' ? 'Receber' : 'Gerenciar'}
+                </td>
+                <td className="px-6 py-6">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-tight">{group.solicitante}</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      {group.secretaria_destino && (
+                        <span className="text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-0.5 rounded uppercase">{group.secretaria_destino}</span>
+                      )}
+                      <span className="text-[9px] font-bold text-slate-400 uppercase">{group.unidade_destino}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-6 text-center">
+                   <div className="flex flex-col items-center gap-1">
+                      <div className="flex items-center gap-2 text-xs font-black text-slate-600">
+                        <FileText size={14} className="text-blue-500" />
+                        {totalItens} <span className="text-[9px] text-slate-400 font-bold uppercase">Materiais</span>
+                      </div>
+                      <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <div className="h-full bg-blue-500 transition-all" style={{ width: `${progressoGeral}%` }}></div>
+                      </div>
+                   </div>
+                </td>
+                <td className="px-6 py-6 text-center">
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${group.tipo_pedido === 'EMERGENCIAL' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
+                    {group.tipo_pedido || 'MENSAL'}
+                  </span>
+                </td>
+                <td className="px-6 py-6 text-center">
+                   <div className="flex flex-col items-center gap-0.5">
+                      <Clock size={12} className="text-orange-500" />
+                      <span className="text-[10px] font-black uppercase text-orange-600">{calcularDias(group.data)}</span>
+                   </div>
+                </td>
+                <td className="px-6 py-6 text-center">
+                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                    group.status_geral === 'SOLICITADO' ? 'bg-orange-100 text-orange-700' : 
+                    group.status_geral === 'APROVADO' ? 'bg-blue-100 text-blue-700' : 
+                    group.status_geral === 'ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {group.status_geral}
+                  </span>
+                </td>
+                <td className="px-6 py-6 text-center">
+                  <div className="flex justify-center gap-3">
+                    {group.status_geral === 'SOLICITADO' ? (
+                      <button 
+                        onClick={() => onAnalisar(group)} 
+                        className="h-10 px-6 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg"
+                      >
+                        Analisar Pedido
                       </button>
-                      {r.status === 'ENTREGUE' && !r.arquivado && onArquivar && (
-                        <button onClick={() => onArquivar(r.id)} className="px-4 py-1 bg-amber-50 text-amber-700 rounded-lg text-[8px] font-black uppercase flex items-center justify-center gap-1 hover:bg-amber-600 hover:text-white transition-all border border-amber-100">
-                          <Archive size={10}/> Arquivar
+                    ) : (
+                      <div className="flex flex-col gap-2 w-full">
+                        <button 
+                          onClick={() => onGerenciar(group)} 
+                          className={`h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all flex items-center justify-center gap-2 ${
+                            group.status_geral === 'ENTREGUE' ? 'bg-slate-100 text-slate-400 border border-slate-200' : 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                          }`} 
+                          disabled={group.status_geral === 'ENTREGUE'}
+                        >
+                          <Truck size={14}/> Gerenciar Entrega
                         </button>
-                      )}
-                      {r.arquivado && (
-                        <span className="text-[7px] font-black uppercase text-slate-400 flex items-center justify-center gap-1 italic">
-                          <CheckCircle2 size={8}/> Arquivado
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </td>
-              <td className="px-3 py-4 text-center">
-                 <div className="flex flex-col items-center gap-0.5">
-                    <div className="text-[9px] font-black text-[var(--text-primary)]">
-                       {r.quantidade_entregue || 0}/{r.quantidade_aprovada || r.quantidade}
-                    </div>
-                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                       <div className={`h-full transition-all ${r.tem_ocorrencia ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${Math.min(100, ((r.quantidade_entregue || 0) / (r.quantidade_aprovada || r.quantidade)) * 100)}%` }}></div>
-                    </div>
-                 </div>
-              </td>
-            </tr>
-          ))}
+                        {group.status_geral === 'ENTREGUE' && !group.arquivado && (
+                          <button 
+                            onClick={() => onArquivar?.(group.protocolo)} 
+                            className="h-8 bg-amber-50 text-amber-700 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-2 hover:bg-amber-600 hover:text-white transition-all border border-amber-100"
+                          >
+                            <Archive size={12}/> Arquivar Protocolo
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
