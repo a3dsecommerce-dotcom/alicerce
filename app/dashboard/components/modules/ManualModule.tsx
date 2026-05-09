@@ -10,6 +10,19 @@ import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, P
 
 const UPDATES = [
   {
+    version: "v753.3",
+    date: "09/05/2026",
+    title: "Recrutamento Segmentado",
+    description: "Otimização do formulário 'Trabalhe Conosco' com seleção precisa de cargos.",
+    tags: ["RECRUTAMENTO", "RH", "UX"],
+    details: [
+      "Atualização da lista de cargos pretendidos com opções operacionais e técnicas.",
+      "Inclusão de cargos como Engenheiro, Motorista e Técnico de Segurança.",
+      "Melhoria na integridade dos dados para triagem automática pelo DP.",
+      "Reset de valores padrão para evitar seleções acidentais (ex: ASG)."
+    ]
+  },
+  {
     version: "v753.2",
     date: "09/05/2026",
     title: "Central de Governança Viva",

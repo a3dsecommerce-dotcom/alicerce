@@ -22,7 +22,7 @@ export default function LoginPage() {
     // Passo 3 - Contato e Endereço
     telefone: "", email: "", cep: "", rua: "", numero: "", bairro: "", cidade: "Manaus", estado: "AM",
     // Passo 4 - Perfil Profissional
-    cargo: "ASG", escolaridade: "Ensino Médio Completo", experiencia: false, ultimo_emprego: "", tempo_experiencia: "",
+    cargo: "", escolaridade: "Ensino Médio Completo", experiencia: false, ultimo_emprego: "", tempo_experiencia: "",
     // Passo 5 - Uniformes e SST
     tamanho_camisa: "M", tamanho_calca: "38", tamanho_calcado: "40", possui_nr: false, declaracao: false,
     curriculo_file: null as File | null,
@@ -435,11 +435,18 @@ export default function LoginPage() {
                 <div className="input-group">
                   <label className="input-label">Cargo Pretendido</label>
                   <select className="modern-input" value={candidato.cargo} onChange={e => setCandidato({...candidato, cargo: e.target.value})}>
-                    <option value="ASG">Auxiliar de Serviços Gerais (ASG)</option>
-                    <option value="ALMOXARIFE">Almoxarife</option>
+                    <option value="">Selecione o Cargo...</option>
+                    <option value="PORTEIRO">Porteiro</option>
+                    <option value="AUXILIAR DE LIMPEZA">Auxiliar de Limpeza</option>
+                    <option value="COZINHA">Cozinha</option>
+                    <option value="RECEPCIONISTA">Recepcionista</option>
+                    <option value="RECEPCIONISTA HOSPITALAR">Recepcionista Hospitalar</option>
                     <option value="ADMINISTRATIVO">Administrativo</option>
-                    <option value="COORDENADOR">Coordenador de Área</option>
-                    <option value="OUTRO">Outro</option>
+                    <option value="MOTORISTA">Motorista</option>
+                    <option value="ENGENHEIRO">Engenheiro</option>
+                    <option value="ENCARREGADO">Encarregado</option>
+                    <option value="ALMOXARIFE">Almoxarife</option>
+                    <option value="TECNICO SEGURANCA DO TRABALHO">Técnico Segurança do Trabalho</option>
                   </select>
                 </div>
                 <div className="input-group">
