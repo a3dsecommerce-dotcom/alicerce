@@ -164,8 +164,11 @@ export default function ColaboradoresTable({
   );
 
   return (
-    <div className="overflow-x-auto custom-scrollbar">
-      <table className="w-full text-left table-auto border-separate border-spacing-0">
+    <div className="overflow-x-auto custom-scrollbar w-full">
+      <table 
+        className="w-full text-left table-auto border-separate border-spacing-0"
+        style={{ minWidth: dpAba === 'arquivo' ? `${1200 + (configChecklist.length * 140)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100% '}}
+      >
         <thead className="sticky top-0 bg-[var(--bg-card)] z-10 border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
           <tr>
             <th className="p-6 sticky left-0 bg-[var(--bg-card)] shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-20">Colaborador</th>
@@ -203,19 +206,20 @@ export default function ColaboradoresTable({
                 <th className="p-4 text-center">CTPS</th>
                 <th className="p-4 text-center">FOTO</th>
                 {configChecklist.map(col => (
-                  <th key={col.id} className="p-4 text-center min-w-[120px] group relative bg-[var(--bg-card)]">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-[9px]">{col.label.toUpperCase()}</span>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <th key={col.id} className="p-4 text-center min-w-[140px] relative bg-[var(--bg-card)] border-x border-[var(--border)]/30">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-[9px] font-black">{col.label.toUpperCase()}</span>
+                      <div className="flex gap-3">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
                             const novo = prompt("Novo nome para a coluna:", col.label);
                             if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
                           }}
-                          className="p-1 hover:text-[var(--brand)] transition-colors"
+                          className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors shadow-sm"
+                          title="Renomear"
                         >
-                          <Edit2 size={10} />
+                          <Edit2 size={12} />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -224,9 +228,10 @@ export default function ColaboradoresTable({
                               onDeleteConfigChecklist?.(col.id);
                             }
                           }}
-                          className="p-1 hover:text-red-500 transition-colors"
+                          className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm"
+                          title="Excluir"
                         >
-                          <Trash2 size={10} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
