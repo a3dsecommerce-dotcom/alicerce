@@ -193,6 +193,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   {[
+                    { key: "nome", label: "Nome Completo", type: "text" },
                     { key: "funcao", label: "Função Operacional", type: "text" },
                     { key: "unidade_alocacao", label: "Unidade de Trabalho", type: "text" },
                     ...(restrictLevel ? [] : [{ key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] }]),
