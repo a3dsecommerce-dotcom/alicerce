@@ -44,6 +44,8 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const [entregaParcialQtd, setEntregaParcialQtd] = useState(0);
   const [ocorrenciaData, setOcorrenciaData] = useState({ desc: "", prioridade: "ALTA", dias_solucao: 1, setor_destino: "Gerência Operacional" });
   const [resolucaoData, setResolucaoData] = useState({ id: "", solucao: "" });
+  const [mostrarArquivados, setMostrarArquivados] = useState(false);
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("EPI");
   const [observacao, setObservacao] = useState("");
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
 
