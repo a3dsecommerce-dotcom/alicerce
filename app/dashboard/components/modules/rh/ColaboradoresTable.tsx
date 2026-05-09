@@ -192,19 +192,8 @@ export default function ColaboradoresTable({
               </>
             ) : dpAba === 'arquivo' ? (
               <>
-                <th className="p-4 text-center">ASU</th>
-                <th className="p-4 text-center">VT</th>
-                <th className="p-4 text-center">TICKET</th>
-                <th className="p-4 text-center">CONTRATO</th>
-                <th className="p-4 text-center">FARDA</th>
-                <th className="p-4 text-center">RG/CPF</th>
-                <th className="p-4 text-center">RESID</th>
-                <th className="p-4 text-center">ESCOL</th>
-                <th className="p-4 text-center">TIT/RES</th>
-                <th className="p-4 text-center">CERTID</th>
-                <th className="p-4 text-center">ANTEC</th>
-                <th className="p-4 text-center">CTPS</th>
                 <th className="p-4 text-center">FOTO</th>
+                {/* As colunas de documentos agora são 100% dinâmicas e gerenciáveis */}
                 {configChecklist.map(col => (
                   <th key={col.id} className="p-4 text-center min-w-[160px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
                     <div className="flex flex-col items-center gap-3">
@@ -329,19 +318,7 @@ export default function ColaboradoresTable({
                 </>
               ) : dpAba === 'arquivo' ? (
                 <>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.asu} onChange={(e) => onUpdateDocs?.(c.id, 'doc_asu', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.vt} onChange={(e) => onUpdateDocs?.(c.id, 'doc_vt', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.ticket} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ticket', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.contrato} onChange={(e) => onUpdateDocs?.(c.id, 'doc_contrato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.fardamento} onChange={(e) => onUpdateDocs?.(c.id, 'doc_fardamento', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.rg_cpf} onChange={(e) => onUpdateDocs?.(c.id, 'doc_rg_cpf', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.residencia} onChange={(e) => onUpdateDocs?.(c.id, 'doc_residencia', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.escolaridade} onChange={(e) => onUpdateDocs?.(c.id, 'doc_escolaridade', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.titulo_reservista} onChange={(e) => onUpdateDocs?.(c.id, 'doc_titulo_reservista', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.certidoes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_certidoes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.antecedentes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_antecedentes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.ctps_pis} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ctps_pis', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.foto} onChange={(e) => onUpdateDocs?.(c.id, 'doc_foto', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  {/* As colunas de documentos agora são 100% dinâmicas e gerenciáveis */}
                   {configChecklist.map(col => (
                     <td key={col.id} className="p-4 text-center">
                       <input 
