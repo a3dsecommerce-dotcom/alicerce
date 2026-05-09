@@ -1,8 +1,27 @@
 "use client";
 import React from "react";
-import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, Package, AlertTriangle, ChevronRight } from "lucide-react";
+import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, Package, AlertTriangle, ChevronRight, FileText } from "lucide-react";
+
+/**
+ * PROTOCOLO DE MANUTENÇÃO (OBRIGATÓRIO):
+ * A cada deploy que contenha melhorias, correções ou novas funcionalidades, 
+ * este arquivo DEVE ser atualizado com uma nova entrada no array UPDATES.
+ */
 
 const UPDATES = [
+  {
+    version: "v753.2",
+    date: "09/05/2026",
+    title: "Central de Governança Viva",
+    description: "Lançamento do Manual de Boas Práticas e Protocolo de Documentação Contínua.",
+    tags: ["DOCUMENTAÇÃO", "BOAS PRÁTICAS", "SIDEBAR"],
+    details: [
+      "Criação do módulo de Manual de Boas Práticas integrado ao cockpit.",
+      "Implementação de filtros RBAC para ocultação automática no nível PMG-1.",
+      "Estabelecimento de protocolo de atualização obrigatória a cada deploy.",
+      "Interface premium com timeline de evolução do sistema."
+    ]
+  },
   {
     version: "v753.1",
     date: "09/05/2026",
