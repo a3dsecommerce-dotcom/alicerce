@@ -206,32 +206,32 @@ export default function ColaboradoresTable({
                 <th className="p-4 text-center">CTPS</th>
                 <th className="p-4 text-center">FOTO</th>
                 {configChecklist.map(col => (
-                  <th key={col.id} className="p-4 text-center min-w-[140px] relative bg-[var(--bg-card)] border-x border-[var(--border)]/30">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-[9px] font-black">{col.label.toUpperCase()}</span>
-                      <div className="flex gap-3">
+                  <th key={col.id} className="p-4 text-center min-w-[160px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
+                    <div className="flex flex-col items-center gap-3">
+                      <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none">{col.label}</span>
+                      <div className="flex items-center justify-center gap-2">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            const novo = prompt("Novo nome para a coluna:", col.label);
+                            const novo = prompt("Renomear coluna:", col.label);
                             if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
                           }}
-                          className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors shadow-sm"
-                          title="Renomear"
+                          className="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-95"
+                          title="Editar Nome"
                         >
-                          <Edit2 size={12} />
+                          <Edit2 size={14} />
                         </button>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm(`Excluir a coluna "${col.label}"? Todos os dados marcados nela serão perdidos.`)) {
+                            if (confirm(`DESEJA EXCLUIR DEFINITIVAMENTE A COLUNA "${col.label.toUpperCase()}"?\n\nIsso apagará todas as marcações de todos os colaboradores para este documento.`)) {
                               onDeleteConfigChecklist?.(col.id);
                             }
                           }}
-                          className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors shadow-sm"
-                          title="Excluir"
+                          className="flex items-center justify-center w-8 h-8 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all shadow-md active:scale-95"
+                          title="Excluir Coluna"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
