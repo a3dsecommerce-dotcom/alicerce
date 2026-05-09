@@ -287,7 +287,14 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
       <div className="flex-1 flex flex-col gap-10 overflow-hidden">
 
         {activeTab === "VISAO" && (
-           <VisaoGeral stats={stats} logs={logs} asgPorSecretaria={asgPorSecretaria} cargos={cargos} />
+           <VisaoGeral 
+            stats={stats} 
+            logs={logs} 
+            asgPorSecretaria={asgPorSecretaria} 
+            cargos={cargos} 
+            volantes={volantes}
+            requisicoesVolantes={requisicoesVolantes}
+           />
         )}
 
         {activeTab === "MISSOES" && (
