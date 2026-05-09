@@ -156,7 +156,7 @@ export default function ColaboradoresTable({
   const OffboardingCheckbox = ({ colabId, field, checked }: any) => (
     <input 
       type="checkbox" 
-      checked={checked} 
+      checked={!!checked} 
       onChange={(e) => onUpdateOffboarding?.(colabId, field, e.target.checked)} 
       className="w-4 h-4 rounded border-[var(--border)] text-red-600 focus:ring-red-500" 
       onClick={e => e.stopPropagation()} 
@@ -323,20 +323,19 @@ export default function ColaboradoresTable({
                   <td className="p-4 text-center"><OffboardingCheckbox colabId={c.id} field="desligamento_strato_final" checked={c.desligamento_strato_final} /></td>
                 </>
               ) : dpAba === 'arquivo' ? (
-                <>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.asu} onChange={(e) => onUpdateDocs?.(c.id, 'doc_asu', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.vt} onChange={(e) => onUpdateDocs?.(c.id, 'doc_vt', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.ticket} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ticket', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.contrato} onChange={(e) => onUpdateDocs?.(c.id, 'doc_contrato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.fardamento} onChange={(e) => onUpdateDocs?.(c.id, 'doc_fardamento', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.rg_cpf} onChange={(e) => onUpdateDocs?.(c.id, 'doc_rg_cpf', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.residencia} onChange={(e) => onUpdateDocs?.(c.id, 'doc_residencia', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.escolaridade} onChange={(e) => onUpdateDocs?.(c.id, 'doc_escolaridade', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.titulo_reservista} onChange={(e) => onUpdateDocs?.(c.id, 'doc_titulo_reservista', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.certidoes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_certidoes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.antecedentes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_antecedentes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.ctps_pis} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ctps_pis', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
-                  <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.foto} onChange={(e) => onUpdateDocs?.(c.id, 'doc_foto', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                       <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.asu} onChange={(e) => onUpdateDocs?.(c.id, 'doc_asu', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.vt} onChange={(e) => onUpdateDocs?.(c.id, 'doc_vt', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.ticket} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ticket', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.contrato} onChange={(e) => onUpdateDocs?.(c.id, 'doc_contrato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.fardamento} onChange={(e) => onUpdateDocs?.(c.id, 'doc_fardamento', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.rg_cpf} onChange={(e) => onUpdateDocs?.(c.id, 'doc_rg_cpf', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.residencia} onChange={(e) => onUpdateDocs?.(c.id, 'doc_residencia', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.escolaridade} onChange={(e) => onUpdateDocs?.(c.id, 'doc_escolaridade', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.titulo_reservista} onChange={(e) => onUpdateDocs?.(c.id, 'doc_titulo_reservista', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.certidoes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_certidoes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.antecedentes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_antecedentes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.ctps_pis} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ctps_pis', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  <td className="p-4 text-center"><input type="checkbox" checked={!!c.docs?.foto} onChange={(e) => onUpdateDocs?.(c.id, 'doc_foto', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>ion()} /></td>
                   {configChecklist.map(col => (
                     <td key={col.id} className="p-4 text-center">
                       <input 
@@ -361,19 +360,19 @@ export default function ColaboradoresTable({
                     <input type="date" value={c.adm_entrevista_data || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_entrevista_data', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_compareceu} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_compareceu', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_compareceu} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_compareceu', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4">
                     <input type="date" value={c.adm_exame_encaminhamento || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_exame_encaminhamento', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_docs_entregues} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_entregues', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_docs_entregues} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_entregues', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_docs_completos} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_completos', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_docs_completos} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_completos', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_aso_liberado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_aso_liberado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_aso_liberado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_aso_liberado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4">
                     <input type="date" value={c.adm_exame_liberacao_data || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_exame_liberacao_data', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
@@ -382,7 +381,7 @@ export default function ColaboradoresTable({
                     <input type="date" value={c.adm_entrega_isadora_data || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_entrega_isadora_data', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_strato_cadastro} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_strato_cadastro', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_strato_cadastro} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_strato_cadastro', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4">
                     <input type="text" value={c.adm_strato_numero || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_strato_numero', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px] font-black" placeholder="Nº Strato" onClick={e => e.stopPropagation()} />
@@ -391,49 +390,49 @@ export default function ColaboradoresTable({
                     {formatDate(c.data_admissao)}
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_carta_banco} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_carta_banco', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_carta_banco} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_carta_banco', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_os_epi} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_os_epi', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_os_epi} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_os_epi', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_contrato_liberado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_contrato_liberado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_contrato_liberado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_contrato_liberado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_ponto_cadastrado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_ponto_cadastrado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_ponto_cadastrado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_ponto_cadastrado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_boas_vindas_msg} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_boas_vindas_msg', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_boas_vindas_msg} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_boas_vindas_msg', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_assinatura_isadora} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_isadora', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_assinatura_isadora} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_isadora', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_vt_enviado_dp} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_vt_enviado_dp', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_vt_enviado_dp} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_vt_enviado_dp', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_va_solicitado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_va_solicitado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_va_solicitado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_va_solicitado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_plano_saude} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_plano_saude', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_plano_saude} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_plano_saude', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_conta_banco_aberta} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_conta_banco_aberta', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_conta_banco_aberta} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_conta_banco_aberta', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_conta_strato_email} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_conta_strato_email', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_conta_strato_email} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_conta_strato_email', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_docs_strato} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_strato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_docs_strato} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_docs_strato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4">
                     <input type="date" value={c.adm_exp1_vencimento || ""} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_exp1_vencimento', e.target.value)} className="bg-transparent border-none p-0 w-full focus:ring-0 text-[11px]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_assinatura_encarregado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_encarregado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_assinatura_encarregado} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_encarregado', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                   <td className="p-4 text-center">
-                    <input type="checkbox" checked={c.adm_assinatura_2_strato} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_2_strato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
+                    <input type="checkbox" checked={!!c.adm_assinatura_2_strato} onChange={(e) => onUpdateAdmission?.(c.id, 'adm_assinatura_2_strato', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} />
                   </td>
                 </>
               ) : (

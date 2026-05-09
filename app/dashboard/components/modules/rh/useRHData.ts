@@ -41,8 +41,17 @@ export function useRHData(user: any) {
             vt: u.doc_vt,
             ticket: u.doc_ticket,
             contrato: u.doc_contrato,
-            fardamento: u.doc_fardamento
-          }
+            fardamento: u.doc_fardamento,
+            rg_cpf: u.doc_rg_cpf,
+            residencia: u.doc_residencia,
+            escolaridade: u.doc_escolaridade,
+            titulo_reservista: u.doc_titulo_reservista,
+            certidoes: u.doc_certidoes,
+            antecedentes: u.doc_antecedentes,
+            ctps_pis: u.doc_ctps_pis,
+            foto: u.doc_foto
+          },
+          checklist_extra: u.checklist_extra || {}
         }));
 
         // Separação: ALICERCE ou PMG vai para Gestão Própria
