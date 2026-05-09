@@ -18,11 +18,18 @@ import TransferenciasList from "./encarregado/TransferenciasList";
 import { useTransferencias } from "@/hooks/useTransferencias";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-    if (t === "REPORTS" || t === "REPORTS") return "REPORTS";
-    if (t === "CAT" || t === "CAT") return "CAT";
-    if (t === "EPI" || t === "EPI") return "EPI";
-    if (t === "MISSIONS" || t === "MISSIONS") return "MY_MISSIONS";
-    if (t === "DISCIPLINA" || t === "DISCIPLINA") return "DISCIPLINA";
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA" | "TRANSFERENCIAS">(() => {
+    if (!initialTab) return "MY_UNITS";
+    const t = initialTab.toUpperCase();
+    if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
+    if (t === "EQUIPE" || t === "COLABS") return "MY_COLABS";
+    if (t === "ADMISSAO" || t === "CADASTRO") return "QUICK_ADMISSION";
+    if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
+    if (t === "INFORMATIVOS" || t === "REPORTS") return "REPORTS";
+    if (t === "CAT" || t === "ACIDENTE") return "CAT";
+    if (t === "EPI" || t === "ENTREGA") return "EPI";
+    if (t === "MISSOES" || t === "MISSIONS") return "MY_MISSIONS";
+    if (t === "DISCIPLINA" || t === "ADVERTENCIAS") return "DISCIPLINA";
     if (t === "TRANSFERENCIAS" || t === "TRANSFERENCIAS") return "TRANSFERENCIAS";
     return "MY_UNITS";
   });
