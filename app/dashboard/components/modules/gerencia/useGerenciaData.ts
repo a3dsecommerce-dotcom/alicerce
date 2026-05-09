@@ -45,12 +45,18 @@ export function useGerenciaData(currentUser?: any) {
       }
 
       // 2. Fetch Logs (Atividades)
-      const { data: logsData } = await supabase
+      const { data: logsData, error: logsError } = await supabase
         .from('atividades')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
-      if (logsData) setLogs(logsData);
+      
+      if (logsError) {
+        console.error("Erro ao buscar logs:", logsError);
+        setLogs([]);
+      } else {
+        setLogs(logsData || []);
+      }
 
       // 3. Usuários Online (Baseado na telemetria de presença)
       const quinzeMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
@@ -84,7 +90,7 @@ export function useGerenciaData(currentUser?: any) {
 
       // 4. Stats gerais — busca dados completos para filtrar Gestão Própria e calcular vagas
       const [colabsData, reqs, quadroRes, tickets] = await Promise.all([
-        supabase.from('usuarios').select('unidade_alocacao, cargo').eq('status', 'ATIVO'),
+        supabase.from('usuarios').select('unidade_alocacao, cargo, secretaria').eq('status', 'ATIVO'),
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
         supabase.from('vagas_quadro').select('unidade_nome, cargo, vagas_totais'),
         supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')

@@ -4,8 +4,8 @@ import { Clock, Activity, ShieldCheck, Box, ShoppingCart, UserCheck, AlertTriang
 interface LogEntry {
   id: string;
   usuario_nome: string;
-  acao: string;
-  modulo: string;
+  mensagem: string;
+  tipo: string;
   created_at: string;
 }
 
@@ -14,12 +14,12 @@ interface ActivitiesLogProps {
 }
 
 export default function ActivitiesLog({ logs }: ActivitiesLogProps) {
-  const getModuleIcon = (modulo: string) => {
-    const m = modulo.toUpperCase();
-    if (m.includes("RH")) return { icon: UserCheck, color: "text-blue-500", bg: "bg-blue-500/10" };
-    if (m.includes("COMPRAS")) return { icon: ShoppingCart, color: "text-orange-500", bg: "bg-orange-500/10" };
-    if (m.includes("ALMOX") || m.includes("UNIFORME")) return { icon: Box, color: "text-green-500", bg: "bg-green-500/10" };
-    if (m.includes("DIRETOR") || m.includes("ADMIN")) return { icon: ShieldCheck, color: "text-slate-500", bg: "bg-slate-500/10" };
+  const getModuleIcon = (tipo: string) => {
+    const t = (tipo || "").toUpperCase();
+    if (t.includes("RH")) return { icon: UserCheck, color: "text-blue-500", bg: "bg-blue-500/10" };
+    if (t.includes("COMPRAS")) return { icon: ShoppingCart, color: "text-orange-500", bg: "bg-orange-500/10" };
+    if (t.includes("ALMOX") || t.includes("OPERACIONAL")) return { icon: Box, color: "text-green-500", bg: "bg-green-500/10" };
+    if (t.includes("SISTEMA") || t.includes("GERENCIA")) return { icon: ShieldCheck, color: "text-slate-500", bg: "bg-slate-500/10" };
     return { icon: Activity, color: "text-[var(--brand)]", bg: "bg-[var(--brand)]/10" };
   };
 
@@ -43,7 +43,7 @@ export default function ActivitiesLog({ logs }: ActivitiesLogProps) {
           </div>
         ) : (
           logs.map((log) => {
-            const { icon: Icon, color, bg } = getModuleIcon(log.modulo);
+            const { icon: Icon, color, bg } = getModuleIcon(log.tipo);
             return (
               <div key={log.id} className="flex items-start gap-5 p-5 bg-[var(--bg-base)]/30 rounded-3xl border border-transparent hover:border-[var(--border)] hover:bg-[var(--bg-card)] transition-all group">
                 <div className={`w-12 h-12 ${bg} ${color} rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110`}>
@@ -52,12 +52,12 @@ export default function ActivitiesLog({ logs }: ActivitiesLogProps) {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start gap-4">
                     <p className="text-[13px] font-bold text-[var(--text-primary)] leading-snug">
-                      <span className="font-black text-orange-600">{log.usuario_nome}</span> {log.acao}
+                      <span className="font-black text-orange-600">{log.usuario_nome || 'Sistema'}</span> {log.mensagem}
                     </p>
                   </div>
                   <div className="flex items-center gap-4 mt-2">
                     <span className={`px-2 py-0.5 ${bg} ${color} text-[8px] font-black uppercase rounded-lg tracking-widest border border-current opacity-60`}>
-                      {log.modulo}
+                      {log.tipo || 'Geral'}
                     </span>
                     <span className="text-[9px] font-bold text-[var(--text-muted)] flex items-center gap-1">
                       <Clock size={10} /> {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
