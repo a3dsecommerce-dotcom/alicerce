@@ -94,62 +94,114 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
         {/* Lado Esquerdo: Distribuição e Listas */}
         <div className="lg:col-span-8 flex flex-col gap-8">
           
-          {(activeSector === "GERAL" || activeSector === "RH") && (
-            <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden">
-              <div className="px-10 pt-10 pb-6 border-b border-[var(--border)] flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center">
-                    <Users size={24} className="text-orange-500" />
+          {activeSector === "GERAL" && (
+            <div className="flex flex-col gap-8 animate-in slide-in-from-left duration-500">
+               {/* SAÚDE DOS PROCESSOS */}
+               <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden p-10">
+                  <div className="flex items-center gap-6 mb-10">
+                    <div className="w-16 h-16 bg-[var(--brand)]/10 rounded-[2rem] flex items-center justify-center text-[var(--brand)]">
+                      <LayoutDashboard size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-[var(--text-primary)] italic tracking-tighter">Status dos Processos</h3>
+                      <p className="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">Visão macro de eficiência operacional</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-black text-[var(--text-primary)] italic tracking-tighter">ASGs por Secretaria</h3>
-                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Distribuição do efetivo operacional</p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <ProcessStat label="Auditoria de Escala" status="EM DIA" pct={98} color="bg-green-500" />
+                    <ProcessStat label="Atendimento SLA" status="ALERTA" pct={72} color="bg-orange-500" />
+                    <ProcessStat label="Entregas Almox" status="EFICIENTE" pct={94} color="bg-blue-500" />
+                    <ProcessStat label="Cobertura de Vagas" status="CRÍTICO" pct={45} color="bg-red-500" />
                   </div>
-                </div>
-              </div>
-              <div className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {asgPorSecretaria.map((item, idx) => {
-                    const pct = Math.round((item.total / maxASG) * 100);
-                    return (
-                      <div key={item.secretaria} className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-base)]">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-[11px] font-black uppercase tracking-wide text-[var(--text-primary)]">{item.secretaria}</span>
-                          <span className="text-xl font-black text-[var(--text-primary)]">{item.total}</span>
-                        </div>
-                        <div className="w-full bg-[var(--bg-card)] rounded-full h-1.5 overflow-hidden">
-                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+               </div>
+
+               {/* ATIVIDADE DO SISTEMA (VISITAS/LOGS) */}
+               <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden p-10">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <Zap size={24} className="text-yellow-500" />
+                      <h3 className="text-xl font-black text-[var(--text-primary)] italic tracking-tighter">Atividade do Sistema</h3>
+                    </div>
+                    <span className="px-4 py-1.5 bg-green-500/10 text-green-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-green-500/20">
+                      Sistema Estável
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Acessos Hoje</p>
+                      <h4 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">142</h4>
+                    </div>
+                    <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Usuários Online</p>
+                      <h4 className="text-3xl font-black text-green-500 tracking-tighter">12</h4>
+                    </div>
+                    <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Interações/Min</p>
+                      <h4 className="text-3xl font-black text-blue-500 tracking-tighter">48</h4>
+                    </div>
+                  </div>
+               </div>
             </div>
           )}
-
-          {(activeSector === "GERAL" || activeSector === "RH") && (
-            <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden">
-              <div className="px-10 pt-10 pb-6 border-b border-[var(--border)] flex items-center gap-4">
-                <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-                  <Briefcase size={24} className="text-blue-500" />
+          
+          {activeSector === "RH" && (
+            <div className="flex flex-col gap-8 animate-in slide-in-from-left duration-500">
+              <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden">
+                <div className="px-10 pt-10 pb-6 border-b border-[var(--border)] flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center">
+                      <Users size={24} className="text-orange-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-[var(--text-primary)] italic tracking-tighter">ASGs por Secretaria</h3>
+                      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Distribuição do efetivo operacional</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-black text-[var(--text-primary)] italic tracking-tighter">Distribuição por Cargo</h3>
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Top 20 funções ativas</p>
+                <div className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {asgPorSecretaria.map((item, idx) => {
+                      const pct = Math.round((item.total / maxASG) * 100);
+                      return (
+                        <div key={item.secretaria} className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-base)]">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-[11px] font-black uppercase tracking-wide text-[var(--text-primary)]">{item.secretaria}</span>
+                            <span className="text-xl font-black text-[var(--text-primary)]">{item.total}</span>
+                          </div>
+                          <div className="w-full bg-[var(--bg-card)] rounded-full h-1.5 overflow-hidden">
+                            <div className="h-full bg-orange-500 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-              <div className="p-8">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {cargos.map((item) => {
-                    const pct = Math.round((item.total / maxCargo) * 100);
-                    return (
-                      <div key={item.cargo} className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-base)]">
-                        <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1 truncate">{item.cargo}</p>
-                        <span className="text-xl font-black text-[var(--text-primary)]">{item.total}</span>
-                      </div>
-                    );
-                  })}
+
+              <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden">
+                <div className="px-10 pt-10 pb-6 border-b border-[var(--border)] flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+                    <Briefcase size={24} className="text-blue-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-[var(--text-primary)] italic tracking-tighter">Distribuição por Cargo</h3>
+                    <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-0.5">Top 20 funções ativas</p>
+                  </div>
+                </div>
+                <div className="p-8">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {cargos.map((item) => {
+                      const pct = Math.round((item.total / maxCargo) * 100);
+                      return (
+                        <div key={item.cargo} className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-base)]">
+                          <p className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1 truncate">{item.cargo}</p>
+                          <span className="text-xl font-black text-[var(--text-primary)]">{item.total}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -204,6 +256,26 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
           </div>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+// Subcomponente de Status de Processo
+function ProcessStat({ label, status, pct, color }: any) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-between items-end">
+        <div>
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">{label}</p>
+          <p className={`text-[9px] font-black px-2 py-0.5 rounded-md inline-block ${status === 'EM DIA' ? 'bg-green-500/10 text-green-600' : status === 'CRÍTICO' ? 'bg-red-500/10 text-red-600' : 'bg-orange-500/10 text-orange-600'}`}>
+            {status}
+          </p>
+        </div>
+        <span className="text-xl font-black text-[var(--text-primary)] tracking-tighter">{pct}%</span>
+      </div>
+      <div className="w-full bg-[var(--bg-base)] rounded-full h-2 overflow-hidden border border-[var(--border)]">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
