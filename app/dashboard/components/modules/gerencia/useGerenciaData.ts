@@ -41,15 +41,23 @@ export function useGerenciaData() {
         .order('created_at', { ascending: false });
       if (reqVolData) setRequisicoesVolantes(reqVolData);
 
-      // 4. Stats gerais
-      const [colabs, reqs, vagas, tickets] = await Promise.all([
-        supabase.from('usuarios').select('*', { count: 'exact', head: true }).eq('status', 'ATIVO'),
+      // 4. Stats gerais — busca dados completos para filtrar Gestão Própria
+      const [colabsData, reqs, vagas, tickets] = await Promise.all([
+        supabase.from('usuarios').select('unidade_alocacao').eq('status', 'ATIVO'),
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
         supabase.from('vagas').select('*', { count: 'exact', head: true }).eq('status_vaga', 'ABERTA'),
         supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
       ]);
+
+      // Exclui unidades Alicerce/PMG (gestão própria) da contagem oficial
+      const isGestaoPropria = (unidade: string) => {
+        const u = (unidade || '').toUpperCase();
+        return u.includes('ALICERCE') || u.includes('PMG');
+      };
+      const totalOficiais = (colabsData.data || []).filter(c => !isGestaoPropria(c.unidade_alocacao)).length;
+
       setStats({
-        totalColaboradores: colabs.count || 0,
+        totalColaboradores: totalOficiais,
         totalRequisicoes: reqs.count || 0,
         totalVagas: vagas.count || 0,
         ticketsAbertos: tickets.count || 0
@@ -62,10 +70,13 @@ export function useGerenciaData() {
         .eq('status', 'ATIVO');
 
       if (allColabs) {
-        // ASG por Secretaria (filtra variações do cargo ASG)
-        const asgList = allColabs.filter(c => {
+        // Filtra Gestão Própria (Alicerce/PMG) — fora do contrato oficial
+        const oficiais = allColabs.filter(c => !isGestaoPropria(c.unidade_alocacao || ''));
+
+        // ASG por Secretaria — apenas efetivo oficial
+        const asgList = oficiais.filter(c => {
           const c_ = (c.cargo || '').toUpperCase();
-          return c_.includes('ASG') || c_.includes('AGENTE DE SERVI') || c_.includes('SERV') && c_.includes('GERAIS');
+          return c_.includes('ASG') || c_.includes('AGENTE DE SERVI') || (c_.includes('SERV') && c_.includes('GERAIS'));
         });
         const asgMap: Record<string, number> = {};
         asgList.forEach(c => {
@@ -78,9 +89,9 @@ export function useGerenciaData() {
             .sort((a, b) => b.total - a.total)
         );
 
-        // Distribuição por Cargo (top 20)
+        // Distribuição por Cargo — apenas efetivo oficial
         const cargoMap: Record<string, number> = {};
-        allColabs.forEach(c => {
+        oficiais.forEach(c => {
           const cargo = (c.cargo || 'Não definido').toUpperCase().trim();
           cargoMap[cargo] = (cargoMap[cargo] || 0) + 1;
         });
