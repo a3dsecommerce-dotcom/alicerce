@@ -198,29 +198,29 @@ export default function ColaboradoresTable({
                   <th key={col.id} className="p-4 text-center min-w-[160px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
                     <div className="flex flex-col items-center gap-3">
                       <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none">{col.label}</span>
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
                             const novo = prompt("Renomear coluna:", col.label);
                             if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
                           }}
-                          className="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md active:scale-95"
-                          title="Editar Nome"
+                          className="flex items-center justify-center w-6 h-6 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          title="Renomear"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={10} />
                         </button>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (confirm(`DESEJA EXCLUIR DEFINITIVAMENTE A COLUNA "${col.label.toUpperCase()}"?\n\nIsso apagará todas as marcações de todos os colaboradores para este documento.`)) {
+                            if (confirm(`DESEJA EXCLUIR DEFINITIVAMENTE A COLUNA "${col.label.toUpperCase()}"?`)) {
                               onDeleteConfigChecklist?.(col.id);
                             }
                           }}
-                          className="flex items-center justify-center w-8 h-8 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all shadow-md active:scale-95"
-                          title="Excluir Coluna"
+                          className="flex items-center justify-center w-6 h-6 bg-red-50 text-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                          title="Excluir"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={10} />
                         </button>
                       </div>
                     </div>
