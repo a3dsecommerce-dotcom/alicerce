@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
