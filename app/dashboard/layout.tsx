@@ -193,6 +193,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';
             const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
             const isManager = !isStrictRole && ((user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole));
+            
+            // Regra: Excluir Manual para Nível 1 da unidade PMG
+            if (item.label === 'Manual de Boas Práticas') {
+              const isLevel1 = (user?.nivel || 0) <= 1;
+              const isPMG = user?.unidade_alocacao?.toUpperCase().includes('PMG');
+              if (isLevel1 && isPMG) return false;
+            }
+
             return isManager || item.roles.includes(safeRole);
           }).map(item => {
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';

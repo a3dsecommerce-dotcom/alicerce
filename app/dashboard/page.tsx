@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, Users, ShoppingBag, Megaphone, 
   Package, ShieldCheck, Activity, Bell, Settings,
-  Loader, AlertTriangle
+  Loader, AlertTriangle, FileText, BookOpen, Sparkles, Rocket
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
@@ -21,6 +21,7 @@ import AlmoxarifadoModule from "./components/modules/AlmoxarifadoModule";
 import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
 import EncarregadoModule from "./components/modules/EncarregadoModule";
 import OcorrenciasModule from "./components/modules/OcorrenciasModule";
+import ManualModule from "./components/modules/ManualModule";
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
   { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ENCARREGADO"] },
@@ -31,6 +32,7 @@ const ALL_MODULES = [
   { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "TECNICO_SEGURANCA"] },
   { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "ENCARREGADO"] },
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
+  { id: "MANUAL", label: "Manual de Boas Práticas", icon: FileText, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
 ];
 
 export default function UnifiedCockpitPage() {
@@ -213,6 +215,7 @@ function CockpitContent() {
             { activeModule === "OPERACIONAL" && <OperacionalModule user={user} /> }
             { activeModule === "OCORRENCIAS" && <OcorrenciasModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
+            { activeModule === "MANUAL" && <ManualModule /> }
             { (activeModule === "COMMAND" || !activeModule) && (
                (safeRole === 'ENCARREGADO') 
                  ? <EncarregadoModule user={user} initialTab={tabParam as any} />
