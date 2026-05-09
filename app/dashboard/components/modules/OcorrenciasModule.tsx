@@ -8,6 +8,7 @@ import {
 import { useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
+import { getBusinessHoursElapsed } from "@/utils/dateUtils";
 
 export default function OcorrenciasModule({ user }: { user: any }) {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -189,7 +190,8 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     const abertura = new Date(t.data_abertura);
     const horaFim = t.data_fechamento ? new Date(t.data_fechamento) : new Date();
     
-    const horasDecorridas = (horaFim.getTime() - abertura.getTime()) / (1000 * 60 * 60);
+    // SLA baseado em Horário Comercial (Seg-Sex, 07:00-17:00)
+    const horasDecorridas = getBusinessHoursElapsed(abertura, horaFim);
     const horasSLA = (t.prazo_estipulado_dias || 1) * 24;
     const porcentagem = (horasDecorridas / horasSLA) * 100;
     
@@ -251,7 +253,7 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       if (t.atrasado_na_entrega) return true;
       const abertura = new Date(t.data_abertura);
       const horasSLA = (t.prazo_estipulado_dias || 1) * 24;
-      const horasDecorridas = ((t.data_fechamento ? new Date(t.data_fechamento) : agora).getTime() - abertura.getTime()) / (1000 * 60 * 60);
+      const horasDecorridas = getBusinessHoursElapsed(abertura, t.data_fechamento ? new Date(t.data_fechamento) : agora);
       return horasDecorridas > horasSLA && !t.status?.startsWith('RESOLVIDO');
     }).length;
 

@@ -10,6 +10,32 @@ import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, P
 
 const UPDATES = [
   {
+    version: "v753.5",
+    date: "09/05/2026",
+    title: "SLA em Horário Comercial",
+    description: "Implementação global de 'Horas Úteis' para cálculo de prazos e vencimentos.",
+    tags: ["SLA", "GOVERNANÇA", "OPERACIONAL"],
+    details: [
+      "O relógio de ocorrências agora 'congela' automaticamente em fins de semana e feriados.",
+      "Contagem válida apenas de Segunda a Sexta, das 07:00 às 17:00.",
+      "Eliminação de falsos atrasos em tickets abertos antes do final de semana.",
+      "Centralização da lógica em utilitário único para todos os módulos (RH, Gerência, Encarregado)."
+    ]
+  },
+  {
+    version: "v753.4",
+    date: "09/05/2026",
+    title: "Telemetria de Governança",
+    description: "Novo sistema de monitoramento de acessos e presença em tempo real.",
+    tags: ["DADOS", "SISTEMA", "AUDITORIA"],
+    details: [
+      "Contador de 'Acessos Totais' por usuário para estatísticas de engajamento.",
+      "Sistema de Heartbeat para detecção ultra-precisa de usuários online.",
+      "Novo filtro de 15 minutos para status 'Ativo' no painel de gerência.",
+      "Otimização de performance na listagem de atividades do sistema."
+    ]
+  },
+  {
     version: "v753.3",
     date: "09/05/2026",
     title: "Recrutamento Segmentado",

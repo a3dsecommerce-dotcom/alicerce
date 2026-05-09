@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { getBusinessHoursElapsed } from "@/utils/dateUtils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -200,30 +201,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     const agora = new Date();
     const abertura = new Date(t.data_abertura);
     
-    // Função para calcular horas úteis decorridas
-    const getBusinessHoursElapsed = (start: Date, end: Date) => {
-      let count = 0;
-      let current = new Date(start);
-      
-      // Itera minuto a minuto (ou hora a hora para performance, mas vamos usar 30 min)
-      const step = 30 * 60 * 1000; // 30 minutos
-      
-      while (current < end) {
-        const day = current.getDay();
-        const hour = current.getHours();
-        const isWeekend = day === 0 || day === 6;
-        const isBusinessHours = hour >= 7 && hour < 17;
-        
-        if (!isWeekend && isBusinessHours) {
-          count += 0.5; // adiciona meia hora
-        }
-        current = new Date(current.getTime() + step);
-      }
-      return count;
-    };
-
+    // SLA Útil baseado em Horário Comercial (Seg-Sex, 07:00-17:00)
     const horasUteisDecorridas = getBusinessHoursElapsed(abertura, agora);
-    const prazoEmHoras = (t.prazo_estipulado_dias || 1) * 10; // 1 dia = 10 horas úteis (7h-17h)
+    const prazoEmHoras = (t.prazo_estipulado_dias || 1) * 24; 
     const isAtrasadoSolicitado = horasUteisDecorridas >= prazoEmHoras;
 
     const deadlineAcordado = t.prazo_prometido ? new Date(t.prazo_prometido) : null;
