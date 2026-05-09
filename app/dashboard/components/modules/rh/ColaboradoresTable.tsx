@@ -223,7 +223,7 @@ export default function ColaboradoresTable({
                 <th className="p-4 text-center">PONTO CAD.</th>
                 <th className="p-4 text-center">BOAS VINDAS</th>
                 <th className="p-4 text-center">ASSIN. ISADORA</th>
-                <th className="p-4 text-center">VT -> DP</th>
+                <th className="p-4 text-center">VT → DP</th>
                 <th className="p-4 text-center">SOLIC. VA</th>
                 <th className="p-4 text-center">PLANO SAÚDE</th>
                 <th className="p-4 text-center">ABRIU CONTA?</th>
