@@ -61,6 +61,8 @@ interface ColaboradoresTableProps {
   onUpdateDocs?: (id: string, field: string, value: boolean) => void;
   onUpdateExpDecision?: (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => void;
   onUpdateOffboarding?: (id: string, field: string, value: any) => void;
+  configChecklist?: {id: string, label: string}[];
+  onUpdateExtraCheck?: (id: string, label: string, value: boolean) => void;
 }
 
 export default function ColaboradoresTable({ 
@@ -71,7 +73,9 @@ export default function ColaboradoresTable({
   onGerarPDF,
   onUpdateDocs,
   onUpdateExpDecision,
-  onUpdateOffboarding
+  onUpdateOffboarding,
+  configChecklist = [],
+  onUpdateExtraCheck
 }: ColaboradoresTableProps) {
   
   const formatDate = (dateStr: string | null | undefined) => {
@@ -166,6 +170,9 @@ export default function ColaboradoresTable({
                 <th className="p-4 text-center">ANTEC</th>
                 <th className="p-4 text-center">CTPS</th>
                 <th className="p-4 text-center">FOTO</th>
+                {configChecklist.map(col => (
+                  <th key={col.id} className="p-4 text-center min-w-[100px]">{col.label.toUpperCase()}</th>
+                ))}
               </>
             ) : dpAba === 'contratacao' ? (
               <>
@@ -248,6 +255,17 @@ export default function ColaboradoresTable({
                   <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.antecedentes} onChange={(e) => onUpdateDocs?.(c.id, 'doc_antecedentes', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
                   <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.ctps_pis} onChange={(e) => onUpdateDocs?.(c.id, 'doc_ctps_pis', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
                   <td className="p-4 text-center"><input type="checkbox" checked={c.docs?.foto} onChange={(e) => onUpdateDocs?.(c.id, 'doc_foto', e.target.checked)} className="w-4 h-4 rounded border-[var(--border)] text-[var(--brand)] focus:ring-[var(--brand)]" onClick={e => e.stopPropagation()} /></td>
+                  {configChecklist.map(col => (
+                    <td key={col.id} className="p-4 text-center">
+                      <input 
+                        type="checkbox" 
+                        checked={!!(c.checklist_extra?.[col.label])} 
+                        onChange={(e) => onUpdateExtraCheck?.(c.id, col.label, e.target.checked)} 
+                        className="w-4 h-4 rounded border-[var(--border)] text-indigo-600 focus:ring-indigo-500" 
+                        onClick={e => e.stopPropagation()} 
+                      />
+                    </td>
+                  ))}
                 </>
               ) : dpAba === 'contratacao' ? (
                 <>

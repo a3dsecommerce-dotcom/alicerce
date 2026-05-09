@@ -13,6 +13,7 @@ export function useRHData(user: any) {
   const [faltas, setFaltas] = useState<any[]>([]);
   const [volantes, setVolantes] = useState<any[]>([]);
   const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
+  const [configChecklist, setConfigChecklist] = useState<{id: string, label: string}[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -76,6 +77,10 @@ export function useRHData(user: any) {
       // 7. Fetch Requisições de Volantes
       const { data: reqVolantesDb } = await supabase.from('requisicoes_volantes').select('*').order('created_at', { ascending: false });
       if (reqVolantesDb) setRequisicoesVolantes(reqVolantesDb);
+
+      // 8. Fetch Config Checklist Dinâmico
+      const { data: configDb } = await supabase.from('config_checklist_rh').select('*').order('label');
+      if (configDb) setConfigChecklist(configDb);
     } catch (err) {
       console.error("Erro no carregamento do RH:", err);
     } finally {
@@ -215,6 +220,31 @@ export function useRHData(user: any) {
 
       await fetchData();
     },
+    addChecklistColumn: async (label: string) => {
+      const { error } = await supabase.from('config_checklist_rh').insert([{ label }]);
+      if (error) throw error;
+      
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.nome || user.name,
+        mensagem: `Criou nova coluna de checklist: ${label}`,
+        tipo: "RH",
+        created_at: new Date().toISOString()
+      }]);
+
+      await fetchData();
+    },
+    updateExtraCheck: async (id: string, label: string, value: boolean) => {
+      const { data: colab } = await supabase.from('usuarios').select('checklist_extra').eq('id', id).single();
+      const currentExtra = colab?.checklist_extra || {};
+      const newExtra = { ...currentExtra, [label]: value };
+      
+      const { error } = await supabase.from('usuarios').update({ checklist_extra: newExtra }).eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    },
+    configChecklist,
     deleteExtra: async (id: string, justificativa: string) => {
       // 1. Buscar dados do item antes de excluir para o log
       const { data: item } = await supabase.from('informativos_operacionais').select('*').eq('id', id).single();

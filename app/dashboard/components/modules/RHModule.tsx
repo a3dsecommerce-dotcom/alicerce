@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2, Plus
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
@@ -28,7 +28,7 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, deleteExtra, refresh } = useRHData(user);
+  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, addChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
   const { transferencias, finalizarRH } = useTransferencias(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
@@ -262,6 +262,17 @@ export default function RHModule({ user }: { user: any }) {
                       <input className="input-field w-full pl-12" placeholder="Buscar no DP..." value={busca} onChange={e => setBusca(e.target.value)} />
                    </div>
                    <div className="flex gap-2 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
+                      {dpAba === 'arquivo' && (
+                        <button 
+                          className="px-6 py-2 rounded-lg text-[9px] font-black uppercase bg-green-600 text-white hover:bg-green-700 transition-all flex items-center gap-2"
+                          onClick={() => {
+                            const label = prompt("Nome da nova coluna de checklist:");
+                            if (label) addChecklistColumn(label);
+                          }}
+                        >
+                          <Plus size={14} /> Adicionar Coluna
+                        </button>
+                      )}
                       {dpAba === 'ativos' && (
                         <button className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${expOnly ? 'bg-indigo-600 text-white' : 'text-[var(--text-muted)]'}`} onClick={() => setExpOnly(!expOnly)}>Em Experiência</button>
                       )}
@@ -284,6 +295,8 @@ export default function RHModule({ user }: { user: any }) {
                          onUpdateDocs={handleUpdateDocs}
                          onUpdateExpDecision={handleUpdateExpDecisionWrapper}
                          onUpdateOffboarding={updateOffboarding}
+                         configChecklist={configChecklist}
+                         onUpdateExtraCheck={updateExtraCheck}
                        />
                     )}
                  </div>
