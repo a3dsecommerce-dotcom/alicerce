@@ -28,7 +28,7 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, deleteExtra, refresh } = useRHData(user);
+  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, deleteExtra, refresh } = useRHData(user);
   const { transferencias, finalizarRH } = useTransferencias(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
@@ -141,12 +141,11 @@ export default function RHModule({ user }: { user: any }) {
   };
 
   const handleUpdateDocs = async (id: string, field: string, value: boolean) => {
-    const { error } = await supabase.from('usuarios').update({ [field]: value }).eq('id', id);
-    if (!error) {
+    try {
+      await updateDocs(id, field, value);
       toast.success("Checklist atualizado!");
-      refresh();
-    } else {
-      toast.error("Erro ao atualizar checklist");
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 

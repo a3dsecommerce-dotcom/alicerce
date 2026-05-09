@@ -131,7 +131,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
 
     const { error } = await supabase.from('tickets_sla').insert([payload]);
     if (error) alert(error.message);
-    else { supabase.from("notificacoes").insert([{ setor_destino: formData.setor_destino, titulo: "Nova Ocorrência", mensagem: "Demanda: " + formData.assunto, link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    else { 
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.name || user.nome,
+        mensagem: `Abriu nova ocorrência: ${formData.assunto} (Destino: ${formData.setor_destino})`,
+        tipo: "OCORRENCIA",
+        created_at: new Date().toISOString()
+      }]);
+      
+      supabase.from("notificacoes").insert([{ setor_destino: formData.setor_destino, titulo: "Nova Ocorrência", mensagem: "Demanda: " + formData.assunto, link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); 
+    }
     setLoading(false);
   };
 
@@ -159,7 +170,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       data_fechamento: new Date().toISOString()
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
-    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "Ocorrência Rejeitada", mensagem: "Sua demanda foi cancelada.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    else { 
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.name || user.nome,
+        mensagem: `Cancelou/Rejeitou ocorrência #${selectedTicket.id.substring(0,8)}: ${cancelarData.motivo}`,
+        tipo: "OCORRENCIA",
+        created_at: new Date().toISOString()
+      }]);
+      
+      supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "Ocorrência Rejeitada", mensagem: "Sua demanda foi cancelada.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); 
+    }
     setLoading(false);
   };
 
@@ -179,7 +201,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
       atrasado_na_entrega: isFalit // Campo extra opcional para auditoria
     }).eq('id', selectedTicket.id);
     if (error) alert(error.message);
-    else { supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "Ocorrência Resolvida", mensagem: "Sua demanda foi resolvida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); }
+    else { 
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.name || user.nome,
+        mensagem: `Resolveu ocorrência #${selectedTicket.id.substring(0,8)}${isFalit ? ' (COM ATRASO)' : ''}`,
+        tipo: "OCORRENCIA",
+        created_at: new Date().toISOString()
+      }]);
+      
+      supabase.from("notificacoes").insert([{ user_id: selectedTicket.representante_id, titulo: "Ocorrência Resolvida", mensagem: "Sua demanda foi resolvida.", link: "/dashboard?module=OCORRENCIAS" }]).then(() => {}); setModalAberto(null); fetchTickets(); 
+    }
     setLoading(false);
   };
 

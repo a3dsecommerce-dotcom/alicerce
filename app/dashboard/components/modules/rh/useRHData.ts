@@ -92,9 +92,19 @@ export function useRHData(user: any) {
       throw new Error("Demissões devem ser autorizadas pela Gerência Operacional.");
     }
 
+    const { data: colab } = await supabase.from('usuarios').select('nome').eq('id', id).single();
     const { error } = await supabase.from('usuarios').update({ status: newStatus }).eq('id', id);
     if (error) throw error;
     
+    // Log de Atividade
+    await supabase.from('atividades').insert([{
+      usuario_id: user.id,
+      usuario_nome: user.nome || user.name,
+      mensagem: `Alterou status de ${colab?.nome || 'Colaborador'} para ${newStatus}`,
+      tipo: "RH",
+      created_at: new Date().toISOString()
+    }]);
+
     await fetchData();
   };
 
@@ -119,6 +129,49 @@ export function useRHData(user: any) {
     // 2. Atualizar Candidato
     await supabase.from('candidatos').update({ status_candidato: 'CONTRATADO' }).eq('id', candidato.id);
     
+    // 3. Log de Atividade
+    await supabase.from('atividades').insert([{
+      usuario_id: user.id,
+      usuario_nome: user.nome || user.name,
+      mensagem: `Finalizou pré-admissão de ${candidato.nome} (${form.cargo})`,
+      tipo: "RH",
+      created_at: new Date().toISOString()
+    }]);
+
+    await fetchData();
+  };
+
+  const updateExpDecision = async (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => {
+    const { data: colab } = await supabase.from('usuarios').select('nome').eq('id', id).single();
+    const { error } = await supabase.from('usuarios').update({ [stage]: decision }).eq('id', id);
+    if (error) throw error;
+
+    // Log de Atividade
+    await supabase.from('atividades').insert([{
+      usuario_id: user.id,
+      usuario_nome: user.nome || user.name,
+      mensagem: `Decisão de Experiência (${stage === 'exp1_decisao' ? '30d' : '90d'}): ${decision} para ${colab?.nome}`,
+      tipo: "RH",
+      created_at: new Date().toISOString()
+    }]);
+
+    await fetchData();
+  };
+
+  const updateDocs = async (id: string, field: string, value: boolean) => {
+    const { data: colab } = await supabase.from('usuarios').select('nome').eq('id', id).single();
+    const { error } = await supabase.from('usuarios').update({ [field]: value }).eq('id', id);
+    if (error) throw error;
+
+    // Log de Atividade
+    await supabase.from('atividades').insert([{
+      usuario_id: user.id,
+      usuario_nome: user.nome || user.name,
+      mensagem: `Checklist de Documentos: ${field.replace('doc_', '').toUpperCase()} ${value ? 'OK' : 'PENDENTE'} para ${colab?.nome}`,
+      tipo: "RH",
+      created_at: new Date().toISOString()
+    }]);
+
     await fetchData();
   };
 
@@ -144,11 +197,8 @@ export function useRHData(user: any) {
     },
     updateStatus,
     finalizarAdmissao,
-    updateExpDecision: async (id: string, stage: 'exp1_decisao' | 'exp2_decisao', decision: string) => {
-      const { error } = await supabase.from('usuarios').update({ [stage]: decision }).eq('id', id);
-      if (error) throw error;
-      await fetchData();
-    },
+    updateExpDecision,
+    updateDocs,
     deleteExtra: async (id: string, justificativa: string) => {
       // 1. Buscar dados do item antes de excluir para o log
       const { data: item } = await supabase.from('informativos_operacionais').select('*').eq('id', id).single();

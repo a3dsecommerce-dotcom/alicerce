@@ -138,6 +138,16 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     
     if (!error) {
       toast.success(`Supervisor da ${rotaNome} atualizado!`);
+      
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.nome || user.name,
+        mensagem: `Alterou supervisor da ${rotaNome} para ${encNome}`,
+        tipo: "GERENCIA",
+        created_at: new Date().toISOString()
+      }]);
+      
       fetchConfigRotas();
     } else {
       toast.error("Erro ao atualizar: " + error.message);
@@ -190,6 +200,16 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
     if (!error) {
       toast.success(editingUnit ? "Unidade atualizada!" : "Unidade cadastrada!");
+      
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.nome || user.name,
+        mensagem: `${editingUnit ? 'Atualizou' : 'Cadastrou'} unidade: ${newUnit.nome} (${newUnit.secretaria})`,
+        tipo: "OPERACIONAL",
+        created_at: new Date().toISOString()
+      }]);
+      
       setIsModalOpen(false);
       resetForm();
       fetchUnidades();
