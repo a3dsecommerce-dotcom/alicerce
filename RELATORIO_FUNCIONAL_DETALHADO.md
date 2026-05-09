@@ -32,10 +32,12 @@ Este relatório descreve minuciosamente as capacidades operacionais de cada seto
 **Objetivo:** Gestão do ciclo de vida do colaborador e conformidade legal.
 
 - **Portal de Recrutamento:** Gestão de candidatos, entrevistas e aprovações para novas vagas.
+- **Admissão Master (Onboarding 360):** Fluxo rigoroso de 32 etapas para garantir que nenhum colaborador inicie sem ASO, contrato assinado, VT/VA solicitado e cadastro completo em sistemas auxiliares (Strato).
+- **Checklist Dinâmico de Documentos:** Repositório com colunas customizáveis para verificação de documentos físicos e digitais (RG, CPF, Título, Antecedentes, etc).
+- **Motor de Offboarding:** Checklist de 16 pontos para desligamentos, incluindo devolução de uniformes, exames demissionais e conferência de TRCT.
 - **Banco de Talentos:** Repositório centralizado de currículos e perfis profissionais.
 - **Monitoramento de Faltas e Atestados:** Recebimento automático dos informativos preenchidos pelos encarregados em campo.
 - **Gestão de Ponto:** Sistema para conferência e ajuste de batidas de ponto, integrado à escala de trabalho.
-- **Triagem de Documentação:** Fluxo de validação de documentos após a admissão rápida realizada no campo.
 
 ---
 

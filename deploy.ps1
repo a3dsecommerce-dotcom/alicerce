@@ -23,16 +23,22 @@ $commitMsg = "$mensagem [$timestamp]"
 Write-Host "[3/4] Git Push..."
 & $GIT push origin main
 
-# 4. WEBHOOK
-Write-Host "[4/4] Webhook..."
-# O usuário deve ter configurado isso no Easypanel
-$WEBHOOK = "https://easypanel.mshosting.com.br/api/hooks/deploy/8a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"
+# 4. WEBHOOK / DEPLOY
+Write-Host "[4/4] Finalizando Deploy..."
 
-try {
-    Invoke-RestMethod -Uri $WEBHOOK -Method Post
-    Write-Host "SUCCESS: Deploy triggered."
-} catch {
-    Write-Host "WARNING: Webhook failed. Manual deploy needed."
+# Instrução: Configure o Webhook do Easypanel no seu ambiente local (.env) 
+# ou substitua a URL abaixo para automação completa.
+$WEBHOOK = $env:EASYPANEL_WEBHOOK # Exemplo: buscar de variável de ambiente
+
+if ($WEBHOOK -and $WEBHOOK -ne "") {
+    try {
+        Invoke-RestMethod -Uri $WEBHOOK -Method Post
+        Write-Host "SUCESSO: Deploy acionado via Webhook."
+    } catch {
+        Write-Host "AVISO: Webhook falhou ou não respondeu."
+    }
+} else {
+    Write-Host "NOTA: Webhook não configurado. Execute o Rebuild manual no Painel Easypanel."
 }
 
 Write-Host "DONE."

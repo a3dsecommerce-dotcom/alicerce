@@ -44,9 +44,11 @@ Uma interface *Mobile-First* simplificada, focada em produtividade e coleta de d
 
 ## 📦 3. Módulos Especializados Integrados
 
-### 👥 Recursos Humanos (RH)
-- Fluxo completo desde o recrutamento até a alocação em unidade.
-- Gestão de banco de dados de currículos e status de contratação.
+### 👥 Recursos Humanos (RH) e DP
+- **Admissão Master (32 Passos):** Fluxo unificado que garante a conformidade documental completa antes do início operacional.
+- **Checklist Dinâmico de Documentos:** Arquitetura flexível baseada em JSONB para acompanhamento de certidões, ASOs e contratos.
+- **Módulo de Offboarding Operacional:** Gestão de desligamentos com 16 etapas de auditoria e devolução de ativos.
+- **Gestão de Ponto e Benefícios:** Integração de escalas com controle de VT/VA e convênios.
 
 ### 🛒 Compras e Suprimentos
 - **Catálogo de Compras:** Sistema de requisição de materiais padronizado.

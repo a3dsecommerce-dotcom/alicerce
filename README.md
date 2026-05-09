@@ -11,7 +11,9 @@ O **Alicerce ERP** é uma plataforma de gestão avançada desenvolvida para cent
 ## 🚀 Módulos Principais
 
 ### 👥 Recursos Humanos (RH Master)
-*   **DP (Departamento Pessoal)**: Gestão completa de colaboradores, admissão master unificada e quadro de vagas.
+*   **DP (Departamento Pessoal)**: Gestão completa de colaboradores, admissão master unificada (32 etapas) e quadro de vagas.
+*   **Checklist Dinâmico**: Motor de verificação documental flexível com criação/edição de colunas em tempo real via JSONB.
+*   **Offboarding Estruturado**: Fluxo de desligamento de 16 etapas com auditoria de devolução de ativos e acerto documental.
 *   **Controle de Pontos**: Orquestração de batidas de ponto com integração via Bot de WhatsApp para regularização automática.
 *   **Gestão de Benefícios**: Controle centralizado de VT, VA e convênios.
 *   **Documentação Central**: Repositório seguro para holerites, contratos e atestados.
@@ -58,3 +60,4 @@ O Alicerce ERP foi construído seguindo princípios de **Sovereign Control**, on
 
 ---
 Desenvolvido por **A3DS Ecommerce** & **Antigravity AI**.
+Versão Atual: **800.0 (Checklist Evolution)**
