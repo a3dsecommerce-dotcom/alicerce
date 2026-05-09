@@ -262,13 +262,16 @@ export default function QuadroVagas() {
                         <tbody>
                             {getQuadroUnidade(unidadeSelecionada).map(item => (
                                 <tr key={item.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-base)]/30 transition-all group">
-                                    <td className="px-8 py-6">
+                                    <td className="px-8 py-6 cursor-pointer group/cell" onClick={() => openModal(unidadeSelecionada, item)}>
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 bg-[var(--bg-base)] rounded-xl flex items-center justify-center text-[var(--brand)] border border-[var(--border)]">
+                                            <div className="w-10 h-10 bg-[var(--bg-base)] rounded-xl flex items-center justify-center text-[var(--brand)] border border-[var(--border)] group-hover/cell:bg-[var(--brand)] group-hover/cell:text-white transition-all">
                                                 <Briefcase size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-[11px] font-black text-[var(--text-primary)] uppercase">{item.cargo}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-[11px] font-black text-[var(--text-primary)] uppercase group-hover/cell:text-[var(--brand)] transition-colors">{item.cargo}</p>
+                                                    <Edit2 size={10} className="opacity-0 group-hover/cell:opacity-100 transition-opacity text-[var(--brand)]" />
+                                                </div>
                                                 {item.insalubridade && item.insalubridade !== 'N/A' && (
                                                     <p className="text-[8px] font-black text-red-500 uppercase mt-1 italic">Insal. {item.insalubridade}</p>
                                                 )}
@@ -326,11 +329,11 @@ export default function QuadroVagas() {
                                         )}
                                     </td>
                                     <td className="px-8 py-6 text-right">
-                                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => openModal(unidadeSelecionada, item)} className="p-3 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => openModal(unidadeSelecionada, item)} className="p-3 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all shadow-sm">
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button onClick={() => handleDelete(item.id)} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                                            <button onClick={() => handleDelete(item.id)} className="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm">
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>
