@@ -14,20 +14,16 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import UserSearchInput from "@/components/ui/UserSearchInput";
 import FichaColaborador360 from "../FichaColaborador360";
 import DisciplinaPanel from "./encarregado/DisciplinaPanel";
+import TransferenciasList from "./encarregado/TransferenciasList";
+import { useTransferencias } from "@/hooks/useTransferencias";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA">(() => {
-    if (!initialTab) return "MY_UNITS";
-    const t = initialTab.toUpperCase();
-    if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
-    if (t === "EQUIPE" || t === "COLABS") return "MY_COLABS";
-    if (t === "ADMISSAO" || t === "CADASTRO") return "QUICK_ADMISSION";
-    if (t === "TICKETS" || t === "OCORRENCIAS") return "TICKETS";
-    if (t === "INFORMATIVOS" || t === "REPORTS") return "REPORTS";
-    if (t === "CAT" || t === "ACIDENTE") return "CAT";
-    if (t === "EPI" || t === "ENTREGA") return "EPI";
-    if (t === "MISSOES" || t === "MISSIONS") return "MY_MISSIONS";
-    if (t === "DISCIPLINA" || t === "ADVERTENCIAS") return "DISCIPLINA";
+    if (t === "REPORTS" || t === "REPORTS") return "REPORTS";
+    if (t === "CAT" || t === "CAT") return "CAT";
+    if (t === "EPI" || t === "EPI") return "EPI";
+    if (t === "MISSIONS" || t === "MISSIONS") return "MY_MISSIONS";
+    if (t === "DISCIPLINA" || t === "DISCIPLINA") return "DISCIPLINA";
+    if (t === "TRANSFERENCIAS" || t === "TRANSFERENCIAS") return "TRANSFERENCIAS";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -36,6 +32,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const [myColabs, setMyColabs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { transferencias, analisarEncarregado, refresh: refreshTransf } = useTransferencias(user);
 
   const [admissao, setAdmissao] = useState<any>({ 
     nome: '', telefone: '', unidade: '', secretaria: '', funcao: '',

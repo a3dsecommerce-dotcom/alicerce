@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  Shield, Settings, Database, Loader, MapPin, Plus, Building2, User, Phone, Map, Users, Search, Truck,
-  LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target, Calculator
+  LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target, Calculator, ArrowUpRight
 } from "lucide-react";
+import { useTransferencias } from "@/hooks/useTransferencias";
+import TransferenciasList from "./encarregado/TransferenciasList";
 import { useGerenciaData } from "./gerencia/useGerenciaData";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
@@ -19,7 +20,8 @@ import CotasManager from "./gerencia/CotasManager";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
-  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS">((initialTab?.toUpperCase() as any) || "VISAO");
+  const { transferencias, analisarGerencia } = useTransferencias(user);
+  const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -259,6 +261,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               <ShieldAlert size={14} /> Canal Ético
             </button>
             <button 
+              onClick={() => setActiveTab("TRANSFERENCIAS")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "TRANSFERENCIAS" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <ArrowUpRight size={14} /> Transferências
+            </button>
+            <button 
               onClick={() => setActiveTab("DB")}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
             >
@@ -284,6 +292,20 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
         {activeTab === "DENUNCIAS" && (
            <DenunciasManager />
+        )}
+
+        {activeTab === "TRANSFERENCIAS" && (
+           <TransferenciasList 
+             transferencias={transferencias.filter(t => t.status === 'ACEITO_ENCARREGADO')} 
+             onAction={async (id, decisao, justificativa) => {
+                try {
+                  await analisarGerencia(id, decisao as any, justificativa);
+                  toast.success("Análise de Gerência registrada!");
+                } catch(e: any) {
+                  toast.error("Erro: " + e.message);
+                }
+             }}
+           />
         )}
 
         {activeTab === "ROTAS" && (
