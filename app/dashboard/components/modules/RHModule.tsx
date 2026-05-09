@@ -43,6 +43,7 @@ export default function RHModule({ user }: { user: any }) {
   const [admissaoForm, setAdmissaoForm] = useState({ secretaria: "", unidade: "", cargo: "", data: new Date().toISOString().split('T')[0] });
   const [modalAfastamento, setModalAfastamento] = useState<any>(null);
   const [afastamentoData, setAfastamentoData] = useState({ motivo: "", tempo: "" });
+  const [modalGerenciarColunas, setModalGerenciarColunas] = useState(false);
 
   const [expOnly, setExpOnly] = useState(false);
 
@@ -263,15 +264,23 @@ export default function RHModule({ user }: { user: any }) {
                    </div>
                    <div className="flex gap-2 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
                       {dpAba === 'arquivo' && (
-                        <button 
-                          className="px-6 py-2 rounded-lg text-[9px] font-black uppercase bg-green-600 text-white hover:bg-green-700 transition-all flex items-center gap-2"
-                          onClick={() => {
-                            const label = prompt("Nome da nova coluna de checklist:");
-                            if (label) addChecklistColumn(label);
-                          }}
-                        >
-                          <Plus size={14} /> Adicionar Coluna
-                        </button>
+                        <div className="flex gap-2">
+                          <button 
+                            className="px-6 py-2 rounded-lg text-[9px] font-black uppercase bg-green-600 text-white hover:bg-green-700 transition-all flex items-center gap-2"
+                            onClick={() => {
+                              const label = prompt("Nome da nova coluna de checklist:");
+                              if (label) addChecklistColumn(label);
+                            }}
+                          >
+                            <Plus size={14} /> Adicionar
+                          </button>
+                          <button 
+                            className="px-6 py-2 rounded-lg text-[9px] font-black uppercase bg-blue-600 text-white hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg"
+                            onClick={() => setModalGerenciarColunas(true)}
+                          >
+                            <FileText size={14} /> Gerenciar Colunas
+                          </button>
+                        </div>
                       )}
                       {dpAba === 'ativos' && (
                         <button className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${expOnly ? 'bg-indigo-600 text-white' : 'text-[var(--text-muted)]'}`} onClick={() => setExpOnly(!expOnly)}>Em Experiência</button>
@@ -447,6 +456,55 @@ export default function RHModule({ user }: { user: any }) {
             </div>
          </div>
       </AdaptiveModal>
+
+         {/* Modal Gerenciar Colunas */}
+         <AdaptiveModal isOpen={modalGerenciarColunas} onClose={() => setModalGerenciarColunas(false)} title="Gerenciar Colunas do Checklist">
+            <div className="p-6">
+               <p className="text-xs text-[var(--text-muted)] mb-6 font-medium text-center">Lista de todas as colunas personalizadas criadas para o checklist de documentos.</p>
+               
+               <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                  {configChecklist.length === 0 ? (
+                     <div className="text-center py-8 text-[var(--text-muted)] italic text-xs">Nenhuma coluna personalizada criada.</div>
+                  ) : (
+                     configChecklist.map(col => (
+                        <div key={col.id} className="flex items-center justify-between p-4 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl group hover:border-[var(--brand)] transition-all">
+                           <span className="text-xs font-black uppercase tracking-tight">{col.label}</span>
+                           <div className="flex gap-2">
+                              <button 
+                                 onClick={() => {
+                                    const novo = prompt("Novo nome para a coluna:", col.label);
+                                    if (novo && novo !== col.label) updateChecklistColumn(col.id, novo);
+                                 }}
+                                 className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-all"
+                                 title="Renomear"
+                              >
+                                 <Edit2 size={16} />
+                              </button>
+                              <button 
+                                 onClick={() => {
+                                    if (confirm(`EXCLUIR COLUNA "${col.label.toUpperCase()}"?\nTodos os checks feitos nesta coluna serão apagados.`)) {
+                                       deleteChecklistColumn(col.id);
+                                    }
+                                 }}
+                                 className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all"
+                                 title="Excluir"
+                              >
+                                 <Trash2 size={16} />
+                              </button>
+                           </div>
+                        </div>
+                     ))
+                  )}
+               </div>
+
+               <button 
+                  onClick={() => setModalGerenciarColunas(false)}
+                  className="w-full mt-8 py-4 bg-[var(--brand)] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+               >
+                  Fechar Gerenciamento
+               </button>
+            </div>
+         </AdaptiveModal>
     </div>
   );
 }
