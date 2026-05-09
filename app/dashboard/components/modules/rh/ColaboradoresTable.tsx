@@ -1,5 +1,4 @@
-"use client";
-import { ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, FileText, Edit2, Trash2 } from "lucide-react";
 
 interface Colaborador {
   id: string;
@@ -91,6 +90,8 @@ interface ColaboradoresTableProps {
   onUpdateAdmission?: (id: string, field: string, value: any) => void;
   configChecklist?: {id: string, label: string}[];
   onUpdateExtraCheck?: (id: string, label: string, value: boolean) => void;
+  onUpdateConfigChecklist?: (id: string, newLabel: string) => void;
+  onDeleteConfigChecklist?: (id: string) => void;
 }
 
 export default function ColaboradoresTable({ 
@@ -102,8 +103,11 @@ export default function ColaboradoresTable({
   onUpdateDocs,
   onUpdateExpDecision,
   onUpdateOffboarding,
+  onUpdateAdmission,
   configChecklist = [],
-  onUpdateExtraCheck
+  onUpdateExtraCheck,
+  onUpdateConfigChecklist,
+  onDeleteConfigChecklist
 }: ColaboradoresTableProps) {
   
   const formatDate = (dateStr: string | null | undefined) => {
@@ -199,7 +203,34 @@ export default function ColaboradoresTable({
                 <th className="p-4 text-center">CTPS</th>
                 <th className="p-4 text-center">FOTO</th>
                 {configChecklist.map(col => (
-                  <th key={col.id} className="p-4 text-center min-w-[100px]">{col.label.toUpperCase()}</th>
+                  <th key={col.id} className="p-4 text-center min-w-[120px] group relative bg-[var(--bg-card)]">
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="text-[9px]">{col.label.toUpperCase()}</span>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const novo = prompt("Novo nome para a coluna:", col.label);
+                            if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
+                          }}
+                          className="p-1 hover:text-[var(--brand)] transition-colors"
+                        >
+                          <Edit2 size={10} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Excluir a coluna "${col.label}"? Todos os dados marcados nela serão perdidos.`)) {
+                              onDeleteConfigChecklist?.(col.id);
+                            }
+                          }}
+                          className="p-1 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  </th>
                 ))}
               </>
             ) : dpAba === 'contratacao' ? (

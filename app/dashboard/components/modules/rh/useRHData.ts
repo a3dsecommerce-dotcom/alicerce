@@ -251,6 +251,16 @@ export function useRHData(user: any) {
 
       await fetchData();
     },
+    updateChecklistColumn: async (id: string, newLabel: string) => {
+      const { error } = await supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    },
+    deleteChecklistColumn: async (id: string) => {
+      const { error } = await supabase.from('config_checklist_rh').delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    },
     updateExtraCheck: async (id: string, label: string, value: boolean) => {
       const { data: colab } = await supabase.from('usuarios').select('checklist_extra').eq('id', id).single();
       const currentExtra = colab?.checklist_extra || {};

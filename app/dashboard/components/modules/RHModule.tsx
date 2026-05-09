@@ -28,7 +28,7 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
+  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateChecklistColumn, deleteChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
   const { transferencias, finalizarRH } = useTransferencias(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
@@ -298,6 +298,8 @@ export default function RHModule({ user }: { user: any }) {
                          onUpdateAdmission={updateAdmission}
                          configChecklist={configChecklist}
                          onUpdateExtraCheck={updateExtraCheck}
+                         onUpdateConfigChecklist={updateChecklistColumn}
+                         onDeleteConfigChecklist={deleteChecklistColumn}
                        />
                     )}
                  </div>
