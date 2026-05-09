@@ -167,7 +167,7 @@ export default function ColaboradoresTable({
     <div className="overflow-x-auto custom-scrollbar w-full">
       <table 
         className="w-full text-left table-auto border-separate border-spacing-0"
-        style={{ minWidth: dpAba === 'arquivo' ? `${1200 + (configChecklist.length * 140)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100% '}}
+        style={{ minWidth: dpAba === 'arquivo' ? `${400 + (configChecklist.length * 100)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100% '}}
       >
         <thead className="sticky top-0 bg-[var(--bg-card)] z-10 border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
           <tr>
@@ -192,11 +192,10 @@ export default function ColaboradoresTable({
               </>
             ) : dpAba === 'arquivo' ? (
               <>
-                <th className="p-4 text-center">FOTO</th>
                 {/* As colunas de documentos agora são 100% dinâmicas e gerenciáveis */}
                 {configChecklist.map(col => (
-                  <th key={col.id} className="p-4 text-center min-w-[160px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
-                    <div className="flex flex-col items-center gap-3">
+                  <th key={col.id} className="p-4 text-center min-w-[100px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
+                    <div className="flex flex-col items-center gap-2">
                       <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none">{col.label}</span>
                       <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
                         <button 
