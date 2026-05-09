@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 
-export function useGerenciaData() {
+export function useGerenciaData(currentUser?: any) {
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
   const [volantes, setVolantes] = useState<any[]>([]);
@@ -17,10 +17,28 @@ export function useGerenciaData() {
     ticketsAbertos: 0
   });
 
+  const pingAtividade = useCallback(async () => {
+    if (!currentUser) return;
+    
+    // Registra uma atividade silenciosa de "Acesso ao Painel" para marcar como online
+    await supabase.from('atividades').insert([{
+      usuario_id: currentUser.id,
+      usuario_nome: currentUser.nome || currentUser.email,
+      mensagem: "Acessou o Painel de Controle Central",
+      tipo: "SISTEMA",
+      created_at: new Date().toISOString()
+    }]);
+  }, [currentUser]);
+
   const fetchGerencia = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Fetch Logs (Atividades)
+      // 1. Ping de atividade para o usuário atual
+      if (currentUser) {
+        await pingAtividade();
+      }
+
+      // 2. Fetch Logs (Atividades)
       const { data: logsData } = await supabase
         .from('atividades')
         .select('*')
@@ -28,7 +46,7 @@ export function useGerenciaData() {
         .limit(20);
       if (logsData) setLogs(logsData);
 
-      // 2. Fetch Usuários Online (Interação nos últimos 15 min)
+      // 3. Fetch Usuários Online (Interação nos últimos 15 min)
       const quinzeMinAtras = new Date(Date.now() - 15 * 60 * 1000).toISOString();
       const { data: recentAtiv } = await supabase
         .from('atividades')
@@ -37,7 +55,6 @@ export function useGerenciaData() {
         .order('created_at', { ascending: false });
       
       if (recentAtiv) {
-        // Remove duplicatas mantendo a interação mais recente
         const uniqueUsers: any[] = [];
         const ids = new Set();
         recentAtiv.forEach(a => {
@@ -49,7 +66,7 @@ export function useGerenciaData() {
         setUsuariosOnline(uniqueUsers);
       }
 
-      // 2. Fetch Volantes
+      // 4. Fetch Volantes
       const { data: volData } = await supabase
         .from('escala_volantes')
         .select('*')
