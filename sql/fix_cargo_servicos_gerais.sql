@@ -1,20 +1,32 @@
--- Padronização do nome do cargo "Serviços Gerais"
+-- Padronização de nomes de cargos
 -- Remove as porcentagens do nome e unifica a nomenclatura
 
--- 1. Atualização na tabela de colaboradores (usuarios)
+-- ==========================================
+-- 1. SERVIÇOS GERAIS
+-- ==========================================
 UPDATE usuarios 
 SET cargo = 'SERVIÇOS GERAIS'
 WHERE cargo ILIKE '%AUXILIAR DE SERVIÇOS GERAIS%' 
    OR cargo ILIKE '%SERVIÇO GERAIS%';
 
--- 2. Atualização na tabela de quotas (vagas_quadro)
 UPDATE vagas_quadro
 SET cargo = 'SERVIÇOS GERAIS'
 WHERE cargo ILIKE '%AUXILIAR DE SERVIÇOS GERAIS%'
    OR cargo ILIKE '%SERVIÇO GERAIS%';
 
--- 3. Caso existam registros específicos com as porcentagens no nome, garante a limpeza
-UPDATE usuarios SET cargo = 'SERVIÇOS GERAIS' WHERE cargo = 'AUXILIAR DE SERVIÇOS GERAIS 20%';
-UPDATE usuarios SET cargo = 'SERVIÇOS GERAIS' WHERE cargo = 'AUXILIAR DE SERVIÇOS GERAIS 40%';
-UPDATE vagas_quadro SET cargo = 'SERVIÇOS GERAIS' WHERE cargo = 'AUXILIAR DE SERVIÇOS GERAIS 20%';
-UPDATE vagas_quadro SET cargo = 'SERVIÇOS GERAIS' WHERE cargo = 'AUXILIAR DE SERVIÇOS GERAIS 40%';
+-- ==========================================
+-- 2. PORTEIRO
+-- ==========================================
+UPDATE usuarios 
+SET cargo = 'PORTEIRO'
+WHERE cargo ILIKE 'PORTEIRO%';
+
+UPDATE vagas_quadro
+SET cargo = 'PORTEIRO'
+WHERE cargo ILIKE 'PORTEIRO%';
+
+-- 3. Limpeza específica de porcentagens residuais
+UPDATE usuarios SET cargo = 'SERVIÇOS GERAIS' WHERE cargo IN ('AUXILIAR DE SERVIÇOS GERAIS 20%', 'AUXILIAR DE SERVIÇOS GERAIS 40%');
+UPDATE vagas_quadro SET cargo = 'SERVIÇOS GERAIS' WHERE cargo IN ('AUXILIAR DE SERVIÇOS GERAIS 20%', 'AUXILIAR DE SERVIÇOS GERAIS 40%');
+UPDATE usuarios SET cargo = 'PORTEIRO' WHERE cargo IN ('PORTEIRO 20%', 'PORTEIRO 40%');
+UPDATE vagas_quadro SET cargo = 'PORTEIRO' WHERE cargo IN ('PORTEIRO 20%', 'PORTEIRO 40%');
