@@ -29,8 +29,14 @@ export default function QuadroVagas() {
     vagas_totais: 1,
     turno: "DIURNO",
     horario: "",
-    insalubridade: false
+    insalubridade: "N/A"
   });
+
+  // Sugestões de cargos baseadas no que já existe no sistema
+  const sugestoesCargos = Array.from(new Set([
+    ...colaboradores.map(c => (c.cargo || "").toUpperCase().trim()),
+    ...quadro.map(q => (q.cargo || "").toUpperCase().trim())
+  ])).filter(Boolean).sort();
 
   const secretarias = ["SEMED", "SEMSA", "SEMTAC", "SEMOB", "ADMINISTRAÇÃO GERAL"];
 
@@ -113,7 +119,7 @@ export default function QuadroVagas() {
         vagas_totais: item.vagas_totais,
         turno: item.turno,
         horario: item.horario,
-        insalubridade: item.insalubridade
+        insalubridade: item.insalubridade || "N/A"
       });
     } else {
       setEditingItem(null);
@@ -124,7 +130,7 @@ export default function QuadroVagas() {
         vagas_totais: 1,
         turno: "DIURNO",
         horario: "",
-        insalubridade: false
+        insalubridade: "N/A"
       });
     }
     setIsModalOpen(true);
@@ -255,6 +261,9 @@ export default function QuadroVagas() {
                             <div className="flex gap-4 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest italic">
                                 <span className="flex items-center gap-1"><Clock size={12} /> {item.turno}</span>
                                 {item.horario && <span className="flex items-center gap-1">• {item.horario}</span>}
+                                {item.insalubridade && item.insalubridade !== 'N/A' && (
+                                  <span className="flex items-center gap-1 text-red-500">• INSAL. {item.insalubridade}</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -323,11 +332,15 @@ export default function QuadroVagas() {
               <input 
                 required
                 type="text"
+                list="cargos-list"
                 className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-xs font-bold focus:border-[var(--brand)] outline-none"
                 placeholder="Ex: ASG, Porteiro..."
                 value={formData.cargo}
                 onChange={(e) => setFormData({...formData, cargo: e.target.value})}
               />
+              <datalist id="cargos-list">
+                {sugestoesCargos.map(c => <option key={c} value={c} />)}
+              </datalist>
             </div>
             
             <div className="flex flex-col gap-2">
@@ -368,16 +381,17 @@ export default function QuadroVagas() {
                 onChange={(e) => setFormData({...formData, horario: e.target.value})}
               />
             </div>
-            <div className="flex flex-col gap-2 justify-center">
-              <label className="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border)] rounded-xl hover:bg-[var(--bg-base)] transition-all">
-                <input 
-                  type="checkbox"
-                  className="w-5 h-5 accent-[var(--brand)]"
-                  checked={formData.insalubridade}
-                  onChange={(e) => setFormData({...formData, insalubridade: e.target.checked})}
-                />
-                <span className="text-[10px] font-black uppercase tracking-widest">Insalubridade</span>
-              </label>
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Insalubridade</label>
+              <select 
+                className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-xs font-bold focus:border-[var(--brand)] outline-none"
+                value={formData.insalubridade}
+                onChange={(e) => setFormData({...formData, insalubridade: e.target.value})}
+              >
+                <option value="N/A">N/A (NÃO TEM)</option>
+                <option value="20%">20% (GRAU MÉDIO)</option>
+                <option value="40%">40% (GRAU MÁXIMO)</option>
+              </select>
             </div>
           </div>
 
