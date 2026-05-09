@@ -9,6 +9,7 @@ export function useGerenciaData() {
   const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
   const [asgPorSecretaria, setAsgPorSecretaria] = useState<{ secretaria: string; total: number }[]>([]);
   const [cargos, setCargos] = useState<{ cargo: string; total: number }[]>([]);
+  const [usuariosOnline, setUsuariosOnline] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalColaboradores: 0,
     totalRequisicoes: 0,
@@ -26,6 +27,27 @@ export function useGerenciaData() {
         .order('created_at', { ascending: false })
         .limit(20);
       if (logsData) setLogs(logsData);
+
+      // 2. Fetch Usuários Online (Interação nos últimos 15 min)
+      const quinzeMinAtras = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { data: recentAtiv } = await supabase
+        .from('atividades')
+        .select('usuario_id, usuario_nome, created_at')
+        .gt('created_at', quinzeMinAtras)
+        .order('created_at', { ascending: false });
+      
+      if (recentAtiv) {
+        // Remove duplicatas mantendo a interação mais recente
+        const uniqueUsers: any[] = [];
+        const ids = new Set();
+        recentAtiv.forEach(a => {
+          if (!ids.has(a.usuario_id)) {
+            ids.add(a.usuario_id);
+            uniqueUsers.push(a);
+          }
+        });
+        setUsuariosOnline(uniqueUsers);
+      }
 
       // 2. Fetch Volantes
       const { data: volData } = await supabase
@@ -131,6 +153,7 @@ export function useGerenciaData() {
     stats,
     asgPorSecretaria,
     cargos,
+    usuariosOnline,
     refresh: fetchGerencia
   };
 }

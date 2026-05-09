@@ -14,11 +14,12 @@ interface VisaoGeralProps {
   cargos: { cargo: string; total: number }[];
   volantes: any[];
   requisicoesVolantes: any[];
+  usuariosOnline: any[];
 }
 
 type Sector = "GERAL" | "ALMOX" | "ENCARREGADO" | "RH";
 
-export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, volantes, requisicoesVolantes }: VisaoGeralProps) {
+export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, volantes, requisicoesVolantes, usuariosOnline }: VisaoGeralProps) {
   const [activeSector, setActiveSector] = useState<Sector>("GERAL");
 
   const totalASG = asgPorSecretaria.reduce((acc, s) => acc + s.total, 0);
@@ -135,11 +136,58 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
                     </div>
                     <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
                       <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Usuários Online</p>
-                      <h4 className="text-3xl font-black text-green-500 tracking-tighter">12</h4>
+                      <h4 className="text-3xl font-black text-green-500 tracking-tighter">{usuariosOnline.length}</h4>
                     </div>
                     <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
                       <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Interações/Min</p>
                       <h4 className="text-3xl font-black text-blue-500 tracking-tighter">48</h4>
+                    </div>
+                  </div>
+
+                  {/* TABELA DE USUÁRIOS ONLINE */}
+                  <div className="mt-10 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] overflow-hidden">
+                    <div className="px-8 py-4 border-b border-[var(--border)] bg-[var(--bg-card)]/50">
+                       <p className="text-[10px] font-black uppercase text-[var(--text-primary)] tracking-widest">Colaboradores em Atividade</p>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
+                       {usuariosOnline.length === 0 ? (
+                         <p className="text-center py-10 text-[10px] font-black text-[var(--text-muted)] uppercase opacity-50">Ninguém online no momento</p>
+                       ) : (
+                         <table className="w-full text-left">
+                            <thead className="bg-[var(--bg-base)] text-[9px] font-black text-[var(--text-muted)] uppercase border-b border-[var(--border)]">
+                               <tr>
+                                  <th className="px-8 py-3">Usuário</th>
+                                  <th className="px-8 py-3">Última Ação</th>
+                                  <th className="px-8 py-3 text-right">Status</th>
+                               </tr>
+                            </thead>
+                            <tbody>
+                               {usuariosOnline.map((user, idx) => (
+                                 <tr key={idx} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--brand)]/5 transition-all">
+                                    <td className="px-8 py-4">
+                                       <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 rounded-full bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)] font-black text-xs">
+                                             {user.usuario_nome?.charAt(0)}
+                                          </div>
+                                          <p className="text-[11px] font-black text-[var(--text-primary)] uppercase">{user.usuario_nome}</p>
+                                       </div>
+                                    </td>
+                                    <td className="px-8 py-4">
+                                       <p className="text-[10px] font-bold text-[var(--text-muted)]">
+                                          {new Date(user.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                       </p>
+                                    </td>
+                                    <td className="px-8 py-4 text-right">
+                                       <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-600 rounded-full text-[8px] font-black uppercase">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                          Ativo
+                                       </span>
+                                    </td>
+                                 </tr>
+                               ))}
+                            </tbody>
+                         </table>
+                       )}
                     </div>
                   </div>
                </div>

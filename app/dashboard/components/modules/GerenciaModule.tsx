@@ -294,6 +294,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             cargos={cargos} 
             volantes={volantes}
             requisicoesVolantes={requisicoesVolantes}
+            usuariosOnline={usuariosOnline}
            />
         )}
 
