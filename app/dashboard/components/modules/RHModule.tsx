@@ -44,9 +44,20 @@ export default function RHModule({ user }: { user: any }) {
   const [modalAfastamento, setModalAfastamento] = useState<any>(null);
   const [afastamentoData, setAfastamentoData] = useState({ motivo: "", tempo: "" });
 
+  const [expOnly, setExpOnly] = useState(false);
+
   const filtradosDP = colaboradores.filter(c => {
-    if (dpAba === "arquivo") return c.status === "DESLIGADO";
-    if (dpAba === "ativos") return c.status !== "DESLIGADO";
+    if (dpAba === "arquivo") return true; // Mostra todos para checklist
+    if (dpAba === "talentos") return false; // Handled separately
+    if (dpAba === "contratacao") return c.status === "EM_ADMISSAO";
+    if (dpAba === "ativos") return c.status === "ATIVO";
+    return true;
+  }).filter(c => {
+    if (expOnly && c.data_admissao) {
+      const diff = Math.abs(new Date().getTime() - new Date(c.data_admissao).getTime());
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      return days <= 90;
+    }
     return true;
   }).filter(c =>
     (filtro === "TODOS" || c.status === filtro) &&
@@ -117,6 +128,16 @@ export default function RHModule({ user }: { user: any }) {
       refresh();
     } else {
       toast.error("Erro ao atualizar status da CAT");
+    }
+  };
+
+  const handleUpdateDocs = async (id: string, field: string, value: boolean) => {
+    const { error } = await supabase.from('usuarios').update({ [field]: value }).eq('id', id);
+    if (!error) {
+      toast.success("Checklist atualizado!");
+      refresh();
+    } else {
+      toast.error("Erro ao atualizar checklist");
     }
   };
 
@@ -215,13 +236,12 @@ export default function RHModule({ user }: { user: any }) {
           <div className="flex flex-col gap-8 flex-1 overflow-hidden animate-fade-in">
              <div className="flex gap-6 bg-[var(--bg-base)]/30 p-1.5 rounded-2xl w-fit border border-[var(--border)]/50">
                  {[
-                   { id: "ativos", label: "Ativos", count: counts.totalOficiais },
-                   { id: "gestao", label: "Gestão Própria", count: counts.totalInterno },
                    { id: "talentos", label: "Talentos", count: candidatos.filter(c => c.status_candidato !== 'CONTRATADO').length },
-                   { id: "contratacao", label: "Admitidos", count: candidatos.filter(c => c.status_candidato === 'CONTRATADO').length },
-                   { id: "arquivo", label: "Arquivo", count: colaboradores.filter(c => c.status === 'DESLIGADO').length + gestaoPropria.filter(c => c.status === 'DESLIGADO').length }
+                   { id: "contratacao", label: "Admitidos (Pré)", count: counts.totalAdmitidos },
+                   { id: "ativos", label: "Colab. Ativos", count: counts.totalOficiais },
+                   { id: "arquivo", label: "Checklist / Arquivo", count: colaboradores.length }
                  ].map((t: any) => (
-                   <button key={t.id} onClick={() => setDpAba(t.id)} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>{t.label} ({t.count})</button>
+                   <button key={t.id} onClick={() => { setDpAba(t.id); setExpOnly(false); }} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>{t.label} ({t.count})</button>
                  ))}
              </div>
 
@@ -232,7 +252,10 @@ export default function RHModule({ user }: { user: any }) {
                       <input className="input-field w-full pl-12" placeholder="Buscar no DP..." value={busca} onChange={e => setBusca(e.target.value)} />
                    </div>
                    <div className="flex gap-2 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
-                      {["TODOS", "ATIVO", "AFASTADO", "INATIVO"].map(f => (
+                      {dpAba === 'ativos' && (
+                        <button className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${expOnly ? 'bg-indigo-600 text-white' : 'text-[var(--text-muted)]'}`} onClick={() => setExpOnly(!expOnly)}>Em Experiência</button>
+                      )}
+                      {["TODOS", "ATIVO", "AFASTADO", "INATIVO", "DESLIGADO"].map(f => (
                         <button key={f} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${filtro === f ? 'bg-[var(--brand)] text-white' : 'text-[var(--text-muted)]'}`} onClick={() => setFiltro(f)}>{f}</button>
                       ))}
                    </div>
@@ -241,12 +264,12 @@ export default function RHModule({ user }: { user: any }) {
                  <div className="flex-1 overflow-auto custom-scrollbar p-8">
                     {dpAba === "ativos" ? (
                        <ColaboradoresTable colaboradores={filtradosDP} dpAba={dpAba} onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
-                    ) : dpAba === "gestao" ? (
-                       <ColaboradoresTable colaboradores={gestaoPropria.filter(c => c.status !== 'DESLIGADO')} dpAba="ativos" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
+                    ) : dpAba === "contratacao" ? (
+                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="contratacao" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
                     ) : dpAba === "talentos" ? (
                        <TalentosGrid candidatos={candidatos.filter(c => c.status_candidato !== 'CONTRATADO')} onAdmitir={(c) => { setAdmissaoForm({...admissaoForm, cargo: c.cargo_pretendido || c.cargo || ""}); setModalAdmissao(c); }} />
                     ) : dpAba === "arquivo" ? (
-                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="arquivo" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
+                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="arquivo" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} onUpdateDocs={handleUpdateDocs} />
                     ) : (
                        <div className="flex flex-col items-center justify-center p-20 opacity-50"><CheckCircle size={48} className="mb-4 text-green-500" /><p className="text-xs font-black uppercase tracking-widest">Processo Finalizado</p></div>
                     )}

@@ -27,10 +27,19 @@ export function useRHData(user: any) {
           cargo: u.cargo || "Não definido",
           unidade: u.unidade_alocacao || "Não alocado",
           status: u.status || "INATIVO",
+          status_ciclo: u.status_ciclo || "ATIVO",
           avatar: (u.nome || "??").substring(0, 2).toUpperCase(),
           cpf: u.cpf || "---",
           telefone: u.telefone || "---",
-          admissao: u.data_admissao || "---"
+          admissao: u.data_admissao || null,
+          data_admissao: u.data_admissao || null,
+          docs: {
+            asu: u.doc_asu,
+            vt: u.doc_vt,
+            ticket: u.doc_ticket,
+            contrato: u.doc_contrato,
+            fardamento: u.doc_fardamento
+          }
         }));
 
         // Separação: ALICERCE ou PMG vai para Gestão Própria
@@ -92,7 +101,8 @@ export function useRHData(user: any) {
     const { error: userError } = await supabase.from('usuarios').insert({
       nome: candidato.nome,
       email: candidato.email || `${candidato.nome.toLowerCase().replace(/\s+/g, '.')}@alicerce.com`,
-      status: 'ATIVO',
+      status: 'EM_ADMISSAO',
+      status_ciclo: 'ADMITIDO',
       nivel_acesso: 1,
       secretaria: form.secretaria,
       unidade_alocacao: form.unidade,
@@ -124,6 +134,7 @@ export function useRHData(user: any) {
     refresh: fetchData,
     counts: {
       totalOficiais: colaboradores.filter(c => c.status === 'ATIVO').length,
+      totalAdmitidos: colaboradores.filter(c => c.status === 'EM_ADMISSAO').length + gestaoPropria.filter(c => c.status === 'EM_ADMISSAO').length,
       totalInterno: gestaoPropria.filter(c => c.status === 'ATIVO').length,
       catsPending: cats.filter(c => c.status === 'EM_ANALISE').length,
       extrasCycle: extras.length,
