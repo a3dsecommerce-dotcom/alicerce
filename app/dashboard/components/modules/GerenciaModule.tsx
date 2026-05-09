@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target, Calculator, ArrowUpRight
+  LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target, Calculator, ArrowUpRight, Shield, Truck
 } from "lucide-react";
 import { useTransferencias } from "@/hooks/useTransferencias";
 import TransferenciasList from "./encarregado/TransferenciasList";
