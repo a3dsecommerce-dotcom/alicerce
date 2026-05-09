@@ -19,7 +19,7 @@ import DenunciasManager from "./gerencia/DenunciasManager";
 import CotasManager from "./gerencia/CotasManager";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, refresh } = useGerenciaData();
+  const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, asgPorSecretaria, cargos, refresh } = useGerenciaData();
   const { transferencias, analisarGerencia } = useTransferencias(user);
   const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
@@ -279,7 +279,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
       <div className="flex-1 flex flex-col gap-10 overflow-hidden">
 
         {activeTab === "VISAO" && (
-           <VisaoGeral stats={stats} logs={logs} />
+           <VisaoGeral stats={stats} logs={logs} asgPorSecretaria={asgPorSecretaria} cargos={cargos} />
         )}
 
         {activeTab === "MISSOES" && (
