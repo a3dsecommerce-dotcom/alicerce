@@ -27,7 +27,8 @@ export default function QuadroVagas() {
     secretaria: "",
     cargo: "",
     vagas_totais: 1,
-    turno: "DIURNO",
+    salario: 0,
+    turno: "44H",
     horario: "",
     insalubridade: "N/A"
   });
@@ -117,6 +118,7 @@ export default function QuadroVagas() {
         secretaria: item.secretaria,
         cargo: item.cargo,
         vagas_totais: item.vagas_totais,
+        salario: item.salario || 0,
         turno: item.turno,
         horario: item.horario,
         insalubridade: item.insalubridade || "N/A"
@@ -128,7 +130,8 @@ export default function QuadroVagas() {
         secretaria: filtroSecretaria,
         cargo: "",
         vagas_totais: 1,
-        turno: "DIURNO",
+        salario: 0,
+        turno: "44H",
         horario: "",
         insalubridade: "N/A"
       });
@@ -264,6 +267,9 @@ export default function QuadroVagas() {
                                 {item.insalubridade && item.insalubridade !== 'N/A' && (
                                   <span className="flex items-center gap-1 text-red-500">• INSAL. {item.insalubridade}</span>
                                 )}
+                                {item.salario > 0 && (
+                                  <span className="flex items-center gap-1 text-green-600 font-black">• R$ {item.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -345,7 +351,7 @@ export default function QuadroVagas() {
             </div>
             
             <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Total de Vagas (Quota)</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Vagas (Quota)</label>
               <input 
                 required
                 type="number"
@@ -353,6 +359,19 @@ export default function QuadroVagas() {
                 className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-xs font-bold focus:border-[var(--brand)] outline-none"
                 value={formData.vagas_totais}
                 onChange={(e) => setFormData({...formData, vagas_totais: parseInt(e.target.value)})}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Salário Base (R$)</label>
+              <input 
+                required
+                type="number"
+                step="0.01"
+                className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-xs font-bold focus:border-[var(--brand)] outline-none"
+                placeholder="Ex: 1500.00"
+                value={formData.salario}
+                onChange={(e) => setFormData({...formData, salario: parseFloat(e.target.value)})}
               />
             </div>
           </div>
@@ -365,10 +384,10 @@ export default function QuadroVagas() {
                 value={formData.turno}
                 onChange={(e) => setFormData({...formData, turno: e.target.value})}
               >
-                <option value="DIURNO">DIURNO</option>
-                <option value="NOTURNO">NOTURNO</option>
-                <option value="12X36">12X36</option>
-                <option value="44H">44H</option>
+                <option value="44H">44 HORAS (SEMANAL)</option>
+                <option value="12X36">12X36 (DIURNO/NOTURNO)</option>
+                <option value="DIURNO">DIURNO (OUTROS)</option>
+                <option value="NOTURNO">NOTURNO (OUTROS)</option>
                 <option value="COMERCIAL">COMERCIAL</option>
               </select>
             </div>
