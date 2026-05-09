@@ -243,9 +243,9 @@ export default function QuadroVagas() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1 gap-8">
                 {getQuadroUnidade(unidadeSelecionada).map(item => (
-                  <div key={item.id} className="bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden group">
+                  <div key={item.id} className="bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] p-10 md:p-12 shadow-xl flex flex-col md:flex-row justify-between items-center gap-10 relative overflow-hidden group hover:border-[var(--brand)]/30 transition-all">
                      {/* Indicador visual lateral */}
                     <div className={`absolute left-0 top-0 h-full w-2 ${item.abertas > 0 ? 'bg-green-500' : item.excesso > 0 ? 'bg-red-500' : 'bg-blue-500'}`} />
                     
@@ -338,6 +338,7 @@ export default function QuadroVagas() {
                 value={formData.cargo}
                 onChange={(e) => setFormData({...formData, cargo: e.target.value})}
               />
+              <p className="text-[8px] font-bold text-[var(--text-muted)] italic">Você pode selecionar da lista ou digitar um novo cargo inexistente.</p>
               <datalist id="cargos-list">
                 {sugestoesCargos.map(c => <option key={c} value={c} />)}
               </datalist>
