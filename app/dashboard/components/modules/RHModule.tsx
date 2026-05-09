@@ -242,10 +242,11 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "EXTRAS" && (
            <ExtrasList extras={extras} onDelete={async (id) => {
-              if(confirm("Deseja realmente excluir este registro de Hora Extra? Esta ação é irreversível.")) {
+              const justificativa = prompt("JUSTIFICATIVA DE AUDITORIA: Por que este registro está sendo excluído?");
+              if (justificativa) {
                  try {
-                    await deleteExtra(id);
-                    toast.success("Registro de Hora Extra excluído.");
+                    await deleteExtra(id, justificativa);
+                    toast.success("Registro excluído e auditado.");
                  } catch (e: any) {
                     toast.error("Erro ao excluir: " + e.message);
                  }

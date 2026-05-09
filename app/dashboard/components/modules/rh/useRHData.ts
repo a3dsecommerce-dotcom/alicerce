@@ -111,6 +111,26 @@ export function useRHData(user: any) {
     requisicoesVolantes,
     refresh: fetchData,
     updateStatus,
-    finalizarAdmissao
+    finalizarAdmissao,
+    deleteExtra: async (id: string, justificativa: string) => {
+      // 1. Buscar dados do item antes de excluir para o log
+      const { data: item } = await supabase.from('informativos_operacionais').select('*').eq('id', id).single();
+      
+      // 2. Registrar no log de auditoria
+      await supabase.from('logs_auditoria').insert({
+        usuario_id: user.id,
+        usuario_nome: user.nome,
+        acao: 'EXCLUSAO',
+        entidade: 'informativos_operacionais',
+        entidade_id: id,
+        justificativa: justificativa,
+        detalhes: item
+      });
+
+      // 3. Excluir
+      const { error } = await supabase.from('informativos_operacionais').delete().eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    }
   };
 }
