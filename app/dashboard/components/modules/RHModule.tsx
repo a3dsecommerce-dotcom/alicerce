@@ -28,11 +28,11 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, deleteExtra, refresh } = useRHData(user);
+  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, deleteExtra, refresh } = useRHData(user);
   const { transferencias, finalizarRH } = useTransferencias(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
-  const [dpAba, setDpAba] = useState<"ativos" | "gestao" | "talentos" | "contratacao" | "arquivo">("ativos");
+  const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo" | "desligamentos">("ativos");
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
   const [selecionado, setSelecionado] = useState<any>(null);
@@ -47,9 +47,10 @@ export default function RHModule({ user }: { user: any }) {
   const [expOnly, setExpOnly] = useState(false);
 
   const filtradosDP = colaboradores.filter(c => {
-    if (dpAba === "arquivo") return true; // Mostra todos para checklist
-    if (dpAba === "talentos") return false; // Handled separately
+    if (dpAba === "arquivo") return true; 
+    if (dpAba === "talentos") return false; 
     if (dpAba === "contratacao") return c.status === "EM_ADMISSAO";
+    if (dpAba === "desligamentos") return c.status === "DESLIGADO";
     if (dpAba === "ativos") return c.status === "ATIVO";
     return true;
   }).filter(c => {
@@ -247,6 +248,7 @@ export default function RHModule({ user }: { user: any }) {
                    { id: "talentos", label: "Talentos", count: candidatos.filter(c => c.status_candidato !== 'CONTRATADO').length },
                    { id: "contratacao", label: "Admitidos (Pré)", count: counts.totalAdmitidos },
                    { id: "ativos", label: "Colab. Ativos", count: counts.totalOficiais },
+                   { id: "desligamentos", label: "Desligamentos", count: colaboradores.filter(c => c.status === 'DESLIGADO').length },
                    { id: "arquivo", label: "Checklist / Arquivo", count: colaboradores.length }
                  ].map((t: any) => (
                    <button key={t.id} onClick={() => { setDpAba(t.id); setExpOnly(false); }} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>{t.label} ({t.count})</button>
@@ -270,16 +272,19 @@ export default function RHModule({ user }: { user: any }) {
                 </div>
 
                  <div className="flex-1 overflow-auto custom-scrollbar p-8">
-                    {dpAba === "ativos" ? (
-                       <ColaboradoresTable colaboradores={filtradosDP} dpAba={dpAba} onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} />
-                    ) : dpAba === "contratacao" ? (
-                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="contratacao" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} onUpdateExpDecision={handleUpdateExpDecisionWrapper} />
-                    ) : dpAba === "talentos" ? (
+                    {dpAba === 'talentos' ? (
                        <TalentosGrid candidatos={candidatos.filter(c => c.status_candidato !== 'CONTRATADO')} onAdmitir={(c) => { setAdmissaoForm({...admissaoForm, cargo: c.cargo_pretendido || c.cargo || ""}); setModalAdmissao(c); }} />
-                    ) : dpAba === "arquivo" ? (
-                       <ColaboradoresTable colaboradores={filtradosDP} dpAba="arquivo" onSelect={setSelecionado} onUpdateStatus={handleUpdateStatusWrapper} onGerarPDF={handleGerarPDFHistorico} onUpdateDocs={handleUpdateDocs} />
                     ) : (
-                       <div className="flex flex-col items-center justify-center p-20 opacity-50"><CheckCircle size={48} className="mb-4 text-green-500" /><p className="text-xs font-black uppercase tracking-widest">Processo Finalizado</p></div>
+                       <ColaboradoresTable 
+                         colaboradores={filtradosDP} 
+                         dpAba={dpAba}
+                         onSelect={setSelecionado} 
+                         onUpdateStatus={handleUpdateStatusWrapper} 
+                         onGerarPDF={handleGerarPDFHistorico}
+                         onUpdateDocs={handleUpdateDocs}
+                         onUpdateExpDecision={handleUpdateExpDecisionWrapper}
+                         onUpdateOffboarding={updateOffboarding}
+                       />
                     )}
                  </div>
              </div>

@@ -199,6 +199,22 @@ export function useRHData(user: any) {
     finalizarAdmissao,
     updateExpDecision,
     updateDocs,
+    updateOffboarding: async (id: string, field: string, value: any) => {
+      const { data: colab } = await supabase.from('usuarios').select('nome').eq('id', id).single();
+      const { error } = await supabase.from('usuarios').update({ [field]: value }).eq('id', id);
+      if (error) throw error;
+
+      // Log de Atividade
+      await supabase.from('atividades').insert([{
+        usuario_id: user.id,
+        usuario_nome: user.nome || user.name,
+        mensagem: `Atualizou campo ${field.replace('desligamento_', '').toUpperCase()} para ${value} de ${colab?.nome}`,
+        tipo: "RH",
+        created_at: new Date().toISOString()
+      }]);
+
+      await fetchData();
+    },
     deleteExtra: async (id: string, justificativa: string) => {
       // 1. Buscar dados do item antes de excluir para o log
       const { data: item } = await supabase.from('informativos_operacionais').select('*').eq('id', id).single();
