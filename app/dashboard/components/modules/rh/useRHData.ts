@@ -9,6 +9,7 @@ export function useRHData(user: any) {
   const [vagas, setVagas] = useState<any[]>([]);
   const [cats, setCats] = useState<any[]>([]);
   const [extras, setExtras] = useState<any[]>([]);
+  const [faltas, setFaltas] = useState<any[]>([]);
   const [volantes, setVolantes] = useState<any[]>([]);
   const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
 
@@ -44,9 +45,12 @@ export function useRHData(user: any) {
       const { data: catsDb } = await supabase.from('investigacao_cat').select('*').order('created_at', { ascending: false });
       if (catsDb) setCats(catsDb);
 
-      // 5. Fetch Extras
-      const { data: extrasDb } = await supabase.from('informativos_operacionais').select('*').eq('tipo', 'EXTRA').order('data', { ascending: false });
-      if (extrasDb) setExtras(extrasDb);
+      // 5. Fetch Extras e Faltas
+      const { data: informativos } = await supabase.from('informativos_operacionais').select('*').order('data', { ascending: false });
+      if (informativos) {
+        setExtras(informativos.filter(i => i.tipo === 'EXTRA'));
+        setFaltas(informativos.filter(i => i.tipo === 'FALTA'));
+      }
 
       // 6. Fetch Volantes
       const { data: volantesDb } = await supabase.from('escala_volantes').select('*').order('data', { ascending: false });
@@ -108,8 +112,14 @@ export function useRHData(user: any) {
     cats,
     extras,
     volantes,
+    volantes,
     requisicoesVolantes,
     refresh: fetchData,
+    counts: {
+      catsPending: cats.filter(c => c.status === 'EM_ANALISE').length,
+      extrasCycle: extras.length,
+      faltasPending: faltas.length
+    },
     updateStatus,
     finalizarAdmissao,
     deleteExtra: async (id: string, justificativa: string) => {

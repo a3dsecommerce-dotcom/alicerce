@@ -8,6 +8,7 @@ import ColaboradoresTable from "./rh/ColaboradoresTable";
 import TalentosGrid from "./rh/TalentosGrid";
 import CATSList from "./rh/CATSList";
 import ExtrasList from "./rh/ExtrasList";
+import FaltasList from "./rh/FaltasList";
 import VolantesEscala from "./rh/VolantesEscala";
 import RequisicoesRH from "./rh/RequisicoesRH";
 import AdmissaoModals from "./rh/AdmissaoModals";
@@ -21,10 +22,10 @@ import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "VOLANTES" | "REQUISICOES";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, candidatos, cats, extras, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, deleteExtra, refresh } = useRHData(user);
+  const { loading, colaboradores, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, deleteExtra, refresh } = useRHData(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo">("ativos");
@@ -183,13 +184,20 @@ export default function RHModule({ user }: { user: any }) {
         <div className="flex flex-wrap gap-8 border-b border-[var(--border)] pb-4">
           {[
             { id: "DP", label: "Dep. Pessoal (DP)", icon: Briefcase },
-            { id: "CATS", label: "CATs", icon: ShieldCheck },
-            { id: "EXTRAS", label: "Extras", icon: Clock },
+            { id: "CATS", label: "CATs", icon: ShieldCheck, badge: counts.catsPending },
+            { id: "EXTRAS", label: "Extras", icon: Clock, badge: counts.extrasCycle },
+            { id: "FALTAS", label: "Faltas", icon: Clock, badge: counts.faltasPending },
             { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
             { id: "REQUISICOES", label: "Requisições", icon: Package }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
-              <t.icon size={16} /> {t.label}
+              <t.icon size={16} /> 
+              {t.label}
+              {t.badge > 0 && (
+                <span className="bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold ml-1 animate-pulse">
+                  {t.badge}
+                </span>
+              )}
               {masterTab === t.id && <div className="absolute bottom-[-2px] left-0 w-full h-[3px] bg-[var(--brand)] rounded-full" />}
             </button>
           ))}
@@ -247,6 +255,20 @@ export default function RHModule({ user }: { user: any }) {
                  try {
                     await deleteExtra(id, justificativa);
                     toast.success("Registro excluído e auditado.");
+                 } catch (e: any) {
+                    toast.error("Erro ao excluir: " + e.message);
+                 }
+              }
+           }} />
+        )}
+
+        {masterTab === "FALTAS" && (
+           <FaltasList faltas={faltas} onDelete={async (id) => {
+              const justificativa = prompt("JUSTIFICATIVA DE AUDITORIA: Por que este registro de FALTA está sendo excluído?");
+              if (justificativa) {
+                 try {
+                    await deleteExtra(id, justificativa); // Reutilizamos a função de deletar informativos
+                    toast.success("Falta excluída e auditada.");
                  } catch (e: any) {
                     toast.error("Erro ao excluir: " + e.message);
                  }
