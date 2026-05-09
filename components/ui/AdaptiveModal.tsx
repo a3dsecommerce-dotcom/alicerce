@@ -9,6 +9,7 @@ interface AdaptiveModalProps {
   onClose: () => void;
   children: ReactNode;
   width?: string;
+  closeOnOutsideClick?: boolean;
 }
 
 /**
@@ -16,7 +17,14 @@ interface AdaptiveModalProps {
  * - Mobile: Drawer that slides from the bottom.
  * - Desktop: Centered Modal with backdrop.
  */
-export default function AdaptiveModal({ title, isOpen, onClose, children, width = "500px" }: AdaptiveModalProps) {
+export default function AdaptiveModal({ 
+  title, 
+  isOpen, 
+  onClose, 
+  children, 
+  width = "500px",
+  closeOnOutsideClick = true
+}: AdaptiveModalProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function AdaptiveModal({ title, isOpen, onClose, children, width 
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-        onClick={onClose}
+        onClick={closeOnOutsideClick ? onClose : undefined}
       />
 
       {/* Modal/Drawer Container */}

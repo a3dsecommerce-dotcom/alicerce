@@ -368,6 +368,7 @@ export default function QuadroVagas() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
         title={editingItem ? "Editar Configuração de Vaga" : `Nova Vaga: ${formData.unidade_nome}`}
+        closeOnOutsideClick={false}
       >
         <form onSubmit={handleSave} className="p-8 flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-6">
