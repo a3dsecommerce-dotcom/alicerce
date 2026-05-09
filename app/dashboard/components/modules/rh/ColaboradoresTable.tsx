@@ -167,7 +167,7 @@ export default function ColaboradoresTable({
     <div className="overflow-x-auto custom-scrollbar w-full">
       <table 
         className="w-full text-left table-auto border-separate border-spacing-0"
-        style={{ minWidth: dpAba === 'arquivo' ? `${400 + (configChecklist.length * 100)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100% '}}
+        style={{ minWidth: dpAba === 'arquivo' ? `${400 + (configChecklist.length * 70)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100% '}}
       >
         <thead className="sticky top-0 bg-[var(--bg-card)] z-10 border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
           <tr>
@@ -194,20 +194,20 @@ export default function ColaboradoresTable({
               <>
                 {/* As colunas de documentos agora são 100% dinâmicas e gerenciáveis */}
                 {configChecklist.map(col => (
-                  <th key={col.id} className="p-4 text-center min-w-[100px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
+                  <th key={col.id} className="p-2 text-center min-w-[70px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
                     <div className="flex flex-col items-center gap-2">
-                      <span className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none">{col.label}</span>
-                      <div className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity">
+                      <span className="text-[8px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none h-4 overflow-hidden text-ellipsis whitespace-nowrap w-full" title={col.label}>{col.label}</span>
+                      <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
                             const novo = prompt("Renomear coluna:", col.label);
                             if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
                           }}
-                          className="flex items-center justify-center w-6 h-6 bg-blue-50 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          className="flex items-center justify-center w-5 h-5 bg-blue-50 text-blue-600 rounded hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                           title="Renomear"
                         >
-                          <Edit2 size={10} />
+                          <Edit2 size={8} />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -216,10 +216,10 @@ export default function ColaboradoresTable({
                               onDeleteConfigChecklist?.(col.id);
                             }
                           }}
-                          className="flex items-center justify-center w-6 h-6 bg-red-50 text-red-600 rounded-md hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                          className="flex items-center justify-center w-5 h-5 bg-red-50 text-red-600 rounded hover:bg-red-600 hover:text-white transition-all shadow-sm"
                           title="Excluir"
                         >
-                          <Trash2 size={10} />
+                          <Trash2 size={8} />
                         </button>
                       </div>
                     </div>
