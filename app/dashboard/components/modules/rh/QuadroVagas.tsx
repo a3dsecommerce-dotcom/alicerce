@@ -28,7 +28,8 @@ export default function QuadroVagas() {
     cargo: "",
     vagas_totais: 1,
     salario: 0,
-    turno: "44H",
+    escala: "44H",
+    turno: "DIURNO",
     horario: "",
     insalubridade: "N/A"
   });
@@ -119,6 +120,7 @@ export default function QuadroVagas() {
         cargo: item.cargo,
         vagas_totais: item.vagas_totais,
         salario: item.salario || 0,
+        escala: item.escala || "44H",
         turno: item.turno,
         horario: item.horario,
         insalubridade: item.insalubridade || "N/A"
@@ -131,7 +133,8 @@ export default function QuadroVagas() {
         cargo: "",
         vagas_totais: 1,
         salario: 0,
-        turno: "44H",
+        escala: "44H",
+        turno: "DIURNO",
         horario: "",
         insalubridade: "N/A"
       });
@@ -262,7 +265,7 @@ export default function QuadroVagas() {
                                 {item.insalubridade && <ShieldAlert size={14} className="text-red-500" />}
                             </div>
                             <div className="flex gap-4 text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest italic">
-                                <span className="flex items-center gap-1"><Clock size={12} /> {item.turno}</span>
+                                <span className="flex items-center gap-1"><Clock size={12} /> {item.escala} • {item.turno}</span>
                                 {item.horario && <span className="flex items-center gap-1">• {item.horario}</span>}
                                 {item.insalubridade && item.insalubridade !== 'N/A' && (
                                   <span className="flex items-center gap-1 text-red-500">• INSAL. {item.insalubridade}</span>
@@ -376,7 +379,18 @@ export default function QuadroVagas() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Escala</label>
+              <select 
+                className="w-full px-4 py-3 bg-[var(--bg-base)] border border-[var(--border)] rounded-xl text-xs font-bold focus:border-[var(--brand)] outline-none"
+                value={formData.escala}
+                onChange={(e) => setFormData({...formData, escala: e.target.value})}
+              >
+                <option value="44H">44H (SEMANAL)</option>
+                <option value="12X36">12X36</option>
+              </select>
+            </div>
             <div className="flex flex-col gap-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Turno</label>
               <select 
@@ -384,11 +398,8 @@ export default function QuadroVagas() {
                 value={formData.turno}
                 onChange={(e) => setFormData({...formData, turno: e.target.value})}
               >
-                <option value="44H">44 HORAS (SEMANAL)</option>
-                <option value="12X36">12X36 (DIURNO/NOTURNO)</option>
-                <option value="DIURNO">DIURNO (OUTROS)</option>
-                <option value="NOTURNO">NOTURNO (OUTROS)</option>
-                <option value="COMERCIAL">COMERCIAL</option>
+                <option value="DIURNO">DIURNO</option>
+                <option value="NOTURNO">NOTURNO</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">
