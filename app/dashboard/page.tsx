@@ -90,6 +90,25 @@ function CockpitContent() {
               };
               setUser(updatedUser);
               localStorage.setItem("crm_user", JSON.stringify(updatedUser));
+
+              // --- TELEMETRIA DE ACESSO ---
+              const sessionKey = `acesso_contabilizado_${dbUser.id}`;
+              if (!sessionStorage.getItem(sessionKey)) {
+                await supabase.rpc('increment_user_access', { user_id: dbUser.id });
+                // Fallback caso a RPC não exista ainda (incremento manual via update)
+                await supabase.from('usuarios')
+                  .update({ 
+                    acessos_totais: (dbUser.acessos_totais || 0) + 1,
+                    ultima_presenca: new Date().toISOString()
+                  })
+                  .eq('id', dbUser.id);
+                sessionStorage.setItem(sessionKey, 'true');
+              } else {
+                // Apenas atualiza a presença
+                await supabase.from('usuarios')
+                  .update({ ultima_presenca: new Date().toISOString() })
+                  .eq('id', dbUser.id);
+              }
             }
           }
         }
@@ -100,6 +119,21 @@ function CockpitContent() {
       }
     }
     syncUser();
+
+    // Heartbeat de Presença (a cada 5 minutos)
+    const heartbeat = setInterval(async () => {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.id) {
+          await supabase.from('usuarios')
+            .update({ ultima_presenca: new Date().toISOString() })
+            .eq('id', u.id);
+        }
+      }
+    }, 1000 * 60 * 5);
+
+    return () => clearInterval(heartbeat);
   }, []);
 
   // Lógica de Filtragem de Módulos (RBAC)

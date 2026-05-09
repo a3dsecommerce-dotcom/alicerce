@@ -52,32 +52,20 @@ export function useGerenciaData(currentUser?: any) {
         .limit(50);
       if (logsData) setLogs(logsData);
 
-      // 3. Usuários Online (Baseado nos logs recentes)
-      // Buscamos os últimos 100 registros e filtramos no JS para evitar erros de timezone do banco
-      const { data: recentAtiv } = await supabase
-        .from('atividades')
-        .select('usuario_id, usuario_nome, created_at')
-        .order('created_at', { ascending: false })
-        .limit(100);
+      // 3. Usuários Online (Baseado na telemetria de presença)
+      const quinzeMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+      const { data: onlineUsersData } = await supabase
+        .from('usuarios')
+        .select('id, nome, cargo, ultima_presenca')
+        .gt('ultima_presenca', quinzeMinAgo)
+        .order('ultima_presenca', { ascending: false });
       
-      if (recentAtiv) {
-        const agora = Date.now();
-        const umaHoraEmMs = 60 * 60 * 1000;
-        
-        const uniqueUsers: any[] = [];
-        const ids = new Set();
-        
-        recentAtiv.forEach(a => {
-          const dataAtividade = new Date(a.created_at).getTime();
-          // Se a atividade foi nos últimos 60 minutos
-          if ((agora - dataAtividade) < umaHoraEmMs && a.usuario_id) {
-            if (!ids.has(a.usuario_id)) {
-              ids.add(a.usuario_id);
-              uniqueUsers.push(a);
-            }
-          }
-        });
-        setUsuariosOnline(uniqueUsers);
+      if (onlineUsersData) {
+        setUsuariosOnline(onlineUsersData.map(u => ({
+          usuario_id: u.id,
+          usuario_nome: u.nome,
+          created_at: u.ultima_presenca // Mapeado para compatibilidade com o componente visual
+        })));
       }
 
       // 4. Fetch Volantes
