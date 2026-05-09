@@ -48,9 +48,12 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const [filtroCategoria, setFiltroCategoria] = useState<string>("EPI");
   const [observacao, setObservacao] = useState("");
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
+  const [filtroDataEPI, setFiltroDataEPI] = useState<"MES" | "ANO" | "SEMESTRE" | "TUDO" | "CUSTOM">("TUDO");
+  const [dataInicioEPI, setDataInicioEPI] = useState("");
+  const [dataFimEPI, setDataFimEPI] = useState("");
 
-  // Agrupamento para Requisições
-  const requisicoesAgrupadas = (requisicoes || []).reduce((acc: any[], current: any) => {
+  // Agrupamento para Requisições (EXCLUINDO EPI)
+  const requisicoesAgrupadas = (requisicoes || []).filter(r => r.tipo_item !== 'EPI').reduce((acc: any[], current: any) => {
     if (!current) return acc;
     const proto = current.protocolo || 'SEM-PROTOCOLO';
     let group = acc.find(g => g.protocolo === proto);
@@ -290,7 +293,19 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
               loading={loading} 
             />
           )}
-          {activeTab === "ENTREGAS_EPI" && <EntregasEPITable requisicoes={requisicoes} busca={busca} calcularDias={calcularDias} />}
+          {activeTab === "ENTREGAS_EPI" && (
+            <EntregasEPITable 
+              requisicoes={requisicoes} 
+              busca={busca} 
+              calcularDias={calcularDias} 
+              filtroData={filtroDataEPI}
+              setFiltroData={setFiltroDataEPI}
+              dataInicio={dataInicioEPI}
+              setDataInicio={setDataInicioEPI}
+              dataFim={dataFimEPI}
+              setDataFim={setDataFimEPI}
+            />
+          )}
       </div>
 
       <AlmoxModals 
