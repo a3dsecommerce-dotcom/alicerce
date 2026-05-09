@@ -11,6 +11,7 @@ import ExtrasList from "./rh/ExtrasList";
 import FaltasList from "./rh/FaltasList";
 import VolantesEscala from "./rh/VolantesEscala";
 import RequisicoesRH from "./rh/RequisicoesRH";
+import QuadroVagas from "./rh/QuadroVagas";
 import AdmissaoModals from "./rh/AdmissaoModals";
 import FichaColaborador360 from "../FichaColaborador360";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -24,7 +25,7 @@ import TransferenciasList from "./encarregado/TransferenciasList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, deleteExtra, refresh } = useRHData(user);
@@ -192,7 +193,8 @@ export default function RHModule({ user }: { user: any }) {
             { id: "FALTAS", label: "Faltas", icon: Clock, badge: counts.faltasPending },
             { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
             { id: "REQUISICOES", label: "Requisições", icon: Package },
-            { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight, badge: transferencias.filter(t => t.status === 'APROVADO_GERENCIA').length }
+            { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight, badge: transferencias.filter(t => t.status === 'APROVADO_GERENCIA').length },
+            { id: "QUADRO", label: "Quadro de Vagas", icon: Building2 }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> 
@@ -305,6 +307,10 @@ export default function RHModule({ user }: { user: any }) {
                 }
              }}
            />
+        )}
+
+        {masterTab === "QUADRO" && (
+          <QuadroVagas />
         )}
       </div>
 

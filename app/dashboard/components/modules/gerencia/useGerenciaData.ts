@@ -41,11 +41,11 @@ export function useGerenciaData() {
         .order('created_at', { ascending: false });
       if (reqVolData) setRequisicoesVolantes(reqVolData);
 
-      // 4. Stats gerais — busca dados completos para filtrar Gestão Própria
-      const [colabsData, reqs, vagas, tickets] = await Promise.all([
-        supabase.from('usuarios').select('unidade_alocacao').eq('status', 'ATIVO'),
+      // 4. Stats gerais — busca dados completos para filtrar Gestão Própria e calcular vagas
+      const [colabsData, reqs, quadroRes, tickets] = await Promise.all([
+        supabase.from('usuarios').select('unidade_alocacao, cargo').eq('status', 'ATIVO'),
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
-        supabase.from('vagas').select('*', { count: 'exact', head: true }).eq('status_vaga', 'ABERTA'),
+        supabase.from('vagas_quadro').select('unidade_nome, cargo, vagas_totais'),
         supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
       ]);
 
@@ -54,22 +54,31 @@ export function useGerenciaData() {
         const u = (unidade || '').toUpperCase();
         return u.includes('ALICERCE') || u.includes('PMG');
       };
-      const totalOficiais = (colabsData.data || []).filter(c => !isGestaoPropria(c.unidade_alocacao)).length;
+      
+      const todosColabs = colabsData.data || [];
+      const oficiais = todosColabs.filter(c => !isGestaoPropria(c.unidade_alocacao));
+      const totalOficiais = oficiais.length;
+
+      // Cálculo dinâmico de vagas abertas baseadas no Quadro de Lotação
+      let totalVagasAbertas = 0;
+      (quadroRes.data || []).forEach(q => {
+        const ocupadas = todosColabs.filter(c => 
+          c.unidade_alocacao === q.unidade_nome && 
+          (c.cargo || "").toUpperCase() === (q.cargo || "").toUpperCase()
+        ).length;
+        totalVagasAbertas += Math.max(0, q.vagas_totais - ocupadas);
+      });
 
       setStats({
         totalColaboradores: totalOficiais,
         totalRequisicoes: reqs.count || 0,
-        totalVagas: vagas.count || 0,
+        totalVagas: totalVagasAbertas,
         ticketsAbertos: tickets.count || 0
       });
 
-      // 5. Colaboradores ativos para distribuição
-      const { data: allColabs } = await supabase
-        .from('usuarios')
-        .select('cargo, secretaria, unidade_alocacao, status')
-        .eq('status', 'ATIVO');
-
-      if (allColabs) {
+      // 5. Distribuição de colaboradores (Reutiliza dados já carregados)
+      if (todosColabs) {
+        const allColabs = todosColabs;
         // Filtra Gestão Própria (Alicerce/PMG) — fora do contrato oficial
         const oficiais = allColabs.filter(c => !isGestaoPropria(c.unidade_alocacao || ''));
 
