@@ -111,7 +111,7 @@ export function useRHData(user: any) {
     vagas,
     cats,
     extras,
-    volantes,
+    faltas,
     volantes,
     requisicoesVolantes,
     refresh: fetchData,
