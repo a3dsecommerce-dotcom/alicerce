@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 export function useRHData(user: any) {
   const [loading, setLoading] = useState(true);
   const [colaboradores, setColaboradores] = useState<any[]>([]);
+  const [gestaoPropria, setGestaoPropria] = useState<any[]>([]);
   const [candidatos, setCandidatos] = useState<any[]>([]);
   const [vagas, setVagas] = useState<any[]>([]);
   const [cats, setCats] = useState<any[]>([]);
@@ -19,7 +20,7 @@ export function useRHData(user: any) {
       // 1. Fetch Usuarios (Colaboradores)
       const { data: users } = await supabase.from('usuarios').select('*').order('nome');
       if (users) {
-        setColaboradores(users.map(u => ({
+        const mapped = users.map(u => ({
           ...u,
           id: u.id,
           nome: u.nome || "Sem Nome",
@@ -30,17 +31,22 @@ export function useRHData(user: any) {
           cpf: u.cpf || "---",
           telefone: u.telefone || "---",
           admissao: u.data_admissao || "---"
-        })));
+        }));
+
+        // Separação: ALICERCE ou PMG vai para Gestão Própria
+        const oficiais = mapped.filter(u => 
+          !u.unidade.toUpperCase().includes('ALICERCE') && 
+          !u.unidade.toUpperCase().includes('PMG')
+        );
+        const interna = mapped.filter(u => 
+          u.unidade.toUpperCase().includes('ALICERCE') || 
+          u.unidade.toUpperCase().includes('PMG')
+        );
+
+        setColaboradores(oficiais);
+        setGestaoPropria(interna);
       }
-
-      // 2. Fetch Candidatos (Talentos)
-      const { data: talentos } = await supabase.from('candidatos').select('*').order('created_at', { ascending: false });
-      if (talentos) setCandidatos(talentos);
-
-      // 3. Fetch Vagas
-      const { data: vagasDb } = await supabase.from('vagas').select('*').order('created_at', { ascending: false });
-      if (vagasDb) setVagas(vagasDb);
-
+// ... (rest of fetch logic remains same)
       // 4. Fetch CATs
       const { data: catsDb } = await supabase.from('investigacao_cat').select('*').order('created_at', { ascending: false });
       if (catsDb) setCats(catsDb);
@@ -107,6 +113,7 @@ export function useRHData(user: any) {
   return {
     loading,
     colaboradores,
+    gestaoPropria,
     candidatos,
     vagas,
     cats,
@@ -116,6 +123,8 @@ export function useRHData(user: any) {
     requisicoesVolantes,
     refresh: fetchData,
     counts: {
+      totalOficiais: colaboradores.filter(c => c.status === 'ATIVO').length,
+      totalInterno: gestaoPropria.filter(c => c.status === 'ATIVO').length,
       catsPending: cats.filter(c => c.status === 'EM_ANALISE').length,
       extrasCycle: extras.length,
       faltasPending: faltas.length
