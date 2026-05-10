@@ -48,12 +48,15 @@ export default function DiretorModule({ user }: { user: any }) {
       // 2. Definir Unidade Alvo
       let query = supabase.from('unidades').select('*');
       
+      const userPhone = user.telefone || user.phone || "";
+
       if (targetUnitId) {
         query = query.eq('id', targetUnitId).single();
       } else if (isManagement) {
         query = query.eq('status', 'ATIVO').limit(1).single();
       } else {
-        query = query.eq('diretor_id', user.id).single();
+        // Tenta por ID primeiro, se falhar, tenta pelo Telefone (liberação por telefone cadastrado na unidade)
+        query = query.or(`diretor_id.eq.${user.id},telefone.eq.${userPhone}`).single();
       }
 
       const { data: unitData, error: unitError } = await query;
@@ -226,9 +229,14 @@ export default function DiretorModule({ user }: { user: any }) {
             <h2 className="text-4xl lg:text-6xl font-black italic tracking-tighter mb-6 leading-tight">
               Portal do <span className="text-indigo-400">Diretor</span>
             </h2>
-            <p className="text-lg font-medium text-slate-300 max-w-2xl leading-relaxed">
-              Bem-vindo, {user.nome}. Este é o seu cockpit de fiscalização. Monitore horários, informe ocorrências e gerencie o capital humano do Alicerce na sua unidade em tempo real.
-            </p>
+            <div className="flex flex-col gap-1 mb-6">
+              <p className="text-lg font-medium text-slate-300 max-w-2xl leading-relaxed">
+                Bem-vindo, {unidade.diretor || user.nome}. Este é o seu cockpit de fiscalização da unidade {unidade.nome}.
+              </p>
+              <div className="flex items-center gap-2 text-[10px] font-black text-indigo-300 uppercase tracking-widest">
+                <MessageSquare size={12} /> Contato Oficial: {unidade.telefone || "NÃO CADASTRADO"} | Rota: {unidade.rota || "DEFINIR"}
+              </div>
+            </div>
           </div>
           
           <div className="flex flex-col gap-3 w-full lg:w-auto">
