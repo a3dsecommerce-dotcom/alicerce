@@ -265,17 +265,20 @@ export function useRHData(user: any) {
       await fetchData();
     },
     updateChecklistColumn: async (id: string, newLabel: string) => {
-      console.log(`[RH] Renaming ${id} to ${newLabel}`);
+      // Optimistic update
+      setConfigChecklist(prev => prev.map(c => c.id === id ? { ...c, label: newLabel } : c));
+
       const promise = supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id).select();
       toast.promise(promise, {
-        loading: 'Renomeando coluna...',
-        success: 'Coluna renomeada!',
-        error: (err) => `Erro: ${err.message || 'Verifique o SQL'}`
+        loading: 'Renomeando...',
+        success: 'Renomeada!',
+        error: 'Erro ao renomear'
       });
-      const { data, error } = await promise;
-      console.log("[RH] Rename Result:", { data, error });
-      if (error) throw error;
-      await fetchData();
+      const { error } = await promise;
+      if (error) {
+        await fetchData(); // Rollback
+        throw error;
+      }
     },
     deleteChecklistColumn: async (id: string) => {
       const { error } = await supabase.from('config_checklist_rh').delete().eq('id', id);
@@ -293,25 +296,37 @@ export function useRHData(user: any) {
     },
     configChecklist,
     updateChecklistColor: async (id: string, color: string) => {
-      console.log(`[RH] Updating color for ${id} to ${color}`);
+      // Optimistic update
+      setConfigChecklist(prev => prev.map(c => c.id === id ? { ...c, color } : c));
+      
       const promise = supabase.from('config_checklist_rh').update({ color }).eq('id', id).select();
       
       toast.promise(promise, {
-        loading: 'Salvando nova cor...',
+        loading: 'Salvando cor...',
         success: 'Cor atualizada!',
-        error: (err) => `Erro ao salvar cor: ${err.message}`
+        error: 'Erro ao salvar cor'
       });
 
-      const { data, error } = await promise;
-      console.log("[RH] Color Update Result:", { data, error });
+      const { error } = await promise;
       if (error) {
-        console.error("[RH] Color Update Error:", error);
+        await fetchData(); // Rollback
         throw error;
       }
-      await fetchData();
     },
     reorderChecklistColumn: async (id1: string, order1: number, id2: string, order2: number) => {
-      console.log(`[RH] Reordering: ${id1}(${order1}) <-> ${id2}(${order2})`);
+      // Optimistic update
+      setConfigChecklist(prev => {
+        const next = [...prev];
+        const idx1 = next.findIndex(c => c.id === id1);
+        const idx2 = next.findIndex(c => c.id === id2);
+        if (idx1 !== -1 && idx2 !== -1) {
+          const temp = { ...next[idx1], ordem: order2 };
+          next[idx1] = { ...next[idx2], ordem: order1 };
+          next[idx2] = temp;
+        }
+        return next.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+      });
+
       const promise = Promise.all([
         supabase.from('config_checklist_rh').update({ ordem: order2 }).eq('id', id1),
         supabase.from('config_checklist_rh').update({ ordem: order1 }).eq('id', id2)
@@ -320,16 +335,14 @@ export function useRHData(user: any) {
       toast.promise(promise, {
         loading: 'Movendo coluna...',
         success: 'Posição atualizada!',
-        error: 'Erro ao mover coluna'
+        error: 'Erro ao mover'
       });
 
       const results = await promise;
-      const error = results.find(r => r.error)?.error;
-      if (error) {
-        console.error("[RH] Reorder Error:", error);
-        throw error;
+      if (results.some(r => r.error)) {
+        await fetchData(); // Rollback
+        throw new Error("Erro na reordenação");
       }
-      await fetchData();
     },
     deleteExtra: async (id: string, justificativa: string) => {
       // 1. Buscar dados do item antes de excluir para o log

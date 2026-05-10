@@ -219,7 +219,7 @@ export default function ColaboradoresTable({
       <div className="flex items-center justify-between px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-sm">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Navegação Horizontal</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Navegação Horizontal v2.1</span>
         </div>
         <div className="flex items-center gap-1">
           <button 
