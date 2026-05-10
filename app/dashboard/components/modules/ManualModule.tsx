@@ -10,6 +10,19 @@ import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, P
 
 const UPDATES = [
   {
+    version: "v753.6",
+    date: "10/05/2026",
+    title: "Motor de Checklist RH v2.1",
+    description: "Lançamento do Cockpit de Gestão Documental e UX Otimista.",
+    tags: ["RH", "DADOS", "UX"],
+    details: [
+      "Cockpit de Configuração: Personalização total de nomes e cores via ícone de engrenagem.",
+      "Reordenamento Dinâmico: Movimentação de colunas com persistência automática.",
+      "Zero-Blink UX: Atualizações otimistas para resposta instantânea em campo.",
+      "Sincronização Master: Vinculação robusta entre documentos extras e colaboradores."
+    ]
+  },
+  {
     version: "v753.5",
     date: "09/05/2026",
     title: "SLA em Horário Comercial",
