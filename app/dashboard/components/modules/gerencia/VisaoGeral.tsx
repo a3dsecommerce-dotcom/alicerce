@@ -4,7 +4,7 @@ import StatsCards from "./StatsCards";
 import { 
   Users, Briefcase, LayoutDashboard, Package, Shield, 
   Clock, AlertTriangle, CheckCircle2, TrendingUp,
-  MapPin, UserCheck, ClipboardList, Zap
+  MapPin, UserCheck, ClipboardList, Zap, Search
 } from "lucide-react";
 
 interface VisaoGeralProps {
