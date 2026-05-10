@@ -1,6 +1,6 @@
 {
   "name": "alicerce-crm",
-  "version": "0.1.0",
+  "version": "753.5.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
