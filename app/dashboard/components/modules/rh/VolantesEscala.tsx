@@ -88,7 +88,6 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
 
   const addDetalhe = () => {
     if (!novoDetalhe.unidade || !novoDetalhe.entrada) return toast.error("Preencha unidade e entrada");
-    if (formData.detalhes.length >= 2) return toast.error("Máximo de 2 unidades por dia.");
     setFormData({ ...formData, detalhes: [...formData.detalhes, novoDetalhe] });
     setNovoDetalhe({ unidade: "", entrada: "", saida: "", motivo: "" });
     setBuscaUnidade("");
@@ -272,6 +271,54 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
           </div>
         )}
       </div>
+      {/* QUADRO DE ESCALA DO DIA */}
+      <div className="bg-gradient-to-br from-indigo-900 to-slate-900 p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-20 -mt-20" />
+        <div className="flex items-center justify-between gap-4 relative z-10 mb-8">
+           <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/10 rounded-2xl border border-white/20">
+                <Calendar size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white uppercase italic tracking-tighter">Escala do Dia</h3>
+                <p className="text-[10px] font-black text-indigo-200 uppercase opacity-60">{format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</p>
+              </div>
+           </div>
+           <div className="px-6 py-2 bg-white/10 rounded-full border border-white/20 text-[10px] font-black uppercase">
+              {volantes.filter(v => v.data === format(new Date(), "yyyy-MM-dd")).length} Volantes Ativos Hoje
+           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 relative z-10">
+           {volantes.filter(v => v.data === format(new Date(), "yyyy-MM-dd")).length === 0 ? (
+             <div className="col-span-full py-10 text-center bg-white/5 rounded-2xl border border-white/10 italic text-[10px] font-black uppercase text-indigo-200/40">
+                Nenhum volante escalado para hoje.
+             </div>
+           ) : (
+             volantes.filter(v => v.data === format(new Date(), "yyyy-MM-dd")).map((v, i) => (
+               <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-all cursor-pointer group" onClick={() => handleEdit(v)}>
+                  <div className="flex items-center gap-3 mb-4">
+                     <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-black text-xs">
+                        {v.colaborador_nome?.charAt(0)}
+                     </div>
+                     <div>
+                        <p className="text-[11px] font-black uppercase tracking-tight">{v.colaborador_nome}</p>
+                        <p className="text-[8px] font-bold text-indigo-300 uppercase">Supervisor Atribuído</p>
+                     </div>
+                  </div>
+                  <div className="space-y-2">
+                     {v.detalhes_visitas.map((d: any, idx: number) => (
+                       <div key={idx} className="flex items-center justify-between p-2 bg-white/5 rounded-lg text-[9px] font-black uppercase">
+                          <span className="flex items-center gap-2"><MapPin size={10} className="text-indigo-400" /> {d.unidade}</span>
+                          <span className="text-indigo-200">{d.entrada}</span>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+             ))
+           )}
+        </div>
+      </div>
 
       <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-xl overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
@@ -313,32 +360,21 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                     </div>
                   </td>
                   <td className="p-6">
-                    <div className="flex justify-center w-full">
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 w-full max-w-[700px]">
-                        {[0, 1].map(i => {
-                          const d = v.detalhes_visitas[i];
-                          if (d) {
-                            return (
-                              <div key={i} className="p-5 bg-white border border-[var(--border)] rounded-2xl flex flex-col gap-2 shadow-sm border-l-8 border-l-indigo-500 min-h-[100px] justify-center">
-                                <div className="flex items-center justify-between gap-4">
-                                  <span className="text-[12px] font-black text-indigo-600 uppercase flex items-center gap-2"><MapPin size={14} /> {d.unidade}</span>
-                                  <div className="flex items-center gap-1.5 text-[10px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
-                                     <Clock size={12} /> {d.entrada}-{d.saida || '...'}
-                                  </div>
-                                </div>
-                                <p className="text-[11px] font-bold text-slate-600 leading-relaxed italic truncate px-1">
-                                   "{d.motivo || 'Substituição'}"
-                                </p>
-                              </div>
-                            );
-                          }
-                          return (
-                            <div key={i} className="p-5 bg-[var(--bg-base)]/50 border-2 border-dashed border-[var(--border)] rounded-2xl flex items-center justify-center opacity-40 min-h-[100px]">
-                               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Slot Disponível</span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                        {v.detalhes_visitas.map((d: any, i: number) => (
+                          <div key={i} className="px-4 py-2 bg-white border border-indigo-100 rounded-xl flex items-center gap-3 shadow-sm hover:border-indigo-400 transition-all">
+                             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black text-[10px]">
+                                {i + 1}º
+                             </div>
+                             <div>
+                                <p className="text-[10px] font-black uppercase text-slate-800 leading-none">{d.unidade}</p>
+                                <p className="text-[8px] font-bold text-indigo-500 uppercase mt-1">{d.entrada} - {d.saida || '...'}</p>
+                             </div>
+                          </div>
+                        ))}
+                        {v.detalhes_visitas.length === 0 && (
+                          <span className="text-[10px] font-black text-slate-400 uppercase italic">Nenhum roteiro definido</span>
+                        )}
                     </div>
                   </td>
                 </tr>
@@ -439,10 +475,9 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     
                 <button 
                   onClick={addDetalhe} 
-                  disabled={formData.detalhes.length >= 2}
-                  className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                  className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                 >
-                  {formData.detalhes.length >= 2 ? 'Limite de 2 Unidades Atingido' : 'Confirmar Unidade no Roteiro'}
+                  Confirmar Unidade no Roteiro
                 </button>
               </div>
             )}
