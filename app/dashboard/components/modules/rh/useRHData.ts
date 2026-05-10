@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export function useRHData(user: any) {
   const [loading, setLoading] = useState(true);
@@ -262,7 +263,10 @@ export function useRHData(user: any) {
     },
     updateChecklistColumn: async (id: string, newLabel: string) => {
       const { error } = await supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id);
-      if (error) throw error;
+      if (error) {
+        toast.error("Erro ao renomear: Certifique-se de que a coluna existe no Banco.");
+        throw error;
+      }
       await fetchData();
     },
     deleteChecklistColumn: async (id: string) => {
@@ -282,13 +286,19 @@ export function useRHData(user: any) {
     configChecklist,
     updateChecklistColor: async (id: string, color: string) => {
       const { error } = await supabase.from('config_checklist_rh').update({ color }).eq('id', id);
-      if (error) throw error;
+      if (error) {
+        toast.error("Erro de Cores: Verifique se rodou o SQL Migration!");
+        throw error;
+      }
       await fetchData();
     },
     reorderChecklistColumn: async (id1: string, order1: number, id2: string, order2: number) => {
       const { error: err1 } = await supabase.from('config_checklist_rh').update({ ordem: order2 }).eq('id', id1);
       const { error: err2 } = await supabase.from('config_checklist_rh').update({ ordem: order1 }).eq('id', id2);
-      if (err1 || err2) throw (err1 || err2);
+      if (err1 || err2) {
+        toast.error("Erro de Ordem: Verifique se rodou o SQL Migration!");
+        throw (err1 || err2);
+      }
       await fetchData();
     },
     deleteExtra: async (id: string, justificativa: string) => {
