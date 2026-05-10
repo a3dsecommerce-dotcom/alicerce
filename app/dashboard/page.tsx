@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import QuickActions from "./components/QuickActions";
 
 import dynamic from "next/dynamic";
+import DevImpersonator from "./components/DevImpersonator";
 
 import RHModule from "./components/modules/RHModule";
 import GerenciaModule from "./components/modules/GerenciaModule";
@@ -54,6 +55,7 @@ function CockpitContent() {
   const [activeModule, setActiveModule] = useState<string | null>(null);
   
   const [user, setUser] = useState<any>(null);
+  const [originalDevUser, setOriginalDevUser] = useState<any>(null);
   const [reducaoGeral, setReducaoGeral] = useState(20);
   const [loading, setLoading] = useState(true);
 
@@ -61,9 +63,20 @@ function CockpitContent() {
   useEffect(() => {
     async function syncUser() {
       try {
+        const impersonated = localStorage.getItem("impersonated_user");
         const saved = localStorage.getItem("crm_user");
+        
         if (saved) {
           const localUser = JSON.parse(saved);
+          
+          // Se for um dev e estiver simulando alguém, o 'user' ativo será o simulado
+          if (impersonated && localUser.nivel_acesso >= 4) {
+            setOriginalDevUser(localUser);
+            setUser(JSON.parse(impersonated));
+            setLoading(false);
+            return;
+          }
+
           setUser(localUser);
 
           // Sincroniza com o banco para pegar campos novos (ex: secretaria)
@@ -289,6 +302,17 @@ function CockpitContent() {
           </div>
         )}
       </main>
+
+      {/* FERRAMENTA DE SIMULAÇÃO (GOD MODE) */}
+      <DevImpersonator 
+        originalUser={originalDevUser || user} 
+        onImpersonate={(u) => setUser(u)}
+        onStop={() => {
+          setOriginalDevUser(null);
+          const saved = localStorage.getItem("crm_user");
+          if (saved) setUser(JSON.parse(saved));
+        }}
+      />
 
     </div>
   );
