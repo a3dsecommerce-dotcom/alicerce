@@ -46,7 +46,7 @@ Uma interface *Mobile-First* simplificada, focada em produtividade e coleta de d
 
 ### 👥 Recursos Humanos (RH) e DP
 - **Admissão Master (32 Passos):** Fluxo unificado que garante a conformidade documental completa antes do início operacional.
-- **Checklist Dinâmico de Documentos:** Arquitetura flexível baseada em JSONB para acompanhamento de certidões, ASOs e contratos.
+- **Checklist Dinâmico de Documentos:** Arquitetura flexível baseada em JSONB com interface de **Gerenciamento Autônomo**, permitindo a criação, exclusão e renomeação de colunas de documentos diretamente pela interface administrativa.
 - **Módulo de Offboarding Operacional:** Gestão de desligamentos com 16 etapas de auditoria e devolução de ativos.
 - **Gestão de Ponto e Benefícios:** Integração de escalas com controle de VT/VA e convênios.
 
