@@ -47,11 +47,12 @@ Este guia descreve o que o usuário encontra em cada tela do sistema, detalhando
 - **Formulário de Campo:** Campos simplificados para coletar nome, telefone e cargo do novo funcionário. Ideal para contratações de emergência no local.
 
 ---
-
-## 4. Módulo de Compras (Suprimentos)
-**O que você vê:** Um visual de "e-commerce" corporativo.
-- **Aba Catálogo:** Grid de produtos com fotos, preços e botão "Solicitar".
-- **Aba Tracking:** Uma linha do tempo (Timeline) que mostra exatamente onde está o pedido (Ex: "Aguardando Gerência" -> "Comprado" -> "Entregue").
+6. Módulo de RH (Gestão de Capital Humano)
+**O que você vê:** Uma tabela de alta densidade com navegação horizontal suave.
+- **Cockpit de Configuração (Engrenagem):** Ao passar o mouse no cabeçalho, um ícone de configurações permite renomear, colorir, reordenar ou excluir colunas dinamicamente.
+- **Navegação Horizontal v2.1:** Controles dedicados ("Anterior" e "Próxima") para percorrer grandes volumes de colunas sem perder o foco no colaborador.
+- **Atualizações Otimistas:** Mudanças de status, documentos e configurações ocorrem instantaneamente, com feedback visual em tempo real.
+- **Status da Admissão:** Controle detalhado desde a entrevista até a integração final no Strato.
 
 ---
 
