@@ -34,21 +34,37 @@ export default function DiretorModule({ user }: { user: any }) {
   async function fetchData() {
     try {
       setLoading(true);
-      // 1. Buscar Unidade vinculada ao Diretor
-      const { data: unitData, error: unitError } = await supabase
-        .from('unidades')
-        .select('*')
-        .eq('diretor_id', user.id)
-        .single();
+      const isManagement = user.nivel_acesso >= 3 || ['ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
-      if (unitError) throw new Error("Unidade não vinculada ou erro de acesso.");
-      setUnidade(unitData);
+      // 1. Buscar Unidade vinculada ao Diretor (ou a primeira unidade se for Gerente/Admin para não quebrar a tela)
+      let query = supabase.from('unidades').select('*');
+      
+      if (isManagement) {
+        // Se for gerência, tenta pegar a primeira unidade ativa para visualização
+        query = query.eq('status', 'ATIVO').limit(1).single();
+      } else {
+        query = query.eq('diretor_id', user.id).single();
+      }
+
+      const { data: unitData, error: unitError } = await query;
+
+      if (unitError && !isManagement) throw new Error("Unidade não vinculada ou erro de acesso.");
+      
+      if (!unitData && isManagement) {
+        // Caso não existam unidades cadastradas ainda
+        setUnidade({ nome: "AGUARDANDO UNIDADES", id: "0" });
+      } else {
+        setUnidade(unitData);
+      }
+
+      const currentUnitName = unitData?.nome || "";
+      const currentUnitId = unitData?.id || "0";
 
       // 2. Buscar Colaboradores da Unidade
       const { data: colabs, error: colabsError } = await supabase
         .from('usuarios')
         .select('*')
-        .eq('unidade_alocacao', unitData.nome)
+        .eq('unidade_alocacao', currentUnitName)
         .eq('status', 'ATIVO');
 
       if (colabsError) throw colabsError;
@@ -58,7 +74,7 @@ export default function DiretorModule({ user }: { user: any }) {
       const { data: feedData } = await supabase
         .from('feedback_diretor')
         .select('*, colaborador:usuarios(nome)')
-        .eq('unidade_id', unitData.id);
+        .eq('unidade_id', currentUnitId);
       
       setOcorrencias(feedData || []);
 
@@ -66,12 +82,13 @@ export default function DiretorModule({ user }: { user: any }) {
       const { data: transfData } = await supabase
         .from('transferencias')
         .select('*')
-        .eq('unidade_origem', unitData.nome);
+        .eq('unidade_origem', currentUnitName);
       
       setTransferencias(transfData || []);
 
     } catch (err: any) {
-      toast.error(err.message);
+      console.error(err);
+      if (user.nivel_acesso < 3) toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -143,6 +160,7 @@ export default function DiretorModule({ user }: { user: any }) {
   };
 
   if (loading) return <TableSkeleton />;
+  
   if (!unidade) return (
     <div className="flex flex-col items-center justify-center p-20 text-center gap-4 bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)]">
       <AlertTriangle size={64} className="text-amber-500" />
