@@ -63,7 +63,7 @@ export function useGerenciaData(currentUser?: any) {
       }
 
       // 4. Stats e Distribuição
-      let colabsQuery = supabase.from('usuarios').select('unidade_alocacao, cargo, secretaria').eq('status', 'ATIVO');
+      let colabsQuery = supabase.from('usuarios').select('unidade_alocacao, cargo, secretaria, insalubridade').eq('status', 'ATIVO');
       if (selectedSecretaria) colabsQuery = colabsQuery.eq('secretaria', selectedSecretaria);
       if (selectedUnidade) colabsQuery = colabsQuery.eq('unidade_alocacao', selectedUnidade);
 

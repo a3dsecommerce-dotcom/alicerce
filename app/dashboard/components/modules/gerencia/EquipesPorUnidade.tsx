@@ -183,12 +183,12 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
                          return (
                             <div className="flex flex-col gap-1">
                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black border w-fit ${
-                                 c.percentual_insalubridade === '40%' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
-                                 c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
-                                 c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                                 c.insalubridade === '40%' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                                 c.insalubridade === '30%' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                                 c.insalubridade === '20%' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
                                  'bg-slate-500/10 text-slate-500 border-slate-500/20'
                                }`}>
-                                  {c.percentual_insalubridade || 'N/A'}
+                                  {c.insalubridade || 'N/A'}
                                </span>
                                <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest ml-1">Quadro: {ref}</span>
                             </div>

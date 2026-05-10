@@ -118,7 +118,7 @@ export default function DiretorModule({ user }: { user: any }) {
     try {
       const { error } = await supabase
         .from('usuarios')
-        .update({ percentual_insalubridade: novoPercentual })
+        .update({ insalubridade: novoPercentual })
         .eq('id', colabId);
 
       if (error) throw error;
@@ -336,14 +336,14 @@ export default function DiretorModule({ user }: { user: any }) {
                               <button 
                                 onClick={() => setModalInsalubridade(c)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 w-fit ${
-                                  c.percentual_insalubridade === '40%' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
-                                  c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
-                                  c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
+                                  c.insalubridade === '40%' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
+                                  c.insalubridade === '30%' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
+                                  c.insalubridade === '20%' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
                                   'bg-[var(--bg-base)] border-[var(--border)] text-[var(--text-muted)]'
                                 }`}
                               >
-                                <Zap size={14} className={c.percentual_insalubridade ? 'text-current' : 'text-slate-400'} />
-                                <span className="text-[10px] font-black uppercase">{c.percentual_insalubridade || "DEFINIR"}</span>
+                                <Zap size={14} className={c.insalubridade ? 'text-current' : 'text-slate-400'} />
+                                <span className="text-[10px] font-black uppercase">{c.insalubridade || "DEFINIR"}</span>
                               </button>
                               <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ref. Quadro: {ref}</span>
                             </div>
@@ -454,7 +454,7 @@ export default function DiretorModule({ user }: { user: any }) {
                   key={pct}
                   onClick={() => handleUpdateInsalubridade(modalInsalubridade.id, pct)}
                   className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${
-                    modalInsalubridade.percentual_insalubridade === pct 
+                    modalInsalubridade.insalubridade === pct 
                     ? 'bg-amber-600 border-amber-600 text-white shadow-xl scale-105' 
                     : 'bg-white border-slate-100 text-slate-400 hover:border-amber-300'
                   }`}
