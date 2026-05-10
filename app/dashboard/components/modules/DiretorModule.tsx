@@ -34,7 +34,7 @@ export default function DiretorModule({ user }: { user: any }) {
   async function fetchData() {
     try {
       setLoading(true);
-      const isManagement = user.nivel_acesso >= 3 || ['ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
+      const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
       // 1. Buscar Unidade vinculada ao Diretor (ou a primeira unidade se for Gerente/Admin para não quebrar a tela)
       let query = supabase.from('unidades').select('*');
