@@ -1,4 +1,5 @@
-import { ChevronRight, FileText, Edit2, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Edit2, Trash2 } from "lucide-react";
+import { useRef } from "react";
 
 interface Colaborador {
   id: string;
@@ -114,6 +115,17 @@ export default function ColaboradoresTable({
   onEdit,
   onDelete
 }: ColaboradoresTableProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 400;
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
   
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '---';
@@ -169,11 +181,58 @@ export default function ColaboradoresTable({
   );
 
   return (
-    <div className="overflow-x-auto custom-scrollbar w-full border border-[var(--border)] rounded-xl">
-      <table 
-        className={`w-full text-left border-separate border-spacing-0 ${dpAba === 'arquivo' ? 'table-fixed' : 'table-auto'}`}
-        style={{ minWidth: dpAba === 'arquivo' ? `${600 + (configChecklist.length * 70)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100%'}}
+    <div className="flex flex-col gap-2">
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: var(--bg-base);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: var(--brand);
+          border-radius: 10px;
+          border: 2px solid var(--bg-base);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #4338ca;
+        }
+      `}</style>
+      {/* Scroll Controls */}
+      <div className="flex items-center justify-between px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Navegação Horizontal</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => scroll('left')}
+            className="p-2 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--brand)] hover:text-white transition-all shadow-sm flex items-center gap-1 text-[10px] font-black"
+          >
+            <ChevronLeft size={14} /> ANTERIOR
+          </button>
+          <button 
+            onClick={() => scroll('right')}
+            className="p-2 bg-[var(--bg-base)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--brand)] hover:text-white transition-all shadow-sm flex items-center gap-1 text-[10px] font-black"
+          >
+            PRÓXIMA <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
+      <div 
+        ref={scrollRef}
+        className="overflow-x-auto custom-scrollbar w-full border border-[var(--border)] rounded-xl bg-[var(--bg-card)]"
+        style={{
+          scrollbarWidth: 'thick',
+          scrollbarColor: 'var(--brand) transparent'
+        }}
       >
+        <table 
+          className={`w-full text-left border-separate border-spacing-0 ${dpAba === 'arquivo' ? 'table-fixed' : 'table-auto'}`}
+          style={{ minWidth: dpAba === 'arquivo' ? `${600 + (configChecklist.length * 70)}px` : dpAba === 'contratacao' ? '2800px' : dpAba === 'desligamentos' ? '1800px' : '100%'}}
+        >
         <thead className="sticky top-0 bg-[var(--bg-card)] z-10 border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
           <tr>
             <th className="p-6 sticky left-0 bg-[var(--bg-card)] shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-20 w-[250px] min-w-[250px]">Colaborador</th>
@@ -374,6 +433,7 @@ export default function ColaboradoresTable({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
