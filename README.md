@@ -1,6 +1,6 @@
 # 🏛️ Alicerce ERP - Gestão Cognitiva e Soberana
 
-![Alicerce Banner](https://img.shields.io/badge/Version-752.5-blue?style=for-the-badge&logo=rocket)
+![Alicerce Banner](https://img.shields.io/badge/Version-753.5-blue?style=for-the-badge&logo=rocket)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![Supabase](https://img.shields.io/badge/Supabase-Database-green?style=for-the-badge&logo=supabase)
 ![n8n](https://img.shields.io/badge/n8n-Automation-red?style=for-the-badge&logo=n8n)
@@ -60,4 +60,4 @@ O Alicerce ERP foi construído seguindo princípios de **Sovereign Control**, on
 
 ---
 Desenvolvido por **A3DS Ecommerce** & **Antigravity AI**.
-Versão Atual: **800.0 (Checklist Evolution)**
+Versão Atual: **753.5 (Checklist Evolution)**

@@ -27,5 +27,5 @@ Este documento estabelece os padrões de desenvolvimento, design e operação pa
 *   **Integridade**: Nunca apague dados definitivos sem confirmação dupla (`confirm()`) e registro de motivo de exclusão.
 
 ---
-*Atualizado em: 10/05/2026 - Padrão V2.5 (Dynamic UI Engine)*
+*Atualizado em: 10/05/2026 - Padrão V753.5 (Dynamic UI Engine)*
 *Assinado: Equipe Antigravity & A3DS Ecommerce*
