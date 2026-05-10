@@ -1,6 +1,6 @@
-# 🏛️ Dossiê Técnico: Alicerce ERP v753.5
+# 🏛️ Dossiê Técnico: Alicerce ERP v753.7
 **Data do Relatório:** 10/05/2026
-**Status:** Produção Estabilizada (v753.5.0)
+**Status:** Produção Estabilizada (v753.7.0)
 
 ---
 
@@ -34,7 +34,8 @@ O coração do Alicerce Ops reside em seu esquema PostgreSQL altamente relaciona
 | `usuarios` | Cadastro mestre de colaboradores e acessos | `id`, `nivel_acesso`, `secretaria` |
 | `usuarios_docs` | Repositório de verificação de documentos | `usuario_id`, `status_verificacao` |
 | `config_checklist_rh` | Motor dinâmico de colunas do RH | `label`, `color`, `ordem` |
-| `unidades` | Postos de trabalho (Escolas/Hospitais) | `nome`, `rota`, `secretaria` |
+| `feedback_diretor` | Registro de faltas e ocorrências pelo cliente | `diretor_id`, `colaborador_id`, `status` |
+| `unidades` | Postos de trabalho (Escolas/Hospitais) | `nome`, `rota`, `diretor_id` |
 | `atividades` | Log de auditoria global | `usuario_id`, `mensagem`, `tipo` |
 | `transferencias` | Fluxo de movimentação de pessoal | `origem`, `destino`, `status_gerencia` |
 | `missões` | Sistema de tarefas para o campo | `titulo`, `checklist_json` |
@@ -56,7 +57,8 @@ O coração do Alicerce Ops reside em seu esquema PostgreSQL altamente relaciona
 1. **Nível 1 (Operacional)**: Acesso via Celular (Missões, Admissão Rápida).
 2. **Nível 2 (Encarregado)**: Gestão de Rota e Equipe Local.
 3. **Nível 3 (Gerente)**: Painel de Controle Central, Auditoria e Aprovações.
-4. **Nível 10 (Admin)**: Acesso total e configurações de sistema.
+4. **Nível 5 (Diretor de Unidade)**: Portal de Fiscalização do Cliente (Externo).
+5. **Nível 10 (Admin)**: Acesso total e configurações de sistema.
 
 ---
 

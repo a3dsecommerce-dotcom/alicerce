@@ -9,6 +9,19 @@ import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, P
 
 const UPDATES = [
   {
+    version: "v753.7",
+    date: "10/05/2026",
+    title: "Portal do Diretor / Fiscal do Cliente",
+    description: "Lançamento do Cockpit de Fiscalização para gestores externos das unidades.",
+    tags: ["FISCALIZAÇÃO", "CONTRATANTE", "UNIDADES"],
+    details: [
+      "Visão de Unidade: O diretor visualiza apenas os colaboradores alocados em seu posto.",
+      "Ajuste de Jornada: Fiscalização direta de horários com alerta automático para RH/Encarregado.",
+      "Informação de Falta: Botão de ação rápida para reporte imediato de ausências ou atrasos.",
+      "Canal de Vontades: Espaço estruturado para o contratante requisitar melhorias ou transferências."
+    ]
+  },
+  {
     version: "v753.6",
     date: "10/05/2026",
     title: "Motor de Checklist RH v2.1",

@@ -22,6 +22,7 @@ import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
 import EncarregadoModule from "./components/modules/EncarregadoModule";
 import OcorrenciasModule from "./components/modules/OcorrenciasModule";
 import ManualModule from "./components/modules/ManualModule";
+import DiretorModule from "./components/modules/DiretorModule";
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
   { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ENCARREGADO"] },
@@ -33,6 +34,7 @@ const ALL_MODULES = [
   { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "ENCARREGADO"] },
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
   { id: "MANUAL", label: "Manual de Boas Práticas", icon: FileText, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
+  { id: "DIRETOR", label: "Portal do Diretor", icon: UserCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "DIRETOR_UNIDADE"] },
 ];
 
 export default function UnifiedCockpitPage() {
@@ -80,7 +82,7 @@ function CockpitContent() {
               
               // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
               // Caso contrário, usa o que vier do banco ou o nível de acesso
-              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 5 ? 'DIRETOR_UNIDADE' : dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
               
               const updatedUser = { 
                 ...localUser, 
@@ -220,7 +222,7 @@ function CockpitContent() {
           </div>
           <div>
             <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">{activeModuleData.label}</h1>
-            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce V753.5</p>
+            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce V753.7</p>
           </div>
         </div>
 
@@ -250,6 +252,7 @@ function CockpitContent() {
             { activeModule === "OCORRENCIAS" && <OcorrenciasModule user={user} /> }
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             { activeModule === "MANUAL" && <ManualModule /> }
+            { activeModule === "DIRETOR" && <DiretorModule user={user} /> }
             { (activeModule === "COMMAND" || !activeModule) && (
                (safeRole === 'ENCARREGADO') 
                  ? <EncarregadoModule user={user} initialTab={tabParam as any} />

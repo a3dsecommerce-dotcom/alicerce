@@ -59,7 +59,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               
               // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
               // Caso contrário, usa o que vier do banco ou o nível de acesso
-              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 5 ? 'DIRETOR_UNIDADE' : dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
               
               const updatedUser = { 
                 ...localUser, 

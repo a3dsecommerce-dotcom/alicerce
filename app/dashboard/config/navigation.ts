@@ -69,5 +69,11 @@ export const ALL_NAV: NavItem[] = [
     icon: FileText,
     roles: ['ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR'],
     href: '/dashboard?module=MANUAL'
+  },
+  {
+    label: 'Portal do Diretor',
+    icon: Building2,
+    roles: ['ADMIN', 'DIRETOR_UNIDADE'],
+    href: '/dashboard?module=DIRETOR'
   }
 ];
