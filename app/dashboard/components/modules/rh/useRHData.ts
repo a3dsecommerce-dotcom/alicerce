@@ -13,7 +13,7 @@ export function useRHData(user: any) {
   const [faltas, setFaltas] = useState<any[]>([]);
   const [volantes, setVolantes] = useState<any[]>([]);
   const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
-  const [configChecklist, setConfigChecklist] = useState<{id: string, label: string}[]>([]);
+  const [configChecklist, setConfigChecklist] = useState<{id: string, label: string, color?: string, ordem?: number}[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -88,7 +88,7 @@ export function useRHData(user: any) {
       if (reqVolantesDb) setRequisicoesVolantes(reqVolantesDb);
 
       // 8. Fetch Config Checklist Dinâmico
-      const { data: configDb } = await supabase.from('config_checklist_rh').select('*').order('label');
+      const { data: configDb } = await supabase.from('config_checklist_rh').select('*').order('ordem', { ascending: true });
       if (configDb) setConfigChecklist(configDb);
     } catch (err) {
       console.error("Erro no carregamento do RH:", err);
@@ -280,6 +280,17 @@ export function useRHData(user: any) {
       await fetchData();
     },
     configChecklist,
+    updateChecklistColor: async (id: string, color: string) => {
+      const { error } = await supabase.from('config_checklist_rh').update({ color }).eq('id', id);
+      if (error) throw error;
+      await fetchData();
+    },
+    reorderChecklistColumn: async (id1: string, order1: number, id2: string, order2: number) => {
+      const { error: err1 } = await supabase.from('config_checklist_rh').update({ ordem: order2 }).eq('id', id1);
+      const { error: err2 } = await supabase.from('config_checklist_rh').update({ ordem: order1 }).eq('id', id2);
+      if (err1 || err2) throw (err1 || err2);
+      await fetchData();
+    },
     deleteExtra: async (id: string, justificativa: string) => {
       // 1. Buscar dados do item antes de excluir para o log
       const { data: item } = await supabase.from('informativos_operacionais').select('*').eq('id', id).single();

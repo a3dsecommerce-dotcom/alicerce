@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, FileText, Edit2, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Edit2, Trash2, Palette, ArrowLeftRight } from "lucide-react";
 import { useRef } from "react";
 
 interface Colaborador {
@@ -94,6 +94,8 @@ interface ColaboradoresTableProps {
   onUpdateExtraCheck?: (id: string, label: string, value: boolean) => void;
   onUpdateConfigChecklist?: (id: string, newLabel: string) => void;
   onDeleteConfigChecklist?: (id: string) => void;
+  onUpdateConfigColor?: (id: string, color: string) => void;
+  onReorderConfig?: (id1: string, order1: number, id2: string, order2: number) => void;
   onEdit: (c: Colaborador) => void;
   onDelete: (id: string) => void;
 }
@@ -112,6 +114,8 @@ export default function ColaboradoresTable({
   onUpdateExtraCheck,
   onUpdateConfigChecklist,
   onDeleteConfigChecklist,
+  onUpdateConfigColor,
+  onReorderConfig,
   onEdit,
   onDelete
 }: ColaboradoresTableProps) {
@@ -249,10 +253,66 @@ export default function ColaboradoresTable({
               <>
                 <th className="p-4 text-center w-[150px] min-w-[150px]">Unidade</th>
                 {configChecklist.map(col => (
-                  <th key={col.id} className="p-2 text-center w-[70px] min-w-[70px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm">
+                  <th 
+                    key={col.id} 
+                    draggable 
+                    onDragStart={(e) => e.dataTransfer.setData("columnId", col.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      const sourceId = e.dataTransfer.getData("columnId");
+                      if (sourceId && sourceId !== col.id) {
+                        const source = configChecklist.find(c => c.id === sourceId);
+                        if (source) onReorderConfig?.(sourceId, source.ordem || 0, col.id, col.ordem || 0);
+                      }
+                    }}
+                    className="p-2 text-center w-[70px] min-w-[70px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm group/header cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02]" 
+                    style={{ backgroundColor: col.color || 'transparent' }}
+                  >
                     <div className="flex flex-col items-center gap-2">
                       <span className="text-[8px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none h-4 overflow-hidden text-ellipsis whitespace-nowrap w-full" title={col.label}>{col.label}</span>
-                      <div className="flex items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const cores = ['#fef2f2', '#f0f9ff', '#f0fdf4', '#fffbeb', '#f5f3ff', 'transparent'];
+                            const atual = configChecklist.find(c => c.id === col.id)?.color;
+                            const idx = cores.indexOf(atual || 'transparent');
+                            const proxima = cores[(idx + 1) % cores.length];
+                            onUpdateConfigColor?.(col.id, proxima);
+                          }}
+                          className="flex items-center justify-center w-5 h-5 bg-white/50 text-slate-600 rounded hover:bg-slate-200 transition-all shadow-sm"
+                          title="Mudar Cor"
+                        >
+                          <Palette size={8} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const idx = configChecklist.findIndex(c => c.id === col.id);
+                            if (idx > 0) {
+                              const prev = configChecklist[idx - 1];
+                              onReorderConfig?.(col.id, col.ordem || 0, prev.id, prev.ordem || 0);
+                            }
+                          }}
+                          className="flex items-center justify-center w-5 h-5 bg-white/50 text-slate-600 rounded hover:bg-slate-200 transition-all shadow-sm"
+                          title="Mover Esquerda"
+                        >
+                          <ChevronLeft size={8} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const idx = configChecklist.findIndex(c => c.id === col.id);
+                            if (idx < configChecklist.length - 1) {
+                              const next = configChecklist[idx + 1];
+                              onReorderConfig?.(col.id, col.ordem || 0, next.id, next.ordem || 0);
+                            }
+                          }}
+                          className="flex items-center justify-center w-5 h-5 bg-white/50 text-slate-600 rounded hover:bg-slate-200 transition-all shadow-sm"
+                          title="Mover Direita"
+                        >
+                          <ChevronRight size={8} />
+                        </button>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -357,7 +417,7 @@ export default function ColaboradoresTable({
                 <>
                   <td className="p-4 text-[10px] font-black text-center">{c.unidade}</td>
                   {configChecklist.map(col => (
-                    <td key={col.id} className="p-4 text-center border-x border-[var(--border)]/10">
+                    <td key={col.id} className="p-4 text-center border-x border-[var(--border)]/10" style={{ backgroundColor: col.color ? `${col.color}20` : 'transparent' }}>
                       <input 
                         type="checkbox" 
                         checked={!!(c.checklist_extra?.[col.label])} 
