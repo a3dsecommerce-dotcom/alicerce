@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, Users, ShoppingBag, Megaphone, 
   Package, ShieldCheck, Activity, Bell, Settings,
-  Loader, AlertTriangle, FileText, BookOpen, Sparkles, Rocket
+  Loader, AlertTriangle, FileText, BookOpen, Sparkles, Rocket, UserCheck
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
