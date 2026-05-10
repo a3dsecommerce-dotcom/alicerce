@@ -9,7 +9,7 @@ import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, P
 
 const UPDATES = [
   {
-    version: "v753.7",
+    version: "v753.8",
     date: "10/05/2026",
     title: "Portal do Diretor / Fiscal do Cliente",
     description: "Lançamento do Cockpit de Fiscalização para gestores externos das unidades.",

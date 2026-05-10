@@ -1,6 +1,6 @@
-# 🏛️ Dossiê Técnico: Alicerce ERP v753.7
+# 🏛️ Dossiê Técnico: Alicerce ERP v753.8
 **Data do Relatório:** 10/05/2026
-**Status:** Produção Estabilizada (v753.7.0)
+**Status:** Produção Estabilizada (v753.8.0)
 
 ---
 
@@ -57,7 +57,7 @@ O coração do Alicerce Ops reside em seu esquema PostgreSQL altamente relaciona
 1. **Nível 1 (Operacional)**: Acesso via Celular (Missões, Admissão Rápida).
 2. **Nível 2 (Encarregado)**: Gestão de Rota e Equipe Local.
 3. **Nível 3 (Gerente)**: Painel de Controle Central, Auditoria e Aprovações.
-4. **Nível 5 (Diretor de Unidade)**: Portal de Fiscalização do Cliente (Externo).
+4. **Nível 2 (Diretor de Unidade / Supervisor)**: Portal de Fiscalização do Cliente ou Gestão de Campo.
 5. **Nível 10 (Admin)**: Acesso total e configurações de sistema.
 
 ---

@@ -82,7 +82,15 @@ function CockpitContent() {
               
               // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
               // Caso contrário, usa o que vier do banco ou o nível de acesso
-              const cargoResolvido = rawFuncao || (dbUser.nivel_acesso >= 5 ? 'DIRETOR_UNIDADE' : dbUser.nivel_acesso >= 4 ? 'ADMIN' : dbUser.nivel_acesso >= 3 ? 'GERENTE' : dbUser.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
+              const cargoResolvido = rawFuncao || (
+                dbUser.nivel_acesso >= 4 ? 'ADMIN' : 
+                dbUser.nivel_acesso >= 3 ? 'GERENTE' : 
+                dbUser.nivel_acesso >= 2 ? (
+                  (dbUser.cargo || '').toUpperCase().includes('DIRETOR') || (dbUser.cargo || '').toUpperCase().includes('FISCAL') 
+                  ? 'DIRETOR_UNIDADE' 
+                  : 'SUPERVISOR'
+                ) : 'COLABORADOR'
+              );
               
               const updatedUser = { 
                 ...localUser, 
@@ -222,7 +230,7 @@ function CockpitContent() {
           </div>
           <div>
             <h1 className="text-xl font-black text-[var(--text-primary)] tracking-tight">{activeModuleData.label}</h1>
-            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce V753.7</p>
+            <p className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">Portal Administrativo Alicerce V753.8</p>
           </div>
         </div>
 
