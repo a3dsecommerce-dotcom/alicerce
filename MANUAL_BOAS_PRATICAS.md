@@ -33,6 +33,12 @@ Este documento estabelece os padrões de desenvolvimento, design e operação pa
     *   **Janela Operacional**: Contagem válida exclusivamente de Segunda a Sexta, das 07:00 às 17:00.
     *   **Impacto**: Eliminação de falsos atrasos e métricas de desempenho mais precisas.
     *   **Centralização**: Lógica unificada via utilitário central para os módulos de RH, Compras e Almoxarifado.
+*   **• 09/05/2026 - Motor de Checklist RH v2.1 (Cockpit de Gestão)**
+    *   **Interface Dinâmica**: Criação do Cockpit de Configuração via ícone de engrenagem no cabeçalho.
+    *   **Customização Visual**: Implementação de sistema de cores por coluna e renomeação em tempo real.
+    *   **Reordenamento Inteligente**: Capacidade de mover colunas de posição com sincronização automática de `ordem` no banco.
+    *   **UX de Alta Performance**: Implementação de Atualizações Otimistas (Optimistic Updates) e Zero-Blink UX, eliminando latência visual.
+    *   **Exclusão Segura**: Fluxo de confirmação dupla e remoção instantânea de colunas dinâmicas.
 
 ---
 *Atualizado em: 10/05/2026 - Padrão V753.5 (Dynamic UI Engine)*
