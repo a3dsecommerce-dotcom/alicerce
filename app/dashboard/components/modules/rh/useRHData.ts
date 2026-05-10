@@ -15,8 +15,8 @@ export function useRHData(user: any) {
   const [requisicoesVolantes, setRequisicoesVolantes] = useState<any[]>([]);
   const [configChecklist, setConfigChecklist] = useState<{id: string, label: string, color?: string, ordem?: number}[]>([]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       // 1. Fetch Usuarios (Colaboradores)
       const { data: users } = await supabase.from('usuarios').select('*').order('nome');
@@ -98,7 +98,7 @@ export function useRHData(user: any) {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
   }, [fetchData]);
 
   const updateStatus = async (id: string, newStatus: string) => {

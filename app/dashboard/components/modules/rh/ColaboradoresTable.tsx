@@ -1,5 +1,5 @@
-import { ChevronLeft, ChevronRight, FileText, Edit2, Trash2, Palette, ArrowLeftRight } from "lucide-react";
-import { useRef } from "react";
+import { ChevronLeft, ChevronRight, FileText, Edit2, Trash2, Palette, ArrowLeftRight, Settings, X, Check } from "lucide-react";
+import { useRef, useState } from "react";
 
 interface Colaborador {
   id: string;
@@ -120,6 +120,7 @@ export default function ColaboradoresTable({
   onDelete
 }: ColaboradoresTableProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [modalConfig, setModalConfig] = useState<any>(null);
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
@@ -268,71 +269,17 @@ export default function ColaboradoresTable({
                     className="p-2 text-center w-[70px] min-w-[70px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm group/header cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02]" 
                     style={{ backgroundColor: col.color || 'transparent' }}
                   >
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center gap-1">
                       <span className="text-[8px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none h-4 overflow-hidden text-ellipsis whitespace-nowrap w-full" title={col.label}>{col.label}</span>
-                      <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const cores = ['#fef2f2', '#f0f9ff', '#f0fdf4', '#fffbeb', '#f5f3ff', 'transparent'];
-                            const atual = configChecklist.find(c => c.id === col.id)?.color;
-                            const idx = cores.indexOf(atual || 'transparent');
-                            const proxima = cores[(idx + 1) % cores.length];
-                            onUpdateConfigColor?.(col.id, proxima);
-                          }}
-                          className="flex items-center justify-center w-6 h-6 bg-white/70 text-slate-700 rounded-lg hover:bg-slate-200 hover:scale-110 transition-all shadow-sm"
-                          title="Mudar Cor"
-                        >
-                          <Palette size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const idx = configChecklist.findIndex(c => c.id === col.id);
-                            if (idx > 0) {
-                              const prev = configChecklist[idx - 1];
-                              onReorderConfig?.(col.id, col.ordem || 0, prev.id, prev.ordem || 0);
-                            }
-                          }}
-                          className="flex items-center justify-center w-6 h-6 bg-white/70 text-slate-700 rounded-lg hover:bg-slate-200 hover:scale-110 transition-all shadow-sm"
-                          title="Mover Esquerda"
-                        >
-                          <ChevronLeft size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const idx = configChecklist.findIndex(c => c.id === col.id);
-                            if (idx < configChecklist.length - 1) {
-                              const next = configChecklist[idx + 1];
-                              onReorderConfig?.(col.id, col.ordem || 0, next.id, next.ordem || 0);
-                            }
-                          }}
-                          className="flex items-center justify-center w-6 h-6 bg-white/70 text-slate-700 rounded-lg hover:bg-slate-200 hover:scale-110 transition-all shadow-sm"
-                          title="Mover Direita"
-                        >
-                          <ChevronRight size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const novo = prompt("Renomear coluna:", col.label);
-                            if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
-                          }}
-                          className="flex items-center justify-center w-6 h-6 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white hover:scale-110 transition-all shadow-sm"
-                        >
-                          <Edit2 size={12} />
-                        </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`Excluir coluna "${col.label}"?`)) onDeleteConfigChecklist?.(col.id);
-                          }}
-                          className="flex items-center justify-center w-6 h-6 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white hover:scale-110 transition-all shadow-sm"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setModalConfig(col);
+                        }}
+                        className="opacity-0 group-hover/header:opacity-100 transition-all p-1 bg-white/50 hover:bg-white text-slate-600 rounded-md shadow-sm"
+                      >
+                        <Settings size={10} />
+                      </button>
                     </div>
                   </th>
                 ))}
@@ -494,6 +441,122 @@ export default function ColaboradoresTable({
         </tbody>
       </table>
       </div>
+
+      {/* Modal de Configuração de Coluna */}
+      {modalConfig && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setModalConfig(null)}>
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg">
+                  <Settings size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase text-slate-900 leading-none">Ajustar Coluna</h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">{modalConfig.label}</p>
+                </div>
+              </div>
+              <button onClick={() => setModalConfig(null)} className="p-2 hover:bg-slate-200 rounded-xl transition-all"><X size={20} /></button>
+            </div>
+
+            <div className="p-8 space-y-8">
+              {/* Nome */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nome da Coluna</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    defaultValue={modalConfig.label} 
+                    id="newLabel"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-black uppercase focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  />
+                  <button 
+                    onClick={() => {
+                      const val = (document.getElementById('newLabel') as HTMLInputElement).value;
+                      if (val && val !== modalConfig.label) {
+                        onUpdateConfigChecklist?.(modalConfig.id, val);
+                        setModalConfig(null);
+                      }
+                    }}
+                    className="p-3 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg transition-all"
+                  >
+                    <Check size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Cores */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cor de Identificação</label>
+                <div className="grid grid-cols-6 gap-3">
+                  {['#fef2f2', '#f0f9ff', '#f0fdf4', '#fffbeb', '#f5f3ff', 'transparent'].map(color => (
+                    <button 
+                      key={color}
+                      onClick={() => {
+                        onUpdateConfigColor?.(modalConfig.id, color);
+                        setModalConfig(null);
+                      }}
+                      className={`h-10 rounded-xl border-2 transition-all hover:scale-110 ${modalConfig.color === color ? 'border-indigo-600 shadow-inner' : 'border-slate-100 shadow-sm'}`}
+                      style={{ backgroundColor: color === 'transparent' ? '#f8fafc' : color }}
+                      title={color}
+                    >
+                      {color === 'transparent' && <span className="text-[8px] font-black opacity-30 uppercase">None</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Posição */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Reordenar Posição</label>
+                <div className="flex gap-4">
+                  <button 
+                    onClick={() => {
+                      const idx = configChecklist.findIndex(c => c.id === modalConfig.id);
+                      if (idx > 0) {
+                        const prev = configChecklist[idx - 1];
+                        onReorderConfig?.(modalConfig.id, modalConfig.ordem || 0, prev.id, prev.ordem || 0);
+                        setModalConfig(null);
+                      }
+                    }}
+                    className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black uppercase text-[10px] hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    <ChevronLeft size={16} /> Mover p/ Esquerda
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const idx = configChecklist.findIndex(c => c.id === modalConfig.id);
+                      if (idx < configChecklist.length - 1) {
+                        const next = configChecklist[idx + 1];
+                        onReorderConfig?.(modalConfig.id, modalConfig.ordem || 0, next.id, next.ordem || 0);
+                        setModalConfig(null);
+                      }
+                    }}
+                    className="flex-1 py-4 bg-slate-100 text-slate-700 rounded-2xl font-black uppercase text-[10px] hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                  >
+                    Mover p/ Direita <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Excluir */}
+              <div className="pt-4 border-t border-slate-100">
+                <button 
+                  onClick={() => {
+                    if (confirm(`EXCLUIR DEFINITIVAMENTE A COLUNA "${modalConfig.label.toUpperCase()}"?\n\nAtenção: Todos os registros feitos nesta coluna serão perdidos.`)) {
+                      onDeleteConfigChecklist?.(modalConfig.id);
+                      setModalConfig(null);
+                    }
+                  }}
+                  className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} /> Excluir Coluna
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
