@@ -26,6 +26,14 @@ Este documento estabelece os padrões de desenvolvimento, design e operação pa
 *   **Micro-Interações Ergonomicas**: Use ícones de tamanho reduzido (`size={8}` a `size={14}`) em cabeçalhos de configuração para manter o foco no dado, mas garantir acessibilidade de gestão.
 *   **Integridade**: Nunca apague dados definitivos sem confirmação dupla (`confirm()`) e registro de motivo de exclusão.
 
+## 5. Histórico de Governança e Atualizações
+*   **• 09/05/2026 - SLA em Horário Comercial (v753.5)**
+    *   **Implementação Global de 'Horas Úteis'**: Padrão para cálculo de prazos, vencimentos e KPIs.
+    *   **Congelamento Automático**: O relógio de ocorrências e tarefas "congela" em fins de semana e feriados nacionais/municipais.
+    *   **Janela Operacional**: Contagem válida exclusivamente de Segunda a Sexta, das 07:00 às 17:00.
+    *   **Impacto**: Eliminação de falsos atrasos e métricas de desempenho mais precisas.
+    *   **Centralização**: Lógica unificada via utilitário central para os módulos de RH, Compras e Almoxarifado.
+
 ---
 *Atualizado em: 10/05/2026 - Padrão V753.5 (Dynamic UI Engine)*
 *Assinado: Equipe Antigravity & A3DS Ecommerce*
