@@ -20,9 +20,12 @@ Este documento estabelece os padrões de desenvolvimento, design e operação pa
 4.  **Auditoria**: Garanta que as ações administrativas gerem registros de logs.
 5.  **Deploy**: Após o push, verifique sempre o status do build no Easypanel.
 
-## 4. Gestão de Dados
-*   **Flexibilidade**: Use campos `JSONB` (`checklist_extra`, `config_extra`) para dados que mudam frequentemente, evitando migrações de esquema constantes.
+## 4. Gestão de Dados e Interface Dinâmica
+*   **Motores Dinâmicos**: Prefira o uso de campos `JSONB` gerenciáveis (ex: `checklist_extra`) em conjunto com tabelas de configuração (`config_checklist_rh`). Isso permite que o usuário final gerencie colunas e campos sem intervenção técnica.
+*   **Tabelas de Alta Densidade (HD Tables)**: Em tabelas com muitos dados (Checklists, Inventário), utilize `table-fixed` e defina `min-width` em pixels para garantir a rolagem horizontal. Colunas críticas (Nome, Ações) devem ser `sticky`.
+*   **Micro-Interações Ergonomicas**: Use ícones de tamanho reduzido (`size={8}` a `size={14}`) em cabeçalhos de configuração para manter o foco no dado, mas garantir acessibilidade de gestão.
 *   **Integridade**: Nunca apague dados definitivos sem confirmação dupla (`confirm()`) e registro de motivo de exclusão.
 
 ---
+*Atualizado em: 10/05/2026 - Padrão V2.5 (Dynamic UI Engine)*
 *Assinado: Equipe Antigravity & A3DS Ecommerce*
