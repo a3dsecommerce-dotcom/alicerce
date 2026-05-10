@@ -280,10 +280,10 @@ export default function ColaboradoresTable({
                             const proxima = cores[(idx + 1) % cores.length];
                             onUpdateConfigColor?.(col.id, proxima);
                           }}
-                          className="flex items-center justify-center w-5 h-5 bg-white/50 text-slate-600 rounded hover:bg-slate-200 transition-all shadow-sm"
+                          className="flex items-center justify-center w-6 h-6 bg-white/70 text-slate-700 rounded-lg hover:bg-slate-200 hover:scale-110 transition-all shadow-sm"
                           title="Mudar Cor"
                         >
-                          <Palette size={8} />
+                          <Palette size={12} />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -294,10 +294,10 @@ export default function ColaboradoresTable({
                               onReorderConfig?.(col.id, col.ordem || 0, prev.id, prev.ordem || 0);
                             }
                           }}
-                          className="flex items-center justify-center w-5 h-5 bg-white/50 text-slate-600 rounded hover:bg-slate-200 transition-all shadow-sm"
+                          className="flex items-center justify-center w-6 h-6 bg-white/70 text-slate-700 rounded-lg hover:bg-slate-200 hover:scale-110 transition-all shadow-sm"
                           title="Mover Esquerda"
                         >
-                          <ChevronLeft size={8} />
+                          <ChevronLeft size={12} />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -308,10 +308,10 @@ export default function ColaboradoresTable({
                               onReorderConfig?.(col.id, col.ordem || 0, next.id, next.ordem || 0);
                             }
                           }}
-                          className="flex items-center justify-center w-5 h-5 bg-white/50 text-slate-600 rounded hover:bg-slate-200 transition-all shadow-sm"
+                          className="flex items-center justify-center w-6 h-6 bg-white/70 text-slate-700 rounded-lg hover:bg-slate-200 hover:scale-110 transition-all shadow-sm"
                           title="Mover Direita"
                         >
-                          <ChevronRight size={8} />
+                          <ChevronRight size={12} />
                         </button>
                         <button 
                           onClick={(e) => {
@@ -319,18 +319,18 @@ export default function ColaboradoresTable({
                             const novo = prompt("Renomear coluna:", col.label);
                             if (novo && novo !== col.label) onUpdateConfigChecklist?.(col.id, novo);
                           }}
-                          className="flex items-center justify-center w-5 h-5 bg-blue-50 text-blue-600 rounded hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                          className="flex items-center justify-center w-6 h-6 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white hover:scale-110 transition-all shadow-sm"
                         >
-                          <Edit2 size={8} />
+                          <Edit2 size={12} />
                         </button>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
                             if (confirm(`Excluir coluna "${col.label}"?`)) onDeleteConfigChecklist?.(col.id);
                           }}
-                          className="flex items-center justify-center w-5 h-5 bg-red-50 text-red-600 rounded hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                          className="flex items-center justify-center w-6 h-6 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white hover:scale-110 transition-all shadow-sm"
                         >
-                          <Trash2 size={8} />
+                          <Trash2 size={12} />
                         </button>
                       </div>
                     </div>
