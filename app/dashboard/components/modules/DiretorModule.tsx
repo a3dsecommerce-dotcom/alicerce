@@ -16,6 +16,7 @@ export default function DiretorModule({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<Tab>("EQUIPE");
   const [loading, setLoading] = useState(true);
   const [unidade, setUnidade] = useState<any>(null);
+  const [allUnits, setAllUnits] = useState<any[]>([]);
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [transferencias, setTransferencias] = useState<any[]>([]);
@@ -31,16 +32,23 @@ export default function DiretorModule({ user }: { user: any }) {
     fetchData();
   }, [user]);
 
-  async function fetchData() {
+  async function fetchData(targetUnitId?: string) {
     try {
       setLoading(true);
       const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
-      // 1. Buscar Unidade vinculada ao Diretor (ou a primeira unidade se for Gerente/Admin para não quebrar a tela)
+      // 1. Buscar Unidades para o Seletor (apenas para gestão)
+      if (isManagement && allUnits.length === 0) {
+        const { data: list } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
+        setAllUnits(list || []);
+      }
+
+      // 2. Definir Unidade Alvo
       let query = supabase.from('unidades').select('*');
       
-      if (isManagement) {
-        // Se for gerência, tenta pegar a primeira unidade ativa para visualização
+      if (targetUnitId) {
+        query = query.eq('id', targetUnitId).single();
+      } else if (isManagement) {
         query = query.eq('status', 'ATIVO').limit(1).single();
       } else {
         query = query.eq('diretor_id', user.id).single();
@@ -51,7 +59,6 @@ export default function DiretorModule({ user }: { user: any }) {
       if (unitError && !isManagement) throw new Error("Unidade não vinculada ou erro de acesso.");
       
       if (!unitData && isManagement) {
-        // Caso não existam unidades cadastradas ainda
         setUnidade({ nome: "AGUARDANDO UNIDADES", id: "0" });
       } else {
         setUnidade(unitData);
@@ -60,31 +67,16 @@ export default function DiretorModule({ user }: { user: any }) {
       const currentUnitName = unitData?.nome || "";
       const currentUnitId = unitData?.id || "0";
 
-      // 2. Buscar Colaboradores da Unidade
-      const { data: colabs, error: colabsError } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('unidade_alocacao', currentUnitName)
-        .eq('status', 'ATIVO');
+      // 3. Buscar Dados da Unidade selecionada
+      const [colabsRes, feedsRes, transfsRes] = await Promise.all([
+        supabase.from('usuarios').select('*').eq('unidade_alocacao', currentUnitName).eq('status', 'ATIVO'),
+        supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
+        supabase.from('transferencias').select('*').eq('unidade_origem', currentUnitName)
+      ]);
 
-      if (colabsError) throw colabsError;
-      setColaboradores(colabs || []);
-
-      // 3. Buscar Ocorrências/Feedbacks
-      const { data: feedData } = await supabase
-        .from('feedback_diretor')
-        .select('*, colaborador:usuarios(nome)')
-        .eq('unidade_id', currentUnitId);
-      
-      setOcorrencias(feedData || []);
-
-      // 4. Buscar Transferências
-      const { data: transfData } = await supabase
-        .from('transferencias')
-        .select('*')
-        .eq('unidade_origem', currentUnitName);
-      
-      setTransferencias(transfData || []);
+      setColaboradores(colabsRes.data || []);
+      setOcorrencias(feedsRes.data || []);
+      setTransferencias(transfsRes.data || []);
 
     } catch (err: any) {
       console.error(err);
@@ -188,6 +180,20 @@ export default function DiretorModule({ user }: { user: any }) {
               <div className="px-4 py-1.5 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200">
                 Unidade: {unidade.nome}
               </div>
+              {(user.nivel_acesso >= 3 || user.role === 'DEV') && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black text-indigo-300 uppercase">Trocar Unidade:</span>
+                  <select 
+                    className="bg-white/10 border border-white/20 rounded-lg text-[10px] font-black uppercase text-white px-3 py-1 outline-none hover:bg-white/20 transition-all cursor-pointer"
+                    value={unidade.id}
+                    onChange={(e) => fetchData(e.target.value)}
+                  >
+                    {allUnits.map(u => (
+                      <option key={u.id} value={u.id} className="bg-slate-900">{u.nome}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
             <h2 className="text-4xl lg:text-6xl font-black italic tracking-tighter mb-6 leading-tight">
               Portal do <span className="text-indigo-400">Diretor</span>
