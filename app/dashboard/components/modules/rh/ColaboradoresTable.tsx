@@ -235,7 +235,7 @@ export default function ColaboradoresTable({
         >
         <thead className="sticky top-0 bg-[var(--bg-card)] z-10 border-b border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
           <tr>
-            <th className="p-6 sticky left-0 bg-[var(--bg-card)] shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-20 w-[250px] min-w-[250px]">Colaborador</th>
+            <th className="p-6 sticky left-0 bg-[var(--bg-card)] shadow-[4px_0_8px_rgba(0,0,0,0.1)] z-20 w-[250px] min-w-[250px]">Colaborador</th>
             
             {dpAba === 'ativos' ? (
               <>
@@ -327,13 +327,13 @@ export default function ColaboradoresTable({
               </>
             ) : null}
 
-            <th className="p-6 text-right sticky right-0 bg-[var(--bg-card)] shadow-[-2px_0_5px_rgba(0,0,0,0.05)] z-20">Ações</th>
+            <th className="p-6 text-right sticky right-0 bg-[var(--bg-card)] shadow-[-4px_0_8px_rgba(0,0,0,0.1)] z-20 w-[100px] min-w-[100px]">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[var(--border)]">
           {colaboradores.map(c => (
             <tr key={c.id} className="hover:bg-[var(--bg-base)]/50 transition-colors group cursor-pointer" onClick={() => onSelect(c)}>
-              <td className="p-6 sticky left-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)] shadow-[2px_0_5px_rgba(0,0,0,0.05)] z-10">
+              <td className="p-6 sticky left-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)] shadow-[4px_0_8px_rgba(0,0,0,0.1)] z-10">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-[var(--brand)] text-white flex items-center justify-center text-[0.6rem] font-black flex-shrink-0">{c.avatar}</div>
                   <div className="flex flex-col">
@@ -420,7 +420,7 @@ export default function ColaboradoresTable({
                 </>
               ) : null}
 
-              <td className="p-6 text-right sticky right-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)] shadow-[-2px_0_5px_rgba(0,0,0,0.05)] z-10">
+              <td className="p-6 text-right sticky right-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)] shadow-[-4px_0_8px_rgba(0,0,0,0.1)] z-10 w-[100px] min-w-[100px]">
                 <div className="flex items-center justify-end gap-2">
                   {(dpAba === 'arquivo' || dpAba === 'desligamentos') && (
                     <button onClick={(e) => { e.stopPropagation(); onGerarPDF(c); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="PDF"><FileText size={16} /></button>
