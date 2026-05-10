@@ -24,6 +24,7 @@ export default function DiretorModule({ user }: { user: any }) {
 
   // Modais
   const [modalHorario, setModalHorario] = useState<any>(null);
+  const [modalInsalubridade, setModalInsalubridade] = useState<any>(null);
   const [modalOcorrencia, setModalOcorrencia] = useState<any>(null);
   const [modalTransferencia, setModalTransferencia] = useState<any>(null);
   const [modalSolicitacao, setModalSolicitacao] = useState(false);
@@ -107,6 +108,30 @@ export default function DiretorModule({ user }: { user: any }) {
       fetchData();
     } catch (err: any) {
       toast.error("Erro ao atualizar horário.");
+    }
+  };
+
+  const handleUpdateInsalubridade = async (colabId: string, novoPercentual: string) => {
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ percentual_insalubridade: novoPercentual })
+        .eq('id', colabId);
+
+      if (error) throw error;
+
+      // Logar Atividade
+      await supabase.from('atividades').insert({
+        usuario_id: user.id,
+        tipo: 'GERENCIAL',
+        mensagem: `DIRETOR: Alterado percentual de insalubridade de ${colaboradores.find(c => c.id === colabId)?.nome} para ${novoPercentual}.`
+      });
+
+      toast.success("Insalubridade atualizada!");
+      setModalInsalubridade(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error("Erro ao atualizar insalubridade.");
     }
   };
 
@@ -270,7 +295,8 @@ export default function DiretorModule({ user }: { user: any }) {
                   <tr className="border-b border-[var(--border)] bg-[var(--bg-base)]/50">
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Colaborador</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Cargo / Função</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Horário de Trabalho</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Horário</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Insalubridade</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Status</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-right">Ações de Fiscalização</th>
                   </tr>
@@ -297,6 +323,20 @@ export default function DiretorModule({ user }: { user: any }) {
                           <Clock size={14} className="text-indigo-500" />
                           <span className="text-[11px] font-black text-[var(--text-primary)] uppercase">{c.horario_trabalho || "07:00 - 17:00"}</span>
                           <Edit2 size={10} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100" />
+                        </button>
+                      </td>
+                      <td className="px-8 py-6">
+                        <button 
+                          onClick={() => setModalInsalubridade(c)}
+                          className={`flex items-center gap-2 p-3 rounded-xl border transition-all hover:scale-105 ${
+                            c.percentual_insalubridade === '40%' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
+                            c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
+                            c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
+                            'bg-[var(--bg-base)] border-[var(--border)] text-[var(--text-muted)]'
+                          }`}
+                        >
+                          <Zap size={14} className={c.percentual_insalubridade ? 'text-current' : 'text-slate-400'} />
+                          <span className="text-[11px] font-black uppercase">{c.percentual_insalubridade || "DEFINIR"}</span>
                         </button>
                       </td>
                       <td className="px-8 py-6">
@@ -386,6 +426,36 @@ export default function DiretorModule({ user }: { user: any }) {
       </div>
 
       {/* Modais Customizados */}
+      {modalInsalubridade && (
+        <AdaptiveModal isOpen={!!modalInsalubridade} onClose={() => setModalInsalubridade(null)} title="Definir Percentual de Insalubridade" size="md">
+          <div className="p-8 space-y-6">
+            <div className="bg-amber-500/10 p-6 rounded-3xl border border-amber-500/20">
+               <h4 className="text-sm font-black uppercase text-amber-600 mb-2">{modalInsalubridade.nome}</h4>
+               <p className="text-[11px] font-bold text-slate-500 uppercase">
+                 Defina o percentual de acordo com o risco da atividade. 
+                 <br/><br/>
+                 <span className="text-amber-700">Atenção: Cozinha é fixo em 20%. Auxiliares de limpeza variam entre 20% e 40% dependendo do setor.</span>
+               </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+               {['N/A', '20%', '30%', '40%'].map(pct => (
+                 <button
+                  key={pct}
+                  onClick={() => handleUpdateInsalubridade(modalInsalubridade.id, pct)}
+                  className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${
+                    modalInsalubridade.percentual_insalubridade === pct 
+                    ? 'bg-amber-600 border-amber-600 text-white shadow-xl scale-105' 
+                    : 'bg-white border-slate-100 text-slate-400 hover:border-amber-300'
+                  }`}
+                 >
+                   {pct}
+                 </button>
+               ))}
+            </div>
+          </div>
+        </AdaptiveModal>
+      )}
+
       {modalHorario && (
         <AdaptiveModal isOpen={!!modalHorario} onClose={() => setModalHorario(null)} title="Ajustar Horário de Trabalho" size="md">
           <div className="p-8 space-y-6">

@@ -35,33 +35,50 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
     return (
       <div className="flex flex-col gap-8 animate-fade-in">
         <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl">
-           <div className="flex items-center gap-4 mb-8">
-             <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
-               <Building2 className="text-indigo-600" size={24} />
+           <div className="flex items-center justify-between gap-4 mb-8">
+             <div className="flex items-center gap-4">
+               <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+                 <Building2 className="text-indigo-600" size={24} />
+               </div>
+               <div>
+                 <h3 className="text-xl font-black text-[var(--text-primary)] italic uppercase tracking-tighter">Seletor de Equipes Operacionais</h3>
+                 <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-60">Selecione uma unidade para auditar o quadro de funcionários</p>
+               </div>
              </div>
-             <div>
-               <h3 className="text-xl font-black text-[var(--text-primary)] italic uppercase tracking-tighter">Seletor de Equipes Operacionais</h3>
-               <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest opacity-60">Selecione uma unidade para auditar o quadro de funcionários</p>
-             </div>
+             {unidadesList.length === 0 && (
+               <button 
+                onClick={() => window.location.reload()}
+                className="px-6 py-3 bg-[var(--brand)] text-white rounded-xl text-[10px] font-black uppercase flex items-center gap-2 hover:scale-105 transition-all"
+               >
+                 <RefreshCw size={14} /> Sincronizar Unidades
+               </button>
+             )}
            </div>
 
-           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-             {unidadesList.map((u) => (
-               <button 
-                key={u.id}
-                onClick={() => fetchEquipe(u)}
-                className="flex flex-col p-6 bg-[var(--bg-base)] border border-[var(--border)] rounded-[2rem] hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/10 transition-all text-left group relative overflow-hidden"
-               >
-                 <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-indigo-500/10 transition-all" />
-                 <span className="text-[10px] font-black text-indigo-500 uppercase mb-2">{u.secretaria}</span>
-                 <h4 className="text-[13px] font-black text-[var(--text-primary)] uppercase leading-tight mb-4 group-hover:text-indigo-600 transition-colors">{u.nome}</h4>
-                 <div className="flex items-center gap-2 mt-auto">
-                    <Users size={14} className="text-[var(--text-muted)]" />
-                    <span className="text-[9px] font-black text-[var(--text-muted)] uppercase">Ver Quadro</span>
-                 </div>
-               </button>
-             ))}
-           </div>
+           {unidadesList.length === 0 ? (
+             <div className="py-20 text-center border-2 border-dashed border-[var(--border)] rounded-[2rem]">
+                <Info size={48} className="mx-auto mb-4 text-[var(--text-muted)] opacity-20" />
+                <p className="text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nenhuma unidade carregada. Clique em sincronizar ou verifique sua conexão.</p>
+             </div>
+           ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
+               {unidadesList.map((u) => (
+                 <button 
+                  key={u.id}
+                  onClick={() => fetchEquipe(u)}
+                  className="flex flex-col p-6 bg-[var(--bg-base)] border border-[var(--border)] rounded-[2rem] hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/10 transition-all text-left group relative overflow-hidden"
+                 >
+                   <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-indigo-500/10 transition-all" />
+                   <span className="text-[10px] font-black text-indigo-500 uppercase mb-2">{u.secretaria}</span>
+                   <h4 className="text-[13px] font-black text-[var(--text-primary)] uppercase leading-tight mb-4 group-hover:text-indigo-600 transition-colors">{u.nome}</h4>
+                   <div className="flex items-center gap-2 mt-auto">
+                      <Users size={14} className="text-[var(--text-muted)]" />
+                      <span className="text-[9px] font-black text-[var(--text-muted)] uppercase">Ver Quadro</span>
+                   </div>
+                 </button>
+               ))}
+             </div>
+           )}
         </div>
       </div>
     );
@@ -134,7 +151,8 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
                 <tr className="border-b border-[var(--border)] bg-[var(--bg-base)]/50">
                   <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Colaborador</th>
                   <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Cargo / Função</th>
-                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Horário de Trabalho</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Horário</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Insalubridade</th>
                   <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Status</th>
                   <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-right">Auditoria</th>
                 </tr>
@@ -158,6 +176,16 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
                         <Clock size={14} className="text-indigo-500" />
                         <span className="text-[11px] font-black text-[var(--text-primary)] uppercase">{c.horario_trabalho || "07:00 - 17:00"}</span>
                       </div>
+                    </td>
+                    <td className="px-8 py-6">
+                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black border ${
+                         c.percentual_insalubridade === '40%' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                         c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                         c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                         'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                       }`}>
+                          {c.percentual_insalubridade || 'N/A'}
+                       </span>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
