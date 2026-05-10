@@ -90,7 +90,10 @@ export function useRHData(user: any) {
 
       // 8. Fetch Config Checklist Dinâmico
       const { data: configDb } = await supabase.from('config_checklist_rh').select('*').order('ordem', { ascending: true });
-      if (configDb) setConfigChecklist(configDb);
+      if (configDb) {
+        console.log("[RH] Config Checklist Loaded:", configDb);
+        setConfigChecklist(configDb);
+      }
     } catch (err) {
       console.error("Erro no carregamento do RH:", err);
     } finally {

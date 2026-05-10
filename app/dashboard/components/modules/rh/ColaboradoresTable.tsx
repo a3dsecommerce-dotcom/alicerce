@@ -119,6 +119,7 @@ export default function ColaboradoresTable({
   onEdit,
   onDelete
 }: ColaboradoresTableProps) {
+  console.log("[RH Table] Rendering with config:", configChecklist);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [modalConfig, setModalConfig] = useState<any>(null);
 
@@ -276,8 +277,8 @@ export default function ColaboradoresTable({
                         if (source) onReorderConfig?.(sourceId, source.ordem || 0, col.id, col.ordem || 0);
                       }
                     }}
-                    className="p-2 text-center w-[70px] min-w-[70px] bg-[var(--bg-card)] border-x border-[var(--border)] shadow-sm group/header cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02]" 
-                    style={{ backgroundColor: col.color || 'transparent' }}
+                    className={`p-2 text-center w-[70px] min-w-[70px] border-x border-[var(--border)] shadow-sm group/header cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] ${(!col.color || col.color === 'transparent') ? 'bg-[var(--bg-card)]' : ''}`} 
+                    style={{ backgroundColor: (col.color && col.color !== 'transparent') ? col.color : undefined }}
                   >
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-[8px] font-black text-[var(--text-primary)] uppercase tracking-tighter leading-none h-4 overflow-hidden text-ellipsis whitespace-nowrap w-full" title={col.label}>{col.label}</span>
