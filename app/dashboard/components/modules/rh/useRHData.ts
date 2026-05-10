@@ -265,13 +265,15 @@ export function useRHData(user: any) {
       await fetchData();
     },
     updateChecklistColumn: async (id: string, newLabel: string) => {
-      const promise = supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id);
+      console.log(`[RH] Renaming ${id} to ${newLabel}`);
+      const promise = supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id).select();
       toast.promise(promise, {
         loading: 'Renomeando coluna...',
         success: 'Coluna renomeada!',
         error: (err) => `Erro: ${err.message || 'Verifique o SQL'}`
       });
-      const { error } = await promise;
+      const { data, error } = await promise;
+      console.log("[RH] Rename Result:", { data, error });
       if (error) throw error;
       await fetchData();
     },
@@ -292,7 +294,7 @@ export function useRHData(user: any) {
     configChecklist,
     updateChecklistColor: async (id: string, color: string) => {
       console.log(`[RH] Updating color for ${id} to ${color}`);
-      const promise = supabase.from('config_checklist_rh').update({ color }).eq('id', id);
+      const promise = supabase.from('config_checklist_rh').update({ color }).eq('id', id).select();
       
       toast.promise(promise, {
         loading: 'Salvando nova cor...',
@@ -300,7 +302,8 @@ export function useRHData(user: any) {
         error: (err) => `Erro ao salvar cor: ${err.message}`
       });
 
-      const { error } = await promise;
+      const { data, error } = await promise;
+      console.log("[RH] Color Update Result:", { data, error });
       if (error) {
         console.error("[RH] Color Update Error:", error);
         throw error;
