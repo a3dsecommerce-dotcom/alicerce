@@ -203,6 +203,16 @@ export default function ColaboradoresTable({
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #4338ca;
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-modal-fade { animation: fadeIn 0.2s ease-out forwards; }
+        .animate-modal-scale { animation: scaleIn 0.2s ease-out forwards; }
       `}</style>
       {/* Scroll Controls */}
       <div className="flex items-center justify-between px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-sm">
@@ -444,8 +454,8 @@ export default function ColaboradoresTable({
 
       {/* Modal de Configuração de Coluna */}
       {modalConfig && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setModalConfig(null)}>
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-modal-fade" onClick={() => setModalConfig(null)}>
+          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-modal-scale" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg">
