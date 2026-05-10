@@ -262,11 +262,14 @@ export function useRHData(user: any) {
       await fetchData();
     },
     updateChecklistColumn: async (id: string, newLabel: string) => {
-      const { error } = await supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id);
-      if (error) {
-        toast.error("Erro ao renomear: Certifique-se de que a coluna existe no Banco.");
-        throw error;
-      }
+      const promise = supabase.from('config_checklist_rh').update({ label: newLabel }).eq('id', id);
+      toast.promise(promise, {
+        loading: 'Renomeando coluna...',
+        success: 'Coluna renomeada!',
+        error: (err) => `Erro: ${err.message || 'Verifique o SQL'}`
+      });
+      const { error } = await promise;
+      if (error) throw error;
       await fetchData();
     },
     deleteChecklistColumn: async (id: string) => {
@@ -285,19 +288,40 @@ export function useRHData(user: any) {
     },
     configChecklist,
     updateChecklistColor: async (id: string, color: string) => {
-      const { error } = await supabase.from('config_checklist_rh').update({ color }).eq('id', id);
+      console.log(`[RH] Updating color for ${id} to ${color}`);
+      const promise = supabase.from('config_checklist_rh').update({ color }).eq('id', id);
+      
+      toast.promise(promise, {
+        loading: 'Salvando nova cor...',
+        success: 'Cor atualizada!',
+        error: (err) => `Erro ao salvar cor: ${err.message}`
+      });
+
+      const { error } = await promise;
       if (error) {
-        toast.error("Erro de Cores: Verifique se rodou o SQL Migration!");
+        console.error("[RH] Color Update Error:", error);
         throw error;
       }
       await fetchData();
     },
     reorderChecklistColumn: async (id1: string, order1: number, id2: string, order2: number) => {
-      const { error: err1 } = await supabase.from('config_checklist_rh').update({ ordem: order2 }).eq('id', id1);
-      const { error: err2 } = await supabase.from('config_checklist_rh').update({ ordem: order1 }).eq('id', id2);
-      if (err1 || err2) {
-        toast.error("Erro de Ordem: Verifique se rodou o SQL Migration!");
-        throw (err1 || err2);
+      console.log(`[RH] Reordering: ${id1}(${order1}) <-> ${id2}(${order2})`);
+      const promise = Promise.all([
+        supabase.from('config_checklist_rh').update({ ordem: order2 }).eq('id', id1),
+        supabase.from('config_checklist_rh').update({ ordem: order1 }).eq('id', id2)
+      ]);
+
+      toast.promise(promise, {
+        loading: 'Movendo coluna...',
+        success: 'Posição atualizada!',
+        error: 'Erro ao mover coluna'
+      });
+
+      const results = await promise;
+      const error = results.find(r => r.error)?.error;
+      if (error) {
+        console.error("[RH] Reorder Error:", error);
+        throw error;
       }
       await fetchData();
     },
