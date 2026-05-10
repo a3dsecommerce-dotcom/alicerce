@@ -17,7 +17,7 @@ interface VisaoGeralProps {
   usuariosOnline: any[];
 }
 
-type Sector = "GERAL" | "ALMOX" | "ENCARREGADO" | "RH";
+type Sector = "GERAL" | "ALMOX" | "ENCARREGADO" | "RH" | "FISCAL";
 
 export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, volantes, requisicoesVolantes, usuariosOnline }: VisaoGeralProps) {
   const [activeSector, setActiveSector] = useState<Sector>("GERAL");
@@ -31,6 +31,7 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
     { id: "ALMOX", label: "Almoxarifado", icon: Package, color: "#f59e0b" },
     { id: "ENCARREGADO", label: "Encarregado", icon: Shield, color: "#10b981" },
     { id: "RH", label: "RH & Pessoal", icon: Users, color: "#3b82f6" },
+    { id: "FISCAL", label: "Fiscalização", icon: UserCheck, color: "#8b5cf6" },
   ];
 
   return (
@@ -89,6 +90,15 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
         </div>
       )}
 
+      {activeSector === "FISCAL" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+           <KPICard label="Diretores Ativos" value={stats.diretoresAtivos} icon={UserCheck} color="bg-purple-600" />
+           <KPICard label="Vontades / Pedidos" value={stats.solicitacoesDiretor} icon={Sparkles} color="bg-indigo-500" />
+           <KPICard label="Alterações Hoje" value={logs.filter(l => l.mensagem.includes('DIRETOR:')).length} icon={RefreshCw} color="bg-blue-600" />
+           <KPICard label="Unidades Sem Fiscal" value={42 - stats.diretoresAtivos} icon={Building2} color="bg-slate-500" />
+        </div>
+      )}
+
       {/* CONTEÚDO ESPECÍFICO */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
@@ -114,6 +124,7 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
                     <ProcessStat label="Atendimento SLA" status="ALERTA" pct={72} color="bg-orange-500" />
                     <ProcessStat label="Entregas Almox" status="EFICIENTE" pct={94} color="bg-blue-500" />
                     <ProcessStat label="Cobertura de Vagas" status="CRÍTICO" pct={45} color="bg-red-500" />
+                    <ProcessStat label="Fiscalização Direta" status={stats.diretoresAtivos > 10 ? "ATIVO" : "INICIAL"} pct={Math.round((stats.diretoresAtivos / 42) * 100)} color="bg-purple-500" />
                   </div>
                </div>
 
@@ -252,6 +263,39 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeSector === "FISCAL" && (
+            <div className="flex flex-col gap-8 animate-in slide-in-from-left duration-500">
+               <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-xl overflow-hidden p-10">
+                  <div className="flex items-center gap-4 mb-8">
+                     <Sparkles size={24} className="text-indigo-500" />
+                     <h3 className="text-xl font-black text-[var(--text-primary)] italic tracking-tighter">Solicitações do Contratante</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                     {logs.filter(l => l.mensagem.includes('DIRETOR:')).slice(0, 5).map((log, idx) => (
+                        <div key={idx} className="p-6 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)] flex items-center justify-between group">
+                           <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                                 <RefreshCw size={18} className="group-hover:rotate-180 transition-all duration-700" />
+                              </div>
+                              <div>
+                                 <p className="text-[11px] font-bold text-[var(--text-primary)] leading-tight">{log.mensagem}</p>
+                                 <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mt-1">
+                                    {new Date(log.created_at).toLocaleDateString()} • {log.usuario_nome}
+                                 </p>
+                              </div>
+                           </div>
+                           <button className="px-4 py-2 bg-indigo-500/10 text-indigo-600 rounded-xl text-[9px] font-black uppercase hover:bg-indigo-600 hover:text-white transition-all">Analisar</button>
+                        </div>
+                     ))}
+                     {logs.filter(l => l.mensagem.includes('DIRETOR:')).length === 0 && (
+                        <p className="text-center py-10 text-[10px] font-black text-[var(--text-muted)] uppercase opacity-50 italic">Nenhuma interação de fiscalização detectada hoje.</p>
+                     )}
+                  </div>
+               </div>
             </div>
           )}
 

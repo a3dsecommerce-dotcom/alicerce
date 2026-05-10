@@ -14,7 +14,10 @@ export function useGerenciaData(currentUser?: any) {
     totalColaboradores: 0,
     totalRequisicoes: 0,
     totalVagas: 0,
-    ticketsAbertos: 0
+    totalVagas: 0,
+    ticketsAbertos: 0,
+    diretoresAtivos: 0,
+    solicitacoesDiretor: 0
   });
 
   const pingAtividade = useCallback(async () => {
@@ -89,11 +92,13 @@ export function useGerenciaData(currentUser?: any) {
       if (reqVolData) setRequisicoesVolantes(reqVolData);
 
       // 4. Stats gerais — busca dados completos para filtrar Gestão Própria e calcular vagas
-      const [colabsData, reqs, quadroRes, tickets] = await Promise.all([
+      const [colabsData, reqs, quadroRes, tickets, diretoresRes, feedbacksRes] = await Promise.all([
         supabase.from('usuarios').select('unidade_alocacao, cargo, secretaria').eq('status', 'ATIVO'),
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
         supabase.from('vagas_quadro').select('unidade_nome, cargo, vagas_totais'),
-        supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
+        supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
+        supabase.from('unidades').select('*', { count: 'exact', head: true }).not('diretor_id', 'is', null),
+        supabase.from('feedback_diretor').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
       ]);
 
       // Exclui unidades Alicerce/PMG (gestão própria) da contagem oficial
@@ -120,7 +125,9 @@ export function useGerenciaData(currentUser?: any) {
         totalColaboradores: totalOficiais,
         totalRequisicoes: reqs.count || 0,
         totalVagas: totalVagasAbertas,
-        ticketsAbertos: tickets.count || 0
+        ticketsAbertos: tickets.count || 0,
+        diretoresAtivos: diretoresRes.count || 0,
+        solicitacoesDiretor: feedbacksRes.count || 0
       });
 
       // 5. Distribuição de colaboradores (Reutiliza dados já carregados)

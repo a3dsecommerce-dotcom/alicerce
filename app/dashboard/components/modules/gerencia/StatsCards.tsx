@@ -7,6 +7,8 @@ interface StatsCardsProps {
     totalRequisicoes: number;
     totalVagas: number;
     ticketsAbertos: number;
+    diretoresAtivos: number;
+    solicitacoesDiretor: number;
   };
 }
 
