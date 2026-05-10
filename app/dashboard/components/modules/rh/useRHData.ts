@@ -250,8 +250,23 @@ export function useRHData(user: any) {
       await fetchData();
     },
     addChecklistColumn: async (label: string) => {
-      const { error } = await supabase.from('config_checklist_rh').insert([{ label }]);
-      if (error) throw error;
+      const tempId = `temp-${Date.now()}`;
+      // Optimistic add
+      setConfigChecklist(prev => [...prev, { id: tempId, label, color: 'transparent', ordem: prev.length + 1 }]);
+
+      const promise = supabase.from('config_checklist_rh').insert([{ label, ordem: configChecklist.length + 1 }]).select();
+      
+      toast.promise(promise, {
+        loading: 'Criando coluna...',
+        success: 'Coluna criada!',
+        error: 'Erro ao criar'
+      });
+
+      const { error } = await promise;
+      if (error) {
+        await fetchData(); // Rollback
+        throw error;
+      }
       
       // Log de Atividade
       await supabase.from('atividades').insert([{
@@ -262,7 +277,7 @@ export function useRHData(user: any) {
         created_at: new Date().toISOString()
       }]);
 
-      await fetchData();
+      await fetchData(); // Get real ID
     },
     updateChecklistColumn: async (id: string, newLabel: string) => {
       // Optimistic update
@@ -281,9 +296,27 @@ export function useRHData(user: any) {
       }
     },
     deleteChecklistColumn: async (id: string) => {
-      const { error } = await supabase.from('config_checklist_rh').delete().eq('id', id);
-      if (error) throw error;
-      await fetchData();
+      if (id.startsWith('temp-')) {
+        toast.error("Aguarde a coluna terminar de ser criada...");
+        return;
+      }
+
+      // Optimistic delete
+      setConfigChecklist(prev => prev.filter(c => c.id !== id));
+
+      const promise = supabase.from('config_checklist_rh').delete().eq('id', id);
+      
+      toast.promise(promise, {
+        loading: 'Excluindo coluna...',
+        success: 'Coluna removida!',
+        error: 'Erro ao excluir'
+      });
+
+      const { error } = await promise;
+      if (error) {
+        await fetchData(); // Rollback
+        throw error;
+      }
     },
     updateExtraCheck: async (id: string, label: string, value: boolean) => {
       const { data: colab } = await supabase.from('usuarios').select('checklist_extra').eq('id', id).single();
