@@ -374,7 +374,7 @@ export default function ColaboradoresTable({
                 <>
                   <td className="p-4 text-[10px] font-black text-center">{c.unidade}</td>
                   {configChecklist.map(col => (
-                    <td key={col.id} className="p-4 text-center border-x border-[var(--border)]/10" style={{ backgroundColor: col.color ? `${col.color}20` : 'transparent' }}>
+                    <td key={col.id} className="p-4 text-center border-x border-[var(--border)]/10" style={{ backgroundColor: (col.color && col.color !== 'transparent') ? `${col.color}15` : 'transparent' }}>
                       <input 
                         type="checkbox" 
                         checked={!!(c.checklist_extra?.[col.label])} 
@@ -499,7 +499,7 @@ export default function ColaboradoresTable({
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cor de Identificação</label>
                 <div className="grid grid-cols-6 gap-3">
-                  {['#fef2f2', '#f0f9ff', '#f0fdf4', '#fffbeb', '#f5f3ff', 'transparent'].map(color => (
+                  {['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 'transparent'].map(color => (
                     <button 
                       key={color}
                       onClick={() => {
