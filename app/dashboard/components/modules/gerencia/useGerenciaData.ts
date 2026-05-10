@@ -14,11 +14,14 @@ export function useGerenciaData(currentUser?: any) {
     totalColaboradores: 0,
     totalRequisicoes: 0,
     totalVagas: 0,
-    totalVagas: 0,
     ticketsAbertos: 0,
     diretoresAtivos: 0,
     solicitacoesDiretor: 0
   });
+
+  // Filtros Globais
+  const [selectedSecretaria, setSelectedSecretaria] = useState<string>("");
+  const [selectedUnidade, setSelectedUnidade] = useState<string>("");
 
   const pingAtividade = useCallback(async () => {
     if (!currentUser) return;
@@ -36,64 +39,36 @@ export function useGerenciaData(currentUser?: any) {
   const fetchGerencia = useCallback(async () => {
     setLoading(true);
     try {
-      // 1. Ping de atividade (Silencioso)
-      if (currentUser?.id) {
-        await supabase.from('atividades').insert([{
-          usuario_id: currentUser.id,
-          usuario_nome: currentUser.nome || currentUser.email || 'Usuário Gerência',
-          mensagem: "Sessão Ativa no Painel",
-          tipo: "SISTEMA",
-          created_at: new Date().toISOString()
-        }]);
+      // 2. Fetch Logs (Atividades) - Aplica filtro se existir
+      let logsQuery = supabase.from('atividades').select('*');
+      if (selectedUnidade) {
+        logsQuery = logsQuery.ilike('mensagem', `%${selectedUnidade}%`);
       }
+      const { data: logsData } = await logsQuery.order('created_at', { ascending: false }).limit(50);
+      setLogs(logsData || []);
 
-      // 2. Fetch Logs (Atividades)
-      const { data: logsData, error: logsError } = await supabase
-        .from('atividades')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (logsError) {
-        console.error("Erro ao buscar logs:", logsError);
-        setLogs([]);
-      } else {
-        setLogs(logsData || []);
-      }
-
-      // 3. Usuários Online (Baseado na telemetria de presença)
+      // 3. Usuários Online
       const quinzeMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-      const { data: onlineUsersData } = await supabase
-        .from('usuarios')
-        .select('id, nome, cargo, ultima_presenca')
-        .gt('ultima_presenca', quinzeMinAgo)
-        .order('ultima_presenca', { ascending: false });
+      let onlineQuery = supabase.from('usuarios').select('id, nome, cargo, ultima_presenca').gt('ultima_presenca', quinzemAgo);
+      if (selectedSecretaria) onlineQuery = onlineQuery.eq('secretaria', selectedSecretaria);
+      if (selectedUnidade) onlineQuery = onlineQuery.eq('unidade_alocacao', selectedUnidade);
       
+      const { data: onlineUsersData } = await onlineQuery.order('ultima_presenca', { ascending: false });
       if (onlineUsersData) {
         setUsuariosOnline(onlineUsersData.map(u => ({
           usuario_id: u.id,
           usuario_nome: u.nome,
-          created_at: u.ultima_presenca // Mapeado para compatibilidade com o componente visual
+          created_at: u.ultima_presenca
         })));
       }
 
-      // 4. Fetch Volantes
-      const { data: volData } = await supabase
-        .from('escala_volantes')
-        .select('*')
-        .order('data', { ascending: false });
-      if (volData) setVolantes(volData);
+      // 4. Stats e Distribuição
+      let colabsQuery = supabase.from('usuarios').select('unidade_alocacao, cargo, secretaria').eq('status', 'ATIVO');
+      if (selectedSecretaria) colabsQuery = colabsQuery.eq('secretaria', selectedSecretaria);
+      if (selectedUnidade) colabsQuery = colabsQuery.eq('unidade_alocacao', selectedUnidade);
 
-      // 3. Fetch Requisições de Volantes
-      const { data: reqVolData } = await supabase
-        .from('requisicoes_volantes')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (reqVolData) setRequisicoesVolantes(reqVolData);
-
-      // 4. Stats gerais — busca dados completos para filtrar Gestão Própria e calcular vagas
-      const [colabsData, reqs, quadroRes, tickets, diretoresRes, feedbacksRes] = await Promise.all([
-        supabase.from('usuarios').select('unidade_alocacao, cargo, secretaria').eq('status', 'ATIVO'),
+      const [colabsRes, reqs, quadroRes, tickets, diretoresRes, feedbacksRes] = await Promise.all([
+        colabsQuery,
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
         supabase.from('vagas_quadro').select('unidade_nome, cargo, vagas_totais'),
         supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
@@ -101,19 +76,20 @@ export function useGerenciaData(currentUser?: any) {
         supabase.from('feedback_diretor').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
       ]);
 
-      // Exclui unidades Alicerce/PMG (gestão própria) da contagem oficial
+      const todosColabs = colabsRes.data || [];
+      
+      // Exclui unidades Alicerce/PMG (gestão própria) da contagem oficial se não houver filtro específico
       const isGestaoPropria = (unidade: string) => {
         const u = (unidade || '').toUpperCase();
         return u.includes('ALICERCE') || u.includes('PMG');
       };
       
-      const todosColabs = colabsData.data || [];
-      const oficiais = todosColabs.filter(c => !isGestaoPropria(c.unidade_alocacao));
-      const totalOficiais = oficiais.length;
-
-      // Cálculo dinâmico de vagas abertas baseadas no Quadro de Lotação
+      const oficiais = selectedUnidade ? todosColabs : todosColabs.filter(c => !isGestaoPropria(c.unidade_alocacao));
+      
+      // Cálculo dinâmico de vagas abertas
       let totalVagasAbertas = 0;
       (quadroRes.data || []).forEach(q => {
+        if (selectedUnidade && q.unidade_nome !== selectedUnidade) return;
         const ocupadas = todosColabs.filter(c => 
           c.unidade_alocacao === q.unidade_nome && 
           (c.cargo || "").toUpperCase() === (q.cargo || "").toUpperCase()
@@ -122,7 +98,7 @@ export function useGerenciaData(currentUser?: any) {
       });
 
       setStats({
-        totalColaboradores: totalOficiais,
+        totalColaboradores: oficiais.length,
         totalRequisicoes: reqs.count || 0,
         totalVagas: totalVagasAbertas,
         ticketsAbertos: tickets.count || 0,
@@ -130,48 +106,32 @@ export function useGerenciaData(currentUser?: any) {
         solicitacoesDiretor: feedbacksRes.count || 0
       });
 
-      // 5. Distribuição de colaboradores (Reutiliza dados já carregados)
-      if (todosColabs) {
-        const allColabs = todosColabs;
-        // Filtra Gestão Própria (Alicerce/PMG) — fora do contrato oficial
-        const oficiais = allColabs.filter(c => !isGestaoPropria(c.unidade_alocacao || ''));
+      // Distribuição de ASG por Secretaria
+      const asgList = oficiais.filter(c => {
+        const c_ = (c.cargo || '').toUpperCase();
+        return c_.includes('ASG') || c_.includes('AGENTE DE SERVI') || (c_.includes('SERV') && c_.includes('GERAIS'));
+      });
+      const asgMap: Record<string, number> = {};
+      asgList.forEach(c => {
+        const sec = c.secretaria || 'Não informada';
+        asgMap[sec] = (asgMap[sec] || 0) + 1;
+      });
+      setAsgPorSecretaria(Object.entries(asgMap).map(([secretaria, total]) => ({ secretaria, total })).sort((a,b) => b.total - a.total));
 
-        // ASG por Secretaria — apenas efetivo oficial
-        const asgList = oficiais.filter(c => {
-          const c_ = (c.cargo || '').toUpperCase();
-          return c_.includes('ASG') || c_.includes('AGENTE DE SERVI') || (c_.includes('SERV') && c_.includes('GERAIS'));
-        });
-        const asgMap: Record<string, number> = {};
-        asgList.forEach(c => {
-          const sec = c.secretaria || 'Não informada';
-          asgMap[sec] = (asgMap[sec] || 0) + 1;
-        });
-        setAsgPorSecretaria(
-          Object.entries(asgMap)
-            .map(([secretaria, total]) => ({ secretaria, total }))
-            .sort((a, b) => b.total - a.total)
-        );
-
-        // Distribuição por Cargo — apenas efetivo oficial
-        const cargoMap: Record<string, number> = {};
-        oficiais.forEach(c => {
-          const cargo = (c.cargo || 'Não definido').toUpperCase().trim();
-          cargoMap[cargo] = (cargoMap[cargo] || 0) + 1;
-        });
-        setCargos(
-          Object.entries(cargoMap)
-            .map(([cargo, total]) => ({ cargo, total }))
-            .sort((a, b) => b.total - a.total)
-            .slice(0, 20)
-        );
-      }
+      // Distribuição por Cargo
+      const cargoMap: Record<string, number> = {};
+      oficiais.forEach(c => {
+        const cargo = (c.cargo || 'Não definido').toUpperCase().trim();
+        cargoMap[cargo] = (cargoMap[cargo] || 0) + 1;
+      });
+      setCargos(Object.entries(cargoMap).map(([cargo, total]) => ({ cargo, total })).sort((a,b) => b.total - a.total).slice(0, 20));
 
     } catch (err) {
       console.error("Erro no carregamento da Gerência:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedSecretaria, selectedUnidade]);
 
   useEffect(() => {
     fetchGerencia();
@@ -186,6 +146,10 @@ export function useGerenciaData(currentUser?: any) {
     asgPorSecretaria,
     cargos,
     usuariosOnline,
+    selectedSecretaria,
+    setSelectedSecretaria,
+    selectedUnidade,
+    setSelectedUnidade,
     refresh: fetchGerencia
   };
 }

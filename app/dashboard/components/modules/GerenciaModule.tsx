@@ -21,7 +21,12 @@ import CotasManager from "./gerencia/CotasManager";
 import QuadroVagas from "./rh/QuadroVagas";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const { loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, asgPorSecretaria, cargos, usuariosOnline, refresh } = useGerenciaData(user);
+  const { 
+    loading: loadingGerencia, logs, stats, volantes, requisicoesVolantes, 
+    asgPorSecretaria, cargos, usuariosOnline, refresh,
+    selectedSecretaria, setSelectedSecretaria,
+    selectedUnidade, setSelectedUnidade
+  } = useGerenciaData(user);
   const { transferencias, analisarGerencia } = useTransferencias(user);
   const [activeTab, setActiveTab] = useState<"VISAO" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
@@ -315,6 +320,11 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
             volantes={volantes}
             requisicoesVolantes={requisicoesVolantes}
             usuariosOnline={usuariosOnline}
+            selectedSecretaria={selectedSecretaria}
+            setSelectedSecretaria={setSelectedSecretaria}
+            selectedUnidade={selectedUnidade}
+            setSelectedUnidade={setSelectedUnidade}
+            unidadesList={unidades}
            />
         )}
 

@@ -15,16 +15,25 @@ interface VisaoGeralProps {
   volantes: any[];
   requisicoesVolantes: any[];
   usuariosOnline: any[];
+  selectedSecretaria: string;
+  setSelectedSecretaria: (s: string) => void;
+  selectedUnidade: string;
+  setSelectedUnidade: (u: string) => void;
+  unidadesList: any[];
 }
 
 type Sector = "GERAL" | "ALMOX" | "ENCARREGADO" | "RH" | "FISCAL";
 
-export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, volantes, requisicoesVolantes, usuariosOnline }: VisaoGeralProps) {
+export default function VisaoGeral({ 
+  stats, logs, asgPorSecretaria, cargos, volantes, requisicoesVolantes, usuariosOnline,
+  selectedSecretaria, setSelectedSecretaria, selectedUnidade, setSelectedUnidade, unidadesList
+}: VisaoGeralProps) {
   const [activeSector, setActiveSector] = useState<Sector>("GERAL");
 
   const totalASG = asgPorSecretaria.reduce((acc, s) => acc + s.total, 0);
-  const maxASG = asgPorSecretaria[0]?.total || 1;
-  const maxCargo = cargos[0]?.total || 1;
+  
+  // Extrai secretarias únicas da lista de colaboradores para o filtro
+  const secretarias = Array.from(new Set(asgPorSecretaria.map(s => s.secretaria))).sort();
 
   const sectors = [
     { id: "GERAL", label: "Visão Geral", icon: LayoutDashboard, color: "var(--brand)" },
@@ -36,6 +45,56 @@ export default function VisaoGeral({ stats, logs, asgPorSecretaria, cargos, vola
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
+
+      {/* FILTROS GLOBAIS DE GESTÃO */}
+      <div className="flex flex-wrap items-center gap-6 p-6 bg-gradient-to-br from-indigo-900 to-slate-900 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-20 -mt-20" />
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="p-3 bg-white/10 rounded-2xl border border-white/20">
+            <Search size={20} className="text-white" />
+          </div>
+          <div>
+            <h3 className="text-xs font-black text-white uppercase tracking-widest">Filtros de Contexto</h3>
+            <p className="text-[9px] font-bold text-indigo-200 uppercase opacity-60">Recorte Global da Operação</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 flex-1 relative z-10">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-[9px] font-black text-indigo-300 uppercase mb-1.5 block ml-1">Por Secretaria</label>
+            <select 
+              className="w-full bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase text-white p-3 outline-none hover:bg-white/10 transition-all cursor-pointer"
+              value={selectedSecretaria}
+              onChange={(e) => setSelectedSecretaria(e.target.value)}
+            >
+              <option value="" className="bg-slate-900">TODAS AS SECRETARIAS</option>
+              {secretarias.map(s => <option key={s} value={s} className="bg-slate-900">{s}</option>)}
+            </select>
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-[9px] font-black text-indigo-300 uppercase mb-1.5 block ml-1">Por Unidade</label>
+            <select 
+              className="w-full bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase text-white p-3 outline-none hover:bg-white/10 transition-all cursor-pointer"
+              value={selectedUnidade}
+              onChange={(e) => setSelectedUnidade(e.target.value)}
+            >
+              <option value="" className="bg-slate-900">TODAS AS UNIDADES</option>
+              {unidadesList.map(u => <option key={u.id} value={u.nome} className="bg-slate-900">{u.nome}</option>)}
+            </select>
+          </div>
+
+          {(selectedSecretaria || selectedUnidade) && (
+            <button 
+              onClick={() => { setSelectedSecretaria(""); setSelectedUnidade(""); }}
+              className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-[10px] font-black uppercase transition-all mt-5"
+            >
+              Limpar Filtros
+            </button>
+          )}
+        </div>
+      </div>
       
       {/* SUB-NAVEGAÇÃO SETORIAL */}
       <div className="flex flex-wrap gap-4 p-2 bg-[var(--bg-card)] rounded-[2rem] border border-[var(--border)] shadow-sm">
