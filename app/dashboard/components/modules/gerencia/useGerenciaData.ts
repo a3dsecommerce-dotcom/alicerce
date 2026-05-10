@@ -49,7 +49,7 @@ export function useGerenciaData(currentUser?: any) {
 
       // 3. Usuários Online
       const quinzeMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-      let onlineQuery = supabase.from('usuarios').select('id, nome, cargo, ultima_presenca').gt('ultima_presenca', quinzemAgo);
+      let onlineQuery = supabase.from('usuarios').select('id, nome, cargo, ultima_presenca').gt('ultima_presenca', quinzeMinAgo);
       if (selectedSecretaria) onlineQuery = onlineQuery.eq('secretaria', selectedSecretaria);
       if (selectedUnidade) onlineQuery = onlineQuery.eq('unidade_alocacao', selectedUnidade);
       

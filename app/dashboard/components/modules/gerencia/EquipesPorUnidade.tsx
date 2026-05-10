@@ -11,6 +11,14 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [quadroReferencia, setQuadroReferencia] = useState<any[]>([]);
   const [busca, setBusca] = useState("");
+  const [filtroUnidade, setFiltroUnidade] = useState("");
+  const [filtroSecretaria, setFiltroSecretaria] = useState("");
+
+  const secretarias = Array.from(new Set(unidadesList.map(u => u.secretaria))).sort();
+  const unidadesFiltradas = unidadesList.filter(u => 
+    (filtroSecretaria === "" || u.secretaria === filtroSecretaria) &&
+    (filtroUnidade === "" || u.nome.toLowerCase().includes(filtroUnidade.toLowerCase()))
+  );
 
   const fetchEquipe = async (unit: any) => {
     setSelectedUnit(unit);
@@ -55,14 +63,35 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
              )}
            </div>
 
-           {unidadesList.length === 0 ? (
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-[var(--bg-base)] p-6 rounded-[2rem] border border-[var(--border)]">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
+                <input 
+                  type="text" 
+                  placeholder="Pesquisar unidade pelo nome..." 
+                  className="w-full pl-12 pr-4 py-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-[11px] font-black uppercase outline-none focus:border-indigo-500 transition-all"
+                  value={filtroUnidade}
+                  onChange={(e) => setFiltroUnidade(e.target.value)}
+                />
+              </div>
+              <select 
+                className="w-full px-4 py-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-[11px] font-black uppercase outline-none focus:border-indigo-500 transition-all"
+                value={filtroSecretaria}
+                onChange={(e) => setFiltroSecretaria(e.target.value)}
+              >
+                <option value="">Todas as Secretarias</option>
+                {secretarias.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+           </div>
+
+           {unidadesFiltradas.length === 0 ? (
              <div className="py-20 text-center border-2 border-dashed border-[var(--border)] rounded-[2rem]">
                 <Info size={48} className="mx-auto mb-4 text-[var(--text-muted)] opacity-20" />
-                <p className="text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nenhuma unidade carregada. Clique em sincronizar ou verifique sua conexão.</p>
+                <p className="text-[11px] font-black uppercase text-[var(--text-muted)] tracking-widest">Nenhuma unidade encontrada para estes filtros.</p>
              </div>
            ) : (
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
-               {unidadesList.map((u) => (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[50vh] overflow-y-auto pr-4 custom-scrollbar">
+               {unidadesFiltradas.map((u) => (
                  <button 
                   key={u.id}
                   onClick={() => fetchEquipe(u)}
