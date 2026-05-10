@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { 
   Users, AlertTriangle, ArrowRightLeft, Sparkles, Search, Clock, 
   CheckCircle, XCircle, Send, MoreHorizontal, UserCheck, UserX, 
-  MessageSquare, Plus, ChevronRight, FileText, Info, Edit2
+  MessageSquare, Plus, ChevronRight, FileText, Info, Edit2, Zap
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";

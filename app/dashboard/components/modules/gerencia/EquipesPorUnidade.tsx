@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Users, Search, Building2, MapPin, Shield, CheckCircle2, XCircle, Clock, Info } from "lucide-react";
+import { Users, Search, Building2, MapPin, Shield, CheckCircle2, XCircle, Clock, Info, RefreshCw } from "lucide-react";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 
