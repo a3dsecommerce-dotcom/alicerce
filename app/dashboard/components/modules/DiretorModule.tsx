@@ -18,6 +18,7 @@ export default function DiretorModule({ user }: { user: any }) {
   const [unidade, setUnidade] = useState<any>(null);
   const [allUnits, setAllUnits] = useState<any[]>([]);
   const [colaboradores, setColaboradores] = useState<any[]>([]);
+  const [quadroReferencia, setQuadroReferencia] = useState<any[]>([]);
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [transferencias, setTransferencias] = useState<any[]>([]);
   const [busca, setBusca] = useState("");
@@ -69,13 +70,15 @@ export default function DiretorModule({ user }: { user: any }) {
       const currentUnitId = unitData?.id || "0";
 
       // 3. Buscar Dados da Unidade selecionada
-      const [colabsRes, feedsRes, transfsRes] = await Promise.all([
+      const [colabsRes, feedsRes, transfsRes, quadroRes] = await Promise.all([
         supabase.from('usuarios').select('*').eq('unidade_alocacao', currentUnitName).eq('status', 'ATIVO'),
         supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
-        supabase.from('transferencias').select('*').eq('unidade_origem', currentUnitName)
+        supabase.from('transferencias').select('*').eq('unidade_origem', currentUnitName),
+        supabase.from('vagas_quadro').select('*').eq('unidade_nome', currentUnitName)
       ]);
 
       setColaboradores(colabsRes.data || []);
+      setQuadroReferencia(quadroRes.data || []);
       setOcorrencias(feedsRes.data || []);
       setTransferencias(transfsRes.data || []);
 
@@ -326,18 +329,26 @@ export default function DiretorModule({ user }: { user: any }) {
                         </button>
                       </td>
                       <td className="px-8 py-6">
-                        <button 
-                          onClick={() => setModalInsalubridade(c)}
-                          className={`flex items-center gap-2 p-3 rounded-xl border transition-all hover:scale-105 ${
-                            c.percentual_insalubridade === '40%' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
-                            c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
-                            c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
-                            'bg-[var(--bg-base)] border-[var(--border)] text-[var(--text-muted)]'
-                          }`}
-                        >
-                          <Zap size={14} className={c.percentual_insalubridade ? 'text-current' : 'text-slate-400'} />
-                          <span className="text-[11px] font-black uppercase">{c.percentual_insalubridade || "DEFINIR"}</span>
-                        </button>
+                        {(() => {
+                          const ref = quadroReferencia.find(q => (q.cargo || "").toUpperCase() === (c.cargo || "").toUpperCase())?.insalubridade || 'N/A';
+                          return (
+                            <div className="flex flex-col gap-2">
+                              <button 
+                                onClick={() => setModalInsalubridade(c)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 w-fit ${
+                                  c.percentual_insalubridade === '40%' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
+                                  c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
+                                  c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
+                                  'bg-[var(--bg-base)] border-[var(--border)] text-[var(--text-muted)]'
+                                }`}
+                              >
+                                <Zap size={14} className={c.percentual_insalubridade ? 'text-current' : 'text-slate-400'} />
+                                <span className="text-[10px] font-black uppercase">{c.percentual_insalubridade || "DEFINIR"}</span>
+                              </button>
+                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ref. Quadro: {ref}</span>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">

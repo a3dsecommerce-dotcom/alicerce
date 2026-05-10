@@ -9,21 +9,21 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [colaboradores, setColaboradores] = useState<any[]>([]);
+  const [quadroReferencia, setQuadroReferencia] = useState<any[]>([]);
   const [busca, setBusca] = useState("");
 
   const fetchEquipe = async (unit: any) => {
     setSelectedUnit(unit);
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('unidade_alocacao', unit.nome)
-        .eq('status', 'ATIVO')
-        .order('nome');
+      const [colabsRes, quadroRes] = await Promise.all([
+        supabase.from('usuarios').select('*').eq('unidade_alocacao', unit.nome).eq('status', 'ATIVO').order('nome'),
+        supabase.from('vagas_quadro').select('*').eq('unidade_nome', unit.nome)
+      ]);
       
-      if (error) throw error;
-      setColaboradores(data || []);
+      if (colabsRes.error) throw colabsRes.error;
+      setColaboradores(colabsRes.data || []);
+      setQuadroReferencia(quadroRes.data || []);
     } catch (err: any) {
       toast.error("Erro ao carregar equipe: " + err.message);
     } finally {
@@ -178,14 +178,22 @@ export default function EquipesPorUnidade({ unidadesList }: { unidadesList: any[
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                       <span className={`px-4 py-1.5 rounded-full text-[10px] font-black border ${
-                         c.percentual_insalubridade === '40%' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
-                         c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
-                         c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                         'bg-slate-500/10 text-slate-500 border-slate-500/20'
-                       }`}>
-                          {c.percentual_insalubridade || 'N/A'}
-                       </span>
+                       {(() => {
+                         const ref = quadroReferencia.find(q => (q.cargo || "").toUpperCase() === (c.cargo || "").toUpperCase())?.insalubridade || 'N/A';
+                         return (
+                            <div className="flex flex-col gap-1">
+                               <span className={`px-4 py-1.5 rounded-full text-[10px] font-black border w-fit ${
+                                 c.percentual_insalubridade === '40%' ? 'bg-red-500/10 text-red-600 border-red-500/20' :
+                                 c.percentual_insalubridade === '30%' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
+                                 c.percentual_insalubridade === '20%' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                                 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+                               }`}>
+                                  {c.percentual_insalubridade || 'N/A'}
+                               </span>
+                               <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest ml-1">Quadro: {ref}</span>
+                            </div>
+                         );
+                       })()}
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
