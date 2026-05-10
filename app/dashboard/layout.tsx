@@ -38,9 +38,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     async function syncUser() {
       try {
+        const impersonated = localStorage.getItem("impersonated_user");
         const saved = localStorage.getItem("crm_user");
+        
         if (saved) {
           const localUser = JSON.parse(saved);
+          
+          // Se for dev e estiver simulando alguém, o layout deve seguir as regras do simulado
+          if (impersonated && localUser.nivel_acesso >= 4) {
+             const impUser = JSON.parse(impersonated);
+             setUser(impUser);
+             return;
+          }
+
           setUser(localUser);
 
           // Sincroniza com o banco para garantir campos novos e role calculado
@@ -57,8 +67,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() 
                 : null;
               
-              // Se a função for especial (Almoxarife, Comprador, etc), ela define o role
-              // Caso contrário, usa o que vier do banco ou o nível de acesso
               const cargoResolvido = rawFuncao || (
                 dbUser.nivel_acesso >= 4 ? 'DEV' : 
                 dbUser.nivel_acesso >= 3 ? 'ADMIN' : 

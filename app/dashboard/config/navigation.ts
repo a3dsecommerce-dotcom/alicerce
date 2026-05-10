@@ -13,7 +13,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Painel de Controle',
     icon: LayoutDashboard,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO'],
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO', 'DIRETOR_UNIDADE'],
     href: '/dashboard?module=COMMAND'
   },
   {
@@ -55,7 +55,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Central de Ocorrências',
     icon: AlertTriangle,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'DIRETOR', 'ENCARREGADO'],
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'DIRETOR', 'DIRETOR_UNIDADE', 'ENCARREGADO'],
     href: '/dashboard?module=OCORRENCIAS'
   },
   {
