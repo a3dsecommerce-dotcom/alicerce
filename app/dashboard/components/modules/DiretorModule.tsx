@@ -91,10 +91,10 @@ export default function DiretorModule({ user }: { user: any }) {
 
       // 3. Buscar Dados da Unidade selecionada
       const [colabsRes, feedsRes, transfsRes, quadroRes] = await Promise.all([
-        supabase.from('usuarios').select('*').eq('unidade_alocacao', currentUnitName).eq('status', 'ATIVO'),
+        supabase.from('usuarios').select('*').ilike('unidade_alocacao', `%${currentUnitName}%`).eq('status', 'ATIVO'),
         supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
-        supabase.from('transferencias').select('*').eq('unidade_origem', currentUnitName),
-        supabase.from('vagas_quadro').select('*').eq('unidade_nome', currentUnitName)
+        supabase.from('transferencias').select('*').ilike('unidade_origem', `%${currentUnitName}%`),
+        supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${currentUnitName}%`)
       ]);
 
       setColaboradores(colabsRes.data || []);
