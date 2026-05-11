@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-type Tab = "EQUIPE" | "VOLANTE";
+type Tab = "EQUIPE" | "VOLANTE" | "DEMANDAS";
 
 export default function DiretorModule({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<Tab>("EQUIPE");
@@ -20,6 +20,7 @@ export default function DiretorModule({ user }: { user: any }) {
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [quadroReferencia, setQuadroReferencia] = useState<any[]>([]);
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
+  const [solicitacoesVolante, setSolicitacoesVolante] = useState<any[]>([]);
   const [busca, setBusca] = useState("");
 
   // Modais
@@ -85,14 +86,16 @@ export default function DiretorModule({ user }: { user: any }) {
         .or(`unidade_alocacao.ilike.%${cleanUnitName}%,unidade_alocacao.ilike.%${currentUnitName}%`)
         .eq('status', 'ATIVO');
 
-      const [feedsRes, quadroRes] = await Promise.all([
-        supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
-        supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${cleanUnitName}%`)
+      const [feedsRes, quadroRes, volanteRes] = await Promise.all([
+        supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId).order('created_at', { ascending: false }),
+        supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${cleanUnitName}%`),
+        supabase.from('solicitacoes_volante').select('*').eq('unidade_id', currentUnitId).order('created_at', { ascending: false })
       ]);
 
       setColaboradores(colabs || []);
       setQuadroReferencia(quadroRes.data || []);
       setOcorrencias(feedsRes.data || []);
+      setSolicitacoesVolante(volanteRes.data || []);
 
     } catch (err: any) {
       console.error("❌ ERRO NO PORTAL DIRETOR:", err);
@@ -307,7 +310,7 @@ export default function DiretorModule({ user }: { user: any }) {
       {/* Tabs Menu */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-4">
         <div className="flex bg-[var(--bg-card)] p-2 rounded-[2.5rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar max-w-full">
-          {(["EQUIPE", "VOLANTE"] as Tab[]).map(t => (
+          {(["EQUIPE", "VOLANTE", "DEMANDAS"] as Tab[]).map(t => (
             <button 
               key={t}
               onClick={() => setActiveTab(t)}
@@ -315,7 +318,8 @@ export default function DiretorModule({ user }: { user: any }) {
             >
               {t === "EQUIPE" && <Users size={18} />}
               {t === "VOLANTE" && <Truck size={18} />}
-              {t === "EQUIPE" ? "Efetivo da Unidade" : "Solicitar Volante"}
+              {t === "DEMANDAS" && <MessageSquare size={18} />}
+              {t === "EQUIPE" ? "Efetivo da Unidade" : t === "VOLANTE" ? "Solicitar Volante" : "Minhas Demandas"}
             </button>
           ))}
         </div>
@@ -584,6 +588,117 @@ export default function DiretorModule({ user }: { user: any }) {
                 </div>
               </div>
            </div>
+        )}
+
+        {activeTab === "DEMANDAS" && (
+          <div className="max-w-6xl mx-auto space-y-8 py-10 animate-in fade-in slide-in-from-bottom-6">
+             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                   <h3 className="text-3xl font-black italic tracking-tighter uppercase">Minhas Demandas</h3>
+                   <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Acompanhe o status e as respostas da Central</p>
+                </div>
+                <div className="flex gap-4">
+                   <div className="px-6 py-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/20">
+                      <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Total Aberto</p>
+                      <p className="text-xl font-black italic">{ocorrencias.length + solicitacoesVolante.length}</p>
+                   </div>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 gap-6">
+                {/* Ocorrências */}
+                {ocorrencias.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-red-500 tracking-[0.2em] ml-2">Ocorrências de Equipe</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {ocorrencias.map(o => (
+                         <div key={o.id} className="bg-[var(--bg-card)] p-6 rounded-[2.5rem] border border-[var(--border)] shadow-xl space-y-4 hover:border-red-500/30 transition-all">
+                            <div className="flex justify-between items-start">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center text-red-600">
+                                     <AlertTriangle size={20} />
+                                  </div>
+                                  <div>
+                                     <p className="text-[10px] font-black uppercase text-red-500 tracking-widest">{o.tipo_feedback}</p>
+                                     <p className="text-sm font-black italic uppercase leading-none">{o.colaborador?.nome}</p>
+                                  </div>
+                               </div>
+                               <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${o.status === 'CONCLUIDO' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600 animate-pulse'}`}>
+                                  {o.status || 'PENDENTE'}
+                               </span>
+                            </div>
+                            <p className="text-xs font-bold text-[var(--text-muted)] leading-relaxed italic border-l-4 border-slate-200 pl-4 py-2 bg-[var(--bg-base)]/50 rounded-r-xl">
+                               "{o.descricao}"
+                            </p>
+                            {o.resposta_central ? (
+                              <div className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20 space-y-2">
+                                 <p className="text-[9px] font-black uppercase text-emerald-600 tracking-widest flex items-center gap-2">
+                                    <CheckCircle size={12} /> Resposta da Central
+                                 </p>
+                                 <p className="text-xs font-bold italic">{o.resposta_central}</p>
+                              </div>
+                            ) : (
+                              <div className="p-4 bg-slate-500/5 rounded-2xl border border-[var(--border)] border-dashed">
+                                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Aguardando devolutiva...</p>
+                              </div>
+                            )}
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Volantes */}
+                {solicitacoesVolante.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-indigo-500 tracking-[0.2em] ml-2">Solicitações de Volante</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       {solicitacoesVolante.map(v => (
+                         <div key={v.id} className="bg-[var(--bg-card)] p-6 rounded-[2.5rem] border border-[var(--border)] shadow-xl space-y-4 hover:border-indigo-500/30 transition-all">
+                            <div className="flex justify-between items-start">
+                               <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                                     <Truck size={20} />
+                                  </div>
+                                  <div>
+                                     <p className="text-[10px] font-black uppercase text-indigo-500 tracking-widest">{v.data_necessidade} - {v.turno}</p>
+                                     <p className="text-sm font-black italic uppercase leading-none">{v.cargo_alvo || 'Volante Geral'}</p>
+                                  </div>
+                               </div>
+                               <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${v.status === 'APROVADO' ? 'bg-emerald-500/10 text-emerald-600' : v.status === 'NEGADO' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600 animate-pulse'}`}>
+                                  {v.status || 'PENDENTE'}
+                               </span>
+                            </div>
+                            <div className="flex gap-2">
+                               <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[9px] font-bold uppercase">{v.motivo}</span>
+                               {v.dias_afastamento && <span className="px-3 py-1 bg-[var(--bg-base)] rounded-lg text-[9px] font-bold uppercase">{v.dias_afastamento} dias</span>}
+                            </div>
+                            {v.resposta_central ? (
+                              <div className="p-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 space-y-2">
+                                 <p className="text-[9px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2">
+                                    <Info size={12} /> Devolutiva Central
+                                 </p>
+                                 <p className="text-xs font-bold italic">{v.resposta_central}</p>
+                              </div>
+                            ) : (
+                              <div className="p-4 bg-slate-500/5 rounded-2xl border border-[var(--border)] border-dashed">
+                                 <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Aguardando escalação...</p>
+                              </div>
+                            )}
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {ocorrencias.length === 0 && solicitacoesVolante.length === 0 && (
+                   <div className="p-20 text-center space-y-4 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
+                      <CheckCircle size={48} className="mx-auto text-emerald-500 opacity-20" />
+                      <p className="text-xs font-black uppercase text-[var(--text-muted)] tracking-widest">Nenhuma demanda pendente na unidade.</p>
+                   </div>
+                )}
+             </div>
+          </div>
         )}
       </div>
 
