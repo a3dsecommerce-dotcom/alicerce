@@ -40,11 +40,31 @@ export default function LoginPage() {
       const telCom55 = telLimpo.startsWith("55") ? telLimpo : `55${telLimpo}`;
       const telSem55 = telLimpo.startsWith("55") ? telLimpo.slice(2) : telLimpo;
       
-      const { data: user, error: userError } = await supabase.from('usuarios').select('*')
+      let { data: user, error: userError } = await supabase.from('usuarios').select('*')
         .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telCom55}@s.whatsapp.net,telefone.eq.${telSem55}@s.whatsapp.net`)
         .single();
         
-      if (userError || !user) { setError("Usuário não encontrado."); setLoading(false); return; }
+      // FALLBACK: Se não achar em usuários, busca na tabela unidades (Diretores sem cadastro de usuário)
+      if (!user) {
+        const { data: unitData } = await supabase.from('unidades').select('*')
+          .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telefone}`)
+          .single();
+        
+        if (unitData) {
+          user = {
+            id: `diretor_${unitData.id}`,
+            nome: unitData.diretor || unitData.responsavel_nome || "Diretor Unidade",
+            telefone: unitData.telefone,
+            nivel_acesso: 2,
+            cargo: "DIRETOR_UNIDADE",
+            unidade_alocacao: unitData.nome,
+            secretaria: unitData.secretaria || "SEMED",
+            is_virtual: true
+          };
+        }
+      }
+
+      if (!user) { setError("Usuário não encontrado."); setLoading(false); return; }
 
       // Validação de Senha (Suporta senha customizada ou legado de 4 dígitos)
       const senhaPadrao = telLimpo.slice(-4);
