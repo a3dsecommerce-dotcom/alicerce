@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-type Tab = "EQUIPE" | "OCORRENCIAS" | "TRANSFERENCIAS" | "SOLICITACOES";
+type Tab = "EQUIPE" | "TRANSFERENCIAS" | "SOLICITACOES";
 
 export default function DiretorModule({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<Tab>("EQUIPE");
@@ -309,45 +309,19 @@ export default function DiretorModule({ user }: { user: any }) {
         </div>
       </div>
 
-      {/* Dash de Métricas Rápidas (Efeito Glassmorphism) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: "Efetivo Total", val: colaboradores.length, sub: "ATIVOS", icon: Users, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
-          { label: "Ocorrências", val: ocorrencias.length, sub: "REGISTROS", icon: AlertTriangle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-          { label: "Vagas no Quadro", val: quadroReferencia.length, sub: "DISPONÍVEIS", icon: Sparkles, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-          { label: "SLA Médio", val: "94%", sub: "EFICIÊNCIA", icon: Zap, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" }
-        ].map((item, i) => (
-          <div key={i} className={`p-8 bg-[var(--bg-card)] rounded-[2.8rem] border ${item.border} shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl relative overflow-hidden group`}>
-            <div className={`absolute top-0 right-0 w-24 h-24 ${item.bg} rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700`} />
-            <div className="flex items-center gap-5 relative z-10">
-              <div className={`w-14 h-14 ${item.bg} rounded-2xl flex items-center justify-center ${item.color}`}>
-                <item.icon size={28} />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-1">{item.label}</p>
-                <h4 className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter">
-                  {item.val} <span className="text-[11px] font-bold not-italic text-[var(--text-muted)]">{item.sub}</span>
-                </h4>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Tabs Menu - Alinhamento Premium */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-4">
         <div className="flex bg-[var(--bg-card)] p-2 rounded-[2.5rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar max-w-full">
-          {(["EQUIPE", "OCORRENCIAS", "TRANSFERENCIAS", "SOLICITACOES"] as Tab[]).map(t => (
+          {(["EQUIPE", "TRANSFERENCIAS", "SOLICITACOES"] as Tab[]).map(t => (
             <button 
               key={t}
               onClick={() => setActiveTab(t)}
               className={`px-10 py-5 rounded-[2.2rem] text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 whitespace-nowrap ${activeTab === t ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-2xl shadow-indigo-600/40 scale-105" : "text-[var(--text-muted)] hover:bg-[var(--bg-base)]"}`}
             >
               {t === "EQUIPE" && <Users size={18} />}
-              {t === "OCORRENCIAS" && <AlertTriangle size={18} />}
               {t === "TRANSFERENCIAS" && <ArrowRightLeft size={18} />}
               {t === "SOLICITACOES" && <Sparkles size={18} />}
-              {t === "EQUIPE" ? "Efetivo da Unidade" : t === "OCORRENCIAS" ? "Fiscalização de Conduta" : t === "TRANSFERENCIAS" ? "Trocas de Posto" : "Pedidos & Demandas"}
+              {t === "EQUIPE" ? "Efetivo da Unidade" : t === "TRANSFERENCIAS" ? "Trocas de Posto" : "Pedidos & Demandas"}
             </button>
           ))}
         </div>
