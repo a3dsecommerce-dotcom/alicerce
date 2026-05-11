@@ -207,153 +207,160 @@ export default function DiretorModule({ user }: { user: any }) {
       <h2 className="text-2xl font-black italic">ACESSO RESTRITO</h2>
       <p className="text-[var(--text-muted)] font-bold uppercase tracking-tight max-w-md">
         Nenhuma unidade foi vinculada ao seu perfil. Entre em contato com a Gerência da Alicerce para formalizar sua fiscalização.
-      </p>
-    </div>
-  );
-
-  return (
-    <div className="flex flex-col gap-10 animate-fade-in pb-20 max-w-[1500px] mx-auto w-full px-4 lg:px-0">
+    return (
+    <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20 max-w-[1600px] mx-auto w-full px-4 lg:px-6">
       
-      {/* Hero Diretor */}
-      <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-black p-10 lg:p-14 rounded-[4rem] shadow-2xl relative overflow-hidden text-white border border-white/5">
-        <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-500/10 rounded-full blur-[120px] -mr-40 -mt-40" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/5 rounded-full blur-[100px] -ml-40 -mb-40" />
+      {/* Hero Diretor - Design Pro Max */}
+      <div className="group relative bg-slate-950 rounded-[3.5rem] p-1 lg:p-2 shadow-2xl overflow-hidden border border-white/5 transition-all duration-700 hover:shadow-indigo-500/10">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-slate-950 to-emerald-500/5 opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
         
-        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white">
-                Fiscal do Contratante
-              </div>
-              <div className="px-4 py-1.5 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200">
-                Unidade: {unidade.nome}
-              </div>
-              {(user.nivel_acesso >= 3 || user.role === 'DEV') && (
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-black text-indigo-300 uppercase">Trocar Unidade:</span>
-                  <select 
-                    className="bg-white/10 border border-white/20 rounded-lg text-[10px] font-black uppercase text-white px-3 py-1 outline-none hover:bg-white/20 transition-all cursor-pointer"
-                    value={unidade.id}
-                    onChange={(e) => fetchData(e.target.value)}
-                  >
-                    {allUnits.map(u => (
-                      <option key={u.id} value={u.id} className="bg-slate-900">{u.nome}</option>
-                    ))}
-                  </select>
+        {/* Animated Background Orbs */}
+        <div className="absolute top-0 right-0 w-[50rem] h-[50rem] bg-indigo-600/10 rounded-full blur-[140px] -mr-40 -mt-40 animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] -ml-40 -mb-40" />
+
+        <div className="relative z-10 bg-black/40 backdrop-blur-xl rounded-[3rem] p-8 lg:p-12 border border-white/10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
+            
+            <div className="flex-1 space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="px-5 py-2 bg-indigo-500/20 border border-indigo-400/30 rounded-full flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-100">Fiscal do Contratante</span>
                 </div>
-              )}
+                <div className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-white/80">
+                  ID: {user.id}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-5xl lg:text-7xl font-black italic tracking-tighter text-white leading-[1.1]">
+                  Portal do <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-emerald-400">Diretor</span>
+                </h2>
+                <div className="flex items-center gap-4">
+                  <div className="h-[2px] w-12 bg-indigo-500/50" />
+                  <p className="text-lg font-medium text-slate-400 uppercase tracking-[0.3em]">Gestão & Fiscalização</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm max-w-2xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/40">
+                    <Building2 size={24} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Unidade Sob Supervisão</p>
+                    <h3 className="text-xl font-black text-white uppercase italic">{unidade.nome}</h3>
+                  </div>
+                  
+                  {(user.nivel_acesso >= 3 || user.role === 'DEV') && (
+                    <div className="ml-auto">
+                      <select 
+                        className="bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase text-white px-4 py-2 outline-none hover:bg-white/20 transition-all cursor-pointer ring-offset-2 focus:ring-2 ring-indigo-500"
+                        value={unidade.id}
+                        onChange={(e) => fetchData(e.target.value)}
+                      >
+                        {allUnits.map(u => (
+                          <option key={u.id} value={u.id} className="bg-slate-900">{u.nome}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                  <div className="flex items-center gap-3">
+                    <Clock size={14} className="text-emerald-400" />
+                    <span className="text-[10px] font-bold text-slate-300 uppercase">Rota: {unidade.rota || "Interna"}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MessageSquare size={14} className="text-indigo-400" />
+                    <span className="text-[10px] font-bold text-slate-300 uppercase">{unidade.telefone || "Sem Contato"}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h2 className="text-4xl lg:text-6xl font-black italic tracking-tighter mb-6 leading-tight">
-              Portal do <span className="text-indigo-400">Diretor</span>
-            </h2>
-            <div className="flex flex-col gap-1 mb-6">
-              <p className="text-lg font-medium text-slate-300 max-w-2xl leading-relaxed">
-                Bem-vindo, {unidade.diretor || user.nome}. Este é o seu cockpit de fiscalização da unidade {unidade.nome}.
-              </p>
-              <div className="flex items-center gap-2 text-[10px] font-black text-indigo-300 uppercase tracking-widest">
-                <MessageSquare size={12} /> Contato Oficial: {unidade.telefone || "NÃO CADASTRADO"} | Rota: {unidade.rota || "DEFINIR"}
+
+            <div className="flex flex-col gap-6 w-full lg:w-auto">
+              <button 
+                onClick={() => setModalSolicitacao(true)}
+                className="group relative px-12 py-6 bg-white text-slate-950 rounded-[2.5rem] text-[12px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                <Plus size={20} /> Nova Solicitação
+              </button>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col items-center justify-center p-6 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-md">
+                  <span className="text-3xl font-black text-white">{colaboradores.length}</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-indigo-300">Equipe</span>
+                </div>
+                <div className="flex flex-col items-center justify-center p-6 bg-white/5 rounded-[2rem] border border-white/10 backdrop-blur-md">
+                  <span className="text-3xl font-black text-emerald-400">{ocorrencias.filter(o => o.status === 'PENDENTE').length}</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-300">Alertas</span>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="flex flex-col gap-3 w-full lg:w-auto">
-             <button 
-              onClick={() => setModalSolicitacao(true)}
-              className="px-10 py-5 bg-white text-slate-900 rounded-[2rem] text-[11px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl flex items-center justify-center gap-2"
-             >
-                <Plus size={18} /> Nova Solicitação / Vontade
-             </button>
-             <div className="flex items-center gap-3 justify-center">
-                <div className="flex flex-col items-center p-4 bg-white/5 rounded-3xl border border-white/10 min-w-[100px]">
-                  <span className="text-2xl font-black">{colaboradores.length}</span>
-                  <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">Equipe</span>
-                </div>
-                <div className="flex flex-col items-center p-4 bg-white/5 rounded-3xl border border-white/10 min-w-[100px]">
-                  <span className="text-2xl font-black">{ocorrencias.filter(o => o.status === 'PENDENTE').length}</span>
-                  <span className="text-[8px] font-bold uppercase tracking-widest opacity-60">Ocorrências</span>
-                </div>
-             </div>
+
           </div>
         </div>
       </div>
 
-      {/* Dash de Métricas Rápidas (Inspirado no Encarregado) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
-        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all group overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
-          <div className="flex items-center gap-5 mb-4">
-            <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600">
-              <Users size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Efetivo Total</p>
-              <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{colaboradores.length} <span className="text-[10px] font-bold not-italic text-slate-400">ATIVOS</span></h4>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-red-500/5 transition-all group overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
-          <div className="flex items-center gap-5 mb-4">
-            <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-600">
-              <AlertTriangle size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Ocorrências</p>
-              <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{ocorrencias.length} <span className="text-[10px] font-bold not-italic text-slate-400">REGISTROS</span></h4>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
-          <div className="flex items-center gap-5 mb-4">
-            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600">
-              <Sparkles size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Vagas no Quadro</p>
-              <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{quadroReferencia.length} <span className="text-[10px] font-bold not-italic text-slate-400">VAGAS</span></h4>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all group overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
-          <div className="flex items-center gap-5 mb-4">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600">
-              <Clock size={24} />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Ações Rápidas</p>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setActiveTab("SOLICITACOES")}
-                  className="px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
-                >
-                  Pedir Vaga
-                </button>
+      {/* Dash de Métricas Rápidas (Efeito Glassmorphism) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Efetivo Total", val: colaboradores.length, sub: "ATIVOS", icon: Users, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+          { label: "Ocorrências", val: ocorrencias.length, sub: "REGISTROS", icon: AlertTriangle, color: "text-rose-500", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+          { label: "Vagas no Quadro", val: quadroReferencia.length, sub: "DISPONÍVEIS", icon: Sparkles, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+          { label: "SLA Médio", val: "94%", sub: "EFICIÊNCIA", icon: Zap, color: "text-amber-500", bg: "bg-amber-500/10", border: "border-amber-500/20" }
+        ].map((item, i) => (
+          <div key={i} className={`p-8 bg-[var(--bg-card)] rounded-[2.8rem] border ${item.border} shadow-sm transition-all hover:scale-[1.02] hover:shadow-xl relative overflow-hidden group`}>
+            <div className={`absolute top-0 right-0 w-24 h-24 ${item.bg} rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700`} />
+            <div className="flex items-center gap-5 relative z-10">
+              <div className={`w-14 h-14 ${item.bg} rounded-2xl flex items-center justify-center ${item.color}`}>
+                <item.icon size={28} />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-1">{item.label}</p>
+                <h4 className="text-3xl font-black text-[var(--text-primary)] italic tracking-tighter">
+                  {item.val} <span className="text-[11px] font-bold not-italic text-[var(--text-muted)]">{item.sub}</span>
+                </h4>
               </div>
             </div>
           </div>
-        </div>
+        ))}
       </div>
 
-      {/* Tabs Menu */}
-      <div className="flex items-center justify-center lg:justify-start">
-        <div className="flex flex-wrap items-center gap-2 bg-[var(--bg-card)] p-2 rounded-[2rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar">
+      {/* Tabs Menu - Alinhamento Premium */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-4">
+        <div className="flex bg-[var(--bg-card)] p-2 rounded-[2.5rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar max-w-full">
           {(["EQUIPE", "OCORRENCIAS", "TRANSFERENCIAS", "SOLICITACOES"] as Tab[]).map(t => (
             <button 
               key={t}
               onClick={() => setActiveTab(t)}
-              className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === t ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105" : "text-[var(--text-muted)] hover:bg-[var(--bg-base)]"}`}
+              className={`px-10 py-5 rounded-[2.2rem] text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 whitespace-nowrap ${activeTab === t ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-2xl shadow-indigo-600/40 scale-105" : "text-[var(--text-muted)] hover:bg-[var(--bg-base)]"}`}
             >
-              {t === "EQUIPE" && <Users size={16} />}
-              {t === "OCORRENCIAS" && <AlertTriangle size={16} />}
-              {t === "TRANSFERENCIAS" && <ArrowRightLeft size={16} />}
-              {t === "SOLICITACOES" && <Sparkles size={16} />}
-              {t === "EQUIPE" ? "Minha Equipe" : t === "OCORRENCIAS" ? "Gestão de Ocorrências" : t === "TRANSFERENCIAS" ? "Pedidos de Transferência" : "Vontades & Pedidos"}
+              {t === "EQUIPE" && <Users size={18} />}
+              {t === "OCORRENCIAS" && <AlertTriangle size={18} />}
+              {t === "TRANSFERENCIAS" && <ArrowRightLeft size={18} />}
+              {t === "SOLICITACOES" && <Sparkles size={18} />}
+              {t === "EQUIPE" ? "Efetivo da Unidade" : t === "OCORRENCIAS" ? "Fiscalização de Conduta" : t === "TRANSFERENCIAS" ? "Trocas de Posto" : "Pedidos & Demandas"}
             </button>
+          ))}
+        </div>
+
+        {activeTab === "EQUIPE" && (
+          <div className="relative w-full lg:w-[400px]">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500" size={18} />
+            <input 
+              type="text" 
+              placeholder="PESQUISAR NA EQUIPE..." 
+              className="input-field w-full pl-14 pr-6 py-5 bg-[var(--bg-card)] border-[var(--border)] rounded-full text-xs font-black uppercase tracking-widest shadow-lg focus:ring-4 ring-indigo-500/10 transition-all"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
           ))}
         </div>
       </div>
@@ -362,20 +369,10 @@ export default function DiretorModule({ user }: { user: any }) {
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         {activeTab === "EQUIPE" && (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-2">
-              <div className="relative w-full max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Buscar colaborador na minha unidade..." 
-                  className="input-field w-full pl-12 py-4 bg-[var(--bg-card)] border-[var(--border)] rounded-[1.5rem] text-[11px] font-bold uppercase"
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2 bg-[var(--bg-card)] px-4 py-2 rounded-2xl border border-[var(--border)] shadow-sm">
+            <div className="flex flex-col md:flex-row items-center justify-end gap-4 px-2">
+              <div className="flex items-center gap-2 bg-[var(--bg-card)] px-4 py-3 rounded-2xl border border-[var(--border)] shadow-sm">
                 <Info size={14} className="text-indigo-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">Alterações de horário notificam o RH imediatamente</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] italic">Alterações de horário notificam o RH imediatamente</span>
               </div>
             </div>
 
