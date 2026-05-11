@@ -175,7 +175,12 @@ export default function DiretorModule({ user }: { user: any }) {
         solicitante_id: user.id,
         solicitante_nome: user.nome || user.name,
         turno: form.turno,
+        escala: form.escala,
+        horario: form.horario,
         motivo: form.motivo,
+        dias_afastamento: form.dias || 1,
+        cargo_alvo: form.cargo,
+        colaborador_alvo: form.colaborador,
         data_necessidade: form.data,
         status: 'PENDENTE'
       });
@@ -400,10 +405,38 @@ export default function DiretorModule({ user }: { user: any }) {
                    <Truck size={40} />
                 </div>
                 <h3 className="text-3xl font-black italic tracking-tighter uppercase">Solicitar Volante</h3>
+                <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Preencha os detalhes para substituição imediata ou programada</p>
               </div>
 
               <div className="bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-2xl space-y-8 relative overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Colaborador a ser Substituído</label>
+                      <select 
+                        id="volColaborador" 
+                        className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs"
+                        onChange={(e) => {
+                          const colab = colaboradores.find(c => c.nome === e.target.value);
+                          if(colab && document.getElementById('volCargo')) {
+                            (document.getElementById('volCargo') as HTMLInputElement).value = colab.cargo || "";
+                          }
+                        }}
+                      >
+                         <option value="">Selecione o colaborador...</option>
+                         {colaboradores.map(c => (
+                           <option key={c.id} value={c.nome}>{c.nome}</option>
+                         ))}
+                      </select>
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Cargo</label>
+                      <input id="volCargo" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs" placeholder="Ex: Auxiliar de Limpeza" />
+                   </div>
+
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Data da Substituição</label>
+                      <input type="date" id="volData" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold" defaultValue={new Date().toISOString().split('T')[0]} />
+                   </div>
                    <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Turno</label>
                       <select id="volTurno" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold">
@@ -411,31 +444,57 @@ export default function DiretorModule({ user }: { user: any }) {
                          <option value="NOTURNO">Noturno</option>
                       </select>
                    </div>
-                   <div className="space-y-3">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Data</label>
-                      <input type="date" id="volData" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold" defaultValue={new Date().toISOString().split('T')[0]} />
-                   </div>
-                </div>
 
-                <div className="space-y-3 relative z-10">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Motivo</label>
-                   <textarea id="volMotivo" rows={4} className="input-field w-full rounded-3xl p-6 bg-[var(--bg-base)] border-[var(--border)] font-bold text-sm" placeholder="Descreva o motivo..."></textarea>
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Escala</label>
+                      <select id="volEscala" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold">
+                         <option value="12X36">12x36</option>
+                         <option value="5X2">5x2</option>
+                         <option value="6X1">6x1</option>
+                         <option value="OUTRA">Outra</option>
+                      </select>
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Horário Específico</label>
+                      <input id="volHorario" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs" placeholder="Ex: 07:00 às 19:00" />
+                   </div>
+
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Motivo</label>
+                      <select id="volMotivoSelect" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold">
+                         <option value="ATESTADO">Atestado Médico</option>
+                         <option value="FALTA">Falta Não Justificada</option>
+                         <option value="FERIAS">Férias</option>
+                         <option value="TRANSFERENCIA">Transferência</option>
+                         <option value="OUTRO">Outros Motivos</option>
+                      </select>
+                   </div>
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Quantos Dias? (Se Aplicável)</label>
+                      <input type="number" id="volDias" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold" defaultValue="1" />
+                   </div>
                 </div>
 
                 <div className="pt-6 relative z-10">
                    <button 
                     onClick={() => {
                       const form = {
-                        turno: (document.getElementById('volTurno') as HTMLSelectElement).value,
+                        colaborador: (document.getElementById('volColaborador') as HTMLSelectElement).value,
+                        cargo: (document.getElementById('volCargo') as HTMLInputElement).value,
                         data: (document.getElementById('volData') as HTMLInputElement).value,
-                        motivo: (document.getElementById('volMotivo') as HTMLTextAreaElement).value
+                        turno: (document.getElementById('volTurno') as HTMLSelectElement).value,
+                        escala: (document.getElementById('volEscala') as HTMLSelectElement).value,
+                        horario: (document.getElementById('volHorario') as HTMLInputElement).value,
+                        motivo: (document.getElementById('volMotivoSelect') as HTMLSelectElement).value,
+                        dias: (document.getElementById('volDias') as HTMLInputElement).value
                       };
-                      if(!form.motivo) return toast.error("Descreva o motivo.");
+                      if(!form.colaborador) return toast.error("Selecione o colaborador.");
+                      if(!form.cargo) return toast.error("Informe o cargo.");
                       handlePedirVolante(form);
                     }}
                     className="w-full py-8 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-[2.5rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4"
                    >
-                     <Send size={20} /> Enviar Pedido
+                     <Send size={20} /> Enviar Pedido para Central
                    </button>
                 </div>
               </div>
