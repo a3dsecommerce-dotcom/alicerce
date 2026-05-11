@@ -47,14 +47,14 @@ export default function LoginPage() {
       // FALLBACK: Se não achar em usuários, busca na tabela unidades (Diretores sem cadastro de usuário)
       if (!user) {
         const { data: unitData } = await supabase.from('unidades').select('*')
-          .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telefone}`)
+          .or(`responsavel_telefone.eq.${telCom55},responsavel_telefone.eq.${telSem55},responsavel_telefone.eq.${telefone},telefone.eq.${telCom55},telefone.eq.${telSem55}`)
           .single();
         
         if (unitData) {
           user = {
             id: `diretor_${unitData.id}`,
             nome: unitData.diretor || unitData.responsavel_nome || "Diretor Unidade",
-            telefone: unitData.telefone,
+            telefone: unitData.responsavel_telefone || unitData.telefone,
             nivel_acesso: 2,
             cargo: "DIRETOR_UNIDADE",
             unidade_alocacao: unitData.nome,

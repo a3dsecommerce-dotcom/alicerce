@@ -56,7 +56,7 @@ export default function DiretorModule({ user }: { user: any }) {
         query = query.eq('status', 'ATIVO').limit(1).single();
       } else {
         // Tenta por ID primeiro, se falhar, tenta pelo Telefone (liberação por telefone cadastrado na unidade)
-        query = query.or(`diretor_id.eq.${user.id},telefone.eq.${userPhone}`).single();
+        query = query.or(`diretor_id.eq.${user.id},telefone.eq.${userPhone},responsavel_telefone.eq.${userPhone}`).single();
       }
 
       const { data: unitData, error: unitError } = await query;
