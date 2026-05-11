@@ -27,21 +27,16 @@ export default function DiretorModule({ user }: { user: any }) {
   const [modalHorario, setModalHorario] = useState<any>(null);
   const [modalInsalubridade, setModalInsalubridade] = useState<any>(null);
   const [modalOcorrencia, setModalOcorrencia] = useState<any>(null);
-  const [modalTransferencia, setModalTransferencia] = useState<any>(null);
-  const [modalSolicitacao, setModalSolicitacao] = useState(false);
-
   const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
       setLoading(true);
-      console.log("🚀 INICIANDO FETCH DIRETOR:", { userId: user.id, targetUnitId });
+      console.log("🚀 PORTAL DIRETOR: Iniciando sincronização...");
       
       const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
-      // 1. Buscar Unidades para o Seletor (apenas para gestão)
-      if (isManagement && allUnits.length === 0) {
-        const { data: list } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
-        setAllUnits(list || []);
-      }
+      // 1. Buscar Unidades para o Seletor (Apenas Gestão ou para fallback do Diretor)
+      const { data: listUnits } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
+      setAllUnits(listUnits || []);
 
       // 2. Definir Unidade Alvo
       let unitData: any = null;
@@ -51,70 +46,65 @@ export default function DiretorModule({ user }: { user: any }) {
       const phoneWithout55 = cleanPhone.startsWith("55") ? cleanPhone.slice(2) : cleanPhone;
 
       if (targetUnitId) {
-        const { data } = await supabase.from('unidades').select('*').eq('id', targetUnitId).single();
-        unitData = data;
-      } else if (isManagement) {
-        const { data } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').limit(1).single();
-        unitData = data;
+        unitData = listUnits?.find(u => u.id === targetUnitId);
       } else {
-        const unitFilter = [
-          `diretor_id.eq.${user.id}`,
-          `telefone.eq.${cleanPhone}`,
-          `telefone.eq.${phoneWith55}`,
-          `telefone.eq.${phoneWithout55}`,
-          `responsavel_telefone.eq.${cleanPhone}`,
-          `responsavel_telefone.eq.${phoneWith55}`,
-          `responsavel_telefone.eq.${phoneWithout55}`
-        ];
-        
-        if (user.unidade_alocacao) {
-          unitFilter.push(`nome.ilike.%${user.unidade_alocacao.trim()}%`);
-        }
+        // Tenta vincular automaticamente
+        const unitByPhone = listUnits?.find(u => 
+          (u.telefone && (u.telefone.includes(cleanPhone) || u.telefone.includes(phoneWithout55))) || 
+          (u.responsavel_telefone && (u.responsavel_telefone.includes(cleanPhone) || u.responsavel_telefone.includes(phoneWithout55)))
+        );
 
-        if (user.nome || user.name) {
-          const userName = user.nome || user.name;
-          unitFilter.push(`diretor.ilike.%${userName.trim()}%`);
-        }
+        const unitByName = listUnits?.find(u => 
+          (user.unidade_alocacao && u.nome.toLowerCase().includes(user.unidade_alocacao.toLowerCase())) ||
+          (u.diretor && (user.nome || user.name || "").toLowerCase().includes(u.diretor.toLowerCase()))
+        );
 
-        const { data } = await supabase.from('unidades').select('*').or(unitFilter.join(',')).limit(1).maybeSingle();
-        unitData = data;
+        unitData = unitByPhone || unitByName;
       }
 
       if (!unitData && !isManagement) {
-        setLoading(false);
-        setUnidade(null);
-        return;
+        // Se não achou, mas o usuário tem unidade_alocacao, tenta forçar uma unidade "falsa" para não bloquear a tela
+        if (user.unidade_alocacao) {
+          unitData = { nome: user.unidade_alocacao, id: "pending", is_placeholder: true };
+        } else {
+          setLoading(false);
+          setUnidade(null);
+          return;
+        }
       }
       
-      const currentUnit = unitData || { nome: "AGUARDANDO UNIDADES", id: "0" };
-      setUnidade(currentUnit);
+      setUnidade(unitData);
 
-      const currentUnitName = currentUnit.nome || "";
-      const currentUnitId = currentUnit.id || "0";
+      const currentUnitName = unitData.nome || "";
+      const currentUnitId = unitData.id || "0";
 
-      // 3. Buscar Dados da Unidade selecionada (Busca FLEXÍVEL por Colaboradores)
-      // Tenta achar colaboradores que tenham QUALQUER parte do nome da unidade ou que a unidade tenha parte do nome deles
-      const cleanUnitName = currentUnitName.replace(/ESCOLA|MUNICIPAL|POSTO|CENTRO|EME|EMEF/gi, "").trim();
+      // 3. Buscar Dados da Unidade (Busca ULTRA-FLEXÍVEL por Colaboradores)
+      const cleanUnitName = currentUnitName.replace(/ESCOLA|MUNICIPAL|POSTO|CENTRO|EME|EMEF|MANAUS|AMAZONAS/gi, "").trim();
+      
+      // Busca principal por unidade_alocacao
+      const { data: colabs } = await supabase.from('usuarios')
+        .select('*')
+        .or(`unidade_alocacao.ilike.%${cleanUnitName}%,unidade_alocacao.ilike.%${currentUnitName}%`)
+        .eq('status', 'ATIVO');
 
-      const [colabsRes, feedsRes, transfsRes, quadroRes] = await Promise.all([
-        supabase.from('usuarios').select('*').or(`unidade_alocacao.ilike.%${cleanUnitName}%,unidade_alocacao.ilike.%${currentUnitName}%`).eq('status', 'ATIVO'),
+      const [feedsRes, transfsRes, quadroRes] = await Promise.all([
         supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
         supabase.from('transferencias').select('*').ilike('unidade_origem', `%${cleanUnitName}%`),
         supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${cleanUnitName}%`)
       ]);
 
-      setColaboradores(colabsRes.data || []);
+      setColaboradores(colabs || []);
       setQuadroReferencia(quadroRes.data || []);
       setOcorrencias(feedsRes.data || []);
       setTransferencias(transfsRes.data || []);
 
     } catch (err: any) {
       console.error("❌ ERRO NO PORTAL DIRETOR:", err);
-      toast.error("Erro ao carregar dados da unidade.");
+      toast.error("Falha na sincronização dos dados.");
     } finally {
       setLoading(false);
     }
-  }, [user, allUnits.length]);
+  }, [user]);
 
   useEffect(() => {
     fetchData();
