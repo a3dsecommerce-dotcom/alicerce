@@ -207,8 +207,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 px-6 flex flex-col gap-2 overflow-y-auto custom-scrollbar pb-6 mt-4">
           {nav.filter(item => {
             const safeRole = user?.role ? String(user.role).toUpperCase() : '';
-            const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
-            const isManager = !isStrictRole && ((user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole));
+            const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "DIRETOR_UNIDADE", "DIRETORIA"].includes(safeRole);
+            const isManager = !isStrictRole && ((user?.nivel || 0) >= 3 || ["ADMIN", "GERENTE", "GERENCIA"].includes(safeRole));
             
             // Regra: Excluir Manual para Nível 1 da unidade PMG
             if (item.label === 'Manual de Boas Práticas') {
