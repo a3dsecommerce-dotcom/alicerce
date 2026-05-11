@@ -76,6 +76,11 @@ export default function LoginPage() {
         return; 
       }
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
+      
+      // LIMPEZA DE SEGURANÇA: Garante que sessões de simulação antigas sejam removidas no novo login
+      localStorage.removeItem("impersonated_user");
+      localStorage.removeItem("original_dev_user");
+
       const dbFuncao = user.cargo;
       const rawFuncao = dbFuncao ? String(dbFuncao).toUpperCase() : null;
       const cargoResolvido = rawFuncao || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
