@@ -48,25 +48,32 @@ export default function DiretorModule({ user }: { user: any }) {
       // 2. Definir Unidade Alvo
       let query = supabase.from('unidades').select('*');
       
-      const userPhone = user.telefone || user.phone || "";
+      const rawPhone = user.telefone || user.phone || "";
+      const cleanPhone = rawPhone.replace(/\D/g, "");
+      const phoneWith55 = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+      const phoneWithout55 = cleanPhone.startsWith("55") ? cleanPhone.slice(2) : cleanPhone;
 
       if (targetUnitId) {
         query = query.eq('id', targetUnitId).single();
       } else if (isManagement) {
         query = query.eq('status', 'ATIVO').limit(1).single();
       } else {
-        // Tenta por ID, Telefone ou pelo Nome da Unidade gravado no cadastro do usuário
+        // Tenta por ID, Telefone (várias versões) ou pelo Nome da Unidade
         const unitFilter = [
           `diretor_id.eq.${user.id}`,
-          `telefone.eq.${userPhone}`,
-          `responsavel_telefone.eq.${userPhone}`
+          `telefone.eq.${cleanPhone}`,
+          `telefone.eq.${phoneWith55}`,
+          `telefone.eq.${phoneWithout55}`,
+          `responsavel_telefone.eq.${cleanPhone}`,
+          `responsavel_telefone.eq.${phoneWith55}`,
+          `responsavel_telefone.eq.${phoneWithout55}`
         ];
         
         if (user.unidade_alocacao) {
-          unitFilter.push(`nome.eq."${user.unidade_alocacao}"`);
+          unitFilter.push(`nome.ilike.%${user.unidade_alocacao}%`);
         }
 
-        query = query.or(unitFilter.join(',')).single();
+        query = query.or(unitFilter.join(',')).limit(1).maybeSingle();
       }
 
       const { data: unitData, error: unitError } = await query;
