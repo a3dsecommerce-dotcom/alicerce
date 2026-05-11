@@ -30,13 +30,11 @@ export default function DiretorModule({ user }: { user: any }) {
   const [modalTransferencia, setModalTransferencia] = useState<any>(null);
   const [modalSolicitacao, setModalSolicitacao] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, [user]);
-
-  async function fetchData(targetUnitId?: string) {
+  const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
       setLoading(true);
+      console.log("🚀 INICIANDO FETCH DIRETOR:", { userId: user.id, targetUnitId });
+      
       const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
       // 1. Buscar Unidades para o Seletor (apenas para gestão)
@@ -46,19 +44,19 @@ export default function DiretorModule({ user }: { user: any }) {
       }
 
       // 2. Definir Unidade Alvo
-      let query = supabase.from('unidades').select('*');
-      
+      let unitData: any = null;
       const rawPhone = user.telefone || user.phone || "";
       const cleanPhone = rawPhone.replace(/\D/g, "");
       const phoneWith55 = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
       const phoneWithout55 = cleanPhone.startsWith("55") ? cleanPhone.slice(2) : cleanPhone;
 
       if (targetUnitId) {
-        query = query.eq('id', targetUnitId).single();
+        const { data } = await supabase.from('unidades').select('*').eq('id', targetUnitId).single();
+        unitData = data;
       } else if (isManagement) {
-        query = query.eq('status', 'ATIVO').limit(1).single();
+        const { data } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').limit(1).single();
+        unitData = data;
       } else {
-        // Tenta por ID, Telefone (várias versões), Nome da Unidade ou pelo Nome do Diretor
         const unitFilter = [
           `diretor_id.eq.${user.id}`,
           `telefone.eq.${cleanPhone}`,
@@ -78,34 +76,31 @@ export default function DiretorModule({ user }: { user: any }) {
           unitFilter.push(`diretor.ilike.%${userName.trim()}%`);
         }
 
-        console.log("🔍 TENTANDO VÍNCULO DIRETOR:", { 
-          filters: unitFilter, 
-          user_alocacao: user.unidade_alocacao,
-          user_nome: user.nome || user.name 
-        });
-
-        query = query.or(unitFilter.join(',')).limit(1).maybeSingle();
+        const { data } = await supabase.from('unidades').select('*').or(unitFilter.join(',')).limit(1).maybeSingle();
+        unitData = data;
       }
 
-      const { data: unitData, error: unitError } = await query;
-
-      if (unitError && !isManagement) throw new Error("Unidade não vinculada ou erro de acesso.");
+      if (!unitData && !isManagement) {
+        setLoading(false);
+        setUnidade(null);
+        return;
+      }
       
-      if (!unitData && isManagement) {
-        setUnidade({ nome: "AGUARDANDO UNIDADES", id: "0" });
-      } else {
-        setUnidade(unitData);
-      }
+      const currentUnit = unitData || { nome: "AGUARDANDO UNIDADES", id: "0" };
+      setUnidade(currentUnit);
 
-      const currentUnitName = unitData?.nome || "";
-      const currentUnitId = unitData?.id || "0";
+      const currentUnitName = currentUnit.nome || "";
+      const currentUnitId = currentUnit.id || "0";
 
-      // 3. Buscar Dados da Unidade selecionada
+      // 3. Buscar Dados da Unidade selecionada (Busca FLEXÍVEL por Colaboradores)
+      // Tenta achar colaboradores que tenham QUALQUER parte do nome da unidade ou que a unidade tenha parte do nome deles
+      const cleanUnitName = currentUnitName.replace(/ESCOLA|MUNICIPAL|POSTO|CENTRO|EME|EMEF/gi, "").trim();
+
       const [colabsRes, feedsRes, transfsRes, quadroRes] = await Promise.all([
-        supabase.from('usuarios').select('*').ilike('unidade_alocacao', `%${currentUnitName}%`).eq('status', 'ATIVO'),
+        supabase.from('usuarios').select('*').or(`unidade_alocacao.ilike.%${cleanUnitName}%,unidade_alocacao.ilike.%${currentUnitName}%`).eq('status', 'ATIVO'),
         supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
-        supabase.from('transferencias').select('*').ilike('unidade_origem', `%${currentUnitName}%`),
-        supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${currentUnitName}%`)
+        supabase.from('transferencias').select('*').ilike('unidade_origem', `%${cleanUnitName}%`),
+        supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${cleanUnitName}%`)
       ]);
 
       setColaboradores(colabsRes.data || []);
@@ -114,12 +109,16 @@ export default function DiretorModule({ user }: { user: any }) {
       setTransferencias(transfsRes.data || []);
 
     } catch (err: any) {
-      console.error(err);
-      if (user.nivel_acesso < 3) toast.error(err.message);
+      console.error("❌ ERRO NO PORTAL DIRETOR:", err);
+      toast.error("Erro ao carregar dados da unidade.");
     } finally {
       setLoading(false);
     }
-  }
+  }, [user, allUnits.length]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleUpdateHorario = async (colabId: string, novoHorario: string) => {
     try {
