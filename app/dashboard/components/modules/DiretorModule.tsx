@@ -133,7 +133,7 @@ export default function DiretorModule({ user }: { user: any }) {
     try {
       const { error } = await supabase
         .from('usuarios')
-        .update({ insalubridade: novoPercentual })
+        .update({ percentual_insalubridade: novoPercentual })
         .eq('id', colabId);
 
       if (error) throw error;
@@ -379,7 +379,7 @@ export default function DiretorModule({ user }: { user: any }) {
                           className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-muted)]"
                         >
                           <Zap size={14} />
-                          <span className="text-[10px] font-black uppercase">{c.insalubridade || "DEFINIR"}</span>
+                          <span className="text-[10px] font-black uppercase">{c.percentual_insalubridade || "DEFINIR"}</span>
                         </button>
                       </td>
                       <td className="px-8 py-6">
@@ -435,7 +435,7 @@ export default function DiretorModule({ user }: { user: any }) {
                           const colab = colaboradores.find(c => c.nome === val);
                           if(colab) {
                             setVolCargo(colab.cargo || "");
-                            setVolInsalubridade(colab.insalubridade || "");
+                            setVolInsalubridade(colab.percentual_insalubridade || "");
                             setVolHorario(colab.horario_trabalho || "");
                           }
                         }}
@@ -596,7 +596,7 @@ export default function DiretorModule({ user }: { user: any }) {
                  <button
                   key={pct}
                   onClick={() => handleUpdateInsalubridade(modalInsalubridade.id, pct)}
-                  className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${modalInsalubridade.insalubridade === pct ? 'bg-amber-600 border-amber-600 text-white shadow-xl' : 'bg-white border-slate-100 text-slate-400'}`}
+                  className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${modalInsalubridade.percentual_insalubridade === pct ? 'bg-amber-600 border-amber-600 text-white shadow-xl' : 'bg-white border-slate-100 text-slate-400'}`}
                  >
                    {pct}
                  </button>
