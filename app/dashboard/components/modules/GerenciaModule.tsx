@@ -500,7 +500,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><Map size={12}/> Bairro</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2"><MapPin size={12}/> Bairro</label>
               <input 
                 className="input-field w-full h-12 font-bold"
                 placeholder="Bairro da Unidade"
