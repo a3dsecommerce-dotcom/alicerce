@@ -20,13 +20,13 @@ export default function DiretorModule({ user }: { user: any }) {
   const [colaboradores, setColaboradores] = useState<any[]>([]);
   const [quadroReferencia, setQuadroReferencia] = useState<any[]>([]);
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
-  const [transferencias, setTransferencias] = useState<any[]>([]);
   const [busca, setBusca] = useState("");
 
   // Modais
   const [modalHorario, setModalHorario] = useState<any>(null);
   const [modalInsalubridade, setModalInsalubridade] = useState<any>(null);
   const [modalOcorrencia, setModalOcorrencia] = useState<any>(null);
+
   const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
       setLoading(true);
@@ -34,21 +34,17 @@ export default function DiretorModule({ user }: { user: any }) {
       
       const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
-      // 1. Buscar Unidades para o Seletor (Apenas Gestão ou para fallback do Diretor)
       const { data: listUnits } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
       setAllUnits(listUnits || []);
 
-      // 2. Definir Unidade Alvo
       let unitData: any = null;
       const rawPhone = user.telefone || user.phone || "";
       const cleanPhone = rawPhone.replace(/\D/g, "");
-      const phoneWith55 = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
       const phoneWithout55 = cleanPhone.startsWith("55") ? cleanPhone.slice(2) : cleanPhone;
 
       if (targetUnitId) {
         unitData = listUnits?.find(u => u.id === targetUnitId);
       } else {
-        // Tenta vincular automaticamente (EXIGE telefone válido para evitar match vazio)
         const unitByPhone = (cleanPhone.length > 5) ? listUnits?.find(u => 
           (u.telefone && (u.telefone.includes(cleanPhone) || u.telefone.includes(phoneWithout55))) || 
           (u.responsavel_telefone && (u.responsavel_telefone.includes(cleanPhone) || u.responsavel_telefone.includes(phoneWithout55)))
@@ -63,7 +59,6 @@ export default function DiretorModule({ user }: { user: any }) {
       }
 
       if (!unitData && !isManagement) {
-        // Se não achou, mas o usuário tem unidade_alocacao, tenta forçar uma unidade "falsa" para não bloquear a tela
         if (user.unidade_alocacao) {
           unitData = { nome: user.unidade_alocacao, id: "pending", is_placeholder: true };
         } else {
@@ -77,26 +72,21 @@ export default function DiretorModule({ user }: { user: any }) {
 
       const currentUnitName = unitData.nome || "";
       const currentUnitId = unitData.id || "0";
-
-      // 3. Buscar Dados da Unidade (Busca ULTRA-FLEXÍVEL por Colaboradores)
       const cleanUnitName = currentUnitName.replace(/ESCOLA|MUNICIPAL|POSTO|CENTRO|EME|EMEF|MANAUS|AMAZONAS/gi, "").trim();
       
-      // Busca principal por unidade_alocacao
       const { data: colabs } = await supabase.from('usuarios')
         .select('*')
         .or(`unidade_alocacao.ilike.%${cleanUnitName}%,unidade_alocacao.ilike.%${currentUnitName}%`)
         .eq('status', 'ATIVO');
 
-      const [feedsRes, transfsRes, quadroRes] = await Promise.all([
+      const [feedsRes, quadroRes] = await Promise.all([
         supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId),
-        supabase.from('transferencias').select('*').ilike('unidade_origem', `%${cleanUnitName}%`),
         supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${cleanUnitName}%`)
       ]);
 
       setColaboradores(colabs || []);
       setQuadroReferencia(quadroRes.data || []);
       setOcorrencias(feedsRes.data || []);
-      setTransferencias(transfsRes.data || []);
 
     } catch (err: any) {
       console.error("❌ ERRO NO PORTAL DIRETOR:", err);
@@ -119,14 +109,13 @@ export default function DiretorModule({ user }: { user: any }) {
 
       if (error) throw error;
 
-      // Logar Atividade para RH e Encarregado
       await supabase.from('atividades').insert({
         usuario_id: user.id,
         tipo: 'GERENCIAL',
         mensagem: `DIRETOR: Alterado horário de ${colaboradores.find(c => c.id === colabId)?.nome} para ${novoHorario} na unidade ${unidade.nome}.`
       });
 
-      toast.success("Horário atualizado! O RH e Encarregado foram notificados.");
+      toast.success("Horário atualizado!");
       setModalHorario(null);
       fetchData();
     } catch (err: any) {
@@ -143,7 +132,6 @@ export default function DiretorModule({ user }: { user: any }) {
 
       if (error) throw error;
 
-      // Logar Atividade
       await supabase.from('atividades').insert({
         usuario_id: user.id,
         tipo: 'GERENCIAL',
@@ -171,7 +159,7 @@ export default function DiretorModule({ user }: { user: any }) {
 
       if (error) throw error;
 
-      toast.success("Ocorrência registrada com sucesso!");
+      toast.success("Ocorrência registrada!");
       setModalOcorrencia(null);
       fetchData();
     } catch (err: any) {
@@ -194,14 +182,13 @@ export default function DiretorModule({ user }: { user: any }) {
 
       if (error) throw error;
 
-      // Logar Atividade
       await supabase.from('atividades').insert({
         usuario_id: user.id,
         tipo: 'OPERACIONAL',
-        mensagem: `DIRETOR: Solicitado VOLANTE para a unidade ${unidade.nome} (Turno: ${form.turno}).`
+        mensagem: `DIRETOR: Solicitado VOLANTE para a unidade ${unidade.nome}.`
       });
 
-      toast.success("Pedido de volante enviado com sucesso!");
+      toast.success("Pedido de volante enviado!");
       setActiveTab("EQUIPE");
       fetchData();
     } catch (err: any) {
@@ -224,14 +211,10 @@ export default function DiretorModule({ user }: { user: any }) {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20 max-w-[1600px] mx-auto w-full px-4 lg:px-6">
       
-      {/* Hero Diretor - Design Pro Max */}
-      <div className="group relative bg-slate-950 rounded-[3.5rem] p-1 lg:p-2 shadow-2xl overflow-hidden border border-white/5 transition-all duration-700 hover:shadow-indigo-500/10">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-slate-950 to-emerald-500/5 opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
+      {/* Hero */}
+      <div className="group relative bg-slate-950 rounded-[3.5rem] p-1 lg:p-2 shadow-2xl overflow-hidden border border-white/5">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-slate-950 to-emerald-500/5 opacity-50" />
         
-        {/* Animated Background Orbs */}
-        <div className="absolute top-0 right-0 w-[50rem] h-[50rem] bg-indigo-600/10 rounded-full blur-[140px] -mr-40 -mt-40 animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] -ml-40 -mb-40" />
-
         <div className="relative z-10 bg-black/40 backdrop-blur-xl rounded-[3rem] p-8 lg:p-12 border border-white/10">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
             
@@ -250,15 +233,11 @@ export default function DiretorModule({ user }: { user: any }) {
                 <h2 className="text-5xl lg:text-7xl font-black italic tracking-tighter text-white leading-[1.1]">
                   Portal do <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-emerald-400">Diretor</span>
                 </h2>
-                <div className="flex items-center gap-4">
-                  <div className="h-[2px] w-12 bg-indigo-500/50" />
-                  <p className="text-lg font-medium text-slate-400 uppercase tracking-[0.3em]">Gestão & Fiscalização</p>
-                </div>
               </div>
 
               <div className="flex flex-col gap-4 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm max-w-2xl">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/40">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center">
                     <Building2 size={24} className="text-white" />
                   </div>
                   <div>
@@ -269,7 +248,7 @@ export default function DiretorModule({ user }: { user: any }) {
                   {(user.nivel_acesso >= 3 || user.role === 'DEV') && (
                     <div className="ml-auto">
                       <select 
-                        className="bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase text-white px-4 py-2 outline-none hover:bg-white/20 transition-all cursor-pointer ring-offset-2 focus:ring-2 ring-indigo-500"
+                        className="bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase text-white px-4 py-2 outline-none"
                         value={unidade.id}
                         onChange={(e) => fetchData(e.target.value)}
                       >
@@ -280,26 +259,14 @@ export default function DiretorModule({ user }: { user: any }) {
                     </div>
                   )}
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
-                  <div className="flex items-center gap-3">
-                    <Clock size={14} className="text-emerald-400" />
-                    <span className="text-[10px] font-bold text-slate-300 uppercase">Rota: {unidade.rota || "Interna"}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MessageSquare size={14} className="text-indigo-400" />
-                    <span className="text-[10px] font-bold text-slate-300 uppercase">{unidade.telefone || "Sem Contato"}</span>
-                  </div>
-                </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-6 w-full lg:w-auto">
               <button 
-                onClick={() => setModalSolicitacao(true)}
-                className="group relative px-12 py-6 bg-white text-slate-950 rounded-[2.5rem] text-[12px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] flex items-center justify-center gap-3 overflow-hidden"
+                onClick={() => toast.info("Em breve: Nova Solicitação Direta")}
+                className="group relative px-12 py-6 bg-white text-slate-950 rounded-[2.5rem] text-[12px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-3 overflow-hidden"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                 <Plus size={20} /> Nova Solicitação
               </button>
               
@@ -319,14 +286,14 @@ export default function DiretorModule({ user }: { user: any }) {
         </div>
       </div>
 
-      {/* Tabs Menu - Alinhamento Premium */}
+      {/* Tabs Menu */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-4">
         <div className="flex bg-[var(--bg-card)] p-2 rounded-[2.5rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar max-w-full">
           {(["EQUIPE", "VOLANTE"] as Tab[]).map(t => (
             <button 
               key={t}
               onClick={() => setActiveTab(t)}
-              className={`px-10 py-5 rounded-[2.2rem] text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 whitespace-nowrap ${activeTab === t ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-2xl shadow-indigo-600/40 scale-105" : "text-[var(--text-muted)] hover:bg-[var(--bg-base)]"}`}
+              className={`px-10 py-5 rounded-[2.2rem] text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 whitespace-nowrap ${activeTab === t ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-xl scale-105" : "text-[var(--text-muted)] hover:bg-[var(--bg-base)]"}`}
             >
               {t === "EQUIPE" && <Users size={18} />}
               {t === "VOLANTE" && <Truck size={18} />}
@@ -353,23 +320,16 @@ export default function DiretorModule({ user }: { user: any }) {
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
         {activeTab === "EQUIPE" && (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row items-center justify-end gap-4 px-2">
-              <div className="flex items-center gap-2 bg-[var(--bg-card)] px-4 py-3 rounded-2xl border border-[var(--border)] shadow-sm">
-                <Info size={14} className="text-indigo-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] italic">Alterações de horário notificam o RH imediatamente</span>
-              </div>
-            </div>
-
             <div className="bg-[var(--bg-card)] rounded-[3rem] border border-[var(--border)] shadow-2xl overflow-hidden overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--border)] bg-[var(--bg-base)]/50">
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Colaborador</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Cargo / Função</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Cargo</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Horário</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Insalubridade</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Status</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-right">Ações de Fiscalização</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -382,41 +342,27 @@ export default function DiretorModule({ user }: { user: any }) {
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <span className="px-4 py-1.5 bg-slate-500/10 text-[9px] font-black uppercase tracking-widest text-slate-500 rounded-full border border-slate-500/10">
+                        <span className="px-4 py-1.5 bg-slate-500/10 text-[9px] font-black uppercase tracking-widest text-slate-500 rounded-full">
                           {c.cargo}
                         </span>
                       </td>
                       <td className="px-8 py-6">
                         <button 
                           onClick={() => setModalHorario(c)}
-                          className="flex items-center gap-2 p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] hover:border-indigo-500/50 transition-all text-left group-hover:scale-105"
+                          className="flex items-center gap-2 p-3 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] hover:border-indigo-500/50 transition-all text-left"
                         >
                           <Clock size={14} className="text-indigo-500" />
                           <span className="text-[11px] font-black text-[var(--text-primary)] uppercase">{c.horario_trabalho || "07:00 - 17:00"}</span>
-                          <Edit2 size={10} className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100" />
                         </button>
                       </td>
                       <td className="px-8 py-6">
-                        {(() => {
-                          const ref = quadroReferencia.find(q => (q.cargo || "").toUpperCase() === (c.cargo || "").toUpperCase())?.insalubridade || 'N/A';
-                          return (
-                            <div className="flex flex-col gap-2">
-                              <button 
-                                onClick={() => setModalInsalubridade(c)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all hover:scale-105 w-fit ${
-                                  c.insalubridade === '40%' ? 'bg-red-500/10 border-red-500/20 text-red-600' :
-                                  c.insalubridade === '30%' ? 'bg-orange-500/10 border-orange-500/20 text-orange-600' :
-                                  c.insalubridade === '20%' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
-                                  'bg-[var(--bg-base)] border-[var(--border)] text-[var(--text-muted)]'
-                                }`}
-                              >
-                                <Zap size={14} className={c.insalubridade ? 'text-current' : 'text-slate-400'} />
-                                <span className="text-[10px] font-black uppercase">{c.insalubridade || "DEFINIR"}</span>
-                              </button>
-                              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest ml-1">Ref. Quadro: {ref}</span>
-                            </div>
-                          );
-                        })()}
+                        <button 
+                          onClick={() => setModalInsalubridade(c)}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-muted)]"
+                        >
+                          <Zap size={14} />
+                          <span className="text-[10px] font-black uppercase">{c.insalubridade || "DEFINIR"}</span>
+                        </button>
                       </td>
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-2">
@@ -428,13 +374,11 @@ export default function DiretorModule({ user }: { user: any }) {
                         <div className="flex items-center justify-end gap-2">
                            <button 
                             onClick={() => setModalOcorrencia(c)}
-                            title="Informar Falta ou Conduta"
                             className="p-3 bg-red-500/10 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm border border-red-500/10"
                            >
                               <UserX size={16} />
                            </button>
                            <button 
-                            title="Ver Perfil 360"
                             className="p-3 bg-slate-500/10 text-slate-600 rounded-xl hover:bg-slate-600 hover:text-white transition-all shadow-sm border border-slate-500/10"
                            >
                               <ChevronRight size={16} />
@@ -445,45 +389,37 @@ export default function DiretorModule({ user }: { user: any }) {
                   ))}
                 </tbody>
               </table>
-             {activeTab === "VOLANTE" && (
+            </div>
+          </div>
+        )}
+
+        {activeTab === "VOLANTE" && (
            <div className="max-w-4xl mx-auto space-y-12 py-10 animate-in fade-in slide-in-from-bottom-6">
               <div className="text-center space-y-4">
                 <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mx-auto shadow-2xl shadow-indigo-600/40">
                    <Truck size={40} />
                 </div>
-                <h3 className="text-3xl font-black italic tracking-tighter uppercase">Solicitar Volante para Unidade</h3>
-                <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest max-w-lg mx-auto">
-                   Utilize este canal para solicitar cobertura imediata ou programada devido a faltas, férias ou gaps de escala.
-                </p>
+                <h3 className="text-3xl font-black italic tracking-tighter uppercase">Solicitar Volante</h3>
               </div>
 
               <div className="bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-2xl space-y-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                    <div className="space-y-3">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Turno da Necessidade</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Turno</label>
                       <select id="volTurno" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold">
-                         <option value="DIURNO">Diurno (07:00 - 19:00)</option>
-                         <option value="NOTURNO">Noturno (19:00 - 07:00)</option>
-                         <option value="ADMINISTRATIVO">Comercial (07:00 - 17:00)</option>
-                         <option value="ESPECIFICO">Horário Específico</option>
+                         <option value="DIURNO">Diurno</option>
+                         <option value="NOTURNO">Noturno</option>
                       </select>
                    </div>
                    <div className="space-y-3">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Data da Necessidade</label>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Data</label>
                       <input type="date" id="volData" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold" defaultValue={new Date().toISOString().split('T')[0]} />
                    </div>
                 </div>
 
                 <div className="space-y-3 relative z-10">
-                   <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Motivo da Solicitação</label>
-                   <textarea 
-                    id="volMotivo" 
-                    rows={4} 
-                    className="input-field w-full rounded-3xl p-6 bg-[var(--bg-base)] border-[var(--border)] font-bold text-sm" 
-                    placeholder="Descreva o motivo (ex: Falha do colaborador fixo, cobertura de atestado, aumento de fluxo...)"
-                   ></textarea>
+                   <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Motivo</label>
+                   <textarea id="volMotivo" rows={4} className="input-field w-full rounded-3xl p-6 bg-[var(--bg-base)] border-[var(--border)] font-bold text-sm" placeholder="Descreva o motivo..."></textarea>
                 </div>
 
                 <div className="pt-6 relative z-10">
@@ -494,12 +430,12 @@ export default function DiretorModule({ user }: { user: any }) {
                         data: (document.getElementById('volData') as HTMLInputElement).value,
                         motivo: (document.getElementById('volMotivo') as HTMLTextAreaElement).value
                       };
-                      if(!form.motivo) return toast.error("Por favor, descreva o motivo.");
+                      if(!form.motivo) return toast.error("Descreva o motivo.");
                       handlePedirVolante(form);
                     }}
                     className="w-full py-8 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-[2.5rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4"
                    >
-                     <Send size={20} /> Enviar Pedido para Central Operacional
+                     <Send size={20} /> Enviar Pedido
                    </button>
                 </div>
               </div>
@@ -507,28 +443,16 @@ export default function DiretorModule({ user }: { user: any }) {
         )}
       </div>
 
-      {/* Modais Customizados */}
+      {/* Modais */}
       {modalInsalubridade && (
-        <AdaptiveModal isOpen={!!modalInsalubridade} onClose={() => setModalInsalubridade(null)} title="Definir Percentual de Insalubridade" size="md">
+        <AdaptiveModal isOpen={!!modalInsalubridade} onClose={() => setModalInsalubridade(null)} title="Insalubridade" size="md">
           <div className="p-8 space-y-6">
-            <div className="bg-amber-500/10 p-6 rounded-3xl border border-amber-500/20">
-               <h4 className="text-sm font-black uppercase text-amber-600 mb-2">{modalInsalubridade.nome}</h4>
-               <p className="text-[11px] font-bold text-slate-500 uppercase">
-                 Defina o percentual de acordo com o risco da atividade. 
-                 <br/><br/>
-                 <span className="text-amber-700">Atenção: Cozinha é fixo em 20%. Auxiliares de limpeza variam entre 20% e 40% dependendo do setor.</span>
-               </p>
-            </div>
             <div className="grid grid-cols-2 gap-4">
                {['N/A', '20%', '30%', '40%'].map(pct => (
                  <button
                   key={pct}
                   onClick={() => handleUpdateInsalubridade(modalInsalubridade.id, pct)}
-                  className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${
-                    modalInsalubridade.insalubridade === pct 
-                    ? 'bg-amber-600 border-amber-600 text-white shadow-xl scale-105' 
-                    : 'bg-white border-slate-100 text-slate-400 hover:border-amber-300'
-                  }`}
+                  className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${modalInsalubridade.insalubridade === pct ? 'bg-amber-600 border-amber-600 text-white shadow-xl' : 'bg-white border-slate-100 text-slate-400'}`}
                  >
                    {pct}
                  </button>
@@ -539,24 +463,15 @@ export default function DiretorModule({ user }: { user: any }) {
       )}
 
       {modalHorario && (
-        <AdaptiveModal isOpen={!!modalHorario} onClose={() => setModalHorario(null)} title="Ajustar Horário de Trabalho" size="md">
+        <AdaptiveModal isOpen={!!modalHorario} onClose={() => setModalHorario(null)} title="Ajustar Horário" size="md">
           <div className="p-8 space-y-6">
-            <div className="bg-indigo-500/10 p-6 rounded-3xl border border-indigo-500/20">
-               <h4 className="text-sm font-black uppercase text-indigo-600 mb-2">{modalHorario.nome}</h4>
-               <p className="text-[11px] font-bold text-slate-500 uppercase">Ajuste o horário conforme a necessidade local. O RH será alertado para recalcular o SLA.</p>
-            </div>
             <div className="space-y-4">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Novo Horário (Ex: 08:00 - 18:00)</label>
-              <input 
-                id="novoHorarioInput"
-                defaultValue={modalHorario.horario_trabalho || "07:00 - 17:00"}
-                className="input-field w-full p-6 text-2xl font-black italic rounded-3xl text-center border-2 border-indigo-100 focus:border-indigo-600 transition-all"
-              />
+              <input id="novoHorarioInput" defaultValue={modalHorario.horario_trabalho || "07:00 - 17:00"} className="input-field w-full p-6 text-2xl font-black italic rounded-3xl text-center" />
               <button 
                 onClick={() => handleUpdateHorario(modalHorario.id, (document.getElementById('novoHorarioInput') as HTMLInputElement).value)}
-                className="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl transition-all"
+                className="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl"
               >
-                Confirmar Alteração
+                Confirmar
               </button>
             </div>
           </div>
@@ -564,26 +479,16 @@ export default function DiretorModule({ user }: { user: any }) {
       )}
 
       {modalOcorrencia && (
-        <AdaptiveModal isOpen={!!modalOcorrencia} onClose={() => setModalOcorrencia(null)} title="Registrar Ocorrência / Falta" size="md">
+        <AdaptiveModal isOpen={!!modalOcorrencia} onClose={() => setModalOcorrencia(null)} title="Ocorrência" size="md">
           <div className="p-8 space-y-6">
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 p-4 bg-slate-500/5 rounded-2xl">
-                 <Users size={20} className="text-slate-400" />
-                 <div>
-                    <p className="text-[10px] font-black uppercase text-[var(--text-muted)]">Colaborador Alvo</p>
-                    <p className="text-[14px] font-black uppercase italic">{modalOcorrencia.nome}</p>
-                 </div>
-              </div>
-
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <label className="text-[9px] font-black uppercase text-[var(--text-muted)]">Tipo de Ocorrência</label>
+                    <label className="text-[9px] font-black uppercase text-[var(--text-muted)]">Tipo</label>
                     <select id="tipoOco" className="input-field w-full rounded-xl">
-                       <option value="FALTA">Falta Não Justificada</option>
-                       <option value="ATRASO">Atraso Recorrente</option>
-                       <option value="CONDUTA">Má Conduta / Indisciplina</option>
-                       <option value="UNIFORME">Falta de Uniforme / EPI</option>
-                       <option value="OUTROS">Outros Assuntos</option>
+                       <option value="FALTA">Falta</option>
+                       <option value="ATRASO">Atraso</option>
+                       <option value="CONDUTA">Conduta</option>
                     </select>
                  </div>
                  <div className="space-y-2">
@@ -591,33 +496,24 @@ export default function DiretorModule({ user }: { user: any }) {
                     <select id="urgOco" className="input-field w-full rounded-xl">
                        <option value="NORMAL">Normal</option>
                        <option value="URGENTE">Urgente</option>
-                       <option value="CRITICO">Crítico (Imediato)</option>
                     </select>
                  </div>
               </div>
-
-              <div className="space-y-2">
-                 <label className="text-[9px] font-black uppercase text-[var(--text-muted)]">Detalhamento para o RH</label>
-                 <textarea id="descOco" rows={4} className="input-field w-full rounded-2xl p-4 text-xs font-bold" placeholder="Descreva o que aconteceu..."></textarea>
-              </div>
-
+              <textarea id="descOco" rows={4} className="input-field w-full rounded-2xl p-4 text-xs font-bold" placeholder="Descrição..."></textarea>
               <button 
                 onClick={() => handleCriarOcorrencia({
                   tipo: (document.getElementById('tipoOco') as HTMLSelectElement).value,
                   urgencia: (document.getElementById('urgOco') as HTMLSelectElement).value,
                   descricao: (document.getElementById('descOco') as HTMLTextAreaElement).value
                 })}
-                className="w-full py-6 bg-red-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-red-700 shadow-xl transition-all flex items-center justify-center gap-2"
+                className="w-full py-6 bg-red-600 text-white rounded-[2rem] font-black uppercase tracking-widest hover:bg-red-700 shadow-xl flex items-center justify-center gap-2"
               >
-                <Send size={18} /> Enviar para o RH Alicerce
+                <Send size={18} /> Enviar
               </button>
             </div>
           </div>
         </AdaptiveModal>
       )}
-
-      {/* Outros modais seguindo o mesmo padrão... */}
-
     </div>
   );
 }
