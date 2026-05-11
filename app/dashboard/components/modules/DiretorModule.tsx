@@ -26,6 +26,10 @@ export default function DiretorModule({ user }: { user: any }) {
   const [modalHorario, setModalHorario] = useState<any>(null);
   const [modalInsalubridade, setModalInsalubridade] = useState<any>(null);
   const [modalOcorrencia, setModalOcorrencia] = useState<any>(null);
+  
+  // Estados para reatividade do formulário Volante
+  const [volCargo, setVolCargo] = useState("");
+  const [volColaborador, setVolColaborador] = useState("");
 
   const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
@@ -182,6 +186,13 @@ export default function DiretorModule({ user }: { user: any }) {
         cargo_alvo: form.cargo,
         colaborador_alvo: form.colaborador,
         data_necessidade: form.data,
+        insalubridade: form.insalubridade,
+        meta_contexto: {
+          alunos: unidade.quantidade_alunos,
+          fluxo: unidade.fluxo_diario,
+          cozinheiras_efetivas: unidade.tem_cozinheira_efetiva,
+          qtd_cozinheiras: unidade.quantidade_cozinheiras
+        },
         status: 'PENDENTE'
       });
 
@@ -415,10 +426,13 @@ export default function DiretorModule({ user }: { user: any }) {
                       <select 
                         id="volColaborador" 
                         className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs"
+                        value={volColaborador}
                         onChange={(e) => {
-                          const colab = colaboradores.find(c => c.nome === e.target.value);
-                          if(colab && document.getElementById('volCargo')) {
-                            (document.getElementById('volCargo') as HTMLInputElement).value = colab.cargo || "";
+                          const val = e.target.value;
+                          setVolColaborador(val);
+                          const colab = colaboradores.find(c => c.nome === val);
+                          if(colab) {
+                            setVolCargo(colab.cargo || "");
                           }
                         }}
                       >
@@ -430,8 +444,25 @@ export default function DiretorModule({ user }: { user: any }) {
                    </div>
                    <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Cargo</label>
-                      <input id="volCargo" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs" placeholder="Ex: Auxiliar de Limpeza" />
+                      <input 
+                        id="volCargo" 
+                        value={volCargo}
+                        onChange={(e) => setVolCargo(e.target.value)}
+                        className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs" 
+                        placeholder="Ex: Auxiliar de Limpeza" 
+                      />
                    </div>
+
+                   {volCargo.toUpperCase().includes("LIMPEZA") && (
+                     <div className="space-y-3 animate-in slide-in-from-left-4 duration-500">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-amber-500 ml-2">Insalubridade do Posto</label>
+                        <select id="volInsalubridade" className="input-field w-full rounded-2xl p-5 bg-amber-500/5 border-amber-500/20 font-black text-amber-700">
+                           <option value="20%">20% (Mínima)</option>
+                           <option value="30%">30% (Média)</option>
+                           <option value="40%">40% (Máxima)</option>
+                        </select>
+                     </div>
+                   )}
 
                    <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Data da Substituição</label>
@@ -475,18 +506,56 @@ export default function DiretorModule({ user }: { user: any }) {
                    </div>
                 </div>
 
+                {/* Dados de Contexto (SEMED / SEMSA) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-[var(--bg-base)] rounded-[2.5rem] border border-[var(--border)] relative overflow-hidden group/context">
+                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/context:opacity-30 transition-opacity">
+                      <Info size={40} className="text-indigo-500" />
+                   </div>
+                   
+                   {unidade.nome?.toUpperCase().includes("SEMED") || unidade.nome?.toUpperCase().includes("ESCOLA") ? (
+                     <>
+                        <div className="space-y-1">
+                           <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Nº de Alunos</p>
+                           <p className="text-2xl font-black italic">{unidade.quantidade_alunos || 0}</p>
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Cozinheiras (Total / Efetivas)</p>
+                           <p className="text-2xl font-black italic">{unidade.quantidade_cozinheiras || 0} / {unidade.tem_cozinheira_efetiva ? "SIM" : "NÃO"}</p>
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Alunos por Cozinheira</p>
+                           <p className="text-2xl font-black italic text-emerald-500">
+                             {unidade.quantidade_cozinheiras > 0 ? Math.round(unidade.quantidade_alunos / unidade.quantidade_cozinheiras) : unidade.quantidade_alunos}
+                           </p>
+                        </div>
+                     </>
+                   ) : (
+                     <>
+                        <div className="space-y-1">
+                           <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Fluxo Diário de Pessoas</p>
+                           <p className="text-2xl font-black italic">{unidade.fluxo_diario || "N/A"}</p>
+                        </div>
+                        <div className="space-y-1">
+                           <p className="text-[9px] font-black uppercase text-indigo-500 tracking-widest">Tipo de Unidade</p>
+                           <p className="text-xl font-black italic uppercase text-slate-500">Unidade de Saúde (SEMSA)</p>
+                        </div>
+                     </>
+                   )}
+                </div>
+
                 <div className="pt-6 relative z-10">
                    <button 
                     onClick={() => {
                       const form = {
-                        colaborador: (document.getElementById('volColaborador') as HTMLSelectElement).value,
-                        cargo: (document.getElementById('volCargo') as HTMLInputElement).value,
+                        colaborador: volColaborador,
+                        cargo: volCargo,
                         data: (document.getElementById('volData') as HTMLInputElement).value,
                         turno: (document.getElementById('volTurno') as HTMLSelectElement).value,
                         escala: (document.getElementById('volEscala') as HTMLSelectElement).value,
                         horario: (document.getElementById('volHorario') as HTMLInputElement).value,
                         motivo: (document.getElementById('volMotivoSelect') as HTMLSelectElement).value,
-                        dias: (document.getElementById('volDias') as HTMLInputElement).value
+                        dias: (document.getElementById('volDias') as HTMLInputElement).value,
+                        insalubridade: document.getElementById('volInsalubridade') ? (document.getElementById('volInsalubridade') as HTMLSelectElement).value : null
                       };
                       if(!form.colaborador) return toast.error("Selecione o colaborador.");
                       if(!form.cargo) return toast.error("Informe o cargo.");
