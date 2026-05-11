@@ -361,9 +361,6 @@ export default function DiretorModule({ user }: { user: any }) {
           </div>
         )}
       </div>
-          ))}
-        </div>
-      </div>
 
       {/* Content Area */}
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
