@@ -277,6 +277,68 @@ export default function DiretorModule({ user }: { user: any }) {
         </div>
       </div>
 
+      {/* Dash de Métricas Rápidas (Inspirado no Encarregado) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all group overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
+          <div className="flex items-center gap-5 mb-4">
+            <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600">
+              <Users size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Efetivo Total</p>
+              <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{colaboradores.length} <span className="text-[10px] font-bold not-italic text-slate-400">ATIVOS</span></h4>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-red-500/5 transition-all group overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
+          <div className="flex items-center gap-5 mb-4">
+            <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-600">
+              <AlertTriangle size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Ocorrências</p>
+              <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{ocorrencias.length} <span className="text-[10px] font-bold not-italic text-slate-400">REGISTROS</span></h4>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 transition-all group overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
+          <div className="flex items-center gap-5 mb-4">
+            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600">
+              <Sparkles size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Vagas no Quadro</p>
+              <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{quadroReferencia.length} <span className="text-[10px] font-bold not-italic text-slate-400">VAGAS</span></h4>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-sm hover:shadow-xl hover:shadow-blue-500/5 transition-all group overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
+          <div className="flex items-center gap-5 mb-4">
+            <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600">
+              <Clock size={24} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Ações Rápidas</p>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setActiveTab("SOLICITACOES")}
+                  className="px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20"
+                >
+                  Pedir Vaga
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Tabs Menu */}
       <div className="flex items-center justify-center lg:justify-start">
         <div className="flex flex-wrap items-center gap-2 bg-[var(--bg-card)] p-2 rounded-[2rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar">
