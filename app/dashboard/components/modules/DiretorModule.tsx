@@ -48,11 +48,11 @@ export default function DiretorModule({ user }: { user: any }) {
       if (targetUnitId) {
         unitData = listUnits?.find(u => u.id === targetUnitId);
       } else {
-        // Tenta vincular automaticamente
-        const unitByPhone = listUnits?.find(u => 
+        // Tenta vincular automaticamente (EXIGE telefone válido para evitar match vazio)
+        const unitByPhone = (cleanPhone.length > 5) ? listUnits?.find(u => 
           (u.telefone && (u.telefone.includes(cleanPhone) || u.telefone.includes(phoneWithout55))) || 
           (u.responsavel_telefone && (u.responsavel_telefone.includes(cleanPhone) || u.responsavel_telefone.includes(phoneWithout55)))
-        );
+        ) : null;
 
         const unitByName = listUnits?.find(u => 
           (user.unidade_alocacao && u.nome.toLowerCase().includes(user.unidade_alocacao.toLowerCase())) ||

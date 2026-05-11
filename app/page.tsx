@@ -87,6 +87,7 @@ export default function LoginPage() {
       localStorage.setItem("crm_user", JSON.stringify({ 
         id: user.id,
         email: user.telefone, 
+        telefone: user.telefone,
         role: cargoResolvido, 
         name: user.nome, 
         nivel: user.nivel_acesso || 1,
