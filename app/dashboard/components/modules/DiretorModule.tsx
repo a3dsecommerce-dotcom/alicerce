@@ -30,6 +30,8 @@ export default function DiretorModule({ user }: { user: any }) {
   // Estados para reatividade do formulário Volante
   const [volCargo, setVolCargo] = useState("");
   const [volColaborador, setVolColaborador] = useState("");
+  const [volInsalubridade, setVolInsalubridade] = useState("");
+  const [volHorario, setVolHorario] = useState("");
 
   const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
@@ -433,6 +435,8 @@ export default function DiretorModule({ user }: { user: any }) {
                           const colab = colaboradores.find(c => c.nome === val);
                           if(colab) {
                             setVolCargo(colab.cargo || "");
+                            setVolInsalubridade(colab.insalubridade || "");
+                            setVolHorario(colab.horario_trabalho || "");
                           }
                         }}
                       >
@@ -456,7 +460,13 @@ export default function DiretorModule({ user }: { user: any }) {
                    {volCargo.toUpperCase().includes("LIMPEZA") && (
                      <div className="space-y-3 animate-in slide-in-from-left-4 duration-500">
                         <label className="text-[10px] font-black uppercase tracking-widest text-amber-500 ml-2">Insalubridade do Posto</label>
-                        <select id="volInsalubridade" className="input-field w-full rounded-2xl p-5 bg-amber-500/5 border-amber-500/20 font-black text-amber-700">
+                        <select 
+                          id="volInsalubridade" 
+                          value={volInsalubridade}
+                          onChange={(e) => setVolInsalubridade(e.target.value)}
+                          className="input-field w-full rounded-2xl p-5 bg-amber-500/5 border-amber-500/20 font-black text-amber-700"
+                        >
+                           <option value="">Selecione...</option>
                            <option value="20%">20% (Mínima)</option>
                            <option value="30%">30% (Média)</option>
                            <option value="40%">40% (Máxima)</option>
@@ -487,7 +497,13 @@ export default function DiretorModule({ user }: { user: any }) {
                    </div>
                    <div className="space-y-3">
                       <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Horário Específico</label>
-                      <input id="volHorario" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs" placeholder="Ex: 07:00 às 19:00" />
+                      <input 
+                        id="volHorario" 
+                        value={volHorario}
+                        onChange={(e) => setVolHorario(e.target.value)}
+                        className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold text-xs" 
+                        placeholder="Ex: 07:00 às 19:00" 
+                      />
                    </div>
 
                    <div className="space-y-3">
@@ -552,10 +568,10 @@ export default function DiretorModule({ user }: { user: any }) {
                         data: (document.getElementById('volData') as HTMLInputElement).value,
                         turno: (document.getElementById('volTurno') as HTMLSelectElement).value,
                         escala: (document.getElementById('volEscala') as HTMLSelectElement).value,
-                        horario: (document.getElementById('volHorario') as HTMLInputElement).value,
+                        horario: volHorario,
                         motivo: (document.getElementById('volMotivoSelect') as HTMLSelectElement).value,
                         dias: (document.getElementById('volDias') as HTMLInputElement).value,
-                        insalubridade: document.getElementById('volInsalubridade') ? (document.getElementById('volInsalubridade') as HTMLSelectElement).value : null
+                        insalubridade: volInsalubridade
                       };
                       if(!form.colaborador) return toast.error("Selecione o colaborador.");
                       if(!form.cargo) return toast.error("Informe o cargo.");
