@@ -55,8 +55,18 @@ export default function DiretorModule({ user }: { user: any }) {
       } else if (isManagement) {
         query = query.eq('status', 'ATIVO').limit(1).single();
       } else {
-        // Tenta por ID primeiro, se falhar, tenta pelo Telefone (liberação por telefone cadastrado na unidade)
-        query = query.or(`diretor_id.eq.${user.id},telefone.eq.${userPhone},responsavel_telefone.eq.${userPhone}`).single();
+        // Tenta por ID, Telefone ou pelo Nome da Unidade gravado no cadastro do usuário
+        const unitFilter = [
+          `diretor_id.eq.${user.id}`,
+          `telefone.eq.${userPhone}`,
+          `responsavel_telefone.eq.${userPhone}`
+        ];
+        
+        if (user.unidade_alocacao) {
+          unitFilter.push(`nome.eq."${user.unidade_alocacao}"`);
+        }
+
+        query = query.or(unitFilter.join(',')).single();
       }
 
       const { data: unitData, error: unitError } = await query;
