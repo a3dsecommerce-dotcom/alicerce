@@ -26,13 +26,13 @@ import ManualModule from "./components/modules/ManualModule";
 import DiretorModule from "./components/modules/DiretorModule";
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
-  { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ENCARREGADO"] },
+  { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "GERENTE", "GERENCIA", "ENCARREGADO"] },
   { id: "RH", label: "Recursos Humanos", icon: Users, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL"] },
   { id: "COMPRAS", label: "Compras", icon: ShoppingBag, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "COMPRADOR", "COMPRAS"] },
   { id: "ALMOXARIFADO", label: "Almoxarifado", icon: Package, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "ALMOXARIFE", "ALMOXARIFADO"] },
   { id: "OPERACIONAL", label: "Operacional", icon: Activity, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "OPERACIONAL"] },
   { id: "SST", label: "Segurança (SST)", icon: ShieldCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "TECNICO_SEGURANCA"] },
-  { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "ENCARREGADO"] },
+  { id: "OCORRENCIAS", label: "Ocorrências", icon: AlertTriangle, roles: ["ADMIN", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "ENCARREGADO"] },
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
   { id: "MANUAL", label: "Manual de Boas Práticas", icon: FileText, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO"] },
   { id: "DIRETOR", label: "Portal do Diretor", icon: UserCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "DIRETOR_UNIDADE"] },
@@ -167,8 +167,8 @@ function CockpitContent() {
     const nivel = user?.nivel || 0;
     
     // Unificação da lógica de permissão
-    const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA"].includes(safeRole);
-    const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole));
+    const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "DIRETOR_UNIDADE", "DIRETORIA"].includes(safeRole);
+    const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "GERENTE", "GERENCIA"].includes(safeRole));
     
     console.log("🔍 Filtering Modules:", { safeRole, nivel, isManager });
 
