@@ -90,6 +90,7 @@ export default function LoginPage() {
         role: cargoResolvido, 
         name: user.nome, 
         nivel: user.nivel_acesso || 1,
+        nivel_acesso: user.nivel_acesso || 1,
         unidade_alocacao: user.unidade_alocacao,
         secretaria: user.secretaria,
         funcao: dbFuncao

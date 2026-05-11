@@ -64,7 +64,9 @@ export default function DevImpersonator({ originalUser, onImpersonate, onStop }:
     window.location.reload();
   };
 
-  if (!originalUser || originalUser.nivel_acesso < 4) return null;
+  // Proteção de Segurança Estrita: Só renderiza se o nível for exatamente 4 ou superior
+  const userAccessLevel = originalUser?.nivel_acesso ?? originalUser?.nivel ?? 0;
+  if (userAccessLevel < 4) return null;
 
   return (
     <>
