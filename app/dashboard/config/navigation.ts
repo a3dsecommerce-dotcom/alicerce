@@ -13,67 +13,67 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Painel de Controle',
     icon: LayoutDashboard,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ENCARREGADO', 'DIRETOR_UNIDADE'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'ENCARREGADO'],
     href: '/dashboard?module=COMMAND'
   },
   {
     label: 'Catálogo de Compras',
     icon: ShoppingBag,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
     href: '/dashboard?module=COMPRAS&tab=CATALOGO'
   },
   {
     label: 'Acompanhamento de Pedidos',
     icon: Truck,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'COMPRADOR', 'COMPRAS'],
     href: '/dashboard?module=COMPRAS&tab=TRACKING'
   },
   {
     label: 'Almoxarifado',
     icon: Package,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'ALMOXARIFE', 'ALMOXARIFADO'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'ALMOXARIFE', 'ALMOXARIFADO'],
     href: '/dashboard?module=ALMOXARIFADO'
   },
   {
     label: 'Recursos Humanos',
     icon: Users,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'RH_DP'],
     href: '/dashboard?module=RH'
   },
   {
     label: 'Escala de Volantes',
     icon: Truck,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'],
     href: '/dashboard?module=COMMAND&tab=VOLANTES'
   },
   {
     label: 'Gestão de Rotas',
     icon: MapPin,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'],
     href: '/dashboard?module=COMMAND&tab=ROTAS'
   },
   {
     label: 'Central de Ocorrências',
     icon: AlertTriangle,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'DIRETOR', 'DIRETOR_UNIDADE', 'ENCARREGADO'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'ENCARREGADO'],
     href: '/dashboard?module=OCORRENCIAS'
   },
   {
     label: 'Gestão de Ponto',
     icon: Clock,
-    roles: ['DEV', 'SUPERVISOR', 'GERENTE', 'GERENCIA', 'ADMIN', 'DIRETORIA'],
+    roles: ['DEV', 'SUPERVISOR', 'GERENTE', 'GERENCIA', 'ADMIN'],
     href: '/dashboard/ponto'
   },
   {
     label: 'Manual de Boas Práticas',
     icon: FileText,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR'],
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR', 'DIRETOR_UNIDADE'],
     href: '/dashboard?module=MANUAL'
   },
   {
     label: 'Portal do Diretor',
     icon: Building2,
-    roles: ['DEV', 'ADMIN', 'DIRETOR_UNIDADE', 'GERENTE', 'GERENCIA'],
+    roles: ['DEV', 'ADMIN', 'DIRETOR_UNIDADE', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
     href: '/dashboard?module=DIRETOR'
   }
 ];
