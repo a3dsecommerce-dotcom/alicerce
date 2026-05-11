@@ -16,7 +16,9 @@ export function useGerenciaData(currentUser?: any) {
     totalVagas: 0,
     ticketsAbertos: 0,
     diretoresAtivos: 0,
-    solicitacoesDiretor: 0
+    solicitacoesDiretor: 0,
+    acessosHoje: 0,
+    interacoesPorMinuto: 0
   });
 
   // Filtros Globais
@@ -67,13 +69,16 @@ export function useGerenciaData(currentUser?: any) {
       if (selectedSecretaria) colabsQuery = colabsQuery.eq('secretaria', selectedSecretaria);
       if (selectedUnidade) colabsQuery = colabsQuery.eq('unidade_alocacao', selectedUnidade);
 
-      const [colabsRes, reqs, quadroRes, tickets, diretoresRes, feedbacksRes] = await Promise.all([
+      const [colabsRes, reqs, quadroRes, tickets, diretoresRes, feedbacksRes, res4, res5] = await Promise.all([
         colabsQuery,
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
         supabase.from('vagas_quadro').select('unidade_nome, cargo, vagas_totais'),
         supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
         supabase.from('unidades').select('*', { count: 'exact', head: true }).not('diretor_id', 'is', null),
-        supabase.from('feedback_diretor').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
+        supabase.from('feedback_diretor').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
+        // Novas métricas de atividade
+        supabase.from('atividades').select('*', { count: 'exact', head: true }).gt('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
+        supabase.from('atividades').select('*', { count: 'exact', head: true }).gt('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
       ]);
 
       const todosColabs = colabsRes.data || [];
@@ -103,7 +108,9 @@ export function useGerenciaData(currentUser?: any) {
         totalVagas: totalVagasAbertas,
         ticketsAbertos: tickets.count || 0,
         diretoresAtivos: diretoresRes.count || 0,
-        solicitacoesDiretor: feedbacksRes.count || 0
+        solicitacoesDiretor: feedbacksRes.count || 0,
+        acessosHoje: res4?.count || 0,
+        interacoesPorMinuto: Math.round((res5?.count || 0) / 10)
       });
 
       // Distribuição de ASG por Secretaria

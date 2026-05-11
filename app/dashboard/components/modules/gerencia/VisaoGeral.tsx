@@ -202,7 +202,7 @@ export default function VisaoGeral({
                   <div className="grid grid-cols-3 gap-6">
                     <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
                       <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Acessos Hoje</p>
-                      <h4 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">142</h4>
+                      <h4 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter">{stats.acessosHoje}</h4>
                     </div>
                     <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
                       <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Usuários Online</p>
@@ -210,7 +210,7 @@ export default function VisaoGeral({
                     </div>
                     <div className="p-6 bg-[var(--bg-base)] rounded-[2rem] border border-[var(--border)] text-center">
                       <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Interações/Min</p>
-                      <h4 className="text-3xl font-black text-blue-500 tracking-tighter">48</h4>
+                      <h4 className="text-3xl font-black text-blue-500 tracking-tighter">{stats.interacoesPorMinuto}</h4>
                     </div>
                   </div>
 
