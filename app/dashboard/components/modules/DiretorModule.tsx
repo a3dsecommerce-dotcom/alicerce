@@ -58,7 +58,7 @@ export default function DiretorModule({ user }: { user: any }) {
       } else if (isManagement) {
         query = query.eq('status', 'ATIVO').limit(1).single();
       } else {
-        // Tenta por ID, Telefone (várias versões) ou pelo Nome da Unidade
+        // Tenta por ID, Telefone (várias versões), Nome da Unidade ou pelo Nome do Diretor
         const unitFilter = [
           `diretor_id.eq.${user.id}`,
           `telefone.eq.${cleanPhone}`,
@@ -70,8 +70,19 @@ export default function DiretorModule({ user }: { user: any }) {
         ];
         
         if (user.unidade_alocacao) {
-          unitFilter.push(`nome.ilike.%${user.unidade_alocacao}%`);
+          unitFilter.push(`nome.ilike.%${user.unidade_alocacao.trim()}%`);
         }
+
+        if (user.nome || user.name) {
+          const userName = user.nome || user.name;
+          unitFilter.push(`diretor.ilike.%${userName.trim()}%`);
+        }
+
+        console.log("🔍 TENTANDO VÍNCULO DIRETOR:", { 
+          filters: unitFilter, 
+          user_alocacao: user.unidade_alocacao,
+          user_nome: user.nome || user.name 
+        });
 
         query = query.or(unitFilter.join(',')).limit(1).maybeSingle();
       }
