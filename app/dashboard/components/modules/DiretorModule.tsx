@@ -3,14 +3,14 @@ import React, { useState, useEffect } from "react";
 import { 
   Users, AlertTriangle, ArrowRightLeft, Sparkles, Search, Clock, 
   CheckCircle, XCircle, Send, MoreHorizontal, UserCheck, UserX, 
-  MessageSquare, Plus, ChevronRight, FileText, Info, Edit2, Zap, Building2
+  MessageSquare, Plus, ChevronRight, FileText, Info, Edit2, Zap, Building2, Truck
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-type Tab = "EQUIPE" | "TRANSFERENCIAS" | "SOLICITACOES";
+type Tab = "EQUIPE" | "VOLANTE";
 
 export default function DiretorModule({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState<Tab>("EQUIPE");
@@ -179,23 +179,33 @@ export default function DiretorModule({ user }: { user: any }) {
     }
   };
 
-  const handlePedirTransferencia = async (form: any) => {
+  const handlePedirVolante = async (form: any) => {
     try {
-      const { error } = await supabase.from('transferencias').insert({
-        colaborador_id: modalTransferencia.id,
-        colaborador_nome: modalTransferencia.nome,
-        unidade_origem: unidade.nome,
-        motivo_solicitacao: `SOLICITADO POR DIRETOR: ${form.motivo}`,
-        status: 'SOLICITADO'
+      const { error } = await supabase.from('solicitacoes_volante').insert({
+        unidade_id: unidade.id,
+        unidade_nome: unidade.nome,
+        solicitante_id: user.id,
+        solicitante_nome: user.nome || user.name,
+        turno: form.turno,
+        motivo: form.motivo,
+        data_necessidade: form.data,
+        status: 'PENDENTE'
       });
 
       if (error) throw error;
 
-      toast.success("Pedido de transferência enviado!");
-      setModalTransferencia(null);
+      // Logar Atividade
+      await supabase.from('atividades').insert({
+        usuario_id: user.id,
+        tipo: 'OPERACIONAL',
+        mensagem: `DIRETOR: Solicitado VOLANTE para a unidade ${unidade.nome} (Turno: ${form.turno}).`
+      });
+
+      toast.success("Pedido de volante enviado com sucesso!");
+      setActiveTab("EQUIPE");
       fetchData();
     } catch (err: any) {
-      toast.error("Erro ao processar transferência.");
+      toast.error("Erro ao solicitar volante.");
     }
   };
 
@@ -312,16 +322,15 @@ export default function DiretorModule({ user }: { user: any }) {
       {/* Tabs Menu - Alinhamento Premium */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-4">
         <div className="flex bg-[var(--bg-card)] p-2 rounded-[2.5rem] border border-[var(--border)] shadow-xl overflow-x-auto no-scrollbar max-w-full">
-          {(["EQUIPE", "TRANSFERENCIAS", "SOLICITACOES"] as Tab[]).map(t => (
+          {(["EQUIPE", "VOLANTE"] as Tab[]).map(t => (
             <button 
               key={t}
               onClick={() => setActiveTab(t)}
               className={`px-10 py-5 rounded-[2.2rem] text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-3 whitespace-nowrap ${activeTab === t ? "bg-gradient-to-r from-indigo-600 to-indigo-800 text-white shadow-2xl shadow-indigo-600/40 scale-105" : "text-[var(--text-muted)] hover:bg-[var(--bg-base)]"}`}
             >
               {t === "EQUIPE" && <Users size={18} />}
-              {t === "TRANSFERENCIAS" && <ArrowRightLeft size={18} />}
-              {t === "SOLICITACOES" && <Sparkles size={18} />}
-              {t === "EQUIPE" ? "Efetivo da Unidade" : t === "TRANSFERENCIAS" ? "Trocas de Posto" : "Pedidos & Demandas"}
+              {t === "VOLANTE" && <Truck size={18} />}
+              {t === "EQUIPE" ? "Efetivo da Unidade" : "Solicitar Volante"}
             </button>
           ))}
         </div>
@@ -425,13 +434,6 @@ export default function DiretorModule({ user }: { user: any }) {
                               <UserX size={16} />
                            </button>
                            <button 
-                            onClick={() => setModalTransferencia(c)}
-                            title="Solicitar Transferência"
-                            className="p-3 bg-blue-500/10 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-500/10"
-                           >
-                              <ArrowRightLeft size={16} />
-                           </button>
-                           <button 
                             title="Ver Perfil 360"
                             className="p-3 bg-slate-500/10 text-slate-600 rounded-xl hover:bg-slate-600 hover:text-white transition-all shadow-sm border border-slate-500/10"
                            >
@@ -443,56 +445,66 @@ export default function DiretorModule({ user }: { user: any }) {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "OCORRENCIAS" && (
-           <div className="space-y-8">
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-xs font-black uppercase text-[var(--text-muted)] tracking-[0.3em] flex items-center gap-3 italic">
-                  <AlertTriangle className="text-red-500" size={18} /> Feedback Direto à Gerência
-                </h3>
+             {activeTab === "VOLANTE" && (
+           <div className="max-w-4xl mx-auto space-y-12 py-10 animate-in fade-in slide-in-from-bottom-6">
+              <div className="text-center space-y-4">
+                <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mx-auto shadow-2xl shadow-indigo-600/40">
+                   <Truck size={40} />
+                </div>
+                <h3 className="text-3xl font-black italic tracking-tighter uppercase">Solicitar Volante para Unidade</h3>
+                <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest max-w-lg mx-auto">
+                   Utilize este canal para solicitar cobertura imediata ou programada devido a faltas, férias ou gaps de escala.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {ocorrencias.map((o) => (
-                  <div key={o.id} className="bg-[var(--bg-card)] p-8 rounded-[2.5rem] border border-[var(--border)] shadow-xl relative overflow-hidden group">
-                     <div className={`absolute top-0 right-0 w-24 h-24 ${o.urgencia === 'CRITICO' ? 'bg-red-500/10' : 'bg-indigo-500/10'} rounded-full -mr-12 -mt-12 blur-2xl`} />
-                     
-                     <div className="flex items-center justify-between mb-6">
-                        <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${o.status === 'PENDENTE' ? 'bg-amber-500/10 text-amber-600' : 'bg-emerald-500/10 text-emerald-600'}`}>
-                          {o.status}
-                        </span>
-                        <span className="text-[9px] font-bold text-[var(--text-muted)]">{new Date(o.created_at).toLocaleDateString()}</span>
-                     </div>
-
-                     <h5 className="text-sm font-black text-[var(--text-primary)] uppercase italic mb-2">Colaborador: {o.colaborador?.nome}</h5>
-                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-4">Tipo: {o.tipo_feedback}</p>
-                     
-                     <p className="text-[11px] font-bold text-[var(--text-secondary)] leading-relaxed mb-6 italic">
-                        "{o.descricao}"
-                     </p>
-
-                     <div className="flex items-center justify-between mt-auto pt-6 border-t border-[var(--border)]">
-                        <div className="flex items-center gap-2">
-                           <div className={`w-2 h-2 rounded-full ${o.urgencia === 'CRITICO' ? 'bg-red-500' : 'bg-indigo-500'}`} />
-                           <span className="text-[8px] font-black uppercase text-[var(--text-muted)]">Prioridade {o.urgencia}</span>
-                        </div>
-                        <button className="text-[9px] font-black text-indigo-500 hover:underline uppercase">Ver Detalhes</button>
-                     </div>
-                  </div>
-                ))}
-                {ocorrencias.length === 0 && (
-                   <div className="col-span-full py-20 bg-[var(--bg-card)] rounded-[2.5rem] border border-dashed border-[var(--border)] text-center text-[var(--text-muted)] font-black uppercase italic tracking-widest">
-                      Nenhuma ocorrência registrada para esta unidade.
+              <div className="bg-[var(--bg-card)] p-10 rounded-[3.5rem] border border-[var(--border)] shadow-2xl space-y-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Turno da Necessidade</label>
+                      <select id="volTurno" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold">
+                         <option value="DIURNO">Diurno (07:00 - 19:00)</option>
+                         <option value="NOTURNO">Noturno (19:00 - 07:00)</option>
+                         <option value="ADMINISTRATIVO">Comercial (07:00 - 17:00)</option>
+                         <option value="ESPECIFICO">Horário Específico</option>
+                      </select>
                    </div>
-                )}
+                   <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Data da Necessidade</label>
+                      <input type="date" id="volData" className="input-field w-full rounded-2xl p-5 bg-[var(--bg-base)] border-[var(--border)] font-bold" defaultValue={new Date().toISOString().split('T')[0]} />
+                   </div>
+                </div>
+
+                <div className="space-y-3 relative z-10">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-indigo-500 ml-2">Motivo da Solicitação</label>
+                   <textarea 
+                    id="volMotivo" 
+                    rows={4} 
+                    className="input-field w-full rounded-3xl p-6 bg-[var(--bg-base)] border-[var(--border)] font-bold text-sm" 
+                    placeholder="Descreva o motivo (ex: Falha do colaborador fixo, cobertura de atestado, aumento de fluxo...)"
+                   ></textarea>
+                </div>
+
+                <div className="pt-6 relative z-10">
+                   <button 
+                    onClick={() => {
+                      const form = {
+                        turno: (document.getElementById('volTurno') as HTMLSelectElement).value,
+                        data: (document.getElementById('volData') as HTMLInputElement).value,
+                        motivo: (document.getElementById('volMotivo') as HTMLTextAreaElement).value
+                      };
+                      if(!form.motivo) return toast.error("Por favor, descreva o motivo.");
+                      handlePedirVolante(form);
+                    }}
+                    className="w-full py-8 bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-[2.5rem] font-black uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4"
+                   >
+                     <Send size={20} /> Enviar Pedido para Central Operacional
+                   </button>
+                </div>
               </div>
            </div>
         )}
-
-        {/* Outras abas (Transferências e Solicitações) seguindo o mesmo estilo premium */}
       </div>
 
       {/* Modais Customizados */}
