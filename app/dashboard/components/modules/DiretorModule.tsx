@@ -207,7 +207,11 @@ export default function DiretorModule({ user }: { user: any }) {
       <h2 className="text-2xl font-black italic">ACESSO RESTRITO</h2>
       <p className="text-[var(--text-muted)] font-bold uppercase tracking-tight max-w-md">
         Nenhuma unidade foi vinculada ao seu perfil. Entre em contato com a Gerência da Alicerce para formalizar sua fiscalização.
-    return (
+      </p>
+    </div>
+  );
+
+  return (
     <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 pb-20 max-w-[1600px] mx-auto w-full px-4 lg:px-6">
       
       {/* Hero Diretor - Design Pro Max */}
