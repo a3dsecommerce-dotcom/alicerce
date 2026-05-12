@@ -4,7 +4,7 @@ import {
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter, Trash2,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy, ShieldAlert
+  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy, ShieldAlert, Printer
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -111,6 +111,17 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    const [selectedMissao, setSelectedMissao] = useState<any>(null);
    const [respostasMissao, setRespostasMissao] = useState<any>({});
    const [submittingMissao, setSubmittingMissao] = useState(false);
+   
+   // PRINT ROUTE STATE
+   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+   const [printFields, setPrintFields] = useState({
+     unidade: true,
+     colaboradores: true,
+     telefone: true,
+     insalubridade: true,
+     funcao: true,
+     horario: true
+   });
 
    const selecionarColab = (colab: any) => {
      if (campoBuscaAtivo === "substituto") {
@@ -195,6 +206,66 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrintRoute = () => {
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+    const pageWidth = doc.internal.pageSize.width;
+
+    doc.setFontSize(22);
+    doc.text("ROTEIRO OPERACIONAL - ALICERCE", pageWidth / 2, 20, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`Encarregado: ${user.nome} | Data: ${new Date().toLocaleDateString()}`, pageWidth / 2, 28, { align: "center" });
+    
+    const tableData: any[] = [];
+    const headers: string[] = [];
+    
+    if (printFields.unidade) headers.push("UNIDADE");
+    if (printFields.colaboradores) headers.push("COLABORADOR");
+    if (printFields.funcao) headers.push("FUNÇÃO");
+    if (printFields.telefone) headers.push("TELEFONE");
+    if (printFields.insalubridade) headers.push("INSAL.");
+    if (printFields.horario) headers.push("HORÁRIO");
+
+    myUnits.forEach(unitName => {
+      const unitColabs = myColabs.filter(c => c.unidade_alocacao === unitName);
+      
+      if (unitColabs.length === 0) {
+        const row: any[] = [];
+        if (printFields.unidade) row.push(unitName);
+        if (printFields.colaboradores) row.push("SEM COLABORADORES");
+        headers.slice(row.length).forEach(() => row.push("---"));
+        tableData.push(row);
+      } else {
+        unitColabs.forEach((c, idx) => {
+          const row: any[] = [];
+          if (printFields.unidade) row.push(idx === 0 ? unitName : "");
+          if (printFields.colaboradores) row.push(c.nome);
+          if (printFields.funcao) row.push(c.funcao || c.cargo || "---");
+          if (printFields.telefone) row.push(c.telefone || "---");
+          if (printFields.insalubridade) row.push(c.percentual_insalubridade || c.insalubridade || "---");
+          if (printFields.horario) row.push(`${c.horario_entrada || "---"} - ${c.horario_saida || "---"}`);
+          tableData.push(row);
+        });
+      }
+      tableData.push(headers.map(() => ""));
+    });
+
+    autoTable(doc, {
+      startY: 35,
+      head: [headers],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
+      columnStyles: {
+        0: { fontStyle: 'bold' }
+      }
+    });
+
+    doc.save(`ROTA_${user.nome.replace(/\s+/g, '_')}.pdf`);
+    toast.success("Roteiro gerado com sucesso!");
+    setIsPrintModalOpen(false);
   };
 
   const getStatusInfo = (t: any) => {
@@ -513,12 +584,20 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-primary)] mb-1 italic">Povoamento Operacional</h3>
           <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Cadastre colaboradores diretamente nas suas unidades de rota</p>
         </div>
-        <button 
-          onClick={() => setActiveTab("QUICK_ADMISSION")}
-          className="px-10 py-4 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-[var(--brand)]/20 flex items-center gap-3"
-        >
-          <UserPlus size={18} /> Admissão Rápida
-        </button>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => setIsPrintModalOpen(true)}
+            className="px-8 py-4 bg-white text-[var(--text-primary)] border border-[var(--border)] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3"
+          >
+            <Printer size={18} /> Imprimir Rota
+          </button>
+          <button 
+            onClick={() => setActiveTab("QUICK_ADMISSION")}
+            className="px-10 py-4 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl shadow-[var(--brand)]/20 flex items-center gap-3"
+          >
+            <UserPlus size={18} /> Admissão Rápida
+          </button>
+        </div>
       </div>
 
       <div className="card">
@@ -1961,6 +2040,41 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
              </div>
           </div>
        </AdaptiveModal>
+
+      {/* MODAL IMPRIMIR ROTA */}
+      <AdaptiveModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        title="Personalizar Impressão de Rota"
+        width="450px"
+      >
+        <div className="p-8 space-y-8">
+           <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+              <Printer className="text-indigo-600" size={24} />
+              <p className="text-[11px] font-bold text-indigo-900 leading-tight">Escolha quais informações você deseja incluir no seu roteiro impresso.</p>
+           </div>
+
+           <div className="grid grid-cols-1 gap-3">
+              {Object.entries(printFields).map(([field, enabled]) => (
+                <button
+                  key={field}
+                  onClick={() => setPrintFields({...printFields, [field]: !enabled})}
+                  className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${enabled ? 'bg-indigo-50 border-indigo-600 text-indigo-700' : 'bg-white border-slate-100 text-slate-400'}`}
+                >
+                   <span className="text-[10px] font-black uppercase tracking-widest">{field}</span>
+                   {enabled ? <CheckCircle size={18} /> : <div className="w-[18px] h-[18px] rounded-full border-2 border-slate-200" />}
+                </button>
+              ))}
+           </div>
+
+           <button
+              onClick={handlePrintRoute}
+              className="w-full h-16 bg-black text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3"
+           >
+              <Printer size={18} /> Gerar PDF do Roteiro
+           </button>
+        </div>
+      </AdaptiveModal>
     </div>
   );
 }
