@@ -220,7 +220,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     const tableData: any[] = [];
     const headers: string[] = [];
     
-    if (printFields.unidade) headers.push("UNIDADE");
+    // Unidade agora é um cabeçalho de seção, não uma coluna
     if (printFields.colaboradores) headers.push("COLABORADOR");
     if (printFields.funcao) headers.push("FUNÇÃO");
     if (printFields.telefone) headers.push("TELEFONE");
@@ -230,16 +230,22 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     myUnits.forEach(unitName => {
       const unitColabs = myColabs.filter(c => c.unidade_alocacao === unitName);
       
+      // Linha de Seção da Unidade
+      tableData.push([
+        { 
+          content: `UNIDADE: ${unitName.toUpperCase()}`, 
+          colSpan: headers.length, 
+          styles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, cellPadding: 3 } 
+        }
+      ]);
+
       if (unitColabs.length === 0) {
-        const row: any[] = [];
-        if (printFields.unidade) row.push(unitName);
-        if (printFields.colaboradores) row.push("SEM COLABORADORES");
-        headers.slice(row.length).forEach(() => row.push("---"));
-        tableData.push(row);
+        tableData.push([
+          { content: "NENHUM COLABORADOR CADASTRADO NESTA UNIDADE", colSpan: headers.length, styles: { halign: 'center', italic: true, textColor: [150, 150, 150], fontSize: 8 } }
+        ]);
       } else {
-        unitColabs.forEach((c, idx) => {
+        unitColabs.forEach((c) => {
           const row: any[] = [];
-          if (printFields.unidade) row.push(idx === 0 ? unitName : "");
           if (printFields.colaboradores) row.push(c.nome);
           if (printFields.funcao) row.push(c.funcao || c.cargo || "---");
           if (printFields.telefone) row.push(c.telefone || "---");
@@ -248,7 +254,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           tableData.push(row);
         });
       }
-      tableData.push(headers.map(() => ""));
+      
+      // Espaço entre unidades
+      tableData.push([{ content: "", colSpan: headers.length, styles: { cellPadding: 1 } }]);
     });
 
     autoTable(doc, {
@@ -256,11 +264,14 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       head: [headers],
       body: tableData,
       theme: 'grid',
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] },
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [100, 100, 100], textColor: [255, 255, 255], fontStyle: 'bold' },
       columnStyles: {
-        0: { fontStyle: 'bold' }
-      }
+        0: { cellWidth: 80, fontStyle: 'bold' } // Nome do colaborador ganha mais espaço
+      },
+      margin: { top: 35 },
+      pageBreak: 'auto',
+      rowPageBreak: 'avoid' // Tenta evitar quebrar uma linha no meio
     });
 
     doc.save(`ROTA_${user.nome.replace(/\s+/g, '_')}.pdf`);
