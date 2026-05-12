@@ -31,6 +31,8 @@ export default function VisaoGeral({
   const [activeSector, setActiveSector] = useState<Sector>("GERAL");
 
   const totalASG = asgPorSecretaria.reduce((acc, s) => acc + s.total, 0);
+  const maxASG = Math.max(...asgPorSecretaria.map(s => s.total), 1);
+  const maxCargo = Math.max(...cargos.map(c => c.total), 1);
   
   // Extrai secretarias únicas da lista de colaboradores para o filtro
   const secretarias = Array.from(new Set(asgPorSecretaria.map(s => s.secretaria))).sort();
