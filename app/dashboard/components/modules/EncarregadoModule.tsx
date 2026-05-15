@@ -227,7 +227,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     if (printFields.insalubridade) headers.push("INSAL.");
     if (printFields.horario) headers.push("HORÁRIO");
 
-    myUnits.forEach(unitName => {
+    const unitsToPrint = activeTab === "MY_COLABS" && filtroUnidadeColab ? [filtroUnidadeColab] : myUnits;
+
+    unitsToPrint.forEach(unitName => {
       const unitColabs = myColabs.filter(c => c.unidade_alocacao === unitName);
       
       // Linha de Seção da Unidade
@@ -693,6 +695,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                        onChange={e => setSearchTerm(e.target.value)}
                      />
                   </div>
+                  <button 
+                     onClick={() => setIsPrintModalOpen(true)}
+                     className="h-10 px-4 bg-white text-[var(--text-primary)] border border-[var(--border)] rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
+                  >
+                     <Printer size={14} /> Imprimir {filtroUnidadeColab ? "Unidade" : "Equipe"}
+                  </button>
                   <button 
                      onClick={() => setActiveTab("QUICK_ADMISSION")}
                      className="h-10 px-6 bg-[var(--brand)] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-[var(--brand)]/20 flex items-center gap-2"
