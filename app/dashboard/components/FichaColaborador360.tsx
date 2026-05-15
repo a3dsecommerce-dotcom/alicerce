@@ -267,6 +267,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                     {[
                       { key: "email", label: "E-mail Pessoal" },
+                      { key: "telefone", label: "Telefone / WhatsApp" },
                       { key: "data_nascimento", label: "Data de Nascimento" },
                       { key: "sexo", label: "Sexo" },
                       { key: "rg", label: "Registro Geral (RG)" },
