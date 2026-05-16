@@ -1,81 +1,182 @@
-# 🛡️ Alicerce Ops: Ecossistema de Gestão Operacional de Elite (V500)
+# 🛡️ Alicerce Ops: Ecossistema de Gestão Operacional (v753.8.56)
 
 ## 📑 Visão Geral Executiva
-O **Alicerce Ops** é um sistema ERP de última geração, desenvolvido sob medida para a governança soberana de operações de campo. Combinando tecnologias de ponta (Next.js, Supabase e Automação Cognitiva), o sistema transforma o caos operacional em dados estratégicos, permitindo que a diretoria tome decisões baseadas em evidências em tempo real.
+O **Alicerce Ops** é um sistema ERP desenvolvido sob medida para governança soberana de operações de campo. Combinando Next.js, Supabase e automação via n8n, o sistema transforma o caos operacional em dados estratégicos, permitindo decisões baseadas em evidências em tempo real.
+
+**Ambiente de produção:** https://portal.alicerce.cloud
+**Versão atual:** v753.8.56 (Security + Performance Hardening)
 
 ---
 
-## 🚀 1. Cockpit Executivo (Módulo Diretor/Gerente)
-O "Cérebro" do sistema, projetado para supervisão macro e auditoria de alta precisão.
+## 🏢 1. Módulo Gerência (Cockpit Executivo)
+Projetado para supervisão macro, auditoria de alta precisão e tomada de decisão estratégica.
 
-### 📊 Visão Geral e Analytics
-- **Dashboards em Tempo Real:** Monitoramento de KPIs críticos (Vagas, Colaboradores Ativos, Pedidos Pendentes, Ocorrências Críticas).
-- **Logs de Auditoria:** Rastreabilidade total de todas as ações realizadas no sistema por todos os usuários.
+### 📊 Painel de Controle
+- **KPIs em tempo real:** Colaboradores ativos, requisições de volante, vagas abertas, tickets pendentes
+- **Feed de atividades:** Registro cronológico de todas as ações do sistema (tabela `atividades`)
+- **Acesso via abas:** Visão Geral · Fiscalização · RH · Unidades · Missões
 
-### 🗺️ Gestão Estratégica de Rotas e Unidades
-- **Mapeamento de Unidades:** Cadastro completo de escolas e postos de atendimento com geolocalização.
-- **Divisão de Rotas:** Atribuição dinâmica de supervisores por zona geográfica.
-- **Controle de Volantes:** Motor de inteligência para gerenciar o deslocamento e requisições de equipes volantes para cobrir faltas.
+### 🗺️ Fiscalização de Campo
+- Mapeamento de todas as unidades ativas com encarregado responsável
+- Controle de rotas e reorganização de supervisão por zona geográfica
+- Monitoramento de volantes: requisições, aprovações e histórico
 
-### 🎯 Centro de Comando de Missões
-- **Dinamização de Campo:** Criação de missões semanais ou mensais para os encarregados.
-- **Auditoria de Dados:** Missões voltadas para confirmação de EPIs, atualização cadastral e conferência de insumos.
-- **Feedback Loop:** Recebimento imediato de checklists preenchidos em campo com evidências físicas.
+### 👥 Aba RH (Gerência)
+- Visão agregada de colaboradores por secretaria
+- Aprovações de transferências e movimentações
+- Acesso à `FichaColaborador360` para edição com auditoria obrigatória
 
----
-
-## 👷 2. Módulo de Operações de Campo (Módulo Encarregado)
-Uma interface *Mobile-First* simplificada, focada em produtividade e coleta de dados sem atrito.
-
-### 📋 Gestão de Equipe e Unidades
-- **Minhas Unidades:** Visão clara das escolas sob responsabilidade do encarregado.
-- **Admissão Rápida:** Processo de "Onboarding" acelerado para novos colaboradores diretamente do celular, reduzindo a burocracia de papel.
-- **Radar de Missões:** Interface gamificada onde o encarregado aceita desafios da diretoria e envia checklists de conformidade.
-
-### ⚠️ Segurança e SST (Saúde e Segurança do Trabalho)
-- **Abertura de CAT Digital:** Registro imediato de acidentes de trabalho com relato pessoal e testemunhas.
-- **Gestão de EPIs:** Controle de entrega de equipamentos de proteção, garantindo conformidade legal.
-
-### 📝 Informativos e Ocorrências
-- **Informativos Operacionais:** Relatório diário de faltas, substituições e atestados.
-- **Central de Ocorrências:** Canal direto para reportar problemas de infraestrutura, comportamento ou solicitações urgentes à gerência.
+### 🎯 Sistema de Missões
+- Criação de desafios semanais/mensais com checklists customizados
+- Feedback em tempo real dos encarregados
+- Histórico de conclusão por unidade
 
 ---
 
-## 📦 3. Módulos Especializados Integrados
+## 👷 2. Módulo Encarregado (Gestão de Campo)
+Interface Mobile-First focada em produtividade de campo.
 
-### 👥 Recursos Humanos (RH) e DP
-- **Admissão Master (32 Passos):** Fluxo unificado que garante a conformidade documental completa antes do início operacional.
-- **Checklist Dinâmico de Documentos:** Arquitetura flexível baseada em JSONB com interface de **Gerenciamento Autônomo**, permitindo a criação, exclusão e renomeação de colunas de documentos diretamente pela interface administrativa.
-- **Módulo de Offboarding Operacional:** Gestão de desligamentos com 16 etapas de auditoria e devolução de ativos.
-- **Gestão de Ponto e Benefícios:** Integração de escalas com controle de VT/VA e convênios.
+### 🏫 Aba: Minhas Unidades
+- Cards com escolas/postos sob responsabilidade do encarregado
+- Status de colaboradores, alertas de vaga e botão de edição de unidade
 
-### 🛒 Compras e Suprimentos
-- **Catálogo de Compras:** Sistema de requisição de materiais padronizado.
-- **Acompanhamento de Pedidos:** Rastreio total do fluxo de aprovação e entrega de insumos.
+### 👥 Aba: Equipe (Minha Equipe)
+- Tabela de colaboradores com busca e filtros (por unidade e cargo)
+- Filtros memoizados — sem lentidão em equipes grandes
+- **Edição via Ficha 360°:** Clique no colaborador → editar Telefone, Insalubridade, Horário, etc.
+- **Impressão de Equipe:** Botão PDF que detecta filtro ativo
+  - Com filtro de unidade → "Imprimir Unidade [Nome]"
+  - Sem filtro → "Imprimir Equipe Completa"
+  - jsPDF carregado sob demanda (lazy-load)
 
-### 🏢 Almoxarifado
-- Controle de estoque centralizado e redução de desperdício através da auditoria de saídas.
+### 🗺️ Impressão de Rota (Modal)
+Disponível na aba Unidades:
+- Seleção de campos: Unidade · Colaboradores · Telefone · Insalubridade · Função · Horário
+- Agrupamento por unidade sem quebra de página
+- PDF em landscape A4 com logo e data de geração
+
+### ⚡ Admissão Rápida
+- Formulário simplificado para cadastrar colaborador diretamente do celular
+- Campos: Nome, Telefone, Unidade, Função, Horário, Insalubridade, Carga Horária
+- Gravação direta em `usuarios` com `status: 'EM_ADMISSAO'`
+
+### 📋 CAT Digital (Acidente de Trabalho)
+- Busca de colaborador em tempo real (autocomplete)
+- Campos: Data, Hora, Tipo, Descrição, Testemunhas
+- Notificação automática ao Técnico de Segurança via n8n
+- Toast de confirmação (substituiu alert() nativo)
+
+### 🛡️ EPI (Equipamentos de Proteção)
+- Seleção de colaborador e itens de EPI
+- Registro de entrega com data e responsável
+- Histórico consultável por unidade
+
+### ⚡ Disciplina e Transferências
+- Abertura de advertências com categoria e justificativa
+- Solicitação de transferência com destino e motivo
+- Acompanhamento do status pela gerência
+
+### 🎯 Minhas Missões (Radar)
+- Cards gamificados com desafios da diretoria
+- Checklist interativo com submit por missão
+- Feedback registrado em tempo real
 
 ---
 
-## 🏗️ 4. Arquitetura e Escalabilidade
+## 👥 3. Módulo RH e DP
 
-### 🔐 Segurança Baseada em Funções (RBAC)
-O sistema utiliza um rigoroso controle de acesso. Diretores veem tudo, enquanto encarregados acessam apenas os dados das suas unidades específicas, garantindo a privacidade e segurança da informação.
+### Admissão Master (Onboarding 360°)
+- Fluxo de 32 etapas com verificação documental completa
+- Integração com `candidatos` → promoção para `usuarios`
+- Controle de ASO, contrato, VT/VA, CTPS e sistemas externos (Strato)
 
-### 📈 Escalabilidade Soberana
-- **Infraestrutura VPS Cloud:** Hospedado em ambiente escalável, preparado para suportar de 100 a 10.000 colaboradores.
-- **Banco de Dados em Tempo Real:** Sincronização instantânea de dados entre o campo e o escritório.
-- **Pronto para IA:** Estrutura de dados preparada para integração com motores de automação (n8n) e inteligência preditiva de faltas.
+### Checklist Dinâmico (v2.1)
+- Colunas gerenciadas sem deploy via `config_checklist_rh`
+- Criação, renomeação, coloração, reordenação — tudo em tempo real
+- Atualizações otimistas com rollback automático em erro
+- Dados extras em JSONB (`checklist_extra`) na tabela `usuarios`
 
-### 📱 Design Responsivo (Anywhere Access)
-Acessível de desktops em salas de controle ou smartphones no chão de fábrica/escola, sem perda de funcionalidade.
+### Offboarding Estruturado
+- Fluxo de 16 etapas: devolução de ativos, exame demissional, TRCT
+- Cada etapa gera log de auditoria em `historico_gestao`
+
+### Controle de Ponto
+- Conferência de batidas por colaborador e unidade
+- Integração com Bot WhatsApp para notificação de irregularidades
+- Fila de cobrança automática
 
 ---
 
-## 💡 Conclusão: O Impacto na Gestão
-O **Alicerce Ops** não é apenas um software, é uma metodologia de trabalho. Ele elimina a dependência de planilhas e grupos de mensagens informais, centralizando a verdade operacional em uma única plataforma soberana, auditável e altamente produtiva.
+## 📦 4. Compras e Almoxarifado
+
+### Compras
+- Catálogo de insumos padronizados
+- Fluxo: Requisição → Aprovação → Compra → Entrega
+- Prazo mínimo de 30 dias documentado no termo de aceite
+
+### Almoxarifado
+- Inventário central com controle de saídas por unidade
+- Auditoria de discrepâncias (físico vs. sistema)
 
 ---
-*Documentação gerada pelo Sistema de Inteligência Alicerce V500.*
+
+## 🔐 5. Segurança e SST
+
+### Central de Ocorrências
+- Tickets setoriais com prioridade (BAIXA → CRÍTICA)
+- SLA em horário comercial (seg-sex 07h-17h)
+- Resolução exige justificativa — gera log em `historico_gestao`
+- Auto-refresh a cada 60 segundos
+
+### CAT Digital (Rota SST dedicada)
+- Investigação imediata de acidentes de trabalho
+- Histórico de CATs com filtro por colaborador e tipo
+- Notificação automática para técnico de segurança
+
+---
+
+## 🔐 6. Segurança do Sistema (v753.8.56)
+
+### Autenticação
+- Login por telefone + senha (padrão: 4 últimos dígitos)
+- Suporte a senha customizada via campo `senha` em `usuarios`
+- Sessão via cookie `auth_token` + `crm_user` em localStorage
+
+### Rate Limiting
+- **5 tentativas** erradas → bloqueio de **10 minutos**
+- Controle via `sessionStorage` (client-side)
+- Contador limpo automaticamente após login bem-sucedido
+
+### Credenciais
+- Chaves Supabase 100% via `process.env` — nunca no bundle JS
+- Configuradas no Easypanel (não no repositório)
+- Validação de startup: erro fatal se variáveis não encontradas
+
+---
+
+## 🏗️ 7. Arquitetura e Escalabilidade
+
+### RBAC (Role-Based Access Control)
+O filtro de módulos usa `nivel_acesso` + `role` para determinar o que cada usuário vê:
+```
+Nível 1 → Colaborador (acesso futuro via app)
+Nível 2 → Encarregado / Diretor de Unidade
+Nível 3 → Gerente / Supervisor
+Nível 4+ → Admin / Dev (acesso total)
+```
+
+### Escalabilidade
+- Preparado para 100 a 10.000 colaboradores sem refatoração
+- Queries com `.select()` específico — sem `SELECT *` em tabelas grandes
+- Cache local com otimistic updates para UX zero-latência
+
+### Design System
+- Variáveis CSS centralizadas em `globals.css`
+- Dark mode OLED (`#000000`) + Light mode
+- `border-radius` com variáveis semânticas (`--radius-sm`, `--radius-md`)
+- Animações: `animate-fade-in`, `glow-pulse`, `cubic-bezier` em transições
+
+---
+
+*Documentação atualizada em: 16/05/2026*
+*Sistema de Inteligência Alicerce v753.8.56*

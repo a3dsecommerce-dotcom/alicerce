@@ -1,72 +1,185 @@
-# 🖼️ Guia Visual e Funcional: Tour pelo Alicerce Ops (V753.5)
+# 🖼️ Guia Visual e Funcional — Alicerce Ops v753.8.56
 
-Este guia descreve o que o usuário encontra em cada tela do sistema, detalhando os elementos visuais e as ações disponíveis em cada interface.
-
----
-
-## 1. Sidebar (Menu Lateral de Navegação)
-**O que você vê:** Uma barra lateral elegante no lado esquerdo com ícones modernos e o logo da Alicerce no topo.
-- **Painel de Controle:** O ponto de partida. Muda dinamicamente conforme quem está logado (Gerente ou Encarregado).
-- **Módulos Setoriais:** Atalhos diretos para Compras, RH, Almoxarifado e Ocorrências.
-- **Perfil do Usuário:** No rodapé, mostra seu nome e seu cargo (Ex: ADMIN, GERENTE, ENCARREGADO).
-- **Theme Toggle:** Botão para alternar entre o Modo Escuro (Elite Ops) e o Modo Claro.
+Este guia descreve o que o usuário encontra em cada tela do sistema, detalhando os elementos visuais e as ações disponíveis.
 
 ---
 
-## 2. Painel de Controle: Módulo Gerência (O Cockpit Executivo)
-**O que você vê:** Um cabeçalho imponente escrito "Painel de Controle Central" e uma barra de abas logo abaixo.
+## 🔑 1. Tela de Login
 
-### A. Aba: Visão Geral
-- **Cards de Estatísticas:** 4 blocos coloridos no topo mostrando números vivos: Total de Colaboradores, Requisições de Volantes, Vagas Abertas e Tickets Pendentes.
-- **Feed de Atividades:** Uma lista cronológica na lateral mostrando tudo o que aconteceu nas últimas horas (quem cadastrou quem, quem abriu qual chamado).
+**O que você vê:** Fundo escuro (OLED black) com blob animado laranja, logo Alicerce, campos de telefone e senha.
 
-### B. Aba: Unidades (Gestão de Rotas)
-- **Tabela de Escolas:** Uma lista organizada de todas as unidades, mostrando o nome, o endereço, a rota e quem é o encarregado responsável.
-- **Botão "Cadastrar Unidade":** Abre um formulário flutuante (modal) para inserir novos postos de trabalho.
-- **Busca Rápida:** Um campo no topo para filtrar unidades instantaneamente pelo nome ou bairro.
-
-### C. Aba: Missões (Comando Operacional)
-- **Painel de Lançamento:** Espaço para o gerente escrever o título e a descrição de um desafio para o campo.
-- **Editor de Checklist:** Onde o gerente define os itens que o encarregado deve marcar (Ex: "Conferiu estoque de papel?", "EPIs estão em uso?").
-- **Lista de Missões Ativas:** Cards que mostram quais missões estão rodando, se são semanais ou mensais, e permitem desativar ou excluir missões antigas.
+- **Campo Telefone:** Aceita com ou sem DDD e prefixo 55 — o sistema normaliza automaticamente
+- **Campo Senha:** Por padrão, os **4 últimos dígitos do telefone** (ex: telefone `92999991234` → senha `1234`)
+- **Senha Customizada:** Administradores podem definir senha própria para colaboradores
+- **Segurança:** Após 5 tentativas erradas, a conta é bloqueada por 10 minutos
+- **"Trabalhe Conosco":** Abre formulário de candidatura com upload de currículo
+- **Feedback:** Erros exibidos abaixo do formulário; sucesso redireciona ao dashboard
 
 ---
 
-## 3. Painel de Controle: Módulo Encarregado (O Radar de Campo)
-**O que você vê:** Uma interface focada em cards grandes, otimizada para uso no celular.
+## 🏠 2. Dashboard (Navegação Geral)
 
-### A. Dashboard de Resumo
-- **Cards de Status:** Blocos com "Minhas Unidades", "Minha Equipe" e "Ocorrências Ativas". Se houver um problema, o número aparece em vermelho.
+**O que você vê:** Sidebar lateral com ícones dos módulos + área principal de conteúdo.
 
-### B. Aba: Minhas Missões (Radar)
-- **Cards de Desafios:** Blocos pretos e laranjas com ícones de troféu. Cada card mostra o título do desafio enviado pela gerência.
-- **Botão "Aceitar Missão":** Ao clicar, abre uma tela com as instruções e o checklist que deve ser preenchido fisicamente no posto de trabalho.
-- **Checklist Interativo:** Botões que mudam de "Pendente" (Cinza) para "OK" (Verde) conforme o encarregado conclui as tarefas.
+### Sidebar
+- **Logo Alicerce** no topo
+- Ícones dos módulos acessíveis pelo seu perfil (RBAC automático)
+- **Theme Toggle:** Alterna entre Dark (OLED) e Light mode
+- **Perfil do Usuário** no rodapé: nome + cargo
 
-### C. Aba: Admissão Rápida
-- **Formulário de Campo:** Campos simplificados para coletar nome, telefone e cargo do novo funcionário. Ideal para contratações de emergência no local.
-
----
-6. Módulo de RH (Gestão de Capital Humano)
-**O que você vê:** Uma tabela de alta densidade com navegação horizontal suave.
-- **Cockpit de Configuração (Engrenagem):** Ao passar o mouse no cabeçalho, um ícone de configurações permite renomear, colorir, reordenar ou excluir colunas dinamicamente.
-- **Navegação Horizontal v2.1:** Controles dedicados ("Anterior" e "Próxima") para percorrer grandes volumes de colunas sem perder o foco no colaborador.
-- **Atualizações Otimistas:** Mudanças de status, documentos e configurações ocorrem instantaneamente, com feedback visual em tempo real.
-- **Status da Admissão:** Controle detalhado desde a entrevista até a integração final no Strato.
+### Header Dinâmico
+- Nome e ícone do módulo ativo
+- Versão do sistema e botões de ação (logout, troca de módulo)
 
 ---
 
-## 5. Módulo de Ocorrências e SST (Segurança)
-**O que você vê:** Uma lista de chamados com níveis de prioridade.
-- **Badge de Prioridade:** Tags coloridas indicando se o problema é Baixo (Azul), Médio (Amarelo) ou Urgente (Vermelho).
-- **Formulário CAT:** Uma página dedicada para relatar acidentes, com campos para testemunhas, fotos e relato detalhado do ocorrido.
+## 🏢 3. Módulo Gerência
+
+### Aba: Visão Geral
+- **4 KPI Cards:** Colaboradores Ativos · Requisições de Volante · Vagas Abertas · Tickets Pendentes
+- **Feed de Atividades:** Lista cronológica em tempo real de ações de todos os usuários
+- Cada item do feed mostra: usuário, ação, horário
+
+### Aba: Fiscalização
+- Tabela de unidades com status de compliance
+- Indicadores de presença, ocorrências abertas e EPIs
+- Clique em uma unidade → detalhes expandidos
+
+### Aba: RH
+- Visão agregada do ciclo de vida dos colaboradores
+- Controle de admissões em andamento e offboardings
+- Botão de aprovação de transferências com histórico
+
+### Aba: Unidades
+- Lista completa de escolas/postos com busca por nome
+- Cadastro de nova unidade via botão "+"
+- Edição inline de responsável e rota
+
+### Aba: Missões
+- Painel para criar desafios com checklist customizado
+- Cards de missões ativas com progresso por encarregado
+- Opções de desativar, editar ou excluir missão
 
 ---
 
-## 💡 Elementos Visuais Padrão (Design System)
-- **Glassmorphism:** O sistema usa transparências suaves que dão um ar de "tecnologia de elite".
-- **Animações:** Tudo o que você clica tem uma transição suave (fade-in), evitando que a tela "pisque".
-- **Notificações (Toasts):** Pequenos alertas no canto da tela que confirmam ações (Ex: "Unidade cadastrada com sucesso!" em verde).
+## 👷 4. Módulo Encarregado
+
+### Dashboard de Resumo
+- **3 Cards de status:** Minhas Unidades · Minha Equipe · Ocorrências Ativas
+- Números em laranja = atenção; vermelho = crítico
+
+### Aba: Minhas Unidades
+- Cards com nome, endereço e contador de colaboradores por escola
+- Botão **"Imprimir Rota"** → abre modal de personalização do PDF
+  - Checkboxes: Unidade, Colaboradores, Telefone, Insalubridade, Função, Horário
+  - PDF gerado com grupos por unidade (sem quebra de página no meio da unidade)
+
+### Aba: Equipe
+- **Barra de busca:** Filtra por nome ou CPF em tempo real
+- **Filtro por Unidade** e **Filtro por Cargo** (dropdowns)
+- **Tabela de colaboradores:** Nome · Cargo / Unidade · Jornada · Insalubridade · Status
+- Clique em qualquer linha → abre **Ficha 360°** do colaborador
+  - Editar: Nome, Telefone/WhatsApp, Insalubridade, Horários, Função, etc.
+  - Campo "Motivo da Alteração" obrigatório (auditoria)
+  - Alterações salvas com toast de confirmação
+- **Botão "Imprimir Equipe":**
+  - Com filtro de unidade ativo → "Imprimir Unidade [Nome]"
+  - Sem filtro → "Imprimir Equipe Completa"
+  - PDF gerado sob demanda (não impacta o carregamento inicial)
+
+### Aba: Admissão Rápida
+- Formulário mobile-friendly para cadastro emergencial
+- Campos: Nome, Telefone, Unidade, Função, Insalubridade, Horário de entrada/saída
+- Submissão cria colaborador com `status: EM_ADMISSAO`
+
+### Aba: Ocorrências / Tickets
+- Lista de ocorrências abertas por unidade
+- Botão para criar nova ocorrência com prioridade e setor destino
+- Modal de resolução exige justificativa (registro de auditoria)
+
+### Aba: CAT (Acidente de Trabalho)
+- Campo de busca com autocomplete de colaboradores
+- Formulário: Tipo de Acidente, Data, Hora, Descrição, Testemunhas
+- Submissão dispara notificação para Técnico de Segurança
+
+### Aba: EPI
+- Seleção de colaborador + itens de EPI disponíveis em estoque
+- Registro de entrega com data
+- Histórico de entregas por unidade
+
+### Aba: Disciplina
+- Registro de advertências com categoria (verbal, escrita, suspensão)
+- Associação a colaborador e data de ocorrência
+- Histórico consultável
+
+### Aba: Transferências
+- Solicitação de movimentação entre unidades
+- Campos: Colaborador, Unidade de Destino, Motivo, Data Desejada
+- Status: Pendente → Aprovado pela Gerência → Executado
+
+### Aba: Missões (Radar)
+- Cards laranjas com ícone de troféu para cada missão ativa
+- Botão "Aceitar" → abre checklist interativo
+- Itens alternam entre Pendente (cinza) → OK (verde)
+- Submit registra respostas na base de dados em tempo real
 
 ---
-*Este guia ajuda na orientação rápida de novos usuários e na apresentação de recursos para investidores ou diretoria.*
+
+## 👥 5. Módulo RH e DP
+
+**O que você vê:** Tabela de alta densidade com navegação horizontal suave.
+
+### Cockpit de Configuração (Engrenagem no Cabeçalho)
+- Ícone aparece no hover de qualquer coluna dinâmica
+- Opções: Renomear · Colorir · Mover Esquerda/Direita · Excluir
+- Todas as mudanças são instantâneas (Optimistic Updates)
+
+### Tabela de Colaboradores
+- Colunas fixas: Nome, CPF, Cargo, Unidade, Status, Experiência
+- Colunas dinâmicas: checklist de documentos configurável
+- Scroll horizontal com controles "← Anterior" / "Próxima →"
+- Clique em linha → FichaColaborador360 completa
+
+### Offboarding
+- Botão por colaborador com status `DESLIGADO`
+- Checklist de 16 etapas: Exame demissional, TRCT, Devolução de ativos, etc.
+
+---
+
+## 🔐 6. Central de Ocorrências
+
+**O que você vê:** Tabela de tickets com badges de prioridade coloridos.
+
+- **BAIXA** (verde) · **NORMAL** (cinza) · **ALTA** (amarelo) · **CRÍTICA** (vermelho)
+- Colunas: ID · Título · Urgência · Atribuição · Unidade · Tempo Aberto · Status
+- Filtro automático por aba (Minhas Demandas / Minhas Solicitações)
+- **SLA monitorado:** Tickets com >24h exibem "VENCIDO" em vermelho pulsante
+- Botão "Nova Ocorrência" → modal com setor destino e prioridade
+- Clique no ticket → detalhes completos + botão "Confirmar Resolução"
+
+---
+
+## 💡 7. Elementos Visuais Padrão (Design System)
+
+| Elemento | Descrição |
+|---|---|
+| **Dark Mode OLED** | Fundo `#000000` puro — economia de bateria em smartphones |
+| **Brand Color** | `#ff6a00` (laranja) para ações primárias |
+| **Cards** | Glassmorphism com `border` sutil e `shadow-sm` |
+| **Animações** | `animate-fade-in` em toda transição de tela |
+| **Toasts** | Notificações no canto — verde (sucesso), vermelho (erro), cinza (info) |
+| **Modais Adaptativos** | Drawer no mobile, modal centralizado no desktop |
+| **Bordas** | `border-radius` de 12px (cards) a 24px (modais) |
+| **Tipografia** | Inter (Google Fonts), escala 8px-24px, `font-black` em títulos |
+
+### Toasts (Substituição do alert() nativo)
+```
+✅ toast.success("Dados salvos com sucesso!")     → verde, canto superior direito
+❌ toast.error("Erro ao conectar ao banco")        → vermelho, com descrição
+⏳ toast.loading("Salvando...")                    → cinza animado
+```
+
+---
+
+*Guia atualizado em: 16/05/2026 — v753.8.56*
+*Destinado a: novos usuários, diretoria, equipe de campo e desenvolvimento*
