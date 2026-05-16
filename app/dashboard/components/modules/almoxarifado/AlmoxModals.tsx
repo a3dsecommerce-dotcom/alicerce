@@ -166,6 +166,22 @@ export default function AlmoxModals({
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Estoque Mínimo</label>
                   <input type="number" className="input-field w-full font-black text-red-600" value={formData.estoque_minimo} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
                </div>
+               <div className="col-span-2">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block flex items-center gap-2">
+                    Cota Máxima por Requisição <span className="text-orange-500 font-black">★</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="input-field w-full font-black text-orange-600"
+                    value={formData.quantidade_maxima ?? 0}
+                    min={0}
+                    onChange={e => setFormData({...formData, quantidade_maxima: Number(e.target.value)})}
+                    placeholder="0 = sem limite configurado"
+                  />
+                  <p className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-wide">
+                    Limite máximo que uma unidade pode solicitar por pedido mensal. Deixe 0 para não restringir.
+                  </p>
+               </div>
             </div>
 
             <div className="flex gap-4 pt-6">
@@ -346,17 +362,18 @@ export default function AlmoxModals({
       </AdaptiveModal>
 
       {/* MODAL ANÁLISE REQUISIÇÃO (AGRUPADO) */}
-      <AdaptiveModal isOpen={modalAberto === "editar_req"} onClose={() => setModalAberto(null)} title="Análise Técnica de Protocolo" width="1000px">
+      <AdaptiveModal isOpen={modalAberto === "editar_req"} onClose={() => setModalAberto(null)} title="Análise Técnica de Protocolo" width="1100px">
          {reqEditando && (
            <div className="p-10 space-y-8">
-              <div className="bg-[var(--bg-base)] p-8 rounded-[2.5rem] border border-[var(--border)] flex justify-between items-center">
+              {/* Header do protocolo */}
+              <div className="bg-[var(--bg-base)] p-8 rounded-[2.5rem] border border-[var(--border)] flex flex-wrap justify-between items-center gap-4">
                  <div>
                     <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 tracking-[0.2em]">Protocolo sob Análise</p>
                     <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{reqEditando.protocolo}</h4>
                     <p className="text-[10px] font-bold text-orange-600 uppercase mt-1">{reqEditando.solicitante} • {reqEditando.unidade_destino}</p>
                  </div>
-                 <div className="flex gap-3">
-                    <button 
+                 <div className="flex gap-3 flex-wrap">
+                    <button
                       onClick={() => {
                         if(confirm("Deseja APROVAR todos os itens deste protocolo com as quantidades originais?")) {
                           reqEditando.itens.forEach((it:any) => onProcessarReq(it.id, 'APROVADO', it.quantidade));
@@ -364,10 +381,8 @@ export default function AlmoxModals({
                         }
                       }}
                       className="h-12 px-6 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all"
-                    >
-                      Aprovar Todos
-                    </button>
-                    <button 
+                    >Aprovar Todos</button>
+                    <button
                       onClick={() => {
                         if(confirm("Deseja REPROVAR todos os itens deste protocolo?")) {
                           reqEditando.itens.forEach((it:any) => onProcessarReq(it.id, 'REPROVADO'));
@@ -375,49 +390,178 @@ export default function AlmoxModals({
                         }
                       }}
                       className="h-12 px-6 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
-                    >
-                      Reprovar Todos
-                    </button>
+                    >Reprovar Todos</button>
                  </div>
               </div>
 
-              <div className="space-y-4 max-h-[500px] overflow-auto pr-2 scrollbar-thin">
-                 {reqEditando.itens.map((it:any) => (
-                    <div key={it.id} className="p-6 bg-white rounded-2xl border border-[var(--border)] flex justify-between items-center group hover:border-blue-200 transition-all">
-                       <div className="flex-1">
+              {/* Legenda de cores */}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-2">
+                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Legenda:</span>
+                {[
+                  { color: 'bg-green-500', label: 'Dentro da cota e com estoque' },
+                  { color: 'bg-red-500',   label: 'Acima da cota máxima' },
+                  { color: 'bg-amber-500', label: 'Estoque insuficiente' },
+                  { color: 'bg-slate-300', label: 'Sem cota configurada' },
+                ].map(l => (
+                  <div key={l.label} className="flex items-center gap-1.5">
+                    <div className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
+                    <span className="text-[9px] font-black uppercase text-slate-500">{l.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Lista de itens */}
+              <div className="space-y-4 max-h-[540px] overflow-auto pr-2 scrollbar-thin">
+                {reqEditando.itens.map((it:any) => {
+                  // Cruzamento com o estoque local para obter cota e disponibilidade
+                  const estoqueItem = estoque.find((e:any) =>
+                    String(e.id) === String(it.item_id) ||
+                    e.item?.toLowerCase().trim() === it.item_nome?.toLowerCase().trim()
+                  );
+                  const maxPermitido  = estoqueItem?.quantidade_maxima ?? 0;
+                  const estoqueAtual  = estoqueItem?.quantidade        ?? 0;
+                  const solicitado    = it.quantidade;
+                  const semLimite     = maxPermitido === 0;
+                  const acimaDaQuota  = !semLimite && solicitado > maxPermitido;
+                  const excedente     = acimaDaQuota ? solicitado - maxPermitido : 0;
+                  const semEstoque    = estoqueAtual < solicitado;
+
+                  // Sugestão automática = menor entre pedido, cota e estoque
+                  const sugestao = semLimite
+                    ? Math.min(solicitado, estoqueAtual)
+                    : Math.min(solicitado, maxPermitido, estoqueAtual);
+
+                  const cardColor = acimaDaQuota
+                    ? 'border-red-300 bg-red-50/40'
+                    : semEstoque
+                    ? 'border-amber-300 bg-amber-50/40'
+                    : 'border-green-200 bg-green-50/20';
+
+                  return (
+                    <div key={it.id} className={`p-6 rounded-2xl border-2 transition-all ${cardColor}`}>
+                      {/* Nome + métricas + ações */}
+                      <div className="flex flex-wrap justify-between items-start gap-4">
+                        {/* Nome e categoria */}
+                        <div className="flex-1 min-w-[180px]">
                           <h5 className="text-xs font-black text-slate-800 uppercase">{it.item_nome}</h5>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Solicitado: {it.quantidade} {it.unidade_medida} • Categoria: {it.tipo_item}</p>
-                       </div>
-                       <div className="flex items-center gap-6">
-                          <div className="flex flex-col items-center">
-                             <label className="text-[8px] font-black text-slate-400 uppercase mb-1">Qtd. Aprovada</label>
-                             <input 
-                               type="number" 
-                               className="w-20 h-10 bg-slate-50 border-2 border-slate-100 rounded-lg text-center text-xs font-black focus:border-blue-500 transition-all"
-                               defaultValue={it.quantidade}
-                               id={`qtd-apr-${it.id}`}
-                             />
+                          <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">
+                            {it.tipo_item} • {it.unidade_medida || 'UN'}
+                          </p>
+                        </div>
+
+                        {/* 4 cards de métricas */}
+                        <div className="flex items-stretch gap-2 flex-wrap">
+                          {/* Pedido */}
+                          <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[68px]">
+                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Pedido</span>
+                            <span className="text-xl font-black text-slate-700">{solicitado}</span>
                           </div>
-                          <div className="flex gap-2">
-                             <button 
-                               onClick={() => {
-                                 const val = (document.getElementById(`qtd-apr-${it.id}`) as HTMLInputElement).value;
-                                 onProcessarReq(it.id, 'APROVADO', Number(val));
-                               }}
-                               className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Aprovar Individual"
-                             >
-                               <CheckCircle2 size={18} />
-                             </button>
-                             <button 
-                               onClick={() => onProcessarReq(it.id, 'REPROVADO')}
-                               className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm" title="Reprovar Individual"
-                             >
-                               <Trash2 size={18} />
-                             </button>
+
+                          {/* Máx/Req */}
+                          <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
+                            semLimite ? 'bg-slate-100 border-slate-200'
+                            : acimaDaQuota ? 'bg-red-100 border-red-300'
+                            : 'bg-green-100 border-green-200'
+                          }`}>
+                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Máx/Req</span>
+                            <span className={`text-xl font-black ${
+                              semLimite ? 'text-slate-400'
+                              : acimaDaQuota ? 'text-red-700'
+                              : 'text-green-700'
+                            }`}>{semLimite ? '—' : maxPermitido}</span>
                           </div>
-                       </div>
+
+                          {/* Estoque */}
+                          <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
+                            semEstoque ? 'bg-amber-100 border-amber-300' : 'bg-blue-50 border-blue-200'
+                          }`}>
+                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque</span>
+                            <span className={`text-xl font-black ${semEstoque ? 'text-amber-700' : 'text-blue-700'}`}>
+                              {estoqueAtual}
+                            </span>
+                          </div>
+
+                          {/* Sugestão */}
+                          <div className="flex flex-col items-center justify-center bg-[var(--brand)]/10 border border-[var(--brand)]/20 rounded-xl px-4 py-3 min-w-[68px]">
+                            <span className="text-[7px] font-black uppercase text-[var(--brand)] mb-1">Sugestão</span>
+                            <span className="text-xl font-black text-[var(--brand)]">{sugestao}</span>
+                          </div>
+
+                          {/* Campo de aprovação */}
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <label className="text-[7px] font-black uppercase text-slate-400">Aprovar</label>
+                            <input
+                              type="number"
+                              className={`w-20 h-12 border-2 rounded-xl text-center text-sm font-black focus:border-blue-500 transition-all ${
+                                acimaDaQuota ? 'bg-red-50 border-red-300 text-red-700' : 'bg-white border-slate-200'
+                              }`}
+                              defaultValue={sugestao}
+                              id={`qtd-apr-${it.id}`}
+                              min={0}
+                              max={Math.min(solicitado, estoqueAtual)}
+                            />
+                          </div>
+
+                          {/* Botões Aprovar / Reprovar */}
+                          <div className="flex gap-2 items-center">
+                            <button
+                              onClick={() => {
+                                const val = (document.getElementById(`qtd-apr-${it.id}`) as HTMLInputElement).value;
+                                onProcessarReq(it.id, 'APROVADO', Number(val));
+                              }}
+                              className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                              title="Aprovar com quantidade definida"
+                            >
+                              <CheckCircle2 size={18} />
+                            </button>
+                            <button
+                              onClick={() => onProcessarReq(it.id, 'REPROVADO')}
+                              className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                              title="Reprovar item"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Alertas contextuais */}
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {acimaDaQuota && (
+                          <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg border border-red-200">
+                            <AlertTriangle size={11} />
+                            <span className="text-[9px] font-black uppercase">
+                              +{excedente} {it.unidade_medida || 'UN'} acima da cota — aprovar no máximo {maxPermitido}
+                            </span>
+                          </div>
+                        )}
+                        {semEstoque && (
+                          <div className="flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
+                            <AlertTriangle size={11} />
+                            <span className="text-[9px] font-black uppercase">
+                              Estoque insuficiente — disponível: {estoqueAtual} / pedido: {solicitado}
+                            </span>
+                          </div>
+                        )}
+                        {semLimite && (
+                          <div className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span className="text-[9px] font-black uppercase">
+                              Cota máxima não configurada — defina em Cadastro Geral (campo "Máx/Req")
+                            </span>
+                          </div>
+                        )}
+                        {!acimaDaQuota && !semEstoque && !semLimite && (
+                          <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
+                            <CheckCircle2 size={11} />
+                            <span className="text-[9px] font-black uppercase">
+                              Dentro da cota e estoque suficiente — aprovação recomendada
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                 ))}
+                  );
+                })}
               </div>
            </div>
          )}
