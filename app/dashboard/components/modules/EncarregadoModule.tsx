@@ -9,8 +9,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getBusinessHoursElapsed } from "@/utils/dateUtils";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// jsPDF e autoTable carregados sob-demanda (lazy) para reduzir bundle inicial em ~800KB
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import UserSearchInput from "@/components/ui/UserSearchInput";
 import FichaColaborador360 from "../FichaColaborador360";
@@ -123,6 +122,17 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
      horario: true
    });
 
+   // MEMOIZAÇÃO: Filtros da aba Equipe — evita re-cálculo a cada render do componente pai
+   const colabsFiltrados = useMemo(() =>
+     myColabs.filter(c =>
+       ((c.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+       (c.cpf || "").includes(searchTerm)) &&
+       (filtroUnidadeColab === "" || c.unidade_alocacao === filtroUnidadeColab) &&
+       (filtroCargoColab === "" || (c.funcao || c.cargo || 'OPERACIONAL') === filtroCargoColab)
+     ),
+     [myColabs, searchTerm, filtroUnidadeColab, filtroCargoColab]
+   );
+
    const selecionarColab = (colab: any) => {
      if (campoBuscaAtivo === "substituto") {
        setInformativo({
@@ -208,7 +218,11 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     }
   };
 
-  const handlePrintRoute = () => {
+  const handlePrintRoute = async () => {
+    // Lazy load do jsPDF — carregado apenas quando necessário (~800KB)
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    
     const doc = new jsPDF('l', 'mm', 'a4'); 
     const pageWidth = doc.internal.pageSize.width;
 
@@ -745,14 +759,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
-                   {myColabs
-                    .filter(c => 
-                      ((c.nome?.toLowerCase() || "").includes(searchTerm.toLowerCase()) || 
-                      (c.cpf || "").includes(searchTerm)) &&
-                      (filtroUnidadeColab === "" || c.unidade_alocacao === filtroUnidadeColab) &&
-                      (filtroCargoColab === "" || (c.funcao || c.cargo || 'OPERACIONAL') === filtroCargoColab)
-                    )
-                    .map((colab, i) => (
+                   {colabsFiltrados.map((colab, i) => (
                      <tr key={i} className="hover:bg-[var(--bg-base)]/50 transition-colors group cursor-pointer" onClick={() => setEditandoColab(colab)}>
                         <td className="p-6">
                            <div className="flex items-center gap-5">

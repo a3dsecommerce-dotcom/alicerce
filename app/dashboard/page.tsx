@@ -170,8 +170,6 @@ function CockpitContent() {
     const isStrictRole = ["COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "DIRETOR_UNIDADE", "DIRETORIA"].includes(safeRole);
     const isManager = !isStrictRole && (nivel >= 3 || ["ADMIN", "GERENTE", "GERENCIA"].includes(safeRole));
     
-    console.log("🔍 Filtering Modules:", { safeRole, nivel, isManager });
-
     return isManager
       ? ALL_MODULES
       : ALL_MODULES.filter(m => m.roles.includes(safeRole));
@@ -218,19 +216,6 @@ function CockpitContent() {
 
   const safeRole = user?.role ? String(user.role).toUpperCase() : "";
   const isManager = (user?.nivel || 0) >= 3 || ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA"].includes(safeRole);
-
-  useEffect(() => {
-    if (user) {
-      console.log("🛠️ DASHBOARD STATE:", {
-        activeModule,
-        safeRole,
-        isManager,
-        nivel: user.nivel,
-        modParam,
-        tabParam
-      });
-    }
-  }, [user, activeModule, modParam, tabParam, safeRole, isManager]);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in pb-20 h-full overflow-hidden">

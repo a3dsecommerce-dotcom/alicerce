@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Phone, Lock, Shield, ShieldCheck, Zap, Network, Database, CheckCircle2, User, MapPin, Briefcase, Ruler, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Shield, ShieldCheck, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,6 +15,9 @@ export default function LoginPage() {
   const [modalTrabalhe, setModalTrabalhe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1);
+  // Rate limiting: bloqueia após 5 tentativas por 10 min
+  const loginAttempts = useRef(typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('_la') || '0') : 0);
+  const loginBlockedUntil = useRef(typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('_lb') || '0') : 0);
   const [candidato, setCandidato] = useState({
     // Passo 1 - Identificação
     nome: "", data_nascimento: "", sexo: "", estado_civil: "",
@@ -31,6 +35,15 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    
+    // Rate limiting: bloqueia após 5 tentativas por 10 minutos
+    const now = Date.now();
+    if (loginBlockedUntil.current > now) {
+      const minLeft = Math.ceil((loginBlockedUntil.current - now) / 60000);
+      setError(`Muitas tentativas. Aguarde ${minLeft} minuto(s) e tente novamente.`);
+      return;
+    }
+    
     setLoading(true);
     setError("");
     const telLimpo = telefone.replace(/\D/g, "");
@@ -70,11 +83,27 @@ export default function LoginPage() {
       const senhaPadrao = telLimpo.slice(-4);
       const senhaCorreta = user.senha || senhaPadrao;
       
-      if (senha !== senhaCorreta) { 
-        setError(user.senha ? "Senha incorreta." : "Senha incorreta — use os 4 últimos dígitos."); 
-        setLoading(false); 
-        return; 
+      if (senha !== senhaCorreta) {
+        // Incrementa contador de tentativas
+        loginAttempts.current += 1;
+        sessionStorage.setItem('_la', String(loginAttempts.current));
+        if (loginAttempts.current >= 5) {
+          const blockedUntil = Date.now() + 10 * 60 * 1000;
+          loginBlockedUntil.current = blockedUntil;
+          sessionStorage.setItem('_lb', String(blockedUntil));
+          loginAttempts.current = 0;
+          sessionStorage.setItem('_la', '0');
+          setError("Conta bloqueada por 10 minutos após múltiplas tentativas incorretas.");
+        } else {
+          setError(user.senha ? "Senha incorreta." : "Senha incorreta — use os 4 últimos dígitos.");
+        }
+        setLoading(false);
+        return;
       }
+      // Login bem-sucedido: limpa tentativas
+      loginAttempts.current = 0;
+      sessionStorage.removeItem('_la');
+      sessionStorage.removeItem('_lb');
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
       
       // LIMPEZA DE SEGURANÇA: Garante que sessões de simulação antigas sejam removidas no novo login
@@ -156,10 +185,10 @@ export default function LoginPage() {
         curriculo_url: curriculoUrl
       }]);
       if (error) throw error;
-      alert("✅ Inscrição realizada com sucesso! Entraremos em contato pelo WhatsApp.");
+      toast.success("✅ Inscrição realizada! Entraremos em contato pelo WhatsApp.");
       setModalTrabalhe(false); setStep(1);
     } catch (err: any) {
-      alert("Erro ao cadastrar: " + (err.message || "Erro desconhecido."));
+      toast.error("Erro ao cadastrar: " + (err.message || "Erro desconhecido."));
     } finally { setLoading(false); }
   }
 

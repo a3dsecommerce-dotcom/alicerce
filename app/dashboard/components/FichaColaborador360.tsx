@@ -7,6 +7,7 @@ import {
   CheckCircle2, Loader2, UploadCloud
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 interface Ficha360Props {
@@ -71,7 +72,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
   }
 
   const handleSave = async () => {
-    if (!motivoAlt) return alert("Por favor, informe o motivo da alteração para fins de auditoria.");
+    if (!motivoAlt) { toast.error("Informe o motivo da alteração para fins de auditoria."); return; }
     
     setLoading(true);
     const changes = Object.keys(editForm).filter(key => editForm[key] !== data[key] && key !== 'updated_at');
@@ -124,13 +125,13 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
           }]);
         }
 
-        alert("Dados atualizados e auditados com sucesso! Uma ocorrência de notificação foi gerada para a gerência.");
+        toast.success("Dados atualizados e auditados com sucesso!");
         setEditing(false);
         setMotivoAlt("");
         loadFullData();
         if (onUpdate) onUpdate();
       } else {
-        alert("Erro ao salvar: " + error.message);
+        toast.error("Erro ao salvar: " + error.message);
       }
     } else {
       setEditing(false);

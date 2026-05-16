@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Plus, Clock, AlertOctagon, CheckCircle, Loader, User, MapPin, MessageCircle, Search, Activity } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { n8n } from "@/lib/n8n";
-
+import { toast } from "sonner";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 // Categorias de status para referência
@@ -70,7 +70,7 @@ export default function OcorrenciasPage() {
     let finalData = ticketData || [];
     
     if (ticketError) {
-      console.warn("Database sync error:", ticketError);
+      // Erró silencioso de sincronização — dados podem estar desatualizados
     }
 
     if (finalData) {
@@ -127,7 +127,7 @@ export default function OcorrenciasPage() {
 
   const handleSalvarOcorrencia = async () => {
     if (!novaOcorrencia.assunto || !novaOcorrencia.setor_destino) {
-      alert("Informe o assunto e o setor responsável.");
+      toast.error("Informe o assunto e o setor responsável.");
       return;
     }
 
@@ -166,15 +166,15 @@ export default function OcorrenciasPage() {
       setModalNova(false);
       setNovaOcorrencia({ assunto: "", unidade_id: "", prioridade: "NORMAL", descricao: "", setor_destino: "Gerência Operacional", responsavel_citado: "" });
       loadData();
-      alert("Ocorrência aberta e direcionada ao setor com sucesso!");
+      toast.success("Ocorrência aberta e direcionada ao setor com sucesso!");
     } else {
-      alert("Erro ao salvar: " + error.message);
+      toast.error("Erro ao salvar: " + error?.message);
     }
     setLoading(false);
   };
 
   const handleFinalizarResolucao = async () => {
-    if (!solucaoTexto) return alert("Por favor, explique a solução para registro.");
+    if (!solucaoTexto) { toast.error("Por favor, explique a solução para registro."); return; }
     
     setLoading(true);
     const { error } = await supabase
@@ -208,9 +208,9 @@ export default function OcorrenciasPage() {
       setTicketSelecionado(null);
       setSolucaoTexto("");
       loadData();
-      alert("✅ Ocorrência resolvida e registrada no log com sucesso.");
+      toast.success("✅ Ocorrência resolvida e registrada no log com sucesso.");
     } else {
-      alert("Erro ao salvar resolução: " + error.message);
+      toast.error("Erro ao salvar resolução: " + error?.message);
     }
     setLoading(false);
   };

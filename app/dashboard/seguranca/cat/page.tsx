@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { n8n } from "@/lib/n8n";
+import { toast } from "sonner";
 
 interface Colaborador {
   id: string;
@@ -76,7 +77,7 @@ export default function CATInvestigationPage() {
 
   const handleSubmit = async () => {
     if (!form.colaborador_id || !form.data_acidente || !form.tipo_acidente || !form.descricao) {
-      alert("Preencha todos os campos obrigatórios: Colaborador, Data, Tipo e Descrição.");
+      toast.error("Preencha todos os campos obrigatórios: Colaborador, Data, Tipo e Descrição.");
       return;
     }
     setEnviando(true);
@@ -86,12 +87,12 @@ export default function CATInvestigationPage() {
         solicitante: "SST Portal",
         notificar: ["GERENCIA", "RH_DP", "TECNICO_SEGURANCA"],
       });
-      alert(`CAT registrada com sucesso!\nColaborador: ${form.colaborador_nome}\nO Técnico de Segurança foi notificado.`);
+      toast.success(`CAT registrada! Colaborador: ${form.colaborador_nome} — Técnico de Segurança notificado.`);
       setModalCAT(false);
       setForm({ colaborador_id: "", colaborador_nome: "", data_acidente: "", hora_acidente: "", tipo_acidente: "", descricao: "", testemunhas: "" });
       setBuscaColab("");
     } catch (err) {
-      alert("Erro ao registrar CAT. Verifique a conexão e tente novamente.");
+      toast.error("Erro ao registrar CAT. Verifique a conexão e tente novamente.");
     }
     setEnviando(false);
   };

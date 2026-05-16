@@ -119,7 +119,6 @@ export default function ColaboradoresTable({
   onEdit,
   onDelete
 }: ColaboradoresTableProps) {
-  console.log("[RH Table] Rendering with config:", configChecklist);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [modalConfig, setModalConfig] = useState<any>(null);
 

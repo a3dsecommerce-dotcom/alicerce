@@ -37,8 +37,6 @@ export default function DiretorModule({ user }: { user: any }) {
   const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
       setLoading(true);
-      console.log("🚀 PORTAL DIRETOR: Iniciando sincronização...");
-      
       const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
       const { data: listUnits } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
@@ -98,7 +96,6 @@ export default function DiretorModule({ user }: { user: any }) {
       setSolicitacoesVolante(volanteRes.data || []);
 
     } catch (err: any) {
-      console.error("❌ ERRO NO PORTAL DIRETOR:", err);
       toast.error("Falha na sincronização dos dados.");
     } finally {
       setLoading(false);
