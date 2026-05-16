@@ -18,6 +18,7 @@ interface AlmoxModalsProps {
   onConfirmarEntregaEPI: () => void;
   reqEditando: any;
   setReqEditando: (v: any) => void;
+  cotasMap: Record<string, number>;
   onProcessarReq: (id: string, status: 'APROVADO' | 'REPROVADO', qtd?: number) => void;
   entregaConfirm: any;
   setEntregaConfirm: (v: any) => void;
@@ -40,7 +41,7 @@ export default function AlmoxModals({
   modalAberto, setModalAberto,
   formData, setFormData, onSalvarItem, onExcluirItem,
   entregaData, setEntregaData, buscaFuncionario, setBuscaFuncionario, usuarios, estoque, onConfirmarEntregaEPI,
-  reqEditando, setReqEditando, onProcessarReq,
+  reqEditando, setReqEditando, cotasMap, onProcessarReq,
   entregaConfirm, setEntregaConfirm, entregaParcialQtd, setEntregaParcialQtd, onConfirmarEntregaTotal, onConfirmarEntregaParcial, onConfirmarEntregaParcialExternal,
   ocorrenciaData, setOcorrenciaData, onSalvarOcorrencia,
   resolucaoData, setResolucaoData, onFinalizarResolucao,
@@ -399,9 +400,9 @@ export default function AlmoxModals({
                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Legenda:</span>
                 {[
                   { color: 'bg-green-500', label: 'Dentro da cota e com estoque' },
-                  { color: 'bg-red-500',   label: 'Acima da cota máxima' },
+                  { color: 'bg-red-500',   label: 'Acima da cota calculada' },
                   { color: 'bg-amber-500', label: 'Estoque insuficiente' },
-                  { color: 'bg-slate-300', label: 'Sem cota configurada' },
+                  { color: 'bg-blue-300',  label: 'EPI — cota não se aplica' },
                 ].map(l => (
                   <div key={l.label} className="flex items-center gap-1.5">
                     <div className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
@@ -413,23 +414,32 @@ export default function AlmoxModals({
               {/* Lista de itens */}
               <div className="space-y-4 max-h-[540px] overflow-auto pr-2 scrollbar-thin">
                 {reqEditando.itens.map((it:any) => {
-                  // Cruzamento com o estoque local para obter cota e disponibilidade
+                  // Cruzamento com o catálogo de suprimentos para obter coeficiente
                   const estoqueItem = estoque.find((e:any) =>
                     String(e.id) === String(it.item_id) ||
                     e.item?.toLowerCase().trim() === it.item_nome?.toLowerCase().trim()
                   );
-                  const maxPermitido  = estoqueItem?.quantidade_maxima ?? 0;
-                  const estoqueAtual  = estoqueItem?.quantidade        ?? 0;
-                  const solicitado    = it.quantidade;
-                  const semLimite     = maxPermitido === 0;
-                  const acimaDaQuota  = !semLimite && solicitado > maxPermitido;
-                  const excedente     = acimaDaQuota ? solicitado - maxPermitido : 0;
-                  const semEstoque    = estoqueAtual < solicitado;
+                  const estoqueAtual = estoqueItem?.quantidade ?? 0;
+                  const coeficiente  = estoqueItem?.coeficiente ?? 0;
+                  const solicitado   = it.quantidade;
+                  const isEPI        = it.tipo_item === 'EPI';
 
-                  // Sugestão automática = menor entre pedido, cota e estoque
-                  const sugestao = semLimite
-                    ? Math.min(solicitado, estoqueAtual)
-                    : Math.min(solicitado, maxPermitido, estoqueAtual);
+                  // EPI não tem cota — cota só se aplica a suprimentos (calculada via coeficiente × ASGs)
+                  const secretaria   = reqEditando.secretaria_destino || '';
+                  const qtdAsg       = cotasMap[secretaria] ?? 0;
+                  // Se não há coeficiente ou secretaria sem ASGs → sem limite calculado
+                  const cotaCalculada = (!isEPI && coeficiente > 0 && qtdAsg > 0)
+                    ? Math.floor(qtdAsg * coeficiente)
+                    : 0;
+                  const temCota      = cotaCalculada > 0;
+                  const acimaDaQuota = temCota && solicitado > cotaCalculada;
+                  const excedente    = acimaDaQuota ? solicitado - cotaCalculada : 0;
+                  const semEstoque   = estoqueAtual < solicitado;
+
+                  // Sugestão automática (não ultrapassa cota nem estoque)
+                  const sugestao = temCota
+                    ? Math.min(solicitado, cotaCalculada, estoqueAtual)
+                    : Math.min(solicitado, estoqueAtual);
 
                   const cardColor = acimaDaQuota
                     ? 'border-red-300 bg-red-50/40'
@@ -457,19 +467,21 @@ export default function AlmoxModals({
                             <span className="text-xl font-black text-slate-700">{solicitado}</span>
                           </div>
 
-                          {/* Máx/Req */}
-                          <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
-                            semLimite ? 'bg-slate-100 border-slate-200'
-                            : acimaDaQuota ? 'bg-red-100 border-red-300'
-                            : 'bg-green-100 border-green-200'
-                          }`}>
-                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Máx/Req</span>
-                            <span className={`text-xl font-black ${
-                              semLimite ? 'text-slate-400'
-                              : acimaDaQuota ? 'text-red-700'
-                              : 'text-green-700'
-                            }`}>{semLimite ? '—' : maxPermitido}</span>
-                          </div>
+                          {/* Cota — só para suprimentos */}
+                          {!isEPI && (
+                            <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
+                              !temCota ? 'bg-slate-100 border-slate-200'
+                              : acimaDaQuota ? 'bg-red-100 border-red-300'
+                              : 'bg-green-100 border-green-200'
+                            }`}>
+                              <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Cota</span>
+                              <span className={`text-xl font-black ${
+                                !temCota ? 'text-slate-400'
+                                : acimaDaQuota ? 'text-red-700'
+                                : 'text-green-700'
+                              }`}>{temCota ? cotaCalculada : '—'}</span>
+                            </div>
+                          )}
 
                           {/* Estoque */}
                           <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
@@ -531,7 +543,7 @@ export default function AlmoxModals({
                           <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg border border-red-200">
                             <AlertTriangle size={11} />
                             <span className="text-[9px] font-black uppercase">
-                              +{excedente} {it.unidade_medida || 'UN'} acima da cota — aprovar no máximo {maxPermitido}
+                              +{excedente} {it.unidade_medida || 'UN'} acima da cota ({cotaCalculada} {it.unidade_medida || 'UN'} para {reqEditando.secretaria_destino})
                             </span>
                           </div>
                         )}
@@ -543,14 +555,21 @@ export default function AlmoxModals({
                             </span>
                           </div>
                         )}
-                        {semLimite && (
+                        {!isEPI && !temCota && (
                           <div className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200">
                             <span className="text-[9px] font-black uppercase">
-                              Cota máxima não configurada — defina em Cadastro Geral (campo "Máx/Req")
+                              Cota não calculada — verifique ASGs cadastrados na secretaria &quot;{reqEditando.secretaria_destino}&quot;
                             </span>
                           </div>
                         )}
-                        {!acimaDaQuota && !semEstoque && !semLimite && (
+                        {isEPI && !semEstoque && (
+                          <div className="flex items-center gap-1.5 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100">
+                            <span className="text-[9px] font-black uppercase">
+                              EPI — sem cota por requisição. Verifique necessidade com a equipe.
+                            </span>
+                          </div>
+                        )}
+                        {!acimaDaQuota && !semEstoque && temCota && (
                           <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
                             <CheckCircle2 size={11} />
                             <span className="text-[9px] font-black uppercase">

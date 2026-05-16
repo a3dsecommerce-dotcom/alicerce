@@ -8,6 +8,8 @@ export function useAlmoxData() {
   const [requisicoes, setRequisicoes] = useState<any[]>([]);
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
+  // Map de secretaria → qtdAsg (mesma lógica do módulo Compras)
+  const [cotasMap, setCotasMap] = useState<Record<string, number>>({});
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -34,6 +36,39 @@ export function useAlmoxData() {
 
       const { data: ocData } = await supabase.from('tickets_sla').select('*').order('created_at', { ascending: false });
       if (ocData) setOcorrencias(ocData);
+
+      // Calcula qtdAsg por secretaria (mesma lógica do módulo Compras)
+      // 1. Lê configurações manuais
+      const { data: configCotas } = await supabase
+        .from('config_cotas_secretaria')
+        .select('secretaria, modo_calculo, qtd_asg_manual');
+
+      // 2. Conta ASGs reais por secretaria para as que são AUTOMÁTICO
+      const { data: asgData } = await supabase
+        .from('usuarios')
+        .select('secretaria')
+        .ilike('cargo', '%ASG%')
+        .eq('status', 'ATIVO');
+
+      const asgPorSecretaria: Record<string, number> = {};
+      (asgData || []).forEach((u: any) => {
+        if (u.secretaria) asgPorSecretaria[u.secretaria] = (asgPorSecretaria[u.secretaria] || 0) + 1;
+      });
+
+      const mapa: Record<string, number> = {};
+      // Aplica configurações manuais primeiro
+      (configCotas || []).forEach((c: any) => {
+        if (c.modo_calculo === 'MANUAL') {
+          mapa[c.secretaria] = c.qtd_asg_manual;
+        } else {
+          mapa[c.secretaria] = asgPorSecretaria[c.secretaria] || 1;
+        }
+      });
+      // Preenche secretarias sem config manual com contagem real
+      Object.entries(asgPorSecretaria).forEach(([sec, count]) => {
+        if (!mapa[sec]) mapa[sec] = count;
+      });
+      setCotasMap(mapa);
     } catch (err) {
       console.error("Erro no carregamento do Almoxarifado:", err);
     } finally {
@@ -108,6 +143,7 @@ export function useAlmoxData() {
     requisicoes,
     usuarios,
     ocorrencias,
+    cotasMap,
     refresh: fetchAll,
     updateItem,
     insertItem,

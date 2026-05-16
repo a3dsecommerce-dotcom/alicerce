@@ -17,7 +17,7 @@ type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI";
 
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
-    loading, estoque, requisicoes, usuarios, ocorrencias, 
+    loading, estoque, requisicoes, usuarios, ocorrencias, cotasMap,
     updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh 
   } = useAlmoxData();
 
@@ -312,7 +312,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         modalAberto={modalAberto} setModalAberto={handleCloseModal}
         formData={formData} setFormData={setFormData} onSalvarItem={handleSalvarItem} onExcluirItem={handleExcluirItem}
         entregaData={entregaData} setEntregaData={setEntregaData} buscaFuncionario={buscaFuncionario} setBuscaFuncionario={setBuscaFuncionario} usuarios={usuarios} estoque={estoque} onConfirmarEntregaEPI={handleConfirmarEntregaEPI}
-        reqEditando={reqEditando} setReqEditando={setReqEditando} onProcessarReq={(id, status, qtd) => {
+        reqEditando={reqEditando} setReqEditando={setReqEditando} cotasMap={cotasMap} onProcessarReq={(id, status, qtd) => {
            processarRequisicao(id, {status, quantidade_aprovada: qtd});
            toast.success(`Requisição ${status === 'APROVADO' ? 'Aprovada' : 'Reprovada'}`);
         }}
