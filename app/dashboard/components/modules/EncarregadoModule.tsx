@@ -653,7 +653,11 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       
       const cargosMap: Record<string, number> = {};
       unitColabs.forEach(c => {
-        const cargo = c.cargo || c.funcao || "OUTROS";
+        let cargo = c.cargo || c.funcao || "OUTROS";
+        if (cargo.toUpperCase().includes("ASG") || cargo.toUpperCase().includes("SERVIÇOS GERAIS")) {
+          const insalubridade = c.percentual_insalubridade || c.insalubridade || 20;
+          cargo = `ASG (${String(insalubridade).replace(/\D/g, "")}%)`;
+        }
         cargosMap[cargo] = (cargosMap[cargo] || 0) + 1;
       });
       
