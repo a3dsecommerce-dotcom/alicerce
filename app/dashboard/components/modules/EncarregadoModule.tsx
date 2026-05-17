@@ -52,6 +52,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const [justificativa, setJustificativa] = useState("");
   const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
+  const [historicoInformativos, setHistoricoInformativos] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [modalUnidade, setModalUnidade] = useState<any>(null);
   const [unidadeEditando, setUnidadeEditando] = useState<any>(null);
@@ -211,6 +212,15 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           .order('data_abertura', { ascending: false });
         setOcorrencias(tickets || []);
       }
+
+      // Busca informativos do encarregado logado
+      const { data: infoData } = await supabase
+        .from('informativos_operacionais')
+        .select('*')
+        .eq('criado_por_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      setHistoricoInformativos(infoData || []);
     } catch (err) {
       console.error("Erro ao carregar dados do encarregado:", err);
     } finally {
@@ -489,11 +499,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const handleSaveInformativo = async () => {
     setSaving(true);
     
-    // Tratamento para evitar "invalid input syntax for type uuid" com strings vazias
+    const agora = new Date().toISOString();
     const payload = {
       ...informativo,
       colaborador_substituto_id: informativo.colaborador_substituto_id || null,
       colaborador_ausente_id: informativo.colaborador_ausente_id || null,
+      data_abertura: agora,   // data/hora em que o informativo foi aberto/registrado
       criado_por_id: user.id,
       criado_por_nome: user.nome
     };
@@ -520,6 +531,14 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         sugestao_punicao: '',
         observacoes: ''
       });
+      // Atualiza histórico sem recarregar tudo
+      const { data: infoAtual } = await supabase
+        .from('informativos_operacionais')
+        .select('*')
+        .eq('criado_por_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      setHistoricoInformativos(infoAtual || []);
       setActiveTab("MY_UNITS");
     } else {
       alert("Erro ao salvar: " + error.message);
@@ -1372,7 +1391,10 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">Data da Ocorrência</label>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-3 block italic">
+                Data da Ocorrência
+                <span className="ml-2 text-[8px] font-bold text-slate-400 normal-case">(dia da falta, extra ou substituição)</span>
+              </label>
               <input 
                 type="date"
                 className="input-field w-full !h-14 font-black"
@@ -1521,15 +1543,96 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           </button>
         </div>
 
-        <div className="space-y-6">
-             <div className="bg-[var(--bg-card)]/50 p-10 rounded-[3rem] border border-dashed border-[var(--border)] flex flex-col items-center justify-center text-center py-20">
-                <div className="w-20 h-20 rounded-[2rem] bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
-                   <Send className="text-[var(--text-muted)] opacity-30" size={32} />
-                </div>
-                <p className="text-xs font-black uppercase text-[var(--text-muted)] tracking-widest leading-loose">
-                   Preencha as informações <br /> ao lado para enviar <br /> o informativo operacional
-                </p>
-             </div>
+        {/* LADO DIREITO: HISTÓRICO DE INFORMATIVOS */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest">Últimos Registros</h4>
+            <span className="text-[9px] font-bold text-slate-400 uppercase">{historicoInformativos.length} informativo(s)</span>
+          </div>
+
+          {historicoInformativos.length === 0 ? (
+            <div className="bg-[var(--bg-card)]/50 p-10 rounded-[3rem] border border-dashed border-[var(--border)] flex flex-col items-center justify-center text-center py-20">
+              <div className="w-20 h-20 rounded-[2rem] bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center mb-6 shadow-sm">
+                <Send className="text-[var(--text-muted)] opacity-30" size={32} />
+              </div>
+              <p className="text-xs font-black uppercase text-[var(--text-muted)] tracking-widest leading-loose">
+                Preencha as informações <br /> ao lado para enviar <br /> o informativo operacional
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[700px] overflow-auto pr-1 scrollbar-thin">
+              {historicoInformativos.map((inf: any) => {
+                const dataAbertura = new Date(inf.data_abertura || inf.created_at);
+                const dataOcorrencia = inf.data ? new Date(inf.data + 'T12:00:00') : null;
+                const isExtra = inf.tipo === 'EXTRA';
+
+                return (
+                  <div
+                    key={inf.id}
+                    className={`p-5 rounded-2xl border-l-4 border ${
+                      isExtra
+                        ? 'border-l-[var(--brand)] border-[var(--border)] bg-[var(--bg-card)]'
+                        : 'border-l-red-500 border-red-100 bg-red-50/30'
+                    }`}
+                  >
+                    {/* Tipo + Unidade */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md ${
+                        isExtra ? 'bg-[var(--brand)]/10 text-[var(--brand)]' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {isExtra ? '⚡ Extra / Substituição' : '⛔ Falta / Atestado'}
+                      </span>
+                      <span className="text-[8px] font-black text-slate-400 uppercase">{inf.unidade}</span>
+                    </div>
+
+                    {/* Datas separadas — informação central do pedido */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="bg-[var(--bg-base)] rounded-xl p-3">
+                        <p className="text-[7px] font-black uppercase text-slate-400 mb-1">📋 Aberto em</p>
+                        <p className="text-[10px] font-black text-slate-700">
+                          {dataAbertura.toLocaleDateString('pt-BR')} às {dataAbertura.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div className={`rounded-xl p-3 ${
+                        isExtra ? 'bg-[var(--brand)]/5' : 'bg-red-50'
+                      }`}>
+                        <p className="text-[7px] font-black uppercase text-slate-400 mb-1">📅 Data da Ocorrência</p>
+                        <p className={`text-[10px] font-black ${
+                          isExtra ? 'text-[var(--brand)]' : 'text-red-700'
+                        }`}>
+                          {dataOcorrencia ? dataOcorrencia.toLocaleDateString('pt-BR') : '—'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Colaboradores envolvidos */}
+                    {isExtra && (
+                      <div className="text-[9px] font-bold text-slate-500 space-y-0.5">
+                        {inf.colaborador_substituto_nome && (
+                          <p>⚡ Substituto: <span className="font-black text-slate-700">{inf.colaborador_substituto_nome}</span></p>
+                        )}
+                        {inf.colaborador_ausente_nome && (
+                          <p>👤 Ausente: <span className="font-black text-slate-700">{inf.colaborador_ausente_nome}</span></p>
+                        )}
+                        {inf.horario && <p>🕐 Horário: <span className="font-black">{inf.horario}</span></p>}
+                      </div>
+                    )}
+                    {!isExtra && (
+                      <div className="text-[9px] font-bold text-slate-500 space-y-0.5">
+                        {inf.colaborador_ausente_nome && (
+                          <p>👤 Faltante: <span className="font-black text-slate-700">{inf.colaborador_ausente_nome}</span></p>
+                        )}
+                        {inf.tem_atestado && <p className="text-blue-600 font-black">📄 Com atestado ({inf.dias_atestado}d)</p>}
+                        {!inf.tem_atestado && inf.justificada === false && inf.sugestao_punicao && (
+                          <p className="text-red-600 font-black">⚠ {inf.sugestao_punicao.replace(/_/g,' ')}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
