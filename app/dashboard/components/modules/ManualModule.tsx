@@ -9,6 +9,45 @@ import { BookOpen, Sparkles, Rocket, ShieldCheck, Zap, Activity, Clock, Users, P
 
 const UPDATES = [
   {
+    version: "v753.8.58",
+    date: "17/05/2026",
+    title: "Informativos com Data de Abertura Automática",
+    description: "Registro automático da data/hora de abertura do informativo separada da data da ocorrência (falta ou extra).",
+    tags: ["ENCARREGADO", "INFORMATIVOS", "AUDITORIA"],
+    details: [
+      "Campo 'data_abertura' gravado automaticamente no momento do registro — sem ação do encarregado.",
+      "Campo 'Data da Ocorrência' clarificado no formulário: dia real da falta, extra ou substituição.",
+      "Histórico lateral exibe os últimos 30 informativos com as duas datas separadas visualmente.",
+      "Cartões de histórico mostram colaborador substituto, ausente, horário e punição sugerida."
+    ]
+  },
+  {
+    version: "v753.8.57",
+    date: "16/05/2026",
+    title: "Inteligência de Requisições — Almoxarifado",
+    description: "Painel de análise de requisições com cota calculada (coeficiente × ASGs), estoque em tempo real e sugestão automática de aprovação.",
+    tags: ["ALMOXARIFADO", "COTAS", "INTELIGÊNCIA"],
+    details: [
+      "Modal de análise exibe 4 métricas por item: Pedido, Cota, Estoque, Sugestão automática.",
+      "Cota calculada igual ao módulo Compras: Math.floor(qtdAsg × coeficiente), sem campo novo no banco.",
+      "EPI sem cota — apenas estoque exibido; suprimentos com cota por secretaria.",
+      "Alertas visuais: vermelho (acima da cota), âmbar (estoque insuficiente), verde (aprovação recomendada)."
+    ]
+  },
+  {
+    version: "v753.8.56",
+    date: "16/05/2026",
+    title: "Security & Performance Hardening",
+    description: "Endurecimento crítico de segurança, eliminação de alert() nativos e otimização de bundle.",
+    tags: ["SEGURANÇA", "PERFORMANCE", "UX"],
+    details: [
+      "🔐 CRÍTICO: Chave JWT Supabase movida de hardcode para process.env em todos os arquivos.",
+      "🔐 Rate limiting no login: 5 tentativas → bloqueio automático de 10 minutos.",
+      "⚡ Lazy load jsPDF/autoTable → redução de ~800KB no bundle inicial.",
+      "🎨 Todos os alert() nativos substituídos por toast() do Sonner em 6 módulos."
+    ]
+  },
+  {
     version: "v753.8",
     date: "10/05/2026",
     title: "Portal do Diretor / Fiscal do Cliente",

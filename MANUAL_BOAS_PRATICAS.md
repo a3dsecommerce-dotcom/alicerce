@@ -1,4 +1,4 @@
-# 📜 Manual de Boas Práticas — Alicerce ERP v753.8.56
+# 📜 Manual de Boas Práticas — Alicerce ERP v753.8.58
 
 Este documento estabelece os padrões de desenvolvimento, design e operação para garantir a longevidade, segurança e soberania do sistema.
 
@@ -121,6 +121,16 @@ const handlePrint = async () => {
 
 ## 6. Histórico de Governança e Atualizações
 
+### • 17/05/2026 — Informativos com Data Automática (v753.8.58)
+- **📅 Datas Separadas:** Adição automática do campo `data_abertura` (momento do registro), clarificando o campo "Data da Ocorrência" (falta/extra real).
+- **📋 Histórico Visual:** Implementação do painel direito exibindo os últimos 30 informativos com as duas datas separadas para facilitar auditorias operacionais.
+
+### • 16/05/2026 — Inteligência de Almoxarifado (v753.8.57)
+- **🧠 Painel Inteligente:** Análise de requisições exibe agora Pedido, Cota Calculada, Estoque e Sugestão Automática de aprovação.
+- **🔢 Cota Dinâmica:** Cálculo dinâmico baseado em `Math.floor(qtdAsg * coeficiente)` da secretaria, espelhando a lógica do módulo Compras.
+- **🛡️ Tratamento de EPIs:** Isenção automática da regra de cotas para EPIs.
+
+
 ### • 16/05/2026 — Security + Performance Hardening (v753.8.56)
 - **🔐 CRÍTICO:** Chave JWT Supabase movida de hardcode para `process.env`
 - **🔐 CRÍTICO:** Rate limiting no login (5 tentativas → bloqueio 10 min)
@@ -151,5 +161,5 @@ const handlePrint = async () => {
 
 ---
 
-*Atualizado em: 16/05/2026 — Versão v753.8.56*
+*Atualizado em: 17/05/2026 — Versão v753.8.58*
 *Assinado: Equipe Antigravity & A3DS Ecommerce*
