@@ -622,6 +622,54 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     setSaving(false);
   };
 
+  const handlePrintUnidadesInfo = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+    const pageWidth = doc.internal.pageSize.width;
+
+    doc.setFontSize(22);
+    doc.text("INFORMAÇÕES DAS UNIDADES - ALICERCE", pageWidth / 2, 20, { align: "center" });
+    doc.setFontSize(10);
+    doc.text(`Encarregado: ${user.nome} | Data: ${new Date().toLocaleDateString()}`, pageWidth / 2, 28, { align: "center" });
+    
+    const headers = [
+      "UNIDADE",
+      "SECRETARIA",
+      "RESPONSÁVEL",
+      "TELEFONE RESP.",
+      "ALUNOS",
+      "INTEGRAL?",
+      "COZ. EFETIVA?",
+      "QTD COZ.",
+      "HORÁRIO"
+    ];
+
+    const tableData = fullUnits.map(u => [
+      u.nome || "-",
+      u.secretaria || "-",
+      u.responsavel_nome || "-",
+      u.responsavel_telefone || "-",
+      u.quantidade_alunos?.toString() || "-",
+      u.is_integral ? "SIM" : "NÃO",
+      u.tem_cozinheira_efetiva ? "SIM" : "NÃO",
+      u.quantidade_cozinheiras_efetivas?.toString() || "-",
+      u.horario_funcionamento || "-"
+    ]);
+
+    autoTable(doc, {
+      head: [headers],
+      body: tableData,
+      startY: 35,
+      theme: 'grid',
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [255, 106, 0], textColor: [255, 255, 255], fontStyle: 'bold' }
+    });
+
+    doc.save(`Unidades_Info_${user.nome.replace(/\s+/g, '_')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+  };
+
   const renderMyUnits = () => (
     <div className="flex flex-col gap-8 animate-fade-in">
 
@@ -631,6 +679,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tight">Cadastre colaboradores diretamente nas suas unidades de rota</p>
         </div>
         <div className="flex gap-4">
+          <button 
+            onClick={handlePrintUnidadesInfo}
+            className="px-8 py-4 bg-white text-[var(--text-primary)] border border-[var(--border)] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3"
+          >
+            <Printer size={18} /> Detalhes das Unidades
+          </button>
           <button 
             onClick={() => setIsPrintModalOpen(true)}
             className="px-8 py-4 bg-white text-[var(--text-primary)] border border-[var(--border)] rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-3"
