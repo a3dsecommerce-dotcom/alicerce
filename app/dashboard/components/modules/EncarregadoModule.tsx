@@ -642,21 +642,38 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       "ALUNOS",
       "INTEGRAL?",
       "COZ. EFETIVA?",
-      "QTD COZ.",
-      "HORÁRIO"
+      "HORÁRIO",
+      "TOTAL COLAB.",
+      "QUADRO DE FUNÇÕES"
     ];
 
-    const tableData = fullUnits.map(u => [
-      u.nome || "-",
-      u.secretaria || "-",
-      u.responsavel_nome || "-",
-      u.responsavel_telefone || "-",
-      u.quantidade_alunos?.toString() || "-",
-      u.is_integral ? "SIM" : "NÃO",
-      u.tem_cozinheira_efetiva ? "SIM" : "NÃO",
-      u.quantidade_cozinheiras_efetivas?.toString() || "-",
-      u.horario_funcionamento || "-"
-    ]);
+    const tableData = fullUnits.map(u => {
+      const unitColabs = myColabs.filter(c => c.unidade_alocacao === u.nome);
+      const totalColabs = unitColabs.length;
+      
+      const cargosMap: Record<string, number> = {};
+      unitColabs.forEach(c => {
+        const cargo = c.cargo || c.funcao || "OUTROS";
+        cargosMap[cargo] = (cargosMap[cargo] || 0) + 1;
+      });
+      
+      const quadroFuncoes = Object.entries(cargosMap)
+        .map(([cargo, qtd]) => `${qtd}x ${cargo}`)
+        .join('\n');
+
+      return [
+        u.nome || "-",
+        u.secretaria || "-",
+        u.responsavel_nome || "-",
+        u.responsavel_telefone || "-",
+        u.quantidade_alunos?.toString() || "-",
+        u.is_integral ? "SIM" : "NÃO",
+        u.tem_cozinheira_efetiva ? `SIM (${u.quantidade_cozinheiras_efetivas || 1})` : "NÃO",
+        u.horario_funcionamento || "-",
+        totalColabs.toString(),
+        quadroFuncoes || "-"
+      ];
+    });
 
     autoTable(doc, {
       head: [headers],
