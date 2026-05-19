@@ -158,12 +158,11 @@ export default function QuadroVagas() {
         
         const cargoMatch = colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
         
-        // Regra especial para ASG / Serviços Gerais: deve bater a insalubridade
-        if (cargoMatch && (colabCargo.includes("ASG") || colabCargo.includes("SERVIÇOS GERAIS"))) {
-          const colabInsalubridade = String(c.percentual_insalubridade || c.insalubridade || "20").replace(/\D/g, "");
-          if (itemInsalubridade && itemInsalubridade !== "") {
-            return colabInsalubridade === itemInsalubridade;
-          }
+        // Se a vaga exige uma insalubridade específica (diferente de vazio/NA), valida se o colaborador a possui
+        if (cargoMatch && itemInsalubridade !== "" && itemInsalubridade !== "N/A") {
+          const defaultInsalubridade = colabCargo.includes("ASG") || colabCargo.includes("COZINHEIRA") ? "20" : "0";
+          const colabInsalubridade = String(c.percentual_insalubridade || c.insalubridade || defaultInsalubridade).replace(/\D/g, "");
+          return colabInsalubridade === itemInsalubridade;
         }
         
         return cargoMatch;
