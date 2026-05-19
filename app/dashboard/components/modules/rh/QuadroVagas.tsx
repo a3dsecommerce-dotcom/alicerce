@@ -9,6 +9,14 @@ import {
 import { toast } from "sonner";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
+// Funções de limpeza e normalização (globais para performance e reuso)
+const normalizeString = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase() : "";
+
+const removeSchoolPrefixes = (s: string) => {
+  let clean = s.replace(/[\.]/g, ""); // Remove pontos (ex: C.M.E.I)
+  return clean.replace(/^(CEMEI|CMEI|CEMEITI|EMEF|EMEIEF|EMEIEFTI|EMPEF|EMPEIEF|EMUEF|ESCOLA|CRECHE|CENTRO|NAEE)\s+/i, "").trim();
+};
+
 export default function QuadroVagas() {
   const [loading, setLoading] = useState(true);
   const [quadro, setQuadro] = useState<any[]>([]);
@@ -147,20 +155,12 @@ export default function QuadroVagas() {
 
   // Quadro processado com ocupação
   const getQuadroUnidade = (nomeUnidade: string) => {
-    const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase() : "";
-    
-    // Remove siglas comuns que os usuários podem digitar errado no cadastro do funcionário (incluindo com pontos)
-    const removePrefixes = (s: string) => {
-      let clean = s.replace(/[\.]/g, ""); // Remove pontos (ex: C.M.E.I)
-      return clean.replace(/^(CEMEI|CMEI|CEMEITI|EMEF|EMEIEF|EMEIEFTI|EMPEF|EMPEIEF|EMUEF|ESCOLA|CRECHE|CENTRO|NAEE)\s+/i, "").trim();
-    };
-
-    const nomeUnidadeNorm = normalize(nomeUnidade);
-    const nomeUnidadeClean = removePrefixes(nomeUnidadeNorm);
+    const nomeUnidadeNorm = normalizeString(nomeUnidade);
+    const nomeUnidadeClean = removeSchoolPrefixes(nomeUnidadeNorm);
 
     return quadro.filter(q => {
-      const qNomeNorm = normalize(q.unidade_nome);
-      const qNomeClean = removePrefixes(qNomeNorm);
+      const qNomeNorm = normalizeString(q.unidade_nome);
+      const qNomeClean = removeSchoolPrefixes(qNomeNorm);
       
       const matchDb = qNomeNorm === nomeUnidadeNorm || 
                       qNomeClean === nomeUnidadeClean ||
@@ -168,14 +168,14 @@ export default function QuadroVagas() {
                       nomeUnidadeClean.includes(qNomeClean);
       return matchDb;
     }).map(item => {
-      const itemCargoUpper = normalize(item.cargo);
-      const itemInsalubridade = normalize(item.insalubridade).replace(/\D/g, "");
-      const unidadeVaga = normalize(item.unidade_nome);
-      const unidadeVagaClean = removePrefixes(unidadeVaga);
+      const itemCargoUpper = normalizeString(item.cargo);
+      const itemInsalubridade = normalizeString(item.insalubridade).replace(/\D/g, "");
+      const unidadeVaga = normalizeString(item.unidade_nome);
+      const unidadeVagaClean = removeSchoolPrefixes(unidadeVaga);
       
       const ocupadas = colaboradores.filter(c => {
-        const unidadeColab = normalize(c.unidade_alocacao);
-        const unidadeColabClean = removePrefixes(unidadeColab);
+        const unidadeColab = normalizeString(c.unidade_alocacao);
+        const unidadeColabClean = removeSchoolPrefixes(unidadeColab);
         
         // Verifica se todas as palavras da vaga estão na unidade do colaborador ou vice versa
         const wordsVaga = unidadeVagaClean.split(" ").filter(w => w.length > 2);
@@ -192,13 +192,13 @@ export default function QuadroVagas() {
                              
         if (!matchUnidade) return false;
         
-        let colabCargo = normalize(c.cargo || c.funcao || "OUTROS");
+        let colabCargo = normalizeString(c.cargo || c.funcao || "OUTROS");
         
         const cargoMatch = colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
         
         // Se a vaga exige uma insalubridade específica, valida se o colaborador a possui
         if (cargoMatch && itemInsalubridade !== "" && itemInsalubridade !== "N/A" && item.insalubridade !== "N/A") {
-          let colabInsalubridade = normalize(String(c.percentual_insalubridade || c.insalubridade || "")).replace(/\D/g, "");
+          let colabInsalubridade = normalizeString(String(c.percentual_insalubridade || c.insalubridade || "")).replace(/\D/g, "");
           
           // Fallback inteligente: se for ASG/Cozinheira e estiver vazio ou "NA" (virou ""), assume 20
           if (!colabInsalubridade && (colabCargo.includes("ASG") || colabCargo.includes("COZINHEIRA"))) {
@@ -260,7 +260,19 @@ export default function QuadroVagas() {
             </div>
             <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
               {unidadesFiltradas.map(u => {
-                const quotas = quadro.filter(q => q.unidade_nome === u.nome).length;
+                // Cálculo robusto de quotas para a sidebar (mesma lógica do getQuadroUnidade)
+                const uNomeNorm = normalizeString(u.nome);
+                const uNomeClean = removeSchoolPrefixes(uNomeNorm);
+                const quotas = quadro.filter(q => {
+                  const qNomeNorm = normalizeString(q.unidade_nome);
+                  const qNomeClean = removeSchoolPrefixes(qNomeNorm);
+                  
+                  return qNomeNorm === uNomeNorm || 
+                         qNomeClean === uNomeClean ||
+                         qNomeClean.includes(uNomeClean) || 
+                         uNomeClean.includes(qNomeClean);
+                }).length;
+                
                 return (
                   <button
                     key={u.nome}
