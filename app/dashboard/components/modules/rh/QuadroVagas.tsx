@@ -149,8 +149,11 @@ export default function QuadroVagas() {
   const getQuadroUnidade = (nomeUnidade: string) => {
     const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase() : "";
     
-    // Remove siglas comuns que os usuários podem digitar errado no cadastro do funcionário
-    const removePrefixes = (s: string) => s.replace(/^(CEMEI|CMEI|CEMEITI|EMEF|EMEIEF|EMEIEFTI|EMPEF|EMPEIEF|EMUEF|ESCOLA|CRECHE|CENTRO)\s+/i, "").trim();
+    // Remove siglas comuns que os usuários podem digitar errado no cadastro do funcionário (incluindo com pontos)
+    const removePrefixes = (s: string) => {
+      let clean = s.replace(/[\.]/g, ""); // Remove pontos (ex: C.M.E.I)
+      return clean.replace(/^(CEMEI|CMEI|CEMEITI|EMEF|EMEIEF|EMEIEFTI|EMPEF|EMPEIEF|EMUEF|ESCOLA|CRECHE|CENTRO|NAEE)\s+/i, "").trim();
+    };
 
     return quadro.filter(q => q.unidade_nome === nomeUnidade).map(item => {
       const itemCargoUpper = normalize(item.cargo);
@@ -162,9 +165,18 @@ export default function QuadroVagas() {
         const unidadeColab = normalize(c.unidade_alocacao);
         const unidadeColabClean = removePrefixes(unidadeColab);
         
+        // Verifica se todas as palavras da vaga estão na unidade do colaborador ou vice versa
+        const wordsVaga = unidadeVagaClean.split(" ").filter(w => w.length > 2);
+        const wordsColab = unidadeColabClean.split(" ").filter(w => w.length > 2);
+        
+        const hasCommonWords = wordsVaga.length > 0 && wordsColab.length > 0 && 
+                               (wordsVaga.every(w => unidadeColabClean.includes(w)) || 
+                                wordsColab.every(w => unidadeVagaClean.includes(w)));
+        
         const matchUnidade = unidadeColabClean === unidadeVagaClean || 
                              unidadeColabClean.includes(unidadeVagaClean) || 
-                             unidadeVagaClean.includes(unidadeColabClean);
+                             unidadeVagaClean.includes(unidadeColabClean) ||
+                             hasCommonWords;
                              
         if (!matchUnidade) return false;
         
@@ -172,10 +184,15 @@ export default function QuadroVagas() {
         
         const cargoMatch = colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
         
-        // Se a vaga exige uma insalubridade específica (diferente de vazio/NA), valida se o colaborador a possui
+        // Se a vaga exige uma insalubridade específica, valida se o colaborador a possui
         if (cargoMatch && itemInsalubridade !== "" && itemInsalubridade !== "N/A" && item.insalubridade !== "N/A") {
-          const defaultInsalubridade = colabCargo.includes("ASG") || colabCargo.includes("COZINHEIRA") ? "20" : "0";
-          const colabInsalubridade = normalize(String(c.percentual_insalubridade || c.insalubridade || defaultInsalubridade)).replace(/\D/g, "");
+          let colabInsalubridade = normalize(String(c.percentual_insalubridade || c.insalubridade || "")).replace(/\D/g, "");
+          
+          // Fallback inteligente: se for ASG/Cozinheira e estiver vazio ou "NA" (virou ""), assume 20
+          if (!colabInsalubridade && (colabCargo.includes("ASG") || colabCargo.includes("COZINHEIRA"))) {
+            colabInsalubridade = "20";
+          }
+          
           return colabInsalubridade === itemInsalubridade;
         }
         
