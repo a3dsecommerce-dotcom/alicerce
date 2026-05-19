@@ -147,21 +147,25 @@ export default function QuadroVagas() {
 
   // Quadro processado com ocupação
   const getQuadroUnidade = (nomeUnidade: string) => {
+    const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase() : "";
+
     return quadro.filter(q => q.unidade_nome === nomeUnidade).map(item => {
-      const itemCargoUpper = (item.cargo || "").toUpperCase();
-      const itemInsalubridade = String(item.insalubridade || "N/A").toUpperCase().replace(/\D/g, "");
+      const itemCargoUpper = normalize(item.cargo);
+      const itemInsalubridade = normalize(item.insalubridade).replace(/\D/g, "");
+      const unidadeVaga = normalize(item.unidade_nome);
       
       const ocupadas = colaboradores.filter(c => {
-        if (c.unidade_alocacao !== item.unidade_nome) return false;
+        const unidadeColab = normalize(c.unidade_alocacao);
+        if (unidadeColab !== unidadeVaga && !unidadeColab.includes(unidadeVaga) && !unidadeVaga.includes(unidadeColab)) return false;
         
-        let colabCargo = (c.cargo || c.funcao || "OUTROS").toUpperCase();
+        let colabCargo = normalize(c.cargo || c.funcao || "OUTROS");
         
         const cargoMatch = colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
         
         // Se a vaga exige uma insalubridade específica (diferente de vazio/NA), valida se o colaborador a possui
-        if (cargoMatch && itemInsalubridade !== "" && itemInsalubridade !== "N/A") {
+        if (cargoMatch && itemInsalubridade !== "" && itemInsalubridade !== "N/A" && item.insalubridade !== "N/A") {
           const defaultInsalubridade = colabCargo.includes("ASG") || colabCargo.includes("COZINHEIRA") ? "20" : "0";
-          const colabInsalubridade = String(c.percentual_insalubridade || c.insalubridade || defaultInsalubridade).replace(/\D/g, "");
+          const colabInsalubridade = normalize(String(c.percentual_insalubridade || c.insalubridade || defaultInsalubridade)).replace(/\D/g, "");
           return colabInsalubridade === itemInsalubridade;
         }
         
