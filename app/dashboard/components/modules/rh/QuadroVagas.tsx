@@ -47,7 +47,7 @@ export default function QuadroVagas() {
     try {
       const [quadroRes, colabsRes, unidadesRes] = await Promise.all([
         supabase.from('vagas_quadro').select('*').order('unidade_nome'),
-        supabase.from('usuarios').select('unidade_alocacao, cargo').eq('status', 'ATIVO'),
+        supabase.from('usuarios').select('unidade_alocacao, cargo, funcao, insalubridade, percentual_insalubridade').eq('status', 'ATIVO'),
         supabase.from('unidades').select('nome, secretaria').order('nome')
       ]);
 
@@ -148,10 +148,20 @@ export default function QuadroVagas() {
   // Quadro processado com ocupação
   const getQuadroUnidade = (nomeUnidade: string) => {
     return quadro.filter(q => q.unidade_nome === nomeUnidade).map(item => {
-      const ocupadas = colaboradores.filter(c => 
-        c.unidade_alocacao === item.unidade_nome && 
-        (c.cargo || "").toUpperCase() === (item.cargo || "").toUpperCase()
-      ).length;
+      const itemCargoUpper = (item.cargo || "").toUpperCase();
+      
+      const ocupadas = colaboradores.filter(c => {
+        if (c.unidade_alocacao !== item.unidade_nome) return false;
+        
+        let colabCargo = (c.cargo || c.funcao || "OUTROS").toUpperCase();
+        
+        if (colabCargo.includes("ASG") || colabCargo.includes("SERVIÇOS GERAIS")) {
+          const insal = String(c.percentual_insalubridade || c.insalubridade || 20).replace(/\D/g, "");
+          colabCargo = `ASG (${insal}%)`;
+        }
+        
+        return colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
+      }).length;
       
       return {
         ...item,
