@@ -149,18 +149,24 @@ export default function QuadroVagas() {
   const getQuadroUnidade = (nomeUnidade: string) => {
     return quadro.filter(q => q.unidade_nome === nomeUnidade).map(item => {
       const itemCargoUpper = (item.cargo || "").toUpperCase();
+      const itemInsalubridade = String(item.insalubridade || "N/A").toUpperCase().replace(/\D/g, "");
       
       const ocupadas = colaboradores.filter(c => {
         if (c.unidade_alocacao !== item.unidade_nome) return false;
         
         let colabCargo = (c.cargo || c.funcao || "OUTROS").toUpperCase();
         
-        if (colabCargo.includes("ASG") || colabCargo.includes("SERVIÇOS GERAIS")) {
-          const insal = String(c.percentual_insalubridade || c.insalubridade || 20).replace(/\D/g, "");
-          colabCargo = `ASG (${insal}%)`;
+        const cargoMatch = colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
+        
+        // Regra especial para ASG / Serviços Gerais: deve bater a insalubridade
+        if (cargoMatch && (colabCargo.includes("ASG") || colabCargo.includes("SERVIÇOS GERAIS"))) {
+          const colabInsalubridade = String(c.percentual_insalubridade || c.insalubridade || "20").replace(/\D/g, "");
+          if (itemInsalubridade && itemInsalubridade !== "") {
+            return colabInsalubridade === itemInsalubridade;
+          }
         }
         
-        return colabCargo === itemCargoUpper || colabCargo.includes(itemCargoUpper) || itemCargoUpper.includes(colabCargo);
+        return cargoMatch;
       }).length;
       
       return {
