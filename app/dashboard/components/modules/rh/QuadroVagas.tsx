@@ -148,15 +148,25 @@ export default function QuadroVagas() {
   // Quadro processado com ocupação
   const getQuadroUnidade = (nomeUnidade: string) => {
     const normalize = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toUpperCase() : "";
+    
+    // Remove siglas comuns que os usuários podem digitar errado no cadastro do funcionário
+    const removePrefixes = (s: string) => s.replace(/^(CEMEI|CMEI|CEMEITI|EMEF|EMEIEF|EMEIEFTI|EMPEF|EMPEIEF|EMUEF|ESCOLA|CRECHE|CENTRO)\s+/i, "").trim();
 
     return quadro.filter(q => q.unidade_nome === nomeUnidade).map(item => {
       const itemCargoUpper = normalize(item.cargo);
       const itemInsalubridade = normalize(item.insalubridade).replace(/\D/g, "");
       const unidadeVaga = normalize(item.unidade_nome);
+      const unidadeVagaClean = removePrefixes(unidadeVaga);
       
       const ocupadas = colaboradores.filter(c => {
         const unidadeColab = normalize(c.unidade_alocacao);
-        if (unidadeColab !== unidadeVaga && !unidadeColab.includes(unidadeVaga) && !unidadeVaga.includes(unidadeColab)) return false;
+        const unidadeColabClean = removePrefixes(unidadeColab);
+        
+        const matchUnidade = unidadeColabClean === unidadeVagaClean || 
+                             unidadeColabClean.includes(unidadeVagaClean) || 
+                             unidadeVagaClean.includes(unidadeColabClean);
+                             
+        if (!matchUnidade) return false;
         
         let colabCargo = normalize(c.cargo || c.funcao || "OUTROS");
         
