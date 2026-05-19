@@ -155,7 +155,19 @@ export default function QuadroVagas() {
       return clean.replace(/^(CEMEI|CMEI|CEMEITI|EMEF|EMEIEF|EMEIEFTI|EMPEF|EMPEIEF|EMUEF|ESCOLA|CRECHE|CENTRO|NAEE)\s+/i, "").trim();
     };
 
-    return quadro.filter(q => q.unidade_nome === nomeUnidade).map(item => {
+    const nomeUnidadeNorm = normalize(nomeUnidade);
+    const nomeUnidadeClean = removePrefixes(nomeUnidadeNorm);
+
+    return quadro.filter(q => {
+      const qNomeNorm = normalize(q.unidade_nome);
+      const qNomeClean = removePrefixes(qNomeNorm);
+      
+      const matchDb = qNomeNorm === nomeUnidadeNorm || 
+                      qNomeClean === nomeUnidadeClean ||
+                      qNomeClean.includes(nomeUnidadeClean) || 
+                      nomeUnidadeClean.includes(qNomeClean);
+      return matchDb;
+    }).map(item => {
       const itemCargoUpper = normalize(item.cargo);
       const itemInsalubridade = normalize(item.insalubridade).replace(/\D/g, "");
       const unidadeVaga = normalize(item.unidade_nome);
