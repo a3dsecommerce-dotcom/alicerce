@@ -34,6 +34,7 @@ interface AlmoxModalsProps {
   setResolucaoData: (v: any) => void;
   onFinalizarResolucao: () => void;
   onFinalizarRequisicaoInternal: () => void;
+  onEstornarEntrega?: (id: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -46,6 +47,7 @@ export default function AlmoxModals({
   ocorrenciaData, setOcorrenciaData, onSalvarOcorrencia,
   resolucaoData, setResolucaoData, onFinalizarResolucao,
   onFinalizarRequisicaoInternal,
+  onEstornarEntrega,
   loading
 }: AlmoxModalsProps) {
   
@@ -652,8 +654,38 @@ export default function AlmoxModals({
                        </div>
                     </div>
                  ))}
+                 {/* Itens já Entregues */}
+                 {reqEditando.itens.filter((it:any) => it.status === 'ENTREGUE').length > 0 && (
+                    <div className="mt-8 border-t border-[var(--border)] pt-8">
+                       <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Itens já Entregues</h5>
+                       <div className="space-y-4">
+                         {reqEditando.itens.filter((it:any) => it.status === 'ENTREGUE').map((it:any) => (
+                           <div key={it.id} className="p-6 bg-slate-50/50 rounded-2xl border border-[var(--border)] flex justify-between items-center opacity-80 hover:opacity-100 transition-all">
+                              <div className="flex-1">
+                                 <h5 className="text-xs font-black text-slate-600 uppercase">{it.item_nome}</h5>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                                   Entregue: <span className="text-green-600">{it.quantidade_entregue}</span> {it.unidade_medida || 'UN'} • Recebedor: {it.recebedor_nome || 'Auto'}
+                                 </p>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                {onEstornarEntrega && (
+                                   <button 
+                                     onClick={() => onEstornarEntrega(it.id)}
+                                     className="h-10 px-4 bg-red-50 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-600 hover:text-white transition-all border border-red-100"
+                                     title="Desfazer Entrega e Devolver ao Estoque"
+                                   >
+                                     Estornar
+                                   </button>
+                                )}
+                              </div>
+                           </div>
+                         ))}
+                       </div>
+                    </div>
+                 )}
+
                  {reqEditando.itens.filter((it:any) => it.status === 'ENTREGUE').length === reqEditando.itens.length && (
-                    <div className="p-20 text-center flex flex-col items-center gap-4">
+                    <div className="p-10 text-center flex flex-col items-center gap-4 mt-4">
                        <CheckCircle2 size={48} className="text-green-500" />
                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Todos os itens deste protocolo foram entregues.</p>
                     </div>

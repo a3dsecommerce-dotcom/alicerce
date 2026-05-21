@@ -348,6 +348,19 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         ocorrenciaData={ocorrenciaData} setOcorrenciaData={setOcorrenciaData} onSalvarOcorrencia={() => toast.error("Ocorrência registrada e enviada para o RH.")}
         resolucaoData={resolucaoData} setResolucaoData={setResolucaoData} onFinalizarResolucao={() => toast.success("Atendimento finalizado.")}
         onFinalizarRequisicaoInternal={handleFinalizarPedidoInternal}
+        onEstornarEntrega={async (id) => {
+          if (window.confirm("Desfazer entrega e devolver o item ao estoque?")) {
+            try {
+              await estornarEntregaRPC(id);
+              toast.success("Entrega estornada com sucesso! Item devolvido ao estoque.");
+              // Need to close modal or update reqEditando?
+              // The easiest way is to let the user close the modal or refresh closes it?
+              // Since reqEditando won't auto-update without fetching the specific requisition,
+              // it's best to refresh and close the modal.
+              handleCloseModal();
+            } catch (e: any) { toast.error("Erro ao estornar: " + e.message); }
+          }
+        }}
         loading={loading}
       />
     </div>
