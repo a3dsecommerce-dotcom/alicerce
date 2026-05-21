@@ -103,6 +103,8 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
    const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado" | "epi_recebedor">("interessado");
 
+   const [entregaConfirmadaData, setEntregaConfirmadaData] = useState<any>(null);
+
    const [filtroUnidadeColab, setFiltroUnidadeColab] = useState("");
    const [filtroCargoColab, setFiltroCargoColab] = useState("");
 
@@ -614,12 +616,87 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         if (rpcErr) throw rpcErr;
       }
       alert("Entrega de EPI registrada e estoque atualizado com sucesso!");
+      
+      // Salva os dados para exibir o recibo de impressão
+      setEntregaConfirmadaData({
+         colaborador: epiData.colaborador_nome,
+         itens: [...epiData.itens]
+      });
+
       setEpiData({ colaborador_nome: '', unidade: '', itens: [] });
       fetchEncarregadoData();
     } catch (e: any) {
       alert("Erro ao processar entrega: " + e.message);
     }
     setSaving(false);
+  };
+
+  const handleImprimirRecibo = () => {
+    const printContent = document.getElementById('print-recibo-content');
+    if (!printContent) return;
+
+    const win = window.open('', '_blank');
+    if (!win) return;
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Ficha de EPI - ${entregaConfirmadaData?.colaborador}</title>
+          <style>
+            @page { size: landscape; margin: 0.5cm; }
+            body { 
+              font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+              margin: 0; 
+              padding: 10px; 
+              color: black; 
+              overflow: hidden;
+            }
+            .ficha-container { 
+              width: 277mm;
+              height: 190mm;
+              border: 2px solid black; 
+              padding: 25px; 
+              display: flex;
+              flex-direction: column;
+              box-sizing: border-box;
+            }
+            .header { border: 4px solid black; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+            .header-left h2 { margin: 0; font-size: 20px; font-weight: 900; text-transform: uppercase; font-style: italic; }
+            .header-right { text-align: right; border-left: 2px solid black; padding-left: 20px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 2px solid black; margin-bottom: 15px; background: #f9f9f9; }
+            .info-item { padding: 10px; border-right: 2px solid black; }
+            .info-item:last-child { border-right: none; }
+            .info-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #666; margin-bottom: 3px; }
+            .info-value { font-size: 11px; font-weight: 900; text-transform: uppercase; }
+            table { width: 100%; border-collapse: collapse; border: 2px solid black; margin-bottom: 15px; }
+            th { background: black; color: white; padding: 10px; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+            td { padding: 8px; border: 1px solid black; font-size: 9px; font-weight: bold; text-transform: uppercase; }
+            .termo { border: 2px solid black; padding: 15px; background: #f9f9f9; margin-bottom: 20px; }
+            .termo h4 { margin: 0 0 8px 0; font-size: 9px; text-transform: uppercase; text-decoration: underline; }
+            .termo p { margin: 0; font-size: 8px; line-height: 1.4; text-align: justify; font-weight: bold; }
+            .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: auto; padding-bottom: 20px; }
+            .sig-box { text-align: center; }
+            .sig-line { border-bottom: 2px solid black; margin-bottom: 5px; height: 50px; }
+            .sig-label { font-size: 9px; font-weight: 900; text-transform: uppercase; }
+            .footer { border-top: 1px solid #eee; padding-top: 8px; display: flex; justify-content: space-between; font-size: 7px; color: #999; font-weight: bold; text-transform: uppercase; }
+          </style>
+        </head>
+        <body>
+          <div class="ficha-container">
+            ${printContent.innerHTML}
+          </div>
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    win.document.close();
   };
 
   const handlePrintUnidadesInfo = async () => {
@@ -2279,6 +2356,115 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            </button>
         </div>
       </AdaptiveModal>
+
+      {/* MODAL RECIBO DE ENTREGA (VISUALIZAÇÃO NO DASHBOARD - ENCARREGADO) */}
+      <AdaptiveModal isOpen={!!entregaConfirmadaData} onClose={() => setEntregaConfirmadaData(null)} title="Ficha de Entrega de EPI (NR-06)" width="1200px">
+         {entregaConfirmadaData && (
+         <div className="p-10 space-y-8 bg-slate-100 min-h-screen overflow-y-auto">
+            <div className="bg-white p-12 shadow-2xl rounded-sm w-full max-w-[1100px] border border-slate-300 mx-auto" id="print-recibo-content">
+               
+               {/* CABEÇALHO SST */}
+               <div className="border-[4px] border-black p-4 mb-8 flex justify-between items-center" style={{borderColor: 'black'}}>
+                  <div className="space-y-1">
+                     <h2 className="text-2xl font-black uppercase tracking-tighter italic" style={{margin: 0, fontSize: '24px', fontWeight: '900', fontStyle: 'italic'}}>Alicerce ERP</h2>
+                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500" style={{fontSize: '9px', fontWeight: 'bold', color: '#666', marginTop: '5px'}}>Sistema de Gestão Logística e Segurança</p>
+                  </div>
+                  <div className="text-right border-l-2 border-black pl-8" style={{borderLeft: '2px solid black', paddingLeft: '30px', textAlign: 'right'}}>
+                     <h3 className="text-xl font-black uppercase tracking-tight" style={{fontSize: '20px', fontWeight: '900', margin: 0}}>Ficha de Entrega de EPI</h3>
+                     <p className="text-[10px] font-black uppercase text-slate-600" style={{fontSize: '10px', fontWeight: '900', color: '#666', marginTop: '5px'}}>Equipamento de Proteção Individual - NR-06</p>
+                  </div>
+               </div>
+
+               {/* DADOS DO COLABORADOR */}
+               <div className="grid grid-cols-3 gap-0 border-x-2 border-t-2 border-black mb-8 bg-slate-50/50" style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', border: '2px solid black', marginBottom: '30px', background: '#f9f9f9'}}>
+                  <div className="p-4 border-r-2 border-black" style={{padding: '15px', borderRight: '2px solid black'}}>
+                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1" style={{fontSize: '8px', fontWeight: '900', color: '#666', marginBottom: '5px'}}>Nome do Colaborador / Funcionário</label>
+                     <p className="text-xs font-black uppercase" style={{fontSize: '12px', fontWeight: '900'}}>{entregaConfirmadaData.colaborador}</p>
+                  </div>
+                  <div className="p-4 border-r-2 border-black" style={{padding: '15px', borderRight: '2px solid black'}}>
+                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1" style={{fontSize: '8px', fontWeight: '900', color: '#666', marginBottom: '5px'}}>Responsável</label>
+                     <p className="text-xs font-black uppercase" style={{fontSize: '12px', fontWeight: '900'}}>{user.nome}</p>
+                  </div>
+                  <div className="p-4" style={{padding: '15px'}}>
+                     <label className="text-[8px] font-black uppercase text-slate-500 block mb-1" style={{fontSize: '8px', fontWeight: '900', color: '#666', marginBottom: '5px'}}>Data da Entrega</label>
+                     <p className="text-xs font-black uppercase" style={{fontSize: '12px', fontWeight: '900'}}>{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+               </div>
+
+               {/* TABELA DE ITENS */}
+               <div className="border-2 border-black rounded-none mb-8 overflow-hidden" style={{border: '2px solid black', marginBottom: '30px'}}>
+                  <table className="w-full text-left border-collapse" style={{width: '100%', borderCollapse: 'collapse'}}>
+                     <thead>
+                        <tr className="bg-black text-white text-[9px] font-black uppercase tracking-widest" style={{background: 'black', color: 'white'}}>
+                           <th className="p-3 border-r border-white/20 w-[45%]" style={{padding: '12px', fontSize: '9px', fontWeight: '900', textAlign: 'left'}}>Descrição do Item (EPI/EPC)</th>
+                           <th className="p-3 text-center border-r border-white/20" style={{padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900'}}>C.A.</th>
+                           <th className="p-3 text-center border-r border-white/20" style={{padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900'}}>Tam</th>
+                           <th className="p-3 text-center border-r border-white/20" style={{padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900'}}>U.M.</th>
+                           <th className="p-3 text-center" style={{padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900'}}>Qtd</th>
+                        </tr>
+                     </thead>
+                     <tbody className="divide-y divide-black">
+                        {entregaConfirmadaData.itens.map((item: any) => (
+                           <tr key={item.id} className="text-[10px] font-bold uppercase" style={{fontSize: '10px', fontWeight: 'bold'}}>
+                              <td className="p-3 border-r border-black" style={{padding: '12px', border: '1px solid black'}}>{item.item}</td>
+                              <td className="p-3 text-center border-r border-black font-black text-blue-800" style={{padding: '12px', textAlign: 'center', border: '1px solid black', fontWeight: '900', color: '#1e40af'}}>{item.ca || 'N/A'}</td>
+                              <td className="p-3 text-center border-r border-black" style={{padding: '12px', textAlign: 'center', border: '1px solid black'}}>{item.tamanho || 'UN'}</td>
+                              <td className="p-3 text-center border-r border-black" style={{padding: '12px', textAlign: 'center', border: '1px solid black'}}>{item.unidade_medida || 'UN'}</td>
+                              <td className="p-3 text-center font-black bg-slate-50 text-sm" style={{padding: '12px', textAlign: 'center', border: '1px solid black', fontSize: '14px', background: '#f9f9f9', fontWeight: '900'}}>{item.qtd_entrega}</td>
+                           </tr>
+                        ))}
+                     </tbody>
+                  </table>
+               </div>
+
+               {/* TERMO DE RESPONSABILIDADE */}
+               <div className="border-2 border-black p-6 bg-slate-50 mb-10" style={{border: '2px solid black', padding: '20px', background: '#f9f9f9', marginBottom: '40px'}}>
+                  <h4 className="text-[10px] font-black uppercase mb-4 underline decoration-2" style={{margin: '0 0 10px 0', fontSize: '10px', fontWeight: '900', textDecoration: 'underline'}}>Termo de Responsabilidade e Ciência (NR-06 / CLT)</h4>
+                  <p className="text-[9px] font-bold text-justify leading-relaxed uppercase" style={{margin: 0, fontSize: '9px', lineHeight: '1.6', textAlign: 'justify', fontWeight: 'bold'}}>
+                     Declaro ter recebido os equipamentos de proteção individual (EPIs) constantes desta ficha, os quais são de uso obrigatório nas minhas atividades, estando em perfeito estado de conservação e uso. Comprometo-me a utilizá-los apenas para a finalidade a que se destinam, responsabilizando-me pela sua guarda e conservação, observando as normas de segurança da empresa e as diretrizes da NR-06. Estou ciente de que o não uso dos mesmos constitui falta grave, passível de punições disciplinares conforme a CLT, bem como autorizo o desconto em folha de pagamento em caso de extravio ou dano por uso inadequado, conforme Artigo 462 da CLT.
+                  </p>
+               </div>
+
+               {/* ASSINATURAS */}
+               <div className="grid grid-cols-2 gap-20 pt-10" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '100px', marginTop: '60px'}}>
+                  <div className="flex flex-col items-center" style={{textAlign: 'center'}}>
+                     <div className="w-full border-b-2 border-black mb-2" style={{borderBottom: '2px solid black', marginBottom: '10px', height: '60px'}}></div>
+                     <p className="text-[9px] font-black uppercase" style={{fontSize: '10px', fontWeight: '900'}}>Assinatura do Colaborador</p>
+                     <p className="text-[7px] text-slate-500 mt-1 uppercase" style={{fontSize: '7px', color: '#999', marginTop: '5px'}}>Ciente em: {new Date().toLocaleDateString('pt-BR')}</p>
+                  </div>
+                  <div className="flex flex-col items-center" style={{textAlign: 'center'}}>
+                     <div className="w-full border-b-2 border-black mb-2" style={{borderBottom: '2px solid black', marginBottom: '10px', height: '60px'}}></div>
+                     <p className="text-[9px] font-black uppercase" style={{fontSize: '10px', fontWeight: '900'}}>Encarregado / Responsável</p>
+                     <p className="text-[7px] text-slate-500 mt-1 uppercase" style={{fontSize: '7px', color: '#999', marginTop: '5px'}}>{user.nome}</p>
+                  </div>
+               </div>
+
+               {/* RODAPÉ TÉCNICO */}
+               <div className="mt-12 pt-4 border-t border-slate-200 flex justify-between items-center text-[7px] font-bold text-slate-400 uppercase" style={{marginTop: '40px', borderTop: '1px solid #eee', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontSize: '7px', color: '#999', fontWeight: 'bold'}}>
+                  <span>Documento gerado eletronicamente pelo Alicerce ERP</span>
+                  <span>Encarregado: {user.nome} • Via Única</span>
+               </div>
+
+            </div>
+
+            <div className="flex gap-4 justify-center mt-8">
+               <button 
+                  onClick={() => setEntregaConfirmadaData(null)}
+                  className="px-8 py-4 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-300 transition-all"
+               >
+                  Fechar
+               </button>
+               <button 
+                  onClick={handleImprimirRecibo}
+                  className="px-8 py-4 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl flex items-center gap-3"
+               >
+                  <Printer size={18} /> Imprimir Recibo
+               </button>
+            </div>
+         </div>
+         )}
+      </AdaptiveModal>
+
     </div>
   );
 }
