@@ -137,6 +137,14 @@ export function useAlmoxData() {
     await fetchAll();
   };
 
+  const estornarEntregaRPC = async (req_id: string) => {
+    const { error } = await supabase.rpc('estornar_entrega_requisicao', {
+      p_req_id: req_id
+    });
+    if (error) throw error;
+    await fetchAll();
+  };
+
   return {
     loading,
     estoque,
@@ -150,6 +158,7 @@ export function useAlmoxData() {
     deleteItem,
     processarRequisicao,
     processarEntregaRPC,
+    estornarEntregaRPC,
     arquivarRequisicao,
     arquivarProtocolo
   };

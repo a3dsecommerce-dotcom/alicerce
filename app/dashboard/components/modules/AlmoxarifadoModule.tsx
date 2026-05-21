@@ -18,7 +18,7 @@ type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI";
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
     loading, estoque, requisicoes, usuarios, ocorrencias, cotasMap,
-    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh 
+    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, estornarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh 
   } = useAlmoxData();
 
   const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
@@ -304,6 +304,14 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
               setDataInicio={setDataInicioEPI}
               dataFim={dataFimEPI}
               setDataFim={setDataFimEPI}
+              onEstornar={async (id) => {
+                if (window.confirm("Desfazer entrega e devolver o item ao estoque?")) {
+                  try {
+                    await estornarEntregaRPC(id);
+                    toast.success("Entrega estornada com sucesso! Item devolvido ao estoque.");
+                  } catch (e: any) { toast.error("Erro ao estornar: " + e.message); }
+                }
+              }}
             />
           )}
       </div>

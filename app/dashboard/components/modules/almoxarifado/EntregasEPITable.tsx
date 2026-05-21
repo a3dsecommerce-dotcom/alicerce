@@ -11,10 +11,11 @@ interface EntregasEPITableProps {
   setDataInicio: (v: string) => void;
   dataFim: string;
   setDataFim: (v: string) => void;
+  onEstornar?: (id: string) => void;
 }
 
 export default function EntregasEPITable({ 
-  requisicoes, busca, calcularDias, filtroData, setFiltroData, dataInicio, setDataInicio, dataFim, setDataFim 
+  requisicoes, busca, calcularDias, filtroData, setFiltroData, dataInicio, setDataInicio, dataFim, setDataFim, onEstornar 
 }: EntregasEPITableProps) {
   
   const filtrarPorData = (data: string) => {
@@ -170,12 +171,13 @@ export default function EntregasEPITable({
               <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[100px]">Qtd</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[150px]">Protocolo</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[120px]">Recebedor</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-[var(--text-muted)] text-center w-[100px]">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border)]">
             {entregas.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-20 text-center opacity-30 text-[10px] font-black uppercase tracking-widest italic">
+                <td colSpan={6} className="py-20 text-center opacity-30 text-[10px] font-black uppercase tracking-widest italic">
                   Nenhum registro encontrado para este período
                 </td>
               </tr>
@@ -215,6 +217,17 @@ export default function EntregasEPITable({
                       <span className="text-[10px] font-black uppercase text-green-600">{e.recebedor_nome || 'AUTO-ASSINADO'}</span>
                       <span className="text-[8px] font-bold text-slate-400 uppercase">Confirmado</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {onEstornar && (
+                      <button 
+                        onClick={() => onEstornar(e.id)}
+                        className="text-[10px] bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all px-3 py-1.5 rounded-lg border border-red-100 font-black uppercase tracking-wider"
+                        title="Desfazer Entrega e Devolver ao Estoque"
+                      >
+                        Estornar
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
