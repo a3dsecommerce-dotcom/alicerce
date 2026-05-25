@@ -104,6 +104,104 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     }
   }, [form.categoria_motivo, form.colaborador_id, historicoColab]);
 
+  const generateAdvertenciaPDF = async (data: any) => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Header
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
+    doc.setFontSize(14);
+    doc.text("REGISTRO DE MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("DOCUMENTO INTERNO PARA CONTROLE DE RECURSOS HUMANOS", pageWidth / 2, 32, { align: "center" });
+    doc.line(15, 38, pageWidth - 15, 38);
+
+    // Identificação
+    autoTable(doc, {
+      startY: 45,
+      head: [['1. IDENTIFICAÇÃO DO COLABORADOR', '']],
+      body: [
+        ['NOME COMPLETO:', data.colaborador_nome],
+        ['CPF:', data.colaborador_cpf || 'NÃO INFORMADO'],
+        ['CARGO / FUNÇÃO:', data.colaborador_cargo],
+        ['UNIDADE / SETOR:', data.unidade_alocada],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 4 }
+    });
+
+    // Detalhes da Ocorrência
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [['2. DETALHES DA OCORRÊNCIA', '']],
+      body: [
+        ['DATA DA OCORRÊNCIA:', new Date(data.data_ocorrencia).toLocaleDateString('pt-BR')],
+        ['CATEGORIA:', data.categoria_motivo.replace('_', ' ')],
+        ['MOTIVO RESUMIDO:', data.descricao_motivo],
+        ['NÍVEL DE ADVERTÊNCIA:', data.nivel_sugerido_encarregado.replace('_', ' ')],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 4 }
+    });
+
+    // Narrativa
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [['3. DESCRIÇÃO DOS FATOS']],
+      body: [
+        [{ content: data.detalhes_ocorrencia, styles: { halign: 'justify', minCellHeight: 40 } }],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 6 }
+    });
+
+    if (data.testemunhas) {
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 8,
+        head: [['4. TESTEMUNHAS (SE HOUVER)', '']],
+        body: [
+          ['NOMES:', data.testemunhas],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 4 }
+      });
+    }
+
+    // Assinaturas
+    const finalY = (doc as any).lastAutoTable.finalY + 40;
+    
+    doc.line(20, finalY, 90, finalY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.colaborador_nome.toUpperCase(), 55, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Assinatura do Colaborador", 55, finalY + 10, { align: "center" });
+    doc.setFontSize(8);
+    doc.text(`Data: ____/____/________`, 55, finalY + 16, { align: "center" });
+    
+    doc.line(120, finalY, 190, finalY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(user.nome.toUpperCase(), 155, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Encarregado / Gerente Responsável", 155, finalY + 10, { align: "center" });
+
+    doc.setFontSize(7);
+    doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} pelo Alicerce ERP`, 15, 285);
+
+    doc.save(`Advertencia_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrencia}.pdf`);
+  };
+
   const handleSubmit = async () => {
     if (!form.colaborador_id || !form.detalhes_ocorrencia || !form.descricao_motivo) {
       toast.error("Preencha o colaborador, o motivo e os detalhes.");
@@ -119,6 +217,9 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
 
     if (!error) {
       toast.success("Processo enviado para aprovação da Gerência Operacional!");
+      // Gera o PDF de advertência para impressão imediata
+      generateAdvertenciaPDF(form);
+      
       setForm({
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
         categoria_motivo: 'ASSIDUIDADE', descricao_motivo: '',

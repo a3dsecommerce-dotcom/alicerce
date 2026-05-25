@@ -376,7 +376,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     setSaving(false);
   };
 
-  const generateCATPDF = (data: any) => {
+  const generateCATPDF = async (data: any) => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
@@ -2158,10 +2160,10 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "MY_COLABS", label: "Equipe", icon: Users },
            { id: "QUICK_ADMISSION", label: "Admissão", icon: UserPlus },
            { id: "REPORTS", label: "Informativos", icon: Send },
-           { id: "EPI", label: "EPI", icon: Package },
+           { id: "EPI", label: "EPIs", icon: Package },
            { id: "CAT", label: "CAT", icon: ShieldCheck },
            { id: "MY_MISSIONS", label: "Missões", icon: Trophy },
-           { id: "DISCIPLINA", label: "Disciplina", icon: ShieldAlert },
+           { id: "DISCIPLINA", label: "Advertências", icon: ShieldAlert },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
