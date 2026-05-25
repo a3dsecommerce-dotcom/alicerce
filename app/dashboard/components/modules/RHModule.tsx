@@ -22,10 +22,11 @@ import autoTable from "jspdf-autotable";
 import { supabase } from "@/lib/supabase";
 import { useTransferencias } from "@/hooks/useTransferencias";
 import TransferenciasList from "./encarregado/TransferenciasList";
+import AdvertenciasList from "./rh/AdvertenciasList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateChecklistColumn, deleteChecklistColumn, updateChecklistColor, reorderChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
@@ -225,7 +226,8 @@ export default function RHModule({ user }: { user: any }) {
             { id: "VOLANTES", label: "Escala Volantes", icon: Truck },
             { id: "REQUISICOES", label: "Requisições", icon: Package },
             { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight, badge: transferencias.filter(t => t.status === 'APROVADO_GERENCIA').length },
-            { id: "QUADRO", label: "Quadro de Vagas", icon: Building2 }
+            { id: "QUADRO", label: "Quadro de Vagas", icon: Building2 },
+            { id: "ADVERTENCIAS", label: "Advertências", icon: ShieldAlert }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> 
@@ -374,6 +376,10 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "QUADRO" && (
           <QuadroVagas />
+        )}
+
+        {masterTab === "ADVERTENCIAS" && (
+          <AdvertenciasList />
         )}
       </div>
 

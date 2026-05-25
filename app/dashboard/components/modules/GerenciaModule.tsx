@@ -20,6 +20,7 @@ import DenunciasManager from "./gerencia/DenunciasManager";
 import CotasManager from "./gerencia/CotasManager";
 import QuadroVagas from "./rh/QuadroVagas";
 import EquipesPorUnidade from "./gerencia/EquipesPorUnidade";
+import AdvertenciasList from "./rh/AdvertenciasList";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { 
@@ -29,7 +30,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     selectedUnidade, setSelectedUnidade
   } = useGerenciaData(user);
   const { transferencias, analisarGerencia } = useTransferencias(user);
-  const [activeTab, setActiveTab] = useState<"VISAO" | "EQUIPES" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "EQUIPES" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -307,6 +308,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               <Building2 size={14} /> Quadro de Vagas
             </button>
             <button 
+              onClick={() => setActiveTab("ADVERTENCIAS")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "ADVERTENCIAS" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <ShieldAlert size={14} /> Advertências
+            </button>
+            <button 
               onClick={() => setActiveTab("DB")}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
             >
@@ -349,6 +356,10 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
         {activeTab === "QUADRO" && (
            <QuadroVagas />
+        )}
+
+        {activeTab === "ADVERTENCIAS" && (
+           <AdvertenciasList />
         )}
 
         {activeTab === "DENUNCIAS" && (
