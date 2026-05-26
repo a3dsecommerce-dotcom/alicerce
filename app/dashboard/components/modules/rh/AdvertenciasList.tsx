@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { ShieldAlert, Search, FileText, CheckCircle, Clock } from "lucide-react";
+import { ShieldAlert, Search, FileText, CheckCircle, Clock, Printer, Download } from "lucide-react";
 import { toast } from "sonner";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
@@ -48,6 +48,140 @@ export default function AdvertenciasList() {
     return true;
   });
 
+  const handleGerarPDFIndividual = async (data: any) => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    // Header
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
+    doc.setFontSize(14);
+    doc.text("REGISTRO DE MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("DOCUMENTO INTERNO PARA CONTROLE DE RECURSOS HUMANOS", pageWidth / 2, 32, { align: "center" });
+    doc.line(15, 38, pageWidth - 15, 38);
+
+    // Identificação
+    autoTable(doc, {
+      startY: 45,
+      head: [['1. IDENTIFICAÇÃO DO COLABORADOR', '']],
+      body: [
+        ['NOME COMPLETO:', data.colaborador_nome],
+        ['CPF:', data.colaborador_cpf || 'NÃO INFORMADO'],
+        ['CARGO / FUNÇÃO:', data.colaborador_cargo],
+        ['UNIDADE / SETOR:', data.unidade_alocada],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 4 }
+    });
+
+    // Detalhes da Ocorrência
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [['2. DETALHES DA OCORRÊNCIA', '']],
+      body: [
+        ['DATA DA OCORRÊNCIA:', new Date(data.data_ocorrencia).toLocaleDateString('pt-BR')],
+        ['CATEGORIA:', data.categoria_motivo.replace('_', ' ')],
+        ['MOTIVO RESUMIDO:', data.descricao_motivo],
+        ['NÍVEL DE ADVERTÊNCIA:', data.nivel_sugerido_encarregado.replace('_', ' ')],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 4 }
+    });
+
+    // Narrativa
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [['3. DESCRIÇÃO DOS FATOS']],
+      body: [
+        [{ content: data.detalhes_ocorrencia, styles: { halign: 'justify', minCellHeight: 40 } }],
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+      styles: { fontSize: 10, cellPadding: 6 }
+    });
+
+    if (data.testemunhas) {
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 8,
+        head: [['4. TESTEMUNHAS (SE HOUVER)', '']],
+        body: [
+          ['NOMES:', data.testemunhas],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 4 }
+      });
+    }
+
+    // Assinaturas
+    const finalY = (doc as any).lastAutoTable.finalY + 40;
+    
+    doc.line(20, finalY, 90, finalY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.colaborador_nome.toUpperCase(), 55, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Assinatura do Colaborador", 55, finalY + 10, { align: "center" });
+    doc.setFontSize(8);
+    doc.text(`Data: ____/____/________`, 55, finalY + 16, { align: "center" });
+    
+    doc.line(120, finalY, 190, finalY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.encarregado_solicitante_nome?.toUpperCase() || "GESTOR RESPONSÁVEL", 155, finalY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Encarregado / Gerente Responsável", 155, finalY + 10, { align: "center" });
+
+    doc.setFontSize(7);
+    doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} pelo Alicerce ERP`, 15, 285);
+
+    doc.save(`Advertencia_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrencia}.pdf`);
+  };
+
+  const handleGerarRelatorioGeral = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("RELATÓRIO DE ADVERTÊNCIAS", pageWidth / 2, 20, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Filtros Aplicados: Busca: "${busca || 'Todas'}" | Status: ${filtro}`, 14, 30);
+    doc.text(`Total de Registros: ${filtrados.length}`, 14, 36);
+
+    const tableData = filtrados.map(p => [
+      new Date(p.data_ocorrencia).toLocaleDateString('pt-BR'),
+      p.colaborador_nome,
+      p.unidade_alocada,
+      p.categoria_motivo.replace('_', ' '),
+      p.nivel_sugerido_encarregado,
+      p.status.replace('_', ' ')
+    ]);
+
+    autoTable(doc, {
+      startY: 45,
+      head: [['Data', 'Colaborador', 'Unidade', 'Categoria', 'Punição Sugerida', 'Status Atual']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [234, 88, 12] }, // orange-600
+      styles: { fontSize: 8 }
+    });
+
+    doc.save(`Relatorio_Advertencias_${new Date().getTime()}.pdf`);
+  };
+
   return (
     <div className="flex flex-col gap-6 animate-fade-in h-full">
       <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] shadow-2xl flex-1 overflow-hidden flex flex-col">
@@ -72,6 +206,12 @@ export default function AdvertenciasList() {
               </button>
             ))}
           </div>
+          <button 
+            onClick={handleGerarRelatorioGeral}
+            className="h-12 px-6 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg flex items-center gap-2 whitespace-nowrap"
+          >
+            <Download size={14} /> Relatório PDF
+          </button>
         </div>
 
         <div className="flex-1 overflow-auto custom-scrollbar p-8">
@@ -172,6 +312,12 @@ export default function AdvertenciasList() {
               )}
 
               <div className="pt-8 border-t border-[var(--border)] flex flex-wrap gap-4">
+                <button 
+                  onClick={() => handleGerarPDFIndividual(selecionado)}
+                  className="flex-1 py-4 bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all flex items-center justify-center gap-2"
+                >
+                  <Printer size={16} /> Imprimir / PDF
+                </button>
                 <button 
                   onClick={() => handleUpdateStatus(selecionado.id, 'APROVADO_RH')}
                   className="flex-1 py-4 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all flex items-center justify-center gap-2"
