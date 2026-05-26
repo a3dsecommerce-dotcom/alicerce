@@ -379,7 +379,7 @@ export default function RHModule({ user }: { user: any }) {
         )}
 
         {masterTab === "ADVERTENCIAS" && (
-          <AdvertenciasList />
+          <AdvertenciasList user={user} />
         )}
       </div>
 

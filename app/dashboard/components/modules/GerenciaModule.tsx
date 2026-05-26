@@ -359,7 +359,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
         )}
 
         {activeTab === "ADVERTENCIAS" && (
-           <AdvertenciasList />
+           <AdvertenciasList user={user} />
         )}
 
         {activeTab === "DENUNCIAS" && (

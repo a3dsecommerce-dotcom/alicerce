@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { ShieldAlert, Search, FileText, CheckCircle, Clock, Printer, Download } from "lucide-react";
+import { ShieldAlert, Search, FileText, CheckCircle, Clock, Printer, Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
-export default function AdvertenciasList() {
+export default function AdvertenciasList({ user }: { user?: any }) {
   const [processos, setProcessos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
@@ -39,6 +39,23 @@ export default function AdvertenciasList() {
       setSelecionado(null);
     } else {
       toast.error("Erro ao atualizar: " + error.message);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("TEM CERTEZA ABSOLUTA? Esta ação irá excluir permanentemente este registro de advertência.")) return;
+
+    const { error } = await supabase
+      .from('processos_disciplinares')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
+      toast.success("Registro excluído com sucesso!");
+      fetchProcessos();
+      setSelecionado(null);
+    } else {
+      toast.error("Erro ao excluir: " + error.message);
     }
   };
 
@@ -330,6 +347,16 @@ export default function AdvertenciasList() {
                 >
                   Rejeitar / Cancelar
                 </button>
+                
+                {user?.nivel >= 3 && (
+                  <button 
+                    onClick={() => handleDelete(selecionado.id)}
+                    className="flex-none px-6 py-4 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-200 transition-all flex items-center justify-center gap-2 border border-red-200"
+                    title="Excluir Registro Permanentemente"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </>
           )}
