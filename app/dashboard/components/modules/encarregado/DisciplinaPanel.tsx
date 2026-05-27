@@ -1,11 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { AlertTriangle, User, FileText, CheckCircle, Clock, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 
 export default function DisciplinaPanel({ user, myColabs }: { user: any, myColabs: any[] }) {
   const [processos, setProcessos] = useState<any[]>([]);
+  const [padroes, setPadroes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [buscaColab, setBuscaColab] = useState("");
@@ -17,18 +18,19 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     colaborador_cpf: '',
     colaborador_cargo: '',
     unidade_alocada: '',
-    categoria_motivo: 'ASSIDUIDADE',
+    categoria_motivo: '',
     descricao_motivo: '',
     data_ocorrencia: new Date().toISOString().split('T')[0],
     detalhes_ocorrencia: '',
     testemunhas: '',
-    nivel_sugerido_encarregado: 'VERBAL'
+    variaveis_adicionais: {} as Record<string, string>
   });
 
   const [historicoColab, setHistoricoColab] = useState<any[]>([]);
 
   useEffect(() => {
     fetchProcessos();
+    fetchPadroes();
   }, [user.id]);
 
   const fetchProcessos = async () => {
@@ -43,6 +45,16 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     setLoading(false);
   };
 
+  const fetchPadroes = async () => {
+    const { data } = await supabase.from('padroes_advertencia').select('*').order('categoria');
+    if (data && data.length > 0) {
+      setPadroes(data);
+      const cat = data[0].categoria;
+      const mot = data.find(p => p.categoria === cat)?.motivo_especifico || '';
+      setForm(f => ({ ...f, categoria_motivo: cat, descricao_motivo: mot }));
+    }
+  };
+
   const handleBuscarColab = async (termo: string) => {
     setBuscaColab(termo);
     if (termo.length < 3) {
@@ -50,7 +62,6 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
       return;
     }
     
-    // Busca global direta no banco de dados para garantir que encontre o colaborador
     const { data, error } = await supabase
       .from('usuarios')
       .select('*')
@@ -58,10 +69,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
       .limit(10);
       
     if (error) console.error("Erro na busca de usuários:", error);
-      
-    if (data) {
-      setColabsSugeridos(data);
-    }
+    if (data) setColabsSugeridos(data);
   };
 
   const selecionarColab = async (colab: any) => {
@@ -76,109 +84,89 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     setBuscaColab("");
     setColabsSugeridos([]);
 
-    // Buscar histórico do colaborador para sugerir o nível
     const { data } = await supabase
       .from('processos_disciplinares')
       .select('categoria_motivo, nivel_sugerido_encarregado, nivel_aplicado_final, status')
       .eq('colaborador_id', colab.id);
       
-    if (data) {
-      setHistoricoColab(data);
-    }
+    if (data) setHistoricoColab(data);
   };
 
-  // Termômetro Inteligente
-  useEffect(() => {
-    if (form.colaborador_id && historicoColab.length > 0) {
-      const reincidencias = historicoColab.filter(h => h.categoria_motivo === form.categoria_motivo && h.status !== 'REJEITADO').length;
-      
-      if (reincidencias === 0) {
-        setForm(f => ({ ...f, nivel_sugerido_encarregado: 'VERBAL' }));
-      } else if (reincidencias === 1) {
-        setForm(f => ({ ...f, nivel_sugerido_encarregado: 'ESCRITA' }));
-      } else if (reincidencias >= 2) {
-        setForm(f => ({ ...f, nivel_sugerido_encarregado: 'SUSPENSAO' }));
-      }
-    } else {
-      setForm(f => ({ ...f, nivel_sugerido_encarregado: 'VERBAL' }));
-    }
-  }, [form.categoria_motivo, form.colaborador_id, historicoColab]);
+  const categoriasUnicas = useMemo(() => Array.from(new Set(padroes.map(p => p.categoria))), [padroes]);
+  const motivosDaCategoria = useMemo(() => {
+    if (!form.categoria_motivo) return [];
+    return Array.from(new Set(padroes.filter(p => p.categoria === form.categoria_motivo).map(p => p.motivo_especifico)));
+  }, [padroes, form.categoria_motivo]);
 
-  const generateAdvertenciaPDF = async (data: any) => {
+  // Atualiza o motivo se a categoria mudar
+  useEffect(() => {
+    if (motivosDaCategoria.length > 0 && !motivosDaCategoria.includes(form.descricao_motivo)) {
+      setForm(f => ({ ...f, descricao_motivo: motivosDaCategoria[0] }));
+    }
+  }, [form.categoria_motivo, motivosDaCategoria]);
+
+  const reincidencias = historicoColab.filter(h => h.categoria_motivo === form.categoria_motivo && h.status !== 'REJEITADO').length;
+
+  const padraoSugerido = useMemo(() => {
+    if (!form.categoria_motivo || !form.descricao_motivo) return null;
+    const possiveis = padroes.filter(p => p.categoria === form.categoria_motivo && p.motivo_especifico === form.descricao_motivo).sort((a,b) => a.nivel_gravidade - b.nivel_gravidade);
+    if (possiveis.length === 0) return null;
+    
+    let nivelAlvo = reincidencias + 1;
+    let selecionado = possiveis.find(p => p.nivel_gravidade === nivelAlvo);
+    
+    if (!selecionado) {
+      const menores = possiveis.filter(p => p.nivel_gravidade <= nivelAlvo);
+      if (menores.length > 0) selecionado = menores[menores.length - 1];
+      else selecionado = possiveis[possiveis.length - 1];
+    }
+    return selecionado;
+  }, [padroes, form.categoria_motivo, form.descricao_motivo, reincidencias]);
+
+  const customTags = useMemo(() => {
+    if (!padraoSugerido) return [];
+    const sysTags = ['NOME_COLABORADOR', 'FUNCAO', 'UNIDADE_ALOCACAO', 'DATA_OCORRENCIA', 'DATA_ATUAL', 'NARRATIVA_ENCARREGADO'];
+    const matches = padraoSugerido.texto_template.match(/\[([A-Z_]+)\]/g) || [];
+    const tags = matches.map((m: string) => m.replace('[', '').replace(']', ''));
+    return Array.from(new Set(tags)).filter((t: string) => !sysTags.includes(t));
+  }, [padraoSugerido]);
+
+  const generateAdvertenciaPDF = async (data: any, padrao: any) => {
     const { default: jsPDF } = await import('jspdf');
-    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
-    // Header
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
     doc.setFontSize(14);
-    doc.text("REGISTRO DE MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
+    doc.text("MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text("DOCUMENTO INTERNO PARA CONTROLE DE RECURSOS HUMANOS", pageWidth / 2, 32, { align: "center" });
     doc.line(15, 38, pageWidth - 15, 38);
 
-    // Identificação
-    autoTable(doc, {
-      startY: 45,
-      head: [['1. IDENTIFICAÇÃO DO COLABORADOR', '']],
-      body: [
-        ['NOME COMPLETO:', data.colaborador_nome],
-        ['CPF:', data.colaborador_cpf || 'NÃO INFORMADO'],
-        ['CARGO / FUNÇÃO:', data.colaborador_cargo],
-        ['UNIDADE / SETOR:', data.unidade_alocada],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 10, cellPadding: 4 }
-    });
+    let textoFinal = padrao.texto_template;
+    textoFinal = textoFinal.replace(/\[NOME_COLABORADOR\]/g, data.colaborador_nome);
+    textoFinal = textoFinal.replace(/\[FUNCAO\]/g, data.colaborador_cargo);
+    textoFinal = textoFinal.replace(/\[UNIDADE_ALOCACAO\]/g, data.unidade_alocada);
+    textoFinal = textoFinal.replace(/\[DATA_OCORRENCIA\]/g, new Date(data.data_ocorrencia).toLocaleDateString('pt-BR'));
+    textoFinal = textoFinal.replace(/\[DATA_ATUAL\]/g, new Date().toLocaleDateString('pt-BR'));
+    textoFinal = textoFinal.replace(/\[NARRATIVA_ENCARREGADO\]/g, data.detalhes_ocorrencia);
 
-    // Detalhes da Ocorrência
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['2. DETALHES DA OCORRÊNCIA', '']],
-      body: [
-        ['DATA DA OCORRÊNCIA:', new Date(data.data_ocorrencia).toLocaleDateString('pt-BR')],
-        ['CATEGORIA:', data.categoria_motivo.replace('_', ' ')],
-        ['MOTIVO RESUMIDO:', data.descricao_motivo],
-        ['NÍVEL DE ADVERTÊNCIA:', data.nivel_sugerido_encarregado.replace('_', ' ')],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 10, cellPadding: 4 }
-    });
-
-    // Narrativa
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['3. DESCRIÇÃO DOS FATOS']],
-      body: [
-        [{ content: data.detalhes_ocorrencia, styles: { halign: 'justify', minCellHeight: 40 } }],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 10, cellPadding: 6 }
-    });
-
-    if (data.testemunhas) {
-      autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 8,
-        head: [['4. TESTEMUNHAS (SE HOUVER)', '']],
-        body: [
-          ['NOMES:', data.testemunhas],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-        styles: { fontSize: 10, cellPadding: 4 }
-      });
+    for (const tag of customTags) {
+      const val = data.variaveis_adicionais[tag as string] || `[${tag}]`;
+      textoFinal = textoFinal.replace(new RegExp(`\\[${tag}\\]`, 'g'), val);
     }
 
-    // Assinaturas
-    const finalY = (doc as any).lastAutoTable.finalY + 40;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    
+    const lines = doc.splitTextToSize(textoFinal, pageWidth - 30);
+    doc.text(lines, 15, 50);
+
+    const finalY = 50 + (lines.length * 5) + 30;
     
     doc.line(20, finalY, 90, finalY);
     doc.setFontSize(9);
@@ -199,32 +187,47 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     doc.setFontSize(7);
     doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} pelo Alicerce ERP`, 15, 285);
 
-    doc.save(`Advertencia_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrencia}.pdf`);
+    doc.save(`Medida_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrencia}.pdf`);
   };
 
   const handleSubmit = async () => {
-    if (!form.colaborador_id || !form.detalhes_ocorrencia || !form.descricao_motivo) {
-      toast.error("Preencha o colaborador, o motivo e os detalhes.");
+    if (!form.colaborador_id || !form.detalhes_ocorrencia || !form.descricao_motivo || !padraoSugerido) {
+      toast.error("Preencha todos os campos corretamente.");
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.from('processos_disciplinares').insert([{
-      ...form,
+    const nivelStr = padraoSugerido.nivel_gravidade === 3 ? 'SUSPENSAO' : (padraoSugerido.nivel_gravidade === 2 ? 'ADVERTENCIA (REINCIDENCIA)' : 'ADVERTENCIA');
+
+    const payload = {
+      colaborador_id: form.colaborador_id,
+      colaborador_nome: form.colaborador_nome,
+      colaborador_cpf: form.colaborador_cpf,
+      colaborador_cargo: form.colaborador_cargo,
+      unidade_alocada: form.unidade_alocada,
+      categoria_motivo: form.categoria_motivo,
+      descricao_motivo: form.descricao_motivo,
+      data_ocorrencia: form.data_ocorrencia,
+      detalhes_ocorrencia: form.detalhes_ocorrencia,
+      testemunhas: form.testemunhas,
+      nivel_sugerido_encarregado: nivelStr,
+      padrao_advertencia_id: padraoSugerido.id,
+      variaveis_adicionais: form.variaveis_adicionais,
       encarregado_solicitante_id: user.id,
-      encarregado_solicitante_nome: user.nome
-    }]);
+      encarregado_solicitante_nome: user.nome,
+      status: 'PENDENTE_GERENCIA'
+    };
+
+    const { error } = await supabase.from('processos_disciplinares').insert([payload]);
 
     if (!error) {
       toast.success("Processo enviado para aprovação da Gerência Operacional!");
-      // Gera o PDF de advertência para impressão imediata
-      generateAdvertenciaPDF(form);
+      generateAdvertenciaPDF(form, padraoSugerido);
       
       setForm({
+        ...form,
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
-        categoria_motivo: 'ASSIDUIDADE', descricao_motivo: '',
-        data_ocorrencia: new Date().toISOString().split('T')[0],
-        detalhes_ocorrencia: '', testemunhas: '', nivel_sugerido_encarregado: 'VERBAL'
+        detalhes_ocorrencia: '', testemunhas: '', variaveis_adicionais: {}
       });
       setHistoricoColab([]);
       fetchProcessos();
@@ -233,8 +236,6 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     }
     setSaving(false);
   };
-
-  const reincidencias = historicoColab.filter(h => h.categoria_motivo === form.categoria_motivo && h.status !== 'REJEITADO').length;
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1200px] mx-auto w-full">
@@ -247,7 +248,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
             </div>
             <div>
               <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase italic tracking-tighter">Gestão Disciplinar</h3>
-              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-1">Abertura e Histórico de Processos Operacionais</p>
+              <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-1">Abertura Dinâmica de Processos Operacionais</p>
             </div>
           </div>
         </div>
@@ -284,28 +285,29 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
             {form.colaborador_id && (
               <div className="space-y-6 animate-fade-in">
                 
-                {/* Termômetro */}
-                <div className={`p-6 rounded-2xl border ${reincidencias === 0 ? 'bg-green-50 border-green-200 text-green-800' : reincidencias === 1 ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                {/* Termômetro Inteligente Baseado na Categoria */}
+                <div className={`p-6 rounded-2xl border ${padraoSugerido?.nivel_gravidade === 1 ? 'bg-yellow-50 border-yellow-200 text-yellow-800' : padraoSugerido?.nivel_gravidade === 3 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-orange-50 border-orange-200 text-orange-800'}`}>
                   <div className="flex items-center gap-3 mb-2">
                     <AlertTriangle size={18} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Termômetro Disciplinar</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Termômetro de Reincidência</span>
                   </div>
                   <p className="text-sm font-bold">
-                    {reincidencias === 0 ? "Primeiro registro nesta categoria. O sistema sugerirá Orientação Verbal." : 
-                     reincidencias === 1 ? "Colaborador possui 1 reincidência. Sugestão: Advertência Escrita." : 
-                     "Múltiplas reincidências. Sugestão: Suspensão ou Análise Crítica."}
+                    Ocorrências Anteriores na Categoria: {reincidencias}
+                  </p>
+                  <p className="text-xs mt-1 font-medium">
+                    {padraoSugerido ? `Punição Determinada pelo Sistema: Nível ${padraoSugerido.nivel_gravidade} (${padraoSugerido.nivel_gravidade === 3 ? 'Suspensão' : 'Advertência'})` : 'Buscando regras...'}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Categoria</label>
-                    <select className="input-field !h-12 w-full text-sm font-bold" value={form.categoria_motivo} onChange={e => setForm({...form, categoria_motivo: e.target.value})}>
-                      <option value="ASSIDUIDADE" className="bg-white text-black font-semibold">ASSIDUIDADE (Faltas/Atrasos)</option>
-                      <option value="CONDUTA_INSUBORDINACAO" className="bg-white text-black font-semibold">CONDUTA / INSUBORDINAÇÃO</option>
-                      <option value="SEGURANCA_EPI" className="bg-white text-black font-semibold">SEGURANÇA (EPI / Normas)</option>
-                      <option value="PATRIMONIO" className="bg-white text-black font-semibold">PATRIMÔNIO (Danos/Mau uso)</option>
-                      <option value="OUTROS" className="bg-white text-black font-semibold">OUTROS</option>
+                    <select 
+                      className="input-field !h-12 w-full text-sm font-bold" 
+                      value={form.categoria_motivo} 
+                      onChange={e => setForm({...form, categoria_motivo: e.target.value})}
+                    >
+                      {categoriasUnicas.map(c => <option key={c as string} value={c as string}>{c as string}</option>)}
                     </select>
                   </div>
                   <div>
@@ -315,36 +317,48 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Resumo do Motivo</label>
-                  <input className="input-field w-full font-black" placeholder="Ex: Faltou sem atestado dia 10/05" value={form.descricao_motivo} onChange={e => setForm({...form, descricao_motivo: e.target.value})} />
+                  <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Motivo Específico</label>
+                  <select 
+                    className="input-field !h-12 w-full text-sm font-bold" 
+                    value={form.descricao_motivo} 
+                    onChange={e => setForm({...form, descricao_motivo: e.target.value})}
+                  >
+                    {motivosDaCategoria.map(m => <option key={m as string} value={m as string}>{m as string}</option>)}
+                  </select>
+                </div>
+
+                {customTags.length > 0 && (
+                  <div className="p-4 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl space-y-4">
+                    <h4 className="text-[10px] font-black uppercase text-[var(--brand)] tracking-widest">Informações Específicas Necessárias</h4>
+                    {customTags.map((tag: any) => (
+                      <div key={tag}>
+                        <label className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1 block">[{tag}]</label>
+                        <input 
+                          className="input-field w-full font-bold text-sm" 
+                          placeholder={`Informe o valor para ${tag}...`}
+                          value={form.variaveis_adicionais[tag] || ''}
+                          onChange={e => setForm({...form, variaveis_adicionais: { ...form.variaveis_adicionais, [tag]: e.target.value }})}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Relato do Encarregado (Sua Narrativa)</label>
+                  <textarea className="input-field w-full h-32 p-4 font-medium" placeholder="Descreva exatamente como o fato ocorreu..." value={form.detalhes_ocorrencia} onChange={e => setForm({...form, detalhes_ocorrencia: e.target.value})} />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Detalhes do Ocorrido</label>
-                  <textarea className="input-field w-full h-32 p-4 font-medium" placeholder="Descreva como aconteceu..." value={form.detalhes_ocorrencia} onChange={e => setForm({...form, detalhes_ocorrencia: e.target.value})} />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Testemunhas (Opcional)</label>
-                    <input className="input-field w-full font-black" placeholder="Nomes..." value={form.testemunhas} onChange={e => setForm({...form, testemunhas: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[var(--text-muted)] mb-2 block">Pena Sugerida (Final: Gerência)</label>
-                    <select className="input-field !h-12 w-full text-sm font-bold text-orange-600 dark:text-orange-400" value={form.nivel_sugerido_encarregado} onChange={e => setForm({...form, nivel_sugerido_encarregado: e.target.value})}>
-                      <option value="VERBAL" className="bg-white text-black font-semibold">VERBAL (Orientação)</option>
-                      <option value="ESCRITA" className="bg-white text-black font-semibold">ADVERTÊNCIA ESCRITA</option>
-                      <option value="SUSPENSAO" className="bg-white text-black font-semibold">SUSPENSÃO</option>
-                      <option value="JUSTA_CAUSA" className="bg-white text-red-600 font-bold">JUSTA CAUSA</option>
-                    </select>
-                  </div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Testemunhas (Opcional)</label>
+                  <input className="input-field w-full font-black" placeholder="Nomes..." value={form.testemunhas} onChange={e => setForm({...form, testemunhas: e.target.value})} />
                 </div>
 
                 <button 
                   onClick={handleSubmit} disabled={saving}
                   className="w-full h-14 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-lg"
                 >
-                  {saving ? 'Enviando...' : 'Enviar para Avaliação da Gerência'}
+                  {saving ? 'Gerando Documento...' : 'Gerar e Enviar para Avaliação'}
                 </button>
               </div>
             )}
@@ -387,11 +401,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
 
                   <div className="flex items-center gap-2 pt-3 border-t border-[var(--border)]">
                     <span className="text-[9px] font-black uppercase text-[var(--text-muted)] bg-[var(--bg-base)] px-2 py-1 rounded">Sugerido: {p.nivel_sugerido_encarregado}</span>
-                    {p.nivel_aplicado_final && (
-                      <span className="text-[9px] font-black uppercase text-white bg-green-600 px-2 py-1 rounded shadow-sm">Aplicado: {p.nivel_aplicado_final}</span>
-                    )}
                   </div>
-
                 </div>
               ))}
             </div>

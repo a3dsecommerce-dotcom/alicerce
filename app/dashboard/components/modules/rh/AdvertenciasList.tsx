@@ -18,9 +18,10 @@ export default function AdvertenciasList({ user }: { user?: any }) {
 
   const fetchProcessos = async () => {
     setLoading(true);
+    // Seleciona também os dados do padrão de advertência (caso exista)
     const { data, error } = await supabase
       .from('processos_disciplinares')
-      .select('*')
+      .select('*, padroes_advertencia(*)')
       .order('created_at', { ascending: false });
     
     if (data) setProcessos(data);
@@ -77,13 +78,60 @@ export default function AdvertenciasList({ user }: { user?: any }) {
     doc.setFontSize(20);
     doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
     doc.setFontSize(14);
-    doc.text("REGISTRO DE MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
+    doc.text("MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text("DOCUMENTO INTERNO PARA CONTROLE DE RECURSOS HUMANOS", pageWidth / 2, 32, { align: "center" });
     doc.line(15, 38, pageWidth - 15, 38);
 
-    // Identificação
+    // Se possui um template vinculado (Sistema Novo)
+    if (data.padroes_advertencia && data.padroes_advertencia.texto_template) {
+      let textoFinal = data.padroes_advertencia.texto_template;
+      textoFinal = textoFinal.replace(/\[NOME_COLABORADOR\]/g, data.colaborador_nome);
+      textoFinal = textoFinal.replace(/\[FUNCAO\]/g, data.colaborador_cargo);
+      textoFinal = textoFinal.replace(/\[UNIDADE_ALOCACAO\]/g, data.unidade_alocada);
+      textoFinal = textoFinal.replace(/\[DATA_OCORRENCIA\]/g, new Date(data.data_ocorrencia).toLocaleDateString('pt-BR'));
+      textoFinal = textoFinal.replace(/\[DATA_ATUAL\]/g, new Date().toLocaleDateString('pt-BR'));
+      textoFinal = textoFinal.replace(/\[NARRATIVA_ENCARREGADO\]/g, data.detalhes_ocorrencia);
+
+      // Replace variáveis adicionais
+      if (data.variaveis_adicionais) {
+        Object.entries(data.variaveis_adicionais).forEach(([key, val]) => {
+          textoFinal = textoFinal.replace(new RegExp(`\\[${key}\\]`, 'g'), String(val));
+        });
+      }
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      
+      const lines = doc.splitTextToSize(textoFinal, pageWidth - 30);
+      doc.text(lines, 15, 50);
+
+      const finalY = 50 + (lines.length * 5) + 30;
+      
+      doc.line(20, finalY, 90, finalY);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text(data.colaborador_nome.toUpperCase(), 55, finalY + 5, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.text("Assinatura do Colaborador", 55, finalY + 10, { align: "center" });
+      doc.setFontSize(8);
+      doc.text(`Data: ____/____/________`, 55, finalY + 16, { align: "center" });
+      
+      doc.line(120, finalY, 190, finalY);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text(data.encarregado_solicitante_nome?.toUpperCase() || "GESTOR RESPONSÁVEL", 155, finalY + 5, { align: "center" });
+      doc.setFont("helvetica", "normal");
+      doc.text("Encarregado / Gerente Responsável", 155, finalY + 10, { align: "center" });
+
+      doc.setFontSize(7);
+      doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} pelo Alicerce ERP`, 15, 285);
+      doc.save(`Medida_${data.colaborador_nome.replace(/\s+/g, '_')}_${data.data_ocorrencia}.pdf`);
+      return;
+    }
+
+    // LEGADO (Caso o processo disciplinar seja anterior ao sistema de templates)
     autoTable(doc, {
       startY: 45,
       head: [['1. IDENTIFICAÇÃO DO COLABORADOR', '']],
@@ -98,7 +146,6 @@ export default function AdvertenciasList({ user }: { user?: any }) {
       styles: { fontSize: 10, cellPadding: 4 }
     });
 
-    // Detalhes da Ocorrência
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 8,
       head: [['2. DETALHES DA OCORRÊNCIA', '']],
@@ -113,7 +160,6 @@ export default function AdvertenciasList({ user }: { user?: any }) {
       styles: { fontSize: 10, cellPadding: 4 }
     });
 
-    // Narrativa
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 8,
       head: [['3. DESCRIÇÃO DOS FATOS']],
@@ -138,24 +184,23 @@ export default function AdvertenciasList({ user }: { user?: any }) {
       });
     }
 
-    // Assinaturas
-    const finalY = (doc as any).lastAutoTable.finalY + 40;
+    const finalYLegado = (doc as any).lastAutoTable.finalY + 40;
     
-    doc.line(20, finalY, 90, finalY);
+    doc.line(20, finalYLegado, 90, finalYLegado);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(data.colaborador_nome.toUpperCase(), 55, finalY + 5, { align: "center" });
+    doc.text(data.colaborador_nome.toUpperCase(), 55, finalYLegado + 5, { align: "center" });
     doc.setFont("helvetica", "normal");
-    doc.text("Assinatura do Colaborador", 55, finalY + 10, { align: "center" });
+    doc.text("Assinatura do Colaborador", 55, finalYLegado + 10, { align: "center" });
     doc.setFontSize(8);
-    doc.text(`Data: ____/____/________`, 55, finalY + 16, { align: "center" });
+    doc.text(`Data: ____/____/________`, 55, finalYLegado + 16, { align: "center" });
     
-    doc.line(120, finalY, 190, finalY);
+    doc.line(120, finalYLegado, 190, finalYLegado);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(data.encarregado_solicitante_nome?.toUpperCase() || "GESTOR RESPONSÁVEL", 155, finalY + 5, { align: "center" });
+    doc.text(data.encarregado_solicitante_nome?.toUpperCase() || "GESTOR RESPONSÁVEL", 155, finalYLegado + 5, { align: "center" });
     doc.setFont("helvetica", "normal");
-    doc.text("Encarregado / Gerente Responsável", 155, finalY + 10, { align: "center" });
+    doc.text("Encarregado / Gerente Responsável", 155, finalYLegado + 10, { align: "center" });
 
     doc.setFontSize(7);
     doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} pelo Alicerce ERP`, 15, 285);
@@ -212,11 +257,11 @@ export default function AdvertenciasList({ user }: { user?: any }) {
               onChange={e => setBusca(e.target.value)} 
             />
           </div>
-          <div className="flex gap-2 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border)]">
+          <div className="flex gap-2 p-1 bg-[var(--bg-base)] rounded-xl border border-[var(--border)] overflow-x-auto">
             {["TODOS", "PENDENTE_GERENCIA", "PENDENTE_RH", "APROVADO_RH", "REJEITADO"].map(f => (
               <button 
                 key={f} 
-                className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${filtro === f ? 'bg-orange-600 text-white' : 'text-[var(--text-muted)]'}`} 
+                className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase whitespace-nowrap transition-all ${filtro === f ? 'bg-orange-600 text-white' : 'text-[var(--text-muted)]'}`} 
                 onClick={() => setFiltro(f)}
               >
                 {f.replace('_', ' ')}
@@ -318,6 +363,19 @@ export default function AdvertenciasList({ user }: { user?: any }) {
                   <p className="text-xs font-medium text-[var(--text-primary)] leading-relaxed">{selecionado.detalhes_ocorrencia}</p>
                 </div>
               </div>
+              
+              {selecionado.padroes_advertencia && (
+                <div className="space-y-4">
+                  <h5 className="text-[10px] font-black uppercase text-blue-600 flex items-center gap-2 italic">
+                    <CheckCircle size={14} /> Template Utilizado
+                  </h5>
+                  <div className="p-6 bg-blue-50 border border-blue-100 rounded-2xl">
+                    <p className="text-xs font-medium text-blue-900 leading-relaxed italic">
+                      Baseado no Art. {selecionado.padroes_advertencia.embasamento_clt} (Nível {selecionado.padroes_advertencia.nivel_gravidade})
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {selecionado.testemunhas && (
                 <div className="space-y-4">
