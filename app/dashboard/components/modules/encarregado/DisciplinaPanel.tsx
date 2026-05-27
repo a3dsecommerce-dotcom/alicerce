@@ -141,7 +141,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     
     // Header com Logo e Razão Social
     try {
-      doc.addImage(logoBase64, 'PNG', 15, 12, 45, 12);
+      doc.addImage(logoBase64, 'JPEG', 15, 12, 45, 12);
     } catch(e) {}
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
@@ -188,7 +188,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     
     // Assinatura Empresa (Emedir)
     try {
-      doc.addImage(assinaturaBase64, 'JPEG', 135, finalY - 20, 40, 18);
+      doc.addImage(assinaturaBase64, 'PNG', 135, finalY - 20, 40, 18);
     } catch(e) {}
     doc.line(120, finalY, 190, finalY);
     doc.setFontSize(9);
