@@ -133,19 +133,27 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
 
   const generateAdvertenciaPDF = async (data: any, padrao: any) => {
     const { default: jsPDF } = await import('jspdf');
+    const { logoBase64, assinaturaBase64 } = await import('./pdfImages');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
     doc.setTextColor(0, 0, 0);
+    
+    // Header com Logo e Razão Social
+    try {
+      doc.addImage(logoBase64, 'PNG', 15, 12, 45, 12);
+    } catch(e) {}
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
     doc.setFontSize(14);
-    doc.text("MEDIDA DISCIPLINAR", pageWidth / 2, 25, { align: "center" });
-    doc.setFontSize(8);
+    doc.text("ALICERCE CONSTRUÇÕES E SERVIÇOS LTDA", 65, 17);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("DOCUMENTO INTERNO PARA CONTROLE DE RECURSOS HUMANOS", pageWidth / 2, 32, { align: "center" });
-    doc.line(15, 38, pageWidth - 15, 38);
+    doc.text("CNPJ: 42.971.150/0001-92", 65, 23);
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("MEDIDA DISCIPLINAR", pageWidth / 2, 35, { align: "center" });
+    doc.line(15, 40, pageWidth - 15, 40);
 
     let textoFinal = padrao.texto_template;
     textoFinal = textoFinal.replace(/\[NOME_COLABORADOR\]/g, data.colaborador_nome);
@@ -168,6 +176,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
 
     const finalY = 50 + (lines.length * 5) + 30;
     
+    // Assinatura Colaborador
     doc.line(20, finalY, 90, finalY);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
@@ -175,14 +184,28 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     doc.setFont("helvetica", "normal");
     doc.text("Assinatura do Colaborador", 55, finalY + 10, { align: "center" });
     doc.setFontSize(8);
-    doc.text(`Data: ____/____/________`, 55, finalY + 16, { align: "center" });
+    doc.text(`Data: ____/____/________`, 55, finalY + 15, { align: "center" });
     
+    // Assinatura Empresa (Emedir)
+    try {
+      doc.addImage(assinaturaBase64, 'JPEG', 135, finalY - 20, 40, 18);
+    } catch(e) {}
     doc.line(120, finalY, 190, finalY);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(user.nome.toUpperCase(), 155, finalY + 5, { align: "center" });
+    doc.text("Emedir Santos Gonçalves", 155, finalY + 5, { align: "center" });
     doc.setFont("helvetica", "normal");
-    doc.text("Encarregado / Gerente Responsável", 155, finalY + 10, { align: "center" });
+    doc.text("Diretor / Responsável Legal", 155, finalY + 10, { align: "center" });
+
+    // Testemunhas (Recusa)
+    const testY = finalY + 35;
+    doc.setFont("helvetica", "italic");
+    doc.text("Em caso de recusa de assinatura pelo colaborador, colher a assinatura de 2 testemunhas:", 15, testY - 5);
+    doc.setFont("helvetica", "normal");
+    doc.line(20, testY + 10, 90, testY + 10);
+    doc.text("Testemunha 1 (Nome legível e CPF)", 55, testY + 15, { align: "center" });
+    doc.line(120, testY + 10, 190, testY + 10);
+    doc.text("Testemunha 2 (Nome legível e CPF)", 155, testY + 15, { align: "center" });
 
     doc.setFontSize(7);
     doc.text(`Documento gerado em: ${new Date().toLocaleString('pt-BR')} pelo Alicerce ERP`, 15, 285);
