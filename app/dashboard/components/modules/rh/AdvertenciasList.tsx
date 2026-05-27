@@ -348,15 +348,13 @@ export default function AdvertenciasList({ user }: { user?: any }) {
                   Rejeitar / Cancelar
                 </button>
                 
-                {user?.nivel >= 3 && (
-                  <button 
-                    onClick={() => handleDelete(selecionado.id)}
-                    className="flex-none px-6 py-4 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-200 transition-all flex items-center justify-center gap-2 border border-red-200"
-                    title="Excluir Registro Permanentemente"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
+                <button 
+                  onClick={() => handleDelete(selecionado.id)}
+                  className="flex-none px-6 py-4 bg-red-100 text-red-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-200 transition-all flex items-center justify-center gap-2 border border-red-200"
+                  title="Excluir Registro Permanentemente"
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
             </>
           )}
