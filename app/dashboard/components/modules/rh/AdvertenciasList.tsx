@@ -76,16 +76,10 @@ export default function AdvertenciasList({ user }: { user?: any }) {
     // Header
     doc.setTextColor(0, 0, 0);
     
-    // Header com Logo e Razão Social
+    // Header com Logo
     try {
-      doc.addImage(logoBase64, 'JPEG', 15, 12, 45, 12);
+      doc.addImage(logoBase64, 'JPEG', 15, 12, 60, 16);
     } catch(e) {}
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("ALICERCE CONSTRUÇÕES E SERVIÇOS LTDA", 65, 17);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("CNPJ: 42.971.150/0001-92", 65, 23);
     
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
@@ -127,16 +121,16 @@ export default function AdvertenciasList({ user }: { user?: any }) {
       doc.setFontSize(8);
       doc.text(`Data: ____/____/________`, 55, finalY + 15, { align: "center" });
       
-      // Assinatura Empresa (Emedir)
+      // Assinatura Empresa
       try {
-        doc.addImage(assinaturaBase64, 'PNG', 125, finalY - 24, 60, 24);
+        doc.addImage(assinaturaBase64, 'PNG', 125, finalY - 17, 60, 20);
       } catch(e) {}
       doc.line(120, finalY, 190, finalY);
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("Emedir Santos Gonçalves", 155, finalY + 5, { align: "center" });
+      doc.text("ALICERCE CONSTRUÇÕES E SERVIÇOS LTDA", 155, finalY + 5, { align: "center" });
       doc.setFont("helvetica", "normal");
-      doc.text("Diretor / Responsável Legal", 155, finalY + 10, { align: "center" });
+      doc.text("CNPJ: 42.971.150/0001-92", 155, finalY + 10, { align: "center" });
 
       // Testemunhas (Recusa)
       const testY = finalY + 35;
