@@ -188,7 +188,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     
     // Assinatura Empresa (Emedir)
     try {
-      doc.addImage(assinaturaBase64, 'PNG', 135, finalY - 20, 40, 18);
+      doc.addImage(assinaturaBase64, 'PNG', 125, finalY - 24, 60, 24);
     } catch(e) {}
     doc.line(120, finalY, 190, finalY);
     doc.setFontSize(9);
