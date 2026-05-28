@@ -1,5 +1,7 @@
-/* Google Fonts loaded via next/font/google in app/layout.tsx */
+/* Inter font via Google Fonts CDN (runtime, não bloqueia o build) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
 
 /* ============================================================
    ALICERCE DESIGN SYSTEM — Ultra Dark Edition (v2.0)
