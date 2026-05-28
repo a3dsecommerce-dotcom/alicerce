@@ -154,139 +154,46 @@ export default function RHModule({ user }: { user: any }) {
 
   const handleGerarPDFCAT = (cat: any) => {
     const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-
-    // Header - Clean for B&W
-    doc.setTextColor(0, 0, 0);
+    
+    // Título e Cabeçalho
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
-    doc.setFontSize(14);
-    doc.text(`INVESTIGACAO DE ACIDENTE DE TRABALHO (${cat.tipo_acidente})`, pageWidth / 2, 25, { align: "center" });
-    doc.setFontSize(8);
+    doc.text("INVESTIGAÇÃO E ANÁLISE DE ACIDENTE (CAT)", 14, 22);
+    
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("DOCUMENTO INTERNO PARA CONTROLE DE SEGURANCA E SAUDE DO TRABALHO", pageWidth / 2, 32, { align: "center" });
-    doc.line(15, 38, pageWidth - 15, 38);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 30);
 
-    // 1. Identificação
+    // Tabela de Dados Gerais
     autoTable(doc, {
-      startY: 45,
-      head: [['1. IDENTIFICACAO DO ACIDENTADO', '']],
+      startY: 40,
+      head: [['Campo', 'Informação']],
       body: [
-        ['NOME COMPLETO:', cat.colaborador_nome],
-        ['CPF:', cat.colaborador_cpf || 'NAO INFORMADO'],
-        ['CARGO:', cat.colaborador_cargo],
-        ['UNIDADE ATENDIDA:', cat.unidade_alocada],
+        ['Colaborador', cat.colaborador_nome],
+        ['CPF', cat.colaborador_cpf || '---'],
+        ['Cargo', cat.colaborador_cargo],
+        ['Unidade', cat.unidade_alocada],
+        ['Data do Ocorrido', cat.data_ocorrido],
+        ['Horário', cat.horario_ocorrido],
+        ['Local', cat.local_ocorrido],
+        ['Tipo de Acidente', cat.tipo_acidente],
+        ['Parte do Corpo', cat.parte_corpo_atingida || '---'],
+        ['Agente Causador', cat.agente_causador || '---']
       ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 3 }
+      theme: 'striped',
+      headStyles: { fillColor: [185, 28, 28] } // Red 700
     });
-
-    // 2. Ocorrência (Variavel)
-    const ocorrenciaBody = [
-      ['DATA DO ACIDENTE:', cat.data_ocorrido],
-    ];
-    if (cat.tipo_acidente !== 'DOENCA') {
-      ocorrenciaBody.push(
-        ['HORARIO:', cat.horario_ocorrido],
-        ['LOCAL EXATO:', cat.local_ocorrido],
-        ['DESCRICAO DO LOCAL:', cat.descricao_local],
-        ['ENDERECO DO ACIDENTE:', cat.dados_especificos?.endereco_acidente || 'NAO INFORMADO']
-      );
-    } else {
-      ocorrenciaBody.push(
-        ['DATA INICIO SINTOMAS:', cat.dados_especificos?.data_inicio_sintomas || 'NAO INFORMADO'],
-        ['MEDICO AVALIADOR:', cat.dados_especificos?.medico_avaliador || 'NAO INFORMADO']
-      );
-    }
-
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['2. DETALHES DA OCORRENCIA', '']],
-      body: ocorrenciaBody,
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 3 }
-    });
-
-    // Bloco Condicional de Segurança
-    if (cat.tipo_acidente === 'TIPICO') {
-      autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 8,
-        head: [['3. ANALISE DE SEGURANCA (ACIDENTE TIPICO)', '']],
-        body: [
-          ['ATIVIDADE NO MOMENTO:', cat.dados_especificos?.atividade_momento || 'NAO INFORMADO'],
-          ['EPIs UTILIZADOS:', (cat.dados_especificos?.epis_usados || []).join(', ') || 'NENHUM'],
-          ['CONDICAO/ATO INSEGURO:', cat.dados_especificos?.condicao_insegura_ou_ato || 'NAO INFORMADO'],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-        styles: { fontSize: 9, cellPadding: 3 }
-      });
-    } else if (cat.tipo_acidente === 'TRAJETO') {
-      autoTable(doc, {
-        startY: (doc as any).lastAutoTable.finalY + 8,
-        head: [['3. ANALISE DE DESLOCAMENTO (TRAJETO)', '']],
-        body: [
-          ['SENTIDO DO TRAJETO:', cat.dados_especificos?.sentido_trajeto || 'NAO INFORMADO'],
-          ['MEIO DE TRANSPORTE:', cat.dados_especificos?.meio_transporte || 'NAO INFORMADO'],
-          ['COMPROVACAO DE ROTA:', cat.dados_especificos?.comprovacao_rota || 'NAO INFORMADO'],
-          ['CONDICOES DA VIA:', cat.dados_especificos?.condicoes_via || 'NAO INFORMADO'],
-          ['HOUVE TERCEIROS?:', cat.dados_especificos?.houve_terceiros ? 'SIM' : 'NAO'],
-          ['CNH / B.O.:', cat.dados_especificos?.cnh_boletim || 'NAO INFORMADO'],
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-        styles: { fontSize: 9, cellPadding: 3 }
-      });
-    }
 
     // Narrativa
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['NARRATIVA DA INVESTIGACAO']],
-      body: [
-        [{ content: 'DESCRICAO DETALHADA DO OCORRIDO:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
-        [{ content: cat.descricao_ocorrido, styles: { halign: 'justify' } }],
-        [{ content: 'ACOES TOMADAS DURANTE A OCORRENCIA:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
-        [{ content: cat.acoes_tomadas || 'NAO INFORMADO', styles: { halign: 'justify' } }],
-        [{ content: 'RELATO PESSOAL DO ACIDENTADO:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
-        [{ content: cat.relato_pessoal || 'NAO INFORMADO', styles: { halign: 'justify' } }],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 4 }
-    });
-
-    // Analise Tecnica
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['ANALISE TECNICA E ACOMPANHAMENTO', '']],
-      body: [
-        ['AGENTE CAUSADOR:', cat.agente_causador || 'NAO INFORMADO'],
-        ['PARTE DO CORPO ATINGIDA:', cat.parte_corpo_atingida || 'NAO INFORMADO'],
-        ['ACOMPANHAMENTO ATUAL:', cat.acompanhamento_medico || 'NAO INFORMADO'],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 3 }
-    });
-
-    // Conclusao
-    autoTable(doc, {
-      startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['CONCLUSAO E MEDIDAS PREVENTIVAS']],
-      body: [
-        [{ content: 'REAL MOTIVO (CAUSA RAIZ):', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
-        [{ content: cat.real_motivo || 'NAO INFORMADO', styles: { halign: 'justify' } }],
-        [{ content: 'SOLUCOES PROPOSTAS PARA EVITAR RECORRENCIA:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
-        [{ content: cat.solucoes_propostas || 'NAO INFORMADO', styles: { halign: 'justify' } }],
-      ],
-      theme: 'grid',
-      headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
-      styles: { fontSize: 9, cellPadding: 4 }
-    });
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESCRIÇÃO DO OCORRIDO", 14, finalY);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const splitDesc = doc.splitTextToSize(cat.descricao_ocorrido, 180);
+    doc.text(splitDesc, 14, finalY + 7);
 
     doc.save(`CAT_${cat.colaborador_nome.replace(/\s+/g, '_')}.pdf`);
   };
@@ -406,8 +313,6 @@ export default function RHModule({ user }: { user: any }) {
                          onDeleteConfigChecklist={deleteChecklistColumn}
                          onUpdateConfigColor={updateChecklistColor}
                          onReorderConfig={reorderChecklistColumn}
-                         onEdit={() => {}}
-                         onDelete={() => {}}
                        />
                     )}
                  </div>
@@ -516,70 +421,6 @@ export default function RHModule({ user }: { user: any }) {
                   <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase border ${getStatusColor(selecionadaCAT?.status)}`}>
                      {selecionadaCAT?.status?.replace('_', ' ')}
                   </span>
-               </div>
-            </div>
-
-            {/* Detalhes Específicos do Acidente */}
-            <div className="space-y-4">
-               <h5 className="text-[10px] font-black uppercase text-[var(--brand)] italic">Detalhes Específicos</h5>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl">
-                  {selecionadaCAT?.dados_especificos?.endereco_acidente && (
-                     <div className="md:col-span-2">
-                        <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Endereço da Ocorrência</p>
-                        <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos.endereco_acidente}</p>
-                     </div>
-                  )}
-                  
-                  {selecionadaCAT?.tipo_acidente === 'TRAJETO' && (
-                     <>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Sentido / Transporte</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.sentido_trajeto} • {selecionadaCAT.dados_especificos?.meio_transporte}</p>
-                        </div>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Rota Habitual?</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.comprovacao_rota}</p>
-                        </div>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Condições da Via</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.condicoes_via || 'NÃO INFORMADO'}</p>
-                        </div>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Terceiros Envolvidos?</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.houve_terceiros ? `SIM (${selecionadaCAT.dados_especificos?.cnh_boletim})` : 'NÃO'}</p>
-                        </div>
-                     </>
-                  )}
-
-                  {selecionadaCAT?.tipo_acidente === 'TIPICO' && (
-                     <>
-                        <div className="md:col-span-2">
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Atividade no Momento</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.atividade_momento || 'NÃO INFORMADO'}</p>
-                        </div>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">EPIs Utilizados</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{(selecionadaCAT.dados_especificos?.epis_usados || []).join(", ") || "NENHUM"}</p>
-                        </div>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Ato / Condição Insegura</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.condicao_insegura_ou_ato?.replace(/_/g, ' ') || 'NÃO INFORMADO'}</p>
-                        </div>
-                     </>
-                  )}
-
-                  {selecionadaCAT?.tipo_acidente === 'DOENCA' && (
-                     <>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Início dos Sintomas</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.data_inicio_sintomas ? format(new Date(selecionadaCAT.dados_especificos.data_inicio_sintomas), "dd/MM/yyyy") : 'NÃO INFORMADO'}</p>
-                        </div>
-                        <div>
-                           <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Médico Avaliador</p>
-                           <p className="text-[11px] font-bold text-[var(--text-primary)]">{selecionadaCAT.dados_especificos?.medico_avaliador || 'NÃO INFORMADO'}</p>
-                        </div>
-                     </>
-                  )}
                </div>
             </div>
 
