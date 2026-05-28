@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target, Calculator, ArrowUpRight, Shield, Truck, Database,
-  Building2, Plus, X, Save, Edit2, Trash2, MapPin, Users, Check, Settings, Search, RefreshCw, ChevronDown, LogOut
+  Building2, Plus, X, Save, Edit2, Trash2, MapPin, Users, Check, Settings, Search, RefreshCw, ChevronDown, LogOut, Printer
 } from "lucide-react";
 import { useTransferencias } from "@/hooks/useTransferencias";
 import TransferenciasList from "./encarregado/TransferenciasList";
@@ -21,6 +21,8 @@ import CotasManager from "./gerencia/CotasManager";
 import QuadroVagas from "./rh/QuadroVagas";
 import EquipesPorUnidade from "./gerencia/EquipesPorUnidade";
 import AdvertenciasList from "./rh/AdvertenciasList";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function GerenciaModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const { 
@@ -97,6 +99,39 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     } else {
       toast.error("Erro ao excluir: " + error.message);
     }
+  };
+
+  const handlePrintUnidades = () => {
+    const includeResponsavel = window.confirm("Deseja incluir o Diretor/Responsável e Telefone no relatório?");
+    const doc = new jsPDF("landscape");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Relatório de Unidades Operacionais", 14, 20);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 26);
+    
+    const head = includeResponsavel 
+      ? [["Nome da Unidade", "Secretaria/Cliente", "Endereço", "Diretor/Resp.", "Telefone"]]
+      : [["Nome da Unidade", "Secretaria/Cliente", "Endereço"]];
+
+    const body = unidades.map(u => {
+      const enderecoCompleto = [u.endereco, u.numero, u.bairro].filter(Boolean).join(", ");
+      return includeResponsavel
+        ? [u.nome || "-", u.secretaria || u.cliente || "-", enderecoCompleto || "-", u.diretor || "-", u.telefone || "-"]
+        : [u.nome || "-", u.secretaria || u.cliente || "-", enderecoCompleto || "-"];
+    });
+
+    autoTable(doc, {
+      startY: 32,
+      head,
+      body,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 8, cellPadding: 3 }
+    });
+
+    doc.save("Relatorio_Unidades.pdf");
   };
 
   useEffect(() => {
@@ -402,6 +437,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
                     onChange={e => setBusca(e.target.value)}
                   />
                 </div>
+                <button 
+                  onClick={handlePrintUnidades}
+                  className="h-12 px-6 bg-slate-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-xl"
+                >
+                  <Printer size={18} /> Imprimir
+                </button>
                 <button 
                   onClick={() => { resetForm(); setIsModalOpen(true); }}
                   className="h-12 px-8 bg-[var(--brand)] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all shadow-xl shadow-[var(--brand)]/20"
