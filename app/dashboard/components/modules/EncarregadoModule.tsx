@@ -2435,7 +2435,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
          onUpdate={fetchEncarregadoData}
        />
 
-       <AdaptiveModal isOpen={!!modalUnidade} onClose={() => setModalUnidade(null)}>
+       <AdaptiveModal isOpen={!!modalUnidade} onClose={() => setModalUnidade(null)} title="Editar Unidade">
           <div className="p-8">
              <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">

@@ -406,6 +406,8 @@ export default function RHModule({ user }: { user: any }) {
                          onDeleteConfigChecklist={deleteChecklistColumn}
                          onUpdateConfigColor={updateChecklistColor}
                          onReorderConfig={reorderChecklistColumn}
+                         onEdit={() => {}}
+                         onDelete={() => {}}
                        />
                     )}
                  </div>
