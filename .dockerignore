@@ -10,3 +10,10 @@ npm-debug.log
 yarn-debug.log
 yarn-error.log
 .DS_Store
+.agent
+scratch
+*.sql
+*.backup
+.eslintignore
+.planning
+
