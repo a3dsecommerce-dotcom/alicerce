@@ -28,7 +28,7 @@ Write-Host "[4/4] Finalizando Deploy..."
 
 # Instrução: Configure o Webhook do Easypanel no seu ambiente local (.env) 
 # ou substitua a URL abaixo para automação completa.
-$WEBHOOK = "http://187.77.233.165:3000/api/deploy/DmciHjDqZNcasKbJ6MZeU41fhQRm6yA9AUQbgJmJfc8934e3"
+$WEBHOOK = "http://187.77.233.165:3000/api/deploy/092269c1ef52ea017af203941cf6255e9ec900b3621905bb"
 
 if ($WEBHOOK -and $WEBHOOK -ne "") {
     try {
