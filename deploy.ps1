@@ -32,10 +32,10 @@ $WEBHOOK = "http://187.77.233.165:3000/api/deploy/092269c1ef52ea017af203941cf625
 
 if ($WEBHOOK -and $WEBHOOK -ne "") {
     try {
-        Invoke-RestMethod -Uri $WEBHOOK -Method Post
-        Write-Host "SUCESSO: Deploy acionado via Webhook."
+        $response = Invoke-WebRequest -Uri $WEBHOOK -Method Get -ErrorAction Stop
+        Write-Host "SUCESSO: Deploy acionado via Webhook. Status: $($response.StatusCode)"
     } catch {
-        Write-Host "AVISO: Webhook falhou ou não respondeu."
+        Write-Host "AVISO: Webhook falhou ou não respondeu. $_"
     }
 } else {
     Write-Host "NOTA: Webhook não configurado. Execute o Rebuild manual no Painel Easypanel."
