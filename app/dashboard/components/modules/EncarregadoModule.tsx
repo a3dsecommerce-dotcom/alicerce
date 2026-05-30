@@ -89,7 +89,19 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     parte_corpo_atingida: '',
     acompanhamento_medico: '',
     real_motivo: '',
-    solucoes_propostas: ''
+    solucoes_propostas: '',
+    endereco_acidente: '',
+    sentido_trajeto: 'CASA_TRABALHO',
+    meio_transporte: '',
+    comprovacao_rota: '',
+    houve_terceiros: false,
+    cnh_boletim: '',
+    condicoes_via: '',
+    atividade_momento: '',
+    epis_usados: [],
+    condicao_insegura_ou_ato: '',
+    data_inicio_sintomas: '',
+    medico_avaliador: ''
   });
    const [epiData, setEpiData] = useState<any>({
      colaborador_nome: '',
@@ -388,7 +400,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     doc.setFontSize(20);
     doc.text("ALICERCE", pageWidth / 2, 15, { align: "center" });
     doc.setFontSize(14);
-    doc.text("INVESTIGACAO DE ACIDENTE DE TRABALHO (CAT)", pageWidth / 2, 25, { align: "center" });
+    doc.text(`INVESTIGACAO DE ACIDENTE DE TRABALHO (${data.tipo_acidente})`, pageWidth / 2, 25, { align: "center" });
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text("DOCUMENTO INTERNO PARA CONTROLE DE SEGURANCA E SAUDE DO TRABALHO", pageWidth / 2, 32, { align: "center" });
@@ -405,32 +417,73 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         ['UNIDADE ATENDIDA:', data.unidade_alocada],
       ],
       theme: 'grid',
-      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // 2. Ocorrência
+    // 2. Ocorrência (Variavel)
+    const ocorrenciaBody = [
+      ['DATA DO ACIDENTE:', data.data_ocorrido],
+    ];
+    if (data.tipo_acidente !== 'DOENCA') {
+      ocorrenciaBody.push(
+        ['HORARIO:', data.horario_ocorrido],
+        ['LOCAL EXATO:', data.local_ocorrido],
+        ['DESCRICAO DO LOCAL:', data.descricao_local],
+        ['ENDERECO DO ACIDENTE:', data.dados_especificos?.endereco_acidente || 'NAO INFORMADO']
+      );
+    } else {
+      ocorrenciaBody.push(
+        ['DATA INICIO SINTOMAS:', data.dados_especificos?.data_inicio_sintomas || 'NAO INFORMADO'],
+        ['MEDICO AVALIADOR:', data.dados_especificos?.medico_avaliador || 'NAO INFORMADO']
+      );
+    }
+
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 8,
       head: [['2. DETALHES DA OCORRENCIA', '']],
-      body: [
-        ['DATA DO ACIDENTE:', data.data_ocorrido],
-        ['HORARIO:', data.horario_ocorrido],
-        ['TIPO:', data.tipo_acidente],
-        ['LOCAL EXATO:', data.local_ocorrido],
-        ['DESCRICAO DO LOCAL:', data.descricao_local],
-      ],
+      body: ocorrenciaBody,
       theme: 'grid',
-      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // 3. Narrativa - Justified Text
+    // Bloco Condicional de Segurança
+    if (data.tipo_acidente === 'TIPICO') {
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 8,
+        head: [['3. ANALISE DE SEGURANCA (ACIDENTE TIPICO)', '']],
+        body: [
+          ['ATIVIDADE NO MOMENTO:', data.dados_especificos?.atividade_momento || 'NAO INFORMADO'],
+          ['EPIs UTILIZADOS:', (data.dados_especificos?.epis_usados || []).join(', ') || 'NENHUM'],
+          ['CONDICAO/ATO INSEGURO:', data.dados_especificos?.condicao_insegura_ou_ato || 'NAO INFORMADO'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+    } else if (data.tipo_acidente === 'TRAJETO') {
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 8,
+        head: [['3. ANALISE DE DESLOCAMENTO (TRAJETO)', '']],
+        body: [
+          ['SENTIDO DO TRAJETO:', data.dados_especificos?.sentido_trajeto || 'NAO INFORMADO'],
+          ['MEIO DE TRANSPORTE:', data.dados_especificos?.meio_transporte || 'NAO INFORMADO'],
+          ['COMPROVACAO DE ROTA:', data.dados_especificos?.comprovacao_rota || 'NAO INFORMADO'],
+          ['CONDICOES DA VIA:', data.dados_especificos?.condicoes_via || 'NAO INFORMADO'],
+          ['HOUVE TERCEIROS?:', data.dados_especificos?.houve_terceiros ? 'SIM' : 'NAO'],
+          ['CNH / B.O.:', data.dados_especificos?.cnh_boletim || 'NAO INFORMADO'],
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 3 }
+      });
+    }
+
+    // Narrativa
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['3. NARRATIVA DA INVESTIGACAO']],
+      head: [['NARRATIVA DA INVESTIGACAO']],
       body: [
         [{ content: 'DESCRICAO DETALHADA DO OCORRIDO:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
         [{ content: data.descricao_ocorrido, styles: { halign: 'justify' } }],
@@ -440,30 +493,28 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         [{ content: data.relato_pessoal || 'NAO INFORMADO', styles: { halign: 'justify' } }],
       ],
       theme: 'grid',
-      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 4 }
     });
 
-    // 4. Analise Tecnica
+    // Analise Tecnica
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['4. ANALISE TECNICA E ACOMPANHAMENTO', '']],
+      head: [['ANALISE TECNICA E ACOMPANHAMENTO', '']],
       body: [
         ['AGENTE CAUSADOR:', data.agente_causador],
         ['PARTE DO CORPO ATINGIDA:', data.parte_corpo_atingida],
         ['ACOMPANHAMENTO ATUAL:', data.acompanhamento_medico],
       ],
       theme: 'grid',
-      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 3 }
     });
 
-    // 5. Conclusao - Justified Text
+    // Conclusao
     autoTable(doc, {
       startY: (doc as any).lastAutoTable.finalY + 8,
-      head: [['5. CONCLUSAO E MEDIDAS PREVENTIVAS']],
+      head: [['CONCLUSAO E MEDIDAS PREVENTIVAS']],
       body: [
         [{ content: 'REAL MOTIVO (CAUSA RAIZ):', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } }],
         [{ content: data.real_motivo, styles: { halign: 'justify' } }],
@@ -471,7 +522,6 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         [{ content: data.solucoes_propostas, styles: { halign: 'justify' } }],
       ],
       theme: 'grid',
-      showHead: 'firstPage',
       headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 4 }
     });
@@ -551,18 +601,63 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   };
 
   const handleSaveCAT = async () => {
-    if (!catForm.colaborador_id || !catForm.descricao_ocorrido) {
-      alert("Por favor, selecione o colaborador e descreva o ocorrido.");
+    if (!catForm.colaborador_id || !catForm.descricao_ocorrido || (catForm.tipo_acidente !== 'DOENCA' && !catForm.endereco_acidente)) {
+      alert("Por favor, preencha o colaborador, endereço e descrição do ocorrido.");
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('investigacao_cat').insert([{
-      ...catForm,
-      encarregado_responsavel_id: user.id
-    }]);
+
+    const dados_especificos = {
+      endereco_acidente: catForm.endereco_acidente,
+      ...(catForm.tipo_acidente === 'TRAJETO' && {
+        sentido_trajeto: catForm.sentido_trajeto,
+        meio_transporte: catForm.meio_transporte,
+        comprovacao_rota: catForm.comprovacao_rota,
+        houve_terceiros: catForm.houve_terceiros,
+        cnh_boletim: catForm.cnh_boletim,
+        condicoes_via: catForm.condicoes_via,
+      }),
+      ...(catForm.tipo_acidente === 'TIPICO' && {
+        atividade_momento: catForm.atividade_momento,
+        epis_usados: catForm.epis_usados,
+        condicao_insegura_ou_ato: catForm.condicao_insegura_ou_ato,
+      }),
+      ...(catForm.tipo_acidente === 'DOENCA' && {
+        data_inicio_sintomas: catForm.data_inicio_sintomas,
+        medico_avaliador: catForm.medico_avaliador,
+      })
+    };
+
+    const payload = {
+      colaborador_id: catForm.colaborador_id,
+      colaborador_nome: catForm.colaborador_nome,
+      colaborador_cpf: catForm.colaborador_cpf,
+      colaborador_cargo: catForm.colaborador_cargo,
+      unidade_alocada: catForm.unidade_alocada,
+      data_ocorrido: catForm.data_ocorrido,
+      horario_ocorrido: catForm.horario_ocorrido,
+      local_ocorrido: catForm.local_ocorrido,
+      descricao_local: catForm.descricao_local,
+      tipo_acidente: catForm.tipo_acidente,
+      descricao_ocorrido: catForm.descricao_ocorrido,
+      relato_pessoal: catForm.relato_pessoal,
+      tem_testemunha: catForm.tem_testemunha,
+      testemunhas_detalhes: catForm.testemunhas_detalhes,
+      acoes_tomadas: catForm.acoes_tomadas,
+      agente_causador: catForm.agente_causador,
+      parte_corpo_atingida: catForm.parte_corpo_atingida,
+      acompanhamento_medico: catForm.acompanhamento_medico,
+      real_motivo: catForm.real_motivo,
+      solucoes_propostas: catForm.solucoes_propostas,
+      encarregado_responsavel_id: user.id,
+      dados_especificos: dados_especificos
+    };
+
+    const { error } = await supabase.from('investigacao_cat').insert([payload]);
+
     if (!error) {
       alert("Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
-      generateCATPDF(catForm);
+      generateCATPDF({ ...payload, dados_especificos });
       setCatForm({
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
         data_ocorrido: new Date().toISOString().split('T')[0],
@@ -579,7 +674,19 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         parte_corpo_atingida: '',
         acompanhamento_medico: '',
         real_motivo: '',
-        solucoes_propostas: ''
+        solucoes_propostas: '',
+        endereco_acidente: '',
+        sentido_trajeto: 'CASA_TRABALHO',
+        meio_transporte: '',
+        comprovacao_rota: '',
+        houve_terceiros: false,
+        cnh_boletim: '',
+        condicoes_via: '',
+        atividade_momento: '',
+        epis_usados: [],
+        condicao_insegura_ou_ato: '',
+        data_inicio_sintomas: '',
+        medico_avaliador: ''
       });
       setActiveTab("MY_UNITS");
     } else alert("Erro ao salvar CAT: " + error.message);
@@ -1045,7 +1152,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                </div>
             </div>
 
-            {/* BLOCO 2: OCORRÊNCIA */}
+            {/* BLOCO 2: OCORRÊNCIA E CONDICIONAIS */}
             <div className="space-y-6">
                <p className="text-[10px] font-black uppercase text-red-600 flex items-center gap-2 italic">
                   <Clock size={14} /> 2. Detalhes da Ocorrência
@@ -1068,16 +1175,140 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                     </select>
                   </div>
                </div>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Local (Unidade/Posto)</label>
-                    <input className="input-field w-full !h-14 font-black" placeholder="Onde exatamente?" value={catForm.local_ocorrido} onChange={e => setCatForm({...catForm, local_ocorrido: e.target.value.toUpperCase()})} />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição do Local</label>
-                    <input className="input-field w-full !h-14 font-black" placeholder="Ex: Cozinha, Pátio, Escada Norte" value={catForm.descricao_local} onChange={e => setCatForm({...catForm, descricao_local: e.target.value.toUpperCase()})} />
-                  </div>
-               </div>
+
+               {/* Campos Globais (Exceto Doença) */}
+               {catForm.tipo_acidente !== 'DOENCA' && (
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Local (Unidade/Posto)</label>
+                      <input className="input-field w-full !h-14 font-black" placeholder="Onde exatamente?" value={catForm.local_ocorrido} onChange={e => setCatForm({...catForm, local_ocorrido: e.target.value.toUpperCase()})} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição do Local</label>
+                      <input className="input-field w-full !h-14 font-black" placeholder="Ex: Cozinha, Pátio, Escada Norte" value={catForm.descricao_local} onChange={e => setCatForm({...catForm, descricao_local: e.target.value.toUpperCase()})} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black uppercase text-red-500 mb-2 block">* Endereço da Ocorrência</label>
+                      <input className="input-field w-full !h-14 font-black border-red-200 focus:border-red-500" placeholder="Rua, Número, Bairro, Cidade..." value={catForm.endereco_acidente} onChange={e => setCatForm({...catForm, endereco_acidente: e.target.value.toUpperCase()})} />
+                    </div>
+                 </div>
+               )}
+
+               {/* Condicionais por Tipo */}
+               {catForm.tipo_acidente === 'TRAJETO' && (
+                 <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-6 mt-6">
+                    <h4 className="text-[10px] font-black uppercase text-slate-500 italic mb-4">Informações Específicas: Acidente de Trajeto</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Sentido do Trajeto</label>
+                          <select className="input-field w-full !h-12 font-black" value={catForm.sentido_trajeto} onChange={e => setCatForm({...catForm, sentido_trajeto: e.target.value})}>
+                            <option value="CASA_TRABALHO">CASA &rarr; TRABALHO</option>
+                            <option value="TRABALHO_CASA">TRABALHO &rarr; CASA</option>
+                          </select>
+                       </div>
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Meio de Transporte</label>
+                          <input className="input-field w-full !h-12 font-black" placeholder="Ônibus, Moto, Carro, A Pé..." value={catForm.meio_transporte} onChange={e => setCatForm({...catForm, meio_transporte: e.target.value.toUpperCase()})} />
+                       </div>
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Estava na rota habitual?</label>
+                          <select className="input-field w-full !h-12 font-black" value={catForm.comprovacao_rota} onChange={e => setCatForm({...catForm, comprovacao_rota: e.target.value})}>
+                            <option value="">Selecione...</option>
+                            <option value="SIM">SIM, ROTA PADRÃO</option>
+                            <option value="NAO_DESVIO">NÃO, FEZ DESVIO (Motivo Pessoal)</option>
+                            <option value="NAO_FORCA_MAIOR">NÃO, DESVIO POR FORÇA MAIOR (Trânsito, Obra)</option>
+                          </select>
+                       </div>
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Condições da Via / Clima</label>
+                          <input className="input-field w-full !h-12 font-black" placeholder="Ex: Chovendo, buraco, pista escorregadia" value={catForm.condicoes_via} onChange={e => setCatForm({...catForm, condicoes_via: e.target.value.toUpperCase()})} />
+                       </div>
+                       <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Houve envolvimento de terceiros?</label>
+                          <button 
+                            onClick={() => setCatForm({...catForm, houve_terceiros: !catForm.houve_terceiros})}
+                            className={`w-32 py-3 rounded-xl text-[10px] font-black uppercase transition-all ${catForm.houve_terceiros ? 'bg-orange-500 text-white shadow-md' : 'bg-slate-200 text-slate-500'}`}
+                          >
+                            {catForm.houve_terceiros ? 'SIM (COLISÃO)' : 'NÃO'}
+                          </button>
+                       </div>
+                       {catForm.houve_terceiros && (
+                         <div>
+                            <label className="text-[10px] font-black uppercase text-orange-600 mb-2 block">Número B.O. / CNH Envolvido</label>
+                            <input className="input-field w-full !h-12 font-black border-orange-200" placeholder="Dados do B.O. ou do outro condutor..." value={catForm.cnh_boletim} onChange={e => setCatForm({...catForm, cnh_boletim: e.target.value.toUpperCase()})} />
+                         </div>
+                       )}
+                    </div>
+                 </div>
+               )}
+
+               {catForm.tipo_acidente === 'TIPICO' && (
+                 <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-6 mt-6">
+                    <h4 className="text-[10px] font-black uppercase text-slate-500 italic mb-4">Informações Específicas: Acidente Típico</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div className="md:col-span-2">
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Atividade sendo executada no momento</label>
+                          <input className="input-field w-full !h-12 font-black" placeholder="Ex: Limpeza de vidros, corte de carne, descarregando caminhão..." value={catForm.atividade_momento} onChange={e => setCatForm({...catForm, atividade_momento: e.target.value.toUpperCase()})} />
+                       </div>
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">EPIs Sendo Utilizados (Dinâmico)</label>
+                          <div className="relative">
+                            <select 
+                              className="input-field w-full !h-12 font-black" 
+                              onChange={e => {
+                                if (e.target.value && !catForm.epis_usados.includes(e.target.value)) {
+                                  setCatForm({...catForm, epis_usados: [...catForm.epis_usados, e.target.value]});
+                                }
+                                e.target.value = "";
+                              }}
+                            >
+                              <option value="">+ Selecionar EPI do Almoxarifado</option>
+                              {estoqueEpi.map((item: any) => (
+                                <option key={item.id} value={item.item}>{item.item}</option>
+                              ))}
+                              <option value="NENHUM">NENHUM EPI UTILIZADO</option>
+                            </select>
+                          </div>
+                          {catForm.epis_usados.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-3">
+                              {catForm.epis_usados.map((epi: string, idx: number) => (
+                                <div key={idx} className="bg-blue-100 text-blue-700 text-[9px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-2">
+                                  {epi}
+                                  <button onClick={() => setCatForm({...catForm, epis_usados: catForm.epis_usados.filter((_: any, i: number) => i !== idx)})} className="hover:text-red-500">&times;</button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                       </div>
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Condição Insegura ou Ato Inseguro?</label>
+                          <select className="input-field w-full !h-12 font-black" value={catForm.condicao_insegura_ou_ato} onChange={e => setCatForm({...catForm, condicao_insegura_ou_ato: e.target.value})}>
+                            <option value="">Selecione a análise preliminar...</option>
+                            <option value="ATO_INSEGURO">ATO INSEGURO (Falha do Colaborador)</option>
+                            <option value="CONDICAO_INSEGURA">CONDIÇÃO INSEGURA (Falha do Ambiente/Equipamento)</option>
+                            <option value="AMBOS">AMBOS (Ato + Condição)</option>
+                            <option value="FATALIDADE_IMPREVISIVEL">FATALIDADE IMPREVISÍVEL</option>
+                          </select>
+                       </div>
+                    </div>
+                 </div>
+               )}
+
+               {catForm.tipo_acidente === 'DOENCA' && (
+                 <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-6 mt-6">
+                    <h4 className="text-[10px] font-black uppercase text-slate-500 italic mb-4">Informações Específicas: Doença Ocupacional</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Data de Início dos Sintomas (Aproximada)</label>
+                          <input type="date" className="input-field w-full !h-12 font-black" value={catForm.data_inicio_sintomas} onChange={e => setCatForm({...catForm, data_inicio_sintomas: e.target.value})} />
+                       </div>
+                       <div>
+                          <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Médico / Clínica que realizou a avaliação inicial</label>
+                          <input className="input-field w-full !h-12 font-black" placeholder="Nome do Médico ou Hospital..." value={catForm.medico_avaliador} onChange={e => setCatForm({...catForm, medico_avaliador: e.target.value.toUpperCase()})} />
+                       </div>
+                    </div>
+                 </div>
+               )}
             </div>
 
             {/* BLOCO 3: NARRATIVA E TESTEMUNHAS */}
