@@ -13,17 +13,18 @@ import QuickActions from "./components/QuickActions";
 import dynamic from "next/dynamic";
 import DevImpersonator from "./components/DevImpersonator";
 
-import RHModule from "./components/modules/RHModule";
-import GerenciaModule from "./components/modules/GerenciaModule";
-import OperacionalModule from "./components/modules/OperacionalModule";
-import ComprasModule from "./components/modules/ComprasModule";
-import ComunicacaoModule from "./components/modules/ComunicacaoModule";
-import AlmoxarifadoModule from "./components/modules/AlmoxarifadoModule";
-import ConfiguracoesModule from "./components/modules/ConfiguracoesModule";
-import EncarregadoModule from "./components/modules/EncarregadoModule";
-import OcorrenciasModule from "./components/modules/OcorrenciasModule";
-import ManualModule from "./components/modules/ManualModule";
-import DiretorModule from "./components/modules/DiretorModule";
+// Dynamic imports: cada módulo é carregado sob demanda quando o usuário acessa a aba
+const RHModule = dynamic(() => import("./components/modules/RHModule"), { ssr: false });
+const GerenciaModule = dynamic(() => import("./components/modules/GerenciaModule"), { ssr: false });
+const OperacionalModule = dynamic(() => import("./components/modules/OperacionalModule"), { ssr: false });
+const ComprasModule = dynamic(() => import("./components/modules/ComprasModule"), { ssr: false });
+const ComunicacaoModule = dynamic(() => import("./components/modules/ComunicacaoModule"), { ssr: false });
+const AlmoxarifadoModule = dynamic(() => import("./components/modules/AlmoxarifadoModule"), { ssr: false });
+const ConfiguracoesModule = dynamic(() => import("./components/modules/ConfiguracoesModule"), { ssr: false });
+const EncarregadoModule = dynamic(() => import("./components/modules/EncarregadoModule"), { ssr: false });
+const OcorrenciasModule = dynamic(() => import("./components/modules/OcorrenciasModule"), { ssr: false });
+const ManualModule = dynamic(() => import("./components/modules/ManualModule"), { ssr: false });
+const DiretorModule = dynamic(() => import("./components/modules/DiretorModule"), { ssr: false });
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
   { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "GERENTE", "GERENCIA", "ENCARREGADO"] },
