@@ -75,16 +75,69 @@ export function useRHData(user: any) {
 
       // 5. Fetch Extras e Faltas
       const { data: informativos } = await supabase.from('informativos_operacionais').select('*').order('data', { ascending: false });
+      
+      // 6. Fetch Solicitações de Volante (Diretores) — faltas reportadas por diretores
+      const { data: solicitacoesVolante } = await supabase
+        .from('solicitacoes_volante')
+        .select('*')
+        .in('motivo', ['FALTA', 'ATESTADO'])
+        .order('created_at', { ascending: false });
+
       if (informativos) {
         setExtras(informativos.filter(i => i.tipo === 'EXTRA'));
-        setFaltas(informativos.filter(i => i.tipo === 'FALTA'));
+        
+        // UNIFICAÇÃO DE FALTAS: 3 fontes convergem aqui
+        const faltasDiretas = informativos
+          .filter(i => i.tipo === 'FALTA')
+          .map(f => ({ ...f, _origem: 'ENCARREGADO' as const }));
+        
+        const faltasDeExtras = informativos
+          .filter(i => i.tipo === 'EXTRA' && i.colaborador_ausente_id)
+          .map(e => ({
+            id: e.id + '_ausente',
+            _id_original: e.id,
+            data: e.data,
+            data_abertura: e.data_abertura || e.created_at,
+            unidade: e.unidade,
+            colaborador_ausente_id: e.colaborador_ausente_id,
+            colaborador_ausente_nome: e.colaborador_ausente_nome,
+            colaborador_substituto_nome: e.colaborador_substituto_nome,
+            tem_atestado: false,
+            justificada: false,
+            sugestao_punicao: null,
+            observacoes: `Substituído(a) por ${e.colaborador_substituto_nome || 'volante'}`,
+            criado_por_nome: e.criado_por_nome,
+            _origem: 'EXTRA' as const,
+            _readonly: true,
+          }));
+
+        const faltasDeDiretores = (solicitacoesVolante || []).map(s => ({
+          id: 'dir_' + s.id,
+          _id_original: s.id,
+          data: s.data_necessidade || s.created_at?.split('T')[0],
+          data_abertura: s.created_at,
+          unidade: s.unidade_nome,
+          colaborador_ausente_id: null,
+          colaborador_ausente_nome: s.colaborador_alvo || 'Não informado',
+          tem_atestado: s.motivo === 'ATESTADO',
+          dias_atestado: s.dias_afastamento,
+          justificada: s.motivo === 'ATESTADO',
+          sugestao_punicao: null,
+          observacoes: `Volante solicitado pelo diretor — ${s.motivo}`,
+          criado_por_nome: s.solicitante_nome,
+          _origem: 'DIRETOR' as const,
+          _readonly: true,
+        }));
+
+        setFaltas([...faltasDiretas, ...faltasDeExtras, ...faltasDeDiretores]
+          .sort((a, b) => new Date(b.data || 0).getTime() - new Date(a.data || 0).getTime()));
       }
 
-      // 6. Fetch Volantes
+      // 7. Fetch Volantes
       const { data: volantesDb } = await supabase.from('escala_volantes').select('*').order('data', { ascending: false });
       if (volantesDb) setVolantes(volantesDb);
 
-      // 7. Fetch Requisições de Volantes
+      // 8. Fetch Requisições de Volantes
       const { data: reqVolantesDb } = await supabase.from('requisicoes_volantes').select('*').order('created_at', { ascending: false });
       if (reqVolantesDb) setRequisicoesVolantes(reqVolantesDb);
 
