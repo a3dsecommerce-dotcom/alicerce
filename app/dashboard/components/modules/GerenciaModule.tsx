@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, ClipboardList, ShieldAlert, Trophy, Target, Calculator, ArrowUpRight, Shield, Truck, Database,
-  Building2, Plus, X, Save, Edit2, Trash2, MapPin, Users, Check, Settings, Search, RefreshCw, ChevronDown, LogOut, Printer
+  Building2, Plus, X, Save, Edit2, Trash2, MapPin, Users, Check, Settings, Search, RefreshCw, ChevronDown, LogOut, Printer, UserX
 } from "lucide-react";
 import { useTransferencias } from "@/hooks/useTransferencias";
 import TransferenciasList from "./encarregado/TransferenciasList";
@@ -21,6 +21,7 @@ import CotasManager from "./gerencia/CotasManager";
 import QuadroVagas from "./rh/QuadroVagas";
 import EquipesPorUnidade from "./gerencia/EquipesPorUnidade";
 import AdvertenciasList from "./rh/AdvertenciasList";
+import DemissoesManager from "./gerencia/DemissoesManager";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -32,7 +33,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     selectedUnidade, setSelectedUnidade
   } = useGerenciaData(user);
   const { transferencias, analisarGerencia } = useTransferencias(user);
-  const [activeTab, setActiveTab] = useState<"VISAO" | "EQUIPES" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "EQUIPES" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "DEMISSOES">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -349,6 +350,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               <ShieldAlert size={14} /> Advertências
             </button>
             <button 
+              onClick={() => setActiveTab("DEMISSOES")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DEMISSOES" ? "bg-red-600 text-white shadow-lg shadow-red-600/20" : "text-red-500 hover:bg-red-50 dark:hover:bg-red-950"}`}
+            >
+              <UserX size={14} /> Demissões
+            </button>
+            <button 
               onClick={() => setActiveTab("DB")}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DB" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
             >
@@ -395,6 +402,10 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
 
         {activeTab === "ADVERTENCIAS" && (
            <AdvertenciasList user={user} />
+        )}
+
+        {activeTab === "DEMISSOES" && (
+           <DemissoesManager user={user} />
         )}
 
         {activeTab === "DENUNCIAS" && (
