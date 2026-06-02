@@ -13,6 +13,7 @@ import AdaptiveModal from "@/components/ui/AdaptiveModal";
 type Tab = "EQUIPE" | "VOLANTE" | "DEMANDAS";
 
 export default function DiretorModule({ user }: { user: any }) {
+  const isManagement = user.nivel_acesso >= 3 || ["DEV", "ADMIN", "GERENTE", "GERENCIA"].includes(user.role);
   const [activeTab, setActiveTab] = useState<Tab>("EQUIPE");
   const [loading, setLoading] = useState(true);
   const [unidade, setUnidade] = useState<any>(null);
@@ -22,6 +23,7 @@ export default function DiretorModule({ user }: { user: any }) {
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [solicitacoesVolante, setSolicitacoesVolante] = useState<any[]>([]);
   const [busca, setBusca] = useState("");
+  const [selectedSec, setSelectedSec] = useState<string>("TODAS");
 
   // Modais
   const [modalHorario, setModalHorario] = useState<any>(null);
@@ -37,7 +39,6 @@ export default function DiretorModule({ user }: { user: any }) {
   const fetchData = React.useCallback(async (targetUnitId?: string) => {
     try {
       setLoading(true);
-      const isManagement = user.nivel_acesso >= 3 || ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA'].includes(user.role);
 
       const { data: listUnits } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
       setAllUnits(listUnits || []);
@@ -63,8 +64,10 @@ export default function DiretorModule({ user }: { user: any }) {
         unitData = unitByPhone || unitByName;
       }
 
-      if (!unitData && !isManagement) {
-        if (user.unidade_alocacao) {
+      if (!unitData) {
+        if (isManagement && listUnits && listUnits.length > 0) {
+          unitData = listUnits[0];
+        } else if (user.unidade_alocacao) {
           unitData = { nome: user.unidade_alocacao, id: "pending", is_placeholder: true };
         } else {
           setLoading(false);
@@ -214,6 +217,10 @@ export default function DiretorModule({ user }: { user: any }) {
     }
   };
 
+  const filteredUnits = selectedSec === "TODAS"
+    ? allUnits
+    : allUnits.filter(u => u.secretaria === selectedSec);
+
   if (loading) return <TableSkeleton />;
   
   if (!unidade) return (
@@ -254,23 +261,52 @@ export default function DiretorModule({ user }: { user: any }) {
               </div>
 
               <div className="flex flex-col gap-4 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm max-w-2xl">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center">
-                    <Building2 size={24} className="text-white" />
+                {isManagement && (
+                  <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-400/20 rounded-xl flex items-center gap-2">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-300">
+                      🔍 MODO VISUALIZAÇÃO GESTOR: Simulando visão do Diretor
+                    </span>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Unidade Sob Supervisão</p>
-                    <h3 className="text-xl font-black text-white uppercase italic">{unidade.nome}</h3>
+                )}
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center shrink-0">
+                      <Building2 size={24} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Unidade Sob Supervisão</p>
+                      <h3 className="text-xl font-black text-white uppercase italic leading-tight">{unidade.nome}</h3>
+                    </div>
                   </div>
                   
-                  {(user.nivel_acesso >= 3 || user.role === 'DEV') && (
-                    <div className="ml-auto">
+                  {isManagement && (
+                    <div className="flex flex-wrap items-center gap-2 ml-auto w-full md:w-auto">
                       <select 
-                        className="bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase text-white px-4 py-2 outline-none"
+                        className="bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase text-white px-3 py-2 outline-none cursor-pointer hover:bg-white/20 transition-all"
+                        value={selectedSec}
+                        onChange={(e) => {
+                          const sec = e.target.value;
+                          setSelectedSec(sec);
+                          const filtered = sec === "TODAS" ? allUnits : allUnits.filter(u => u.secretaria === sec);
+                          if (filtered.length > 0) {
+                            fetchData(filtered[0].id);
+                          }
+                        }}
+                      >
+                        <option value="TODAS" className="bg-slate-900">TODAS SECRETARIAS</option>
+                        <option value="SEMED" className="bg-slate-900">SEMED (Educação)</option>
+                        <option value="SEMSA" className="bg-slate-900">SEMSA (Saúde)</option>
+                        <option value="SEMAD" className="bg-slate-900">SEMAD (Administração)</option>
+                        <option value="SEMAG" className="bg-slate-900">SEMAG</option>
+                      </select>
+
+                      <select 
+                        className="bg-white/10 border border-white/20 rounded-xl text-[10px] font-black uppercase text-white px-3 py-2 outline-none cursor-pointer hover:bg-white/20 transition-all max-w-[200px]"
                         value={unidade.id}
                         onChange={(e) => fetchData(e.target.value)}
                       >
-                        {allUnits.map(u => (
+                        {filteredUnits.map(u => (
                           <option key={u.id} value={u.id} className="bg-slate-900">{u.nome}</option>
                         ))}
                       </select>

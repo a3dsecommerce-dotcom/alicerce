@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Truck, Calendar, MapPin, User, FileText, Plus, X, Clock, Save, Trash2, TrendingUp, CheckCircle } from "lucide-react";
+import { Truck, Calendar, MapPin, User, FileText, Plus, X, Clock, Save, Trash2, TrendingUp, CheckCircle, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
@@ -37,6 +37,93 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     observacoes: "",
     detalhes: [] as any[]
   });
+
+  const [modalRequisicao, setModalRequisicao] = useState<any>(null);
+  const [detalhesUnidade, setDetalhesUnidade] = useState<any>(null);
+  const [loadingUnidade, setLoadingUnidade] = useState(false);
+  const [selectedApproveDate, setSelectedApproveDate] = useState("");
+  const [volanteAprovadoId, setVolanteAprovadoId] = useState("");
+  const [volanteAprovadoNome, setVolanteAprovadoNome] = useState("");
+  const [buscaVolanteAprovado, setBuscaVolanteAprovado] = useState("");
+  const [volantesAprovadosSugeridos, setVolantesAprovadosSugeridos] = useState<any[]>([]);
+
+  const handleVerRequisicao = (req: any) => {
+    setModalRequisicao(req);
+    setSelectedApproveDate(req.data_inicio);
+    setVolanteAprovadoId("");
+    setVolanteAprovadoNome("");
+    setBuscaVolanteAprovado("");
+    fetchUnitData(req.unidade_destino);
+  };
+
+  const fetchUnitData = async (unidadeNome: string) => {
+    setLoadingUnidade(true);
+    setDetalhesUnidade(null);
+    const { data } = await supabase
+      .from('unidades')
+      .select('*')
+      .eq('nome', unidadeNome)
+      .single();
+    if (data) setDetalhesUnidade(data);
+    setLoadingUnidade(false);
+  };
+
+  const searchVolantesAprovados = async (val: string) => {
+    setBuscaVolanteAprovado(val);
+    if (val.length > 1) {
+      const { data } = await supabase.from('usuarios').select('*').ilike('nome', `%${val}%`).limit(5);
+      if (data) setVolantesAprovadosSugeridos(data);
+    } else {
+      setVolantesAprovadosSugeridos([]);
+    }
+  };
+
+  const handleAprovarDia = async () => {
+    if (!volanteAprovadoId) return toast.error("Selecione um colaborador volante");
+    if (!selectedApproveDate) return toast.error("Selecione a data de aprovação");
+
+    setLoading(true);
+    
+    // 1. Criar Escala de Volante
+    const { error: errEscala } = await supabase.from('escala_volantes').insert([{
+      colaborador_id: volanteAprovadoId,
+      colaborador_nome: volanteAprovadoNome,
+      data: selectedApproveDate,
+      detalhes_visitas: [{ 
+        unidade: modalRequisicao.unidade_destino, 
+        entrada: "07:00", 
+        saida: "17:00", 
+        motivo: `Subst: ${modalRequisicao.colaborador_substituido_nome || 'Colaborador'} (${modalRequisicao.funcao_substituicao || '—'})` 
+      }],
+      observacoes: `Aprovado via Solicitação. Subst: ${modalRequisicao.colaborador_substituido_nome || '—'}. Atestado: ${modalRequisicao.is_atestado ? 'Sim' : 'Não'}`,
+      criado_por_id: user.id,
+      criado_por_nome: user.name || user.nome
+    }]);
+
+    if (errEscala) {
+      toast.error("Erro ao gerar escala: " + errEscala.message);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Atualizar requisição
+    const alocados = modalRequisicao.colaboradores_alocados || [];
+    const { error: errReq } = await supabase.from('requisicoes_volantes')
+      .update({ 
+        status: 'EM_CURSO', 
+        colaboradores_alocados: [...alocados, volanteAprovadoId] 
+       })
+      .eq('id', modalRequisicao.id);
+
+    if (!errReq) {
+      toast.success("Dia aprovado e volante escalado com sucesso!");
+      setModalRequisicao(null);
+      refresh();
+    } else {
+      toast.error("Erro ao atualizar requisição.");
+    }
+    setLoading(false);
+  };
 
   const handleEdit = (v: any) => {
     setEditingId(v.id);
@@ -247,17 +334,10 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                    </div>
                    {canEdit && (
                      <button 
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          data: format(new Date(req.data_inicio), "yyyy-MM-dd"),
-                          detalhes: [{ unidade: req.unidade_destino, entrada: "08:00", saida: "17:00", motivo: req.motivo }]
-                        });
-                        setModalNovo(true);
-                      }}
+                      onClick={() => handleVerRequisicao(req)}
                       className="h-10 px-4 bg-slate-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all"
                      >
-                       Atender Pedido
+                       Ver Solicitação
                      </button>
                    )}
                 </div>
@@ -527,6 +607,195 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             )}
           </div>
         </div>
+      </AdaptiveModal>
+
+      {/* Modal Detalhado de Requisição e Aprovação Diária */}
+      <AdaptiveModal
+        isOpen={!!modalRequisicao}
+        onClose={() => setModalRequisicao(null)}
+        title="Detalhes da Solicitação de Volante"
+        width="650px"
+      >
+        {modalRequisicao && (
+          <div className="p-8 space-y-8 max-h-[85vh] overflow-y-auto custom-scrollbar">
+            
+            {/* Header info */}
+            <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
+                {(modalRequisicao.quem_requisitou || 'DIRETORIA').toUpperCase()}
+              </span>
+              <div className="flex items-center gap-2 text-[var(--text-muted)] font-bold text-xs">
+                <Calendar size={14} /> 
+                {format(new Date(modalRequisicao.data_inicio + 'T00:00:00'), "dd/MM/yyyy")} 
+                {modalRequisicao.data_fim ? ` até ${format(new Date(modalRequisicao.data_fim + 'T00:00:00'), "dd/MM/yyyy")}` : ''}
+              </div>
+            </div>
+
+            {/* School & Target info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Escola / Unidade</p>
+                <p className="text-sm font-black uppercase text-[var(--text-primary)] flex items-center gap-1.5">
+                  <Building2 size={14} className="text-indigo-600" /> {modalRequisicao.unidade_destino}
+                </p>
+              </div>
+
+              <div className="p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Colaborador Substituído</p>
+                <p className="text-sm font-black uppercase text-[var(--text-primary)] flex items-center gap-1.5">
+                  <User size={14} className="text-indigo-600" /> {modalRequisicao.colaborador_substituido_nome || 'NÃO INFORMADO'}
+                </p>
+              </div>
+            </div>
+
+            {/* Atestado info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Motivo / Tipo</p>
+                <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border ${modalRequisicao.is_atestado ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                  {modalRequisicao.is_atestado ? 'Atestado Médico' : 'Falta comum / Outro'}
+                </span>
+              </div>
+
+              <div className="p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Função / Cargo</p>
+                <p className="text-xs font-black uppercase text-[var(--text-primary)]">
+                  {modalRequisicao.funcao_substituicao || modalRequisicao.motivo || 'ASG'}
+                </p>
+              </div>
+            </div>
+
+            {/* MINI RELATÓRIO AUTOMÁTICO */}
+            <div className="space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">📊 Mini Relatório Automático da Unidade</h4>
+              
+              {loadingUnidade ? (
+                <div className="p-6 text-center text-xs font-bold text-[var(--text-muted)]">Carregando métricas da escola...</div>
+              ) : detalhesUnidade ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900 rounded-3xl">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">Alunos Matriculados</p>
+                    <p className="text-lg font-black text-slate-800 dark:text-slate-100">{detalhesUnidade.quantidade_alunos || 0}</p>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">Regime Operacional</p>
+                    <p className="text-xs font-black uppercase text-slate-800 dark:text-slate-100">
+                      {detalhesUnidade.is_integral ? 'Integral ☀️' : 'Parcial 🌤️'}
+                    </p>
+                  </div>
+
+                  {/* Detalhes de ASG ou Cozinha */}
+                  {(() => {
+                    const func = (modalRequisicao.funcao_substituicao || "").toUpperCase();
+                    if (func.includes("ASG")) {
+                      return (
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">Grau Insalubridade</p>
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-lg text-[9px] font-black uppercase">
+                            {modalRequisicao.asg_porcentagem || 20}%
+                          </span>
+                        </div>
+                      );
+                    } else if (func.includes("COZINHA") || func.includes("COZINHEIRA")) {
+                      const totalCoz = (detalhesUnidade.quantidade_cozinheiras || 0) + (detalhesUnidade.tem_cozinheira_efetiva ? 1 : 0);
+                      const media = totalCoz > 0 ? Math.round(detalhesUnidade.quantidade_alunos / totalCoz) : detalhesUnidade.quantidade_alunos;
+                      return (
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">Alunos por Cozinheira</p>
+                          <p className="text-xs font-black text-slate-800 dark:text-slate-100">
+                            {media} / Cozinheira <span className="text-[8px] text-[var(--text-muted)]">({totalCoz} total)</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-indigo-600 uppercase tracking-widest">Responsável</p>
+                        <p className="text-[10px] font-bold text-slate-800 dark:text-slate-100 truncate">{detalhesUnidade.responsavel_nome || '—'}</p>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="p-4 bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl text-[10px] font-bold text-center">
+                  Não foi possível obter dados operacionais automáticos da escola "{modalRequisicao.unidade_destino}".
+                </div>
+              )}
+            </div>
+
+            {/* SEÇÃO DE APROVAÇÃO E ALOCAÇÃO DIÁRIA */}
+            <div className="border-t border-[var(--border)] pt-6 space-y-6">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">⚡ Aprovação e Escala Diária</h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Selecionar Dia */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Selecionar Data a Aprovar</label>
+                  <input 
+                    type="date" 
+                    className="input-field h-12 font-bold" 
+                    value={selectedApproveDate}
+                    min={modalRequisicao.data_inicio}
+                    max={modalRequisicao.data_fim || modalRequisicao.data_inicio}
+                    onChange={(e) => setSelectedApproveDate(e.target.value)} 
+                  />
+                  <p className="text-[8px] text-[var(--text-muted)] uppercase font-bold mt-1">Os dias são dinâmicos para diversificar o envio de volantes.</p>
+                </div>
+
+                {/* Selecionar Volante */}
+                <div className="space-y-2 relative">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Colaborador Volante</label>
+                  <input 
+                    className="input-field h-12 font-bold" 
+                    placeholder="Digitar nome do volante..." 
+                    value={buscaVolanteAprovado}
+                    onChange={(e) => searchVolantesAprovados(e.target.value)}
+                  />
+                  {volantesAprovadosSugeridos.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[120] overflow-hidden">
+                      {volantesAprovadosSugeridos.map(v => (
+                        <button 
+                          key={v.id} 
+                          onClick={() => { 
+                            setVolanteAprovadoId(v.id); 
+                            setVolanteAprovadoNome(v.nome); 
+                            setBuscaVolanteAprovado(v.nome); 
+                            setVolantesAprovadosSugeridos([]); 
+                          }} 
+                          className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none"
+                        >
+                          <p className="text-[10px] font-black uppercase text-indigo-900">{v.nome}</p>
+                          <p className="text-[8px] font-bold text-slate-500 uppercase">{v.cargo} • {v.unidade_alocacao || 'OPERAÇÃO'}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {volanteAprovadoNome && (
+                    <p className="text-[9px] text-emerald-600 font-black uppercase mt-1">Selecionado: {volanteAprovadoNome}</p>
+                  )}
+                </div>
+
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button className="flex-1 btn-ghost h-14 text-[10px] font-black uppercase" onClick={() => setModalRequisicao(null)}>
+                  Voltar
+                </button>
+                <button 
+                  className="flex-[2] btn-brand !bg-emerald-600 hover:!bg-emerald-700 shadow-xl shadow-emerald-600/20 h-14 text-[10px] font-black uppercase"
+                  onClick={handleAprovarDia}
+                  disabled={loading}
+                >
+                  {loading ? 'Aprovando...' : 'Confirmar & Aprovar Dia'}
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        )}
       </AdaptiveModal>
     </div>
   );

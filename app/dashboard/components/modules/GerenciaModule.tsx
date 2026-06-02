@@ -22,6 +22,7 @@ import QuadroVagas from "./rh/QuadroVagas";
 import EquipesPorUnidade from "./gerencia/EquipesPorUnidade";
 import AdvertenciasList from "./rh/AdvertenciasList";
 import DemissoesManager from "./gerencia/DemissoesManager";
+import DiretorModule from "./DiretorModule";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -33,7 +34,7 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
     selectedUnidade, setSelectedUnidade
   } = useGerenciaData(user);
   const { transferencias, analisarGerencia } = useTransferencias(user);
-  const [activeTab, setActiveTab] = useState<"VISAO" | "EQUIPES" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "DEMISSOES">((initialTab?.toUpperCase() as any) || "VISAO");
+  const [activeTab, setActiveTab] = useState<"VISAO" | "EQUIPES" | "CONFIG" | "DB" | "ROTAS" | "AUDITORIA" | "VOLANTES" | "MISSOES" | "DENUNCIAS" | "COTAS" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "DEMISSOES" | "DIRETOR">((initialTab?.toUpperCase() as any) || "VISAO");
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -308,6 +309,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               <Truck size={14} /> Unidades
             </button>
             <button 
+              onClick={() => setActiveTab("DIRETOR")}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "DIRETOR" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
+            >
+              <Building2 size={14} /> Portal Diretor
+            </button>
+            <button 
               onClick={() => setActiveTab("MISSOES")}
               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === "MISSOES" ? "bg-[var(--brand)] text-white shadow-lg shadow-[var(--brand)]/20" : "text-[var(--text-muted)] hover:bg-[var(--bg-card-hover)]"}`}
             >
@@ -486,6 +493,12 @@ export default function GerenciaModule({ user, initialTab }: { user: any, initia
               refresh={refresh}
               user={user}
             />
+          </div>
+        )}
+
+        {activeTab === "DIRETOR" && (
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+            <DiretorModule user={user} />
           </div>
         )}
 
