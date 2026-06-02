@@ -1,10 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Clock, Calendar, MapPin, User, FileText, Download, AlertCircle, Trash2, ShieldAlert, Printer, UserX, ArrowUpRight, Building2 } from "lucide-react";
+import { Calendar, MapPin, FileText, AlertCircle, Trash2, ShieldAlert, Printer, ArrowUpRight, Eye } from "lucide-react";
 import { format, isAfter, isBefore, subMonths, setDate } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 interface FaltasListProps {
   faltas: any[];
@@ -20,6 +20,7 @@ const ORIGEM_CONFIG: Record<string, { label: string; color: string; bg: string; 
 export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
   const [selectedCycle, setSelectedCycle] = useState(new Date());
   const [filtroOrigem, setFiltroOrigem] = useState<string>("");
+  const [selecionada, setSelecionada] = useState<any>(null);
 
   // Lógica de Ciclo: 23 do mês anterior até 22 do mês atual
   const getCycleRange = (date: Date) => {
@@ -149,7 +150,11 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
               {filtrados.map((e, idx) => {
                 const origemCfg = ORIGEM_CONFIG[e._origem] || ORIGEM_CONFIG.ENCARREGADO;
                 return (
-                  <tr key={e.id || idx} className="hover:bg-[var(--bg-base)]/30 transition-colors group">
+                  <tr 
+                    key={e.id || idx} 
+                    className="hover:bg-[var(--bg-base)]/30 transition-colors cursor-pointer group"
+                    onClick={() => setSelecionada(e)}
+                  >
                     <td className="p-6 pl-8">
                       <span className="text-sm font-black text-[var(--text-primary)]">
                         {e.data ? format(new Date(e.data), "dd/MM/yyyy") : "—"}
@@ -211,16 +216,24 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
                       )}
                     </td>
                     <td className="p-6 text-right pr-8">
-                      {!e._readonly && onDelete ? (
-                        <button 
-                          onClick={() => onDelete(e.id)}
-                          className="w-10 h-10 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 border border-[var(--border)] transition-all inline-flex items-center justify-center shadow-sm"
+                      <div className="flex gap-2 justify-end items-center">
+                        <button
+                          onClick={(evt) => { evt.stopPropagation(); setSelecionada(e); }}
+                          className="w-10 h-10 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand-alpha)] border border-[var(--border)] transition-all inline-flex items-center justify-center shadow-sm"
+                          title="Ver Detalhes"
                         >
-                          <Trash2 size={16} />
+                          <Eye size={16} />
                         </button>
-                      ) : (
-                        <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase tracking-widest opacity-50">Somente Leitura</span>
-                      )}
+                        {!e._readonly && onDelete ? (
+                          <button 
+                            onClick={(evt) => { evt.stopPropagation(); onDelete(e.id); }}
+                            className="w-10 h-10 rounded-xl bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 border border-[var(--border)] transition-all inline-flex items-center justify-center shadow-sm"
+                            title="Excluir"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -247,6 +260,115 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
           )}
         </div>
       </div>
+
+      {/* Modal de Detalhes da Falta */}
+      <AdaptiveModal 
+        isOpen={!!selecionada} 
+        onClose={() => setSelecionada(null)} 
+        title="Detalhes do Registro de Falta"
+        width="600px"
+      >
+        {selecionada && (
+          <div className="flex flex-col gap-6">
+            <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
+              {(() => {
+                const orig = ORIGEM_CONFIG[selecionada._origem] || ORIGEM_CONFIG.ENCARREGADO;
+                return (
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-[9px] font-black uppercase border ${orig.bg} ${orig.color} ${orig.border}`}>
+                    <span>{orig.icon}</span> {orig.label}
+                  </span>
+                );
+              })()}
+              <div className="flex items-center gap-2 text-[var(--text-muted)] font-bold text-xs">
+                <Calendar size={14} /> {selecionada.data ? format(new Date(selecionada.data), "dd/MM/yyyy") : "—"}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1.5 block">Colaborador Ausente</label>
+              <div className="flex items-center gap-3 p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-black text-sm">
+                  {selecionada.colaborador_ausente_nome?.substring(0, 2).toUpperCase() || "CF"}
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-[var(--text-primary)] uppercase">{selecionada.colaborador_ausente_nome || "NÃO INFORMADO"}</h4>
+                  {selecionada.criado_por_nome && (
+                    <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mt-0.5">
+                      Informado por: {selecionada.criado_por_nome}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-2xl border border-[var(--border)] bg-white/50 dark:bg-black/20">
+                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1 block">Localização / Unidade</label>
+                <div className="flex items-center gap-2 text-sm font-bold text-[var(--text-primary)]">
+                  <MapPin size={16} className="text-red-500" /> {selecionada.unidade || "—"}
+                </div>
+              </div>
+              
+              <div className="p-4 rounded-2xl border border-[var(--border)] bg-white/50 dark:bg-black/20">
+                <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase mb-1 block">Status de Justificativa</label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {selecionada._origem === 'ENCARREGADO' && (
+                    <span className={`px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase ${selecionada.justificada ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {selecionada.justificada ? 'Justificada' : 'Não Justificada'}
+                    </span>
+                  )}
+                  {selecionada.tem_atestado && (
+                    <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase bg-blue-100 text-blue-700 flex items-center gap-1">
+                      <FileText size={10}/> Atestado {selecionada.dias_atestado ? `(${selecionada.dias_atestado}d)` : ''}
+                    </span>
+                  )}
+                  {selecionada._origem === 'EXTRA' && (
+                    <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase bg-blue-100 text-blue-700 flex items-center gap-1">
+                      Substituição Ativa
+                    </span>
+                  )}
+                  {selecionada._origem === 'DIRETOR' && selecionada.justificada && (
+                    <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase bg-amber-100 text-amber-700">
+                      Diretoria
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {selecionada._origem === 'EXTRA' && selecionada.colaborador_substituto_nome && (
+              <div className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900 rounded-2xl">
+                <label className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase mb-1 block">Colaborador Substituto (Extra)</label>
+                <p className="text-xs font-bold text-blue-900 dark:text-blue-300 uppercase flex items-center gap-2">
+                  <ArrowUpRight size={14} /> {selecionada.colaborador_substituto_nome}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase block">Detalhamento / Observações</label>
+              <div className="p-5 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)] text-[0.88rem] text-[var(--text-secondary)] leading-relaxed shadow-inner">
+                {selecionada.observacoes || "Nenhuma observação adicional registrada."}
+              </div>
+            </div>
+
+            {selecionada.sugestao_punicao && (
+              <div>
+                <label className="text-[10px] font-black text-red-600 dark:text-red-400 uppercase mb-2 block tracking-widest">Medida Disciplinar / Punição Sugerida</label>
+                <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-2xl border border-red-100 dark:border-red-900 text-xs font-black text-red-900 dark:text-red-400 flex items-center gap-2">
+                  <ShieldAlert size={16} /> {selecionada.sugestao_punicao}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex gap-4">
+              <button className="w-full btn-brand py-4 font-black uppercase tracking-wider" onClick={() => setSelecionada(null)}>
+                Fechar Detalhes
+              </button>
+            </div>
+          </div>
+        )}
+      </AdaptiveModal>
     </div>
   );
 }
