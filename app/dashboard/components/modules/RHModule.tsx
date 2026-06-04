@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2, Plus, Edit2, Trash2, ShieldAlert
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2, Plus, Edit2, Trash2, ShieldAlert, Activity
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
@@ -26,10 +26,286 @@ import AdvertenciasList from "./rh/AdvertenciasList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "ADMISSAO_RAPIDA";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateChecklistColumn, deleteChecklistColumn, updateChecklistColor, reorderChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
+  const { transferencias, finalizarRH } = useTransferencias(user);
+
+  const [unidades, setUnidades] = useState<any[]>([]);
+  const [cargos, setCargos] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [admissao, setAdmissao] = useState({
+    nome: '',
+    telefone: '',
+    unidade: '',
+    secretaria: '',
+    funcao: '',
+    insalubridade: 'N/A',
+    carga_horaria: '12X36',
+    periodo: 'DIURNO',
+    escala_tipo: 'IMPAR',
+    data_referencia: new Date().toISOString().split('T')[0],
+    salario_base: 0,
+    valor_alimentacao: 0,
+    valor_vale_transporte: 0,
+    horario_entrada: '07:00',
+    horario_saida: '19:00'
+  });
+
+  useEffect(() => {
+    const fetchAdmissaoData = async () => {
+      const { data: units } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
+      if (units) setUnidades(units);
+      const { data: crgs } = await supabase.from('cargos').select('*').order('nome');
+      if (crgs) setCargos(crgs);
+    };
+    fetchAdmissaoData();
+  }, []);
+
+  const handleSalvarAdmissao = async () => {
+    if (!admissao.nome || !admissao.telefone || !admissao.unidade) {
+      toast.error("Por favor, preencha todos os campos obrigatórios (Nome, Telefone e Unidade).");
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase.from('usuarios').insert([{
+      nome: admissao.nome,
+      telefone: admissao.telefone,
+      unidade_alocacao: admissao.unidade,
+      secretaria: admissao.secretaria,
+      status: 'ATIVO',
+      role: 'COLABORADOR',
+      cargo: admissao.funcao,
+      nivel: 1,
+      insalubridade: parseInt(String(admissao.insalubridade).replace(/\D/g, "")) || 0,
+      carga_horaria: admissao.carga_horaria,
+      periodo: admissao.periodo,
+      horario_entrada: admissao.horario_entrada,
+      horario_saida: admissao.horario_saida,
+      escala_tipo: admissao.escala_tipo,
+      data_referencia_escala: admissao.data_referencia,
+      salario_base: admissao.salario_base || 0,
+      valor_alimentacao: admissao.valor_alimentacao || 0,
+      valor_vale_transporte: admissao.valor_vale_transporte || 0,
+      criado_por: user.nome || user.name || "RH"
+    }]);
+
+    if (!error) {
+      toast.success("Colaborador cadastrado e ATIVO no sistema!");
+      setAdmissao({
+        nome: '',
+        telefone: '',
+        unidade: '',
+        secretaria: '',
+        funcao: '',
+        insalubridade: 'N/A',
+        carga_horaria: '12X36',
+        periodo: 'DIURNO',
+        escala_tipo: 'IMPAR',
+        data_referencia: new Date().toISOString().split('T')[0],
+        salario_base: 0,
+        valor_alimentacao: 0,
+        valor_vale_transporte: 0,
+        horario_entrada: '07:00',
+        horario_saida: '19:00'
+      });
+      refresh();
+      setMasterTab("DP");
+    } else {
+      toast.error("Erro ao cadastrar: " + error.message);
+    }
+    setSaving(false);
+  };
+
+  const renderQuickAdmission = () => (
+    <div className="flex flex-col gap-8 animate-fade-in max-w-2xl mx-auto w-full">
+      <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--brand)]/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+        
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">
+            <UserPlus size={24} />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-[var(--text-primary)] uppercase italic">Admissão Rápida</h3>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Cadastro imediato e ativo de colaborador pelo RH</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome Completo</label>
+              <input 
+                className="input-field w-full !h-14 font-bold" 
+                placeholder="Ex: João da Silva Santos" 
+                value={admissao.nome}
+                onChange={e => setAdmissao({...admissao, nome: e.target.value.toUpperCase()})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Cargo / Função</label>
+              <select 
+                className="input-field w-full !h-14 font-bold"
+                value={admissao.funcao}
+                onChange={e => {
+                  const cargoNome = e.target.value;
+                  const info = cargos.find(c => c.nome === cargoNome);
+                  if (info) {
+                    setAdmissao({
+                      ...admissao,
+                      funcao: cargoNome,
+                      salario_base: info.salario_base,
+                      valor_alimentacao: info.valor_alimentacao,
+                      valor_vale_transporte: info.valor_vale_transporte,
+                      insalubridade: info.insalubridade_padrao,
+                      carga_horaria: info.carga_horaria_padrao,
+                      periodo: info.periodo_padrao || 'DIURNO',
+                      escala_tipo: info.escala_padrao || (info.carga_horaria_padrao === '44H' ? 'DIARIO' : 'IMPAR'),
+                      horario_entrada: info.horario_entrada_padrao || '07:00',
+                      horario_saida: info.horario_saida_padrao || '19:00'
+                    });
+                  } else {
+                    setAdmissao({...admissao, funcao: cargoNome});
+                  }
+                }}
+              >
+                <option value="">Selecione o Cargo...</option>
+                {cargos.map(c => <option key={c.id} value={c.nome}>{c.nome}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Telefone / WhatsApp</label>
+              <input 
+                className="input-field w-full !h-14 font-bold" 
+                placeholder="(00) 00000-0000" 
+                value={admissao.telefone}
+                onChange={e => setAdmissao({...admissao, telefone: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade de Alocação</label>
+              <select 
+                className="input-field w-full !h-14 font-bold"
+                value={admissao.unidade}
+                onChange={e => {
+                  const unit = unidades.find(u => u.nome === e.target.value);
+                  setAdmissao({
+                    ...admissao, 
+                    unidade: e.target.value,
+                    secretaria: unit?.secretaria || 'SEMED' 
+                  });
+                }}
+              >
+                <option value="">Selecione o Posto...</option>
+                {unidades.map(u => <option key={u.id} value={u.nome}>{u.nome}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-8 bg-[var(--bg-base)]/30 rounded-2xl border border-[var(--border)]">
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Carga / Período</label>
+              <div className="flex gap-2">
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.carga_horaria}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setAdmissao({...admissao, carga_horaria: val, escala_tipo: val === '44H' ? 'DIARIO' : admissao.escala_tipo});
+                  }}
+                >
+                  <option value="12X36">12X36</option>
+                  <option value="44H">44H (SEM)</option>
+                </select>
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.periodo}
+                  onChange={e => setAdmissao({...admissao, periodo: e.target.value})}
+                >
+                  <option value="DIURNO">DIURNO</option>
+                  <option value="NOTURNO">NOTURNO</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Escala / Insalubridade</label>
+              <div className="flex gap-2">
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.escala_tipo}
+                  disabled={admissao.carga_horaria === '44H'}
+                  onChange={e => setAdmissao({...admissao, escala_tipo: e.target.value})}
+                >
+                  {admissao.carga_horaria === '44H' ? (
+                    <option value="DIARIO">DIARIO / FIXO</option>
+                  ) : (
+                    <>
+                      <option value="PAR">ESCALA PAR</option>
+                      <option value="IMPAR">ESCALA ÍMPAR</option>
+                    </>
+                  )}
+                </select>
+                <select 
+                  className="input-field flex-1 !h-12 font-bold"
+                  value={admissao.insalubridade}
+                  onChange={e => setAdmissao({...admissao, insalubridade: e.target.value})}
+                >
+                  <option value="N/A">N/A</option>
+                  <option value="20%">20%</option>
+                  <option value="40%">40%</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)]">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Secretaria Detectada</p>
+                <p className="text-sm font-black text-[var(--brand)]">{admissao.secretaria || "Aguardando Unidade..."}</p>
+              </div>
+              <div className="text-right">
+                 <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Entrada / Saída</p>
+                 <p className="text-sm font-black text-[var(--text-primary)]">{admissao.horario_entrada} às {admissao.horario_saida}</p>
+              </div>
+            </div>
+            {admissao.carga_horaria === '12X36' && (
+              <div className="pt-4 border-t border-[var(--border)] flex items-center justify-between mt-4">
+                 <p className="text-[9px] font-black text-blue-600 uppercase">Cálculo de Alternância Ativo (Evita erro dia 31/01)</p>
+                 <input 
+                  type="date" 
+                  className="bg-transparent text-[10px] font-black uppercase outline-none" 
+                  value={admissao.data_referencia}
+                  onChange={e => setAdmissao({...admissao, data_referencia: e.target.value})}
+                />
+              </div>
+            )}
+          </div>
+
+          <button 
+            className="btn-brand w-full !h-16 shadow-xl shadow-[var(--brand)]/20"
+            onClick={handleSalvarAdmissao}
+            disabled={saving}
+          >
+            {saving ? "Salvando..." : "Finalizar Admissão e Ativar"}
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-start gap-4">
+        <Activity className="text-blue-500 shrink-0" size={20} />
+        <p className="text-[10px] font-bold text-blue-700/70 uppercase leading-relaxed">
+          Atenção: Este formulário de Admissão Rápida registra o colaborador como ATIVO imediatamente, sem passar pela esteira prévia de envio de documentos de contratação.
+        </p>
+      </div>
+    </div>
+  );
   const { transferencias, finalizarRH } = useTransferencias(user);
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
@@ -320,7 +596,8 @@ export default function RHModule({ user }: { user: any }) {
             { id: "REQUISICOES", label: "Requisições", icon: Package },
             { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight, badge: transferencias.filter(t => t.status === 'APROVADO_GERENCIA').length },
             { id: "QUADRO", label: "Quadro de Vagas", icon: Building2 },
-            { id: "ADVERTENCIAS", label: "Advertências", icon: ShieldAlert }
+            { id: "ADVERTENCIAS", label: "Advertências", icon: ShieldAlert },
+            { id: "ADMISSAO_RAPIDA", label: "Admissão Rápida", icon: UserPlus }
           ].map((t: any) => (
             <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> 
@@ -473,6 +750,10 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "ADVERTENCIAS" && (
           <AdvertenciasList user={user} />
+        )}
+
+        {masterTab === "ADMISSAO_RAPIDA" && (
+          renderQuickAdmission()
         )}
       </div>
 
