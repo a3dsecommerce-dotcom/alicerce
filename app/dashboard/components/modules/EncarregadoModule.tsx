@@ -630,6 +630,16 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   };
 
   const handleSaveInformativo = async () => {
+    if (!informativo.unidade || !informativo.data) {
+      alert("Por favor, preencha a unidade e a data.");
+      return;
+    }
+
+    if (informativo.tipo === 'EXTRA' && !informativo.colaborador_substituto_nome) {
+      alert("Para informativos do tipo EXTRA, é obrigatório informar o Colaborador (Substituto).");
+      return;
+    }
+
     setSaving(true);
     
     const agora = new Date().toISOString();
