@@ -456,7 +456,7 @@ export default function DiretorModule({ user }: { user: any }) {
                           className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--bg-base)] text-[var(--text-muted)]"
                         >
                           <Zap size={14} />
-                          <span className="text-[10px] font-black uppercase">{c.percentual_insalubridade || "DEFINIR"}</span>
+                          <span className="text-[10px] font-black uppercase">{c.percentual_insalubridade || (c.insalubridade ? `${c.insalubridade}%` : "N/A")}</span>
                         </button>
                       </td>
                       <td className="px-8 py-6">
@@ -776,23 +776,26 @@ export default function DiretorModule({ user }: { user: any }) {
       </div>
 
       {/* Modais */}
-      {modalInsalubridade && (
-        <AdaptiveModal isOpen={!!modalInsalubridade} onClose={() => setModalInsalubridade(null)} title="Insalubridade" size="md">
-          <div className="p-8 space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-               {['N/A', '20%', '30%', '40%'].map(pct => (
-                 <button
-                  key={pct}
-                  onClick={() => handleUpdateInsalubridade(modalInsalubridade.id, pct)}
-                  className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${modalInsalubridade.percentual_insalubridade === pct ? 'bg-amber-600 border-amber-600 text-white shadow-xl' : 'bg-white border-slate-100 text-slate-400'}`}
-                 >
-                   {pct}
-                 </button>
-               ))}
+      {modalInsalubridade && (() => {
+        const currentVal = modalInsalubridade.percentual_insalubridade || (modalInsalubridade.insalubridade ? `${modalInsalubridade.insalubridade}%` : "N/A");
+        return (
+          <AdaptiveModal isOpen={!!modalInsalubridade} onClose={() => setModalInsalubridade(null)} title="Insalubridade" size="md">
+            <div className="p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                 {['N/A', '20%', '30%', '40%'].map(pct => (
+                   <button
+                    key={pct}
+                    onClick={() => handleUpdateInsalubridade(modalInsalubridade.id, pct)}
+                    className={`py-6 rounded-2xl font-black text-xl transition-all border-2 ${currentVal === pct ? 'bg-amber-600 border-amber-600 text-white shadow-xl' : 'bg-white border-slate-100 text-slate-400'}`}
+                   >
+                     {pct}
+                   </button>
+                 ))}
+              </div>
             </div>
-          </div>
-        </AdaptiveModal>
-      )}
+          </AdaptiveModal>
+        );
+      })()}
 
       {modalHorario && (
         <AdaptiveModal isOpen={!!modalHorario} onClose={() => setModalHorario(null)} title="Ajustar Horário" size="md">
