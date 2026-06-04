@@ -253,7 +253,7 @@ export default function DiretorModule({ user }: { user: any }) {
       setActiveTab("EQUIPE");
       fetchData();
     } catch (err: any) {
-      toast.error("Erro ao processar solicitação de volante.");
+      toast.error("Erro ao processar solicitação de volante: " + (err.message || err));
     }
   };
 
