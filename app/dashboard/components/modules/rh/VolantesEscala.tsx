@@ -70,9 +70,20 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
 
   const searchVolantesAprovados = async (val: string) => {
     setBuscaVolanteAprovado(val);
-    if (val.length > 1) {
-      const { data } = await supabase.from('usuarios').select('*').ilike('nome', `%${val}%`).limit(5);
-      if (data) setVolantesAprovadosSugeridos(data);
+    let query = supabase
+      .from('usuarios')
+      .select('*')
+      .or('cargo.ilike.%volante%,funcao.ilike.%volante%')
+      .eq('status', 'ATIVO')
+      .order('nome', { ascending: true });
+
+    if (val.trim().length > 0) {
+      query = query.ilike('nome', `%${val}%`);
+    }
+
+    const { data } = await query.limit(20);
+    if (data) {
+      setVolantesAprovadosSugeridos(data);
     } else {
       setVolantesAprovadosSugeridos([]);
     }
@@ -148,17 +159,26 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   // Busca de colaboradores
   const [buscaColab, setBuscaColab] = useState("");
   const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
-
   const searchColabs = async (val: string) => {
     setBuscaColab(val);
-    if (val.length > 1) {
-      const { data } = await supabase.from('usuarios').select('*').ilike('nome', `%${val}%`).limit(5);
-      if (data) setColabsSugeridos(data);
+    let query = supabase
+      .from('usuarios')
+      .select('*')
+      .or('cargo.ilike.%volante%,funcao.ilike.%volante%')
+      .eq('status', 'ATIVO')
+      .order('nome', { ascending: true });
+
+    if (val.trim().length > 0) {
+      query = query.ilike('nome', `%${val}%`);
+    }
+
+    const { data } = await query.limit(20);
+    if (data) {
+      setColabsSugeridos(data);
     } else {
       setColabsSugeridos([]);
     }
   };
-
   // Busca de unidades
   const [buscaUnidade, setBuscaUnidade] = useState("");
   const [unidadesSugeridas, setUnidadesSugeridas] = useState<any[]>([]);
@@ -489,6 +509,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                   placeholder="DIGITE O NOME PARA BUSCAR..." 
                   value={buscaColab}
                   onChange={(e) => searchColabs(e.target.value)}
+                  onFocus={() => searchColabs(buscaColab)}
                 />
                 {colabsSugeridos.length > 0 && (
                   <div className="absolute top-full left-0 right-0 mt-3 bg-white border border-[var(--border)] rounded-2xl shadow-2xl z-[100] overflow-hidden animate-fade-in">
@@ -752,6 +773,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                     placeholder="Digitar nome do volante..." 
                     value={buscaVolanteAprovado}
                     onChange={(e) => searchVolantesAprovados(e.target.value)}
+                    onFocus={() => searchVolantesAprovados(buscaVolanteAprovado)}
                   />
                   {volantesAprovadosSugeridos.length > 0 && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[120] overflow-hidden">

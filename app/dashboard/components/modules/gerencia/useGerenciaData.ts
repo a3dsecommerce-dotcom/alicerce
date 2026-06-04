@@ -69,7 +69,7 @@ export function useGerenciaData(currentUser?: any) {
       if (selectedSecretaria) colabsQuery = colabsQuery.eq('secretaria', selectedSecretaria);
       if (selectedUnidade) colabsQuery = colabsQuery.eq('unidade_alocacao', selectedUnidade);
 
-      const [colabsRes, reqs, quadroRes, tickets, diretoresRes, feedbacksRes, res4, res5] = await Promise.all([
+      const [colabsRes, reqs, quadroRes, tickets, diretoresRes, feedbacksRes, res4, res5, volantesRes, reqVolantesRes] = await Promise.all([
         colabsQuery,
         supabase.from('requisicoes').select('*', { count: 'exact', head: true }),
         supabase.from('vagas_quadro').select('unidade_nome, cargo, vagas_totais'),
@@ -78,8 +78,13 @@ export function useGerenciaData(currentUser?: any) {
         supabase.from('feedback_diretor').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
         // Novas métricas de atividade
         supabase.from('atividades').select('*', { count: 'exact', head: true }).gt('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
-        supabase.from('atividades').select('*', { count: 'exact', head: true }).gt('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
+        supabase.from('atividades').select('*', { count: 'exact', head: true }).gt('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString()),
+        supabase.from('escala_volantes').select('*').order('data', { ascending: false }),
+        supabase.from('requisicoes_volantes').select('*').order('created_at', { ascending: false })
       ]);
+
+      if (volantesRes.data) setVolantes(volantesRes.data);
+      if (reqVolantesRes.data) setRequisicoesVolantes(reqVolantesRes.data);
 
       const todosColabs = colabsRes.data || [];
       
