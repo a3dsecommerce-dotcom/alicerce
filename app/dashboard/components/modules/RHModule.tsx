@@ -306,7 +306,7 @@ export default function RHModule({ user }: { user: any }) {
       </div>
     </div>
   );
-  const { transferencias, finalizarRH } = useTransferencias(user);
+  
   
   const [masterTab, setMasterTab] = useState<MasterTab>("DP");
   const [dpAba, setDpAba] = useState<"ativos" | "talentos" | "contratacao" | "arquivo" | "desligamentos">("ativos");
