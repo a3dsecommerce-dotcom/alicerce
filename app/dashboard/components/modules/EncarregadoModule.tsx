@@ -104,6 +104,8 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     data_inicio_sintomas: '',
     medico_avaliador: ''
   });
+  const [historicoCats, setHistoricoCats] = useState<any[]>([]);
+  const [editingCatId, setEditingCatId] = useState<string | null>(null);
    const [epiData, setEpiData] = useState<any>({
      colaborador_nome: '',
      unidade: '',
@@ -307,13 +309,21 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       }
 
       // Busca informativos do encarregado logado
-      const { data: infoData } = await supabase
-        .from('informativos_operacionais')
-        .select('*')
-        .eq('criado_por_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(30);
-      setHistoricoInformativos(infoData || []);
+      const [infoDataRes, catDataRes] = await Promise.all([
+        supabase
+          .from('informativos_operacionais')
+          .select('*')
+          .eq('criado_por_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(30),
+        supabase
+          .from('investigacao_cat')
+          .select('*')
+          .eq('encarregado_responsavel_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
+      setHistoricoInformativos(infoDataRes.data || []);
+      setHistoricoCats(catDataRes.data || []);
     } catch (err) {
       console.error("Erro ao carregar dados do encarregado:", err);
     } finally {
@@ -744,11 +754,16 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       dados_especificos: dados_especificos
     };
 
-    const { error } = await supabase.from('investigacao_cat').insert([payload]);
+    const query = editingCatId
+      ? supabase.from('investigacao_cat').update(payload).eq('id', editingCatId)
+      : supabase.from('investigacao_cat').insert([payload]);
+
+    const { error } = await query;
 
     if (!error) {
-      alert("Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
+      alert(editingCatId ? "Investigação de CAT atualizada com sucesso!" : "Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
       generateCATPDF({ ...payload, dados_especificos });
+      setEditingCatId(null);
       setCatForm({
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
         insalubridade: '', horario_trabalho: '',
@@ -780,6 +795,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         data_inicio_sintomas: '',
         medico_avaliador: ''
       });
+      fetchEncarregadoData();
       setActiveTab("MY_UNITS");
     } else alert("Erro ao salvar CAT: " + error.message);
     setSaving(false);
@@ -1178,6 +1194,48 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     </div>
   );
 
+  const handleEditCAT = (cat: any) => {
+    const de = cat.dados_especificos || {};
+    setCatForm({
+      colaborador_id: cat.colaborador_id || '',
+      colaborador_nome: cat.colaborador_nome || '',
+      colaborador_cpf: cat.colaborador_cpf || '',
+      colaborador_cargo: cat.colaborador_cargo || '',
+      unidade_alocada: cat.unidade_alocada || '',
+      insalubridade: de.insalubridade || '',
+      horario_trabalho: de.horario_trabalho || '',
+      data_ocorrido: cat.data_ocorrido || '',
+      horario_ocorrido: cat.horario_ocorrido || '',
+      local_ocorrido: cat.local_ocorrido || '',
+      descricao_local: cat.descricao_local || '',
+      tipo_acidente: cat.tipo_acidente || 'TIPICO',
+      descricao_ocorrido: cat.descricao_ocorrido || '',
+      relato_pessoal: cat.relato_pessoal || '',
+      tem_testemunha: !!cat.tem_testemunha,
+      testemunhas_detalhes: cat.testemunhas_detalhes || '',
+      acoes_tomadas: cat.acoes_tomadas || '',
+      agente_causador: cat.agente_causador || '',
+      parte_corpo_atingida: cat.parte_corpo_atingida || '',
+      acompanhamento_medico: cat.acompanhamento_medico || '',
+      real_motivo: cat.real_motivo || '',
+      solucoes_propostas: cat.solucoes_propostas || '',
+      endereco_acidente: de.endereco_acidente || '',
+      sentido_trajeto: de.sentido_trajeto || 'CASA_TRABALHO',
+      meio_transporte: de.meio_transporte || '',
+      comprovacao_rota: de.comprovacao_rota || '',
+      houve_terceiros: !!de.houve_terceiros,
+      cnh_boletim: de.cnh_boletim || '',
+      condicoes_via: de.condicoes_via || '',
+      atividade_momento: de.atividade_momento || '',
+      epis_usados: de.epis_usados || [],
+      condicao_insegura_ou_ato: de.condicao_insegura_ou_ato || '',
+      data_inicio_sintomas: de.data_inicio_sintomas || '',
+      medico_avaliador: de.medico_avaliador || ''
+    });
+    setEditingCatId(cat.id);
+    toast.info("Dados da CAT carregados para alteração.");
+  };
+
   const renderCAT = () => (
     <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1200px] mx-auto w-full">
       <div className="bg-[var(--bg-card)] p-12 rounded-[3.5rem] border border-[var(--border)] shadow-2xl relative overflow-hidden">
@@ -1197,6 +1255,54 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
             Prazo Crítico: 24 Horas
           </div>
         </div>
+
+        {editingCatId && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-between relative z-10 animate-fade-in">
+            <div className="flex items-center gap-3 text-amber-700 font-black text-[10px] uppercase">
+              <AlertTriangle size={18} />
+              <span>Editando Registro de CAT Existente</span>
+            </div>
+            <button 
+              onClick={() => {
+                setEditingCatId(null);
+                setCatForm({
+                  colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
+                  insalubridade: '', horario_trabalho: '',
+                  data_ocorrido: new Date().toISOString().split('T')[0],
+                  horario_ocorrido: '08:00',
+                  local_ocorrido: '',
+                  descricao_local: '',
+                  tipo_acidente: 'TIPICO',
+                  descricao_ocorrido: '',
+                  relato_pessoal: '',
+                  tem_testemunha: false,
+                  testemunhas_detalhes: '',
+                  acoes_tomadas: '',
+                  agente_causador: '',
+                  parte_corpo_atingida: '',
+                  acompanhamento_medico: '',
+                  real_motivo: '',
+                  solucoes_propostas: '',
+                  endereco_acidente: '',
+                  sentido_trajeto: 'CASA_TRABALHO',
+                  meio_transporte: '',
+                  comprovacao_rota: '',
+                  houve_terceiros: false,
+                  cnh_boletim: '',
+                  condicoes_via: '',
+                  atividade_momento: '',
+                  epis_usados: [],
+                  condicao_insegura_ou_ato: '',
+                  data_inicio_sintomas: '',
+                  medico_avaliador: ''
+                });
+              }}
+              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-black uppercase rounded-xl transition-all"
+            >
+              Cancelar Edição
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 relative z-10">
           <div className="lg:col-span-8 space-y-10">
@@ -1496,7 +1602,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                        </button>
                     </div>
                     {catForm.tem_testemunha && (
-                      <textarea className="input-field w-full !h-24 !text-[10px] p-4 bg-white" placeholder="Nome/Telefone e breve depoimento das testemunhas..." value={catForm.testemunhas_detalhes} onChange={e => setCatForm({...catForm, testemunhas_detalhes: e.target.value})}></textarea>
+                      <textarea className="input-field w-full !h-24 !text-[10px] p-4 bg-white" placeholder="Nome/Telefone e depoimento das testemunhas..." value={catForm.testemunhas_detalhes} onChange={e => setCatForm({...catForm, testemunhas_detalhes: e.target.value})}></textarea>
                     )}
                   </div>
                   <div>
@@ -1549,16 +1655,53 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
               disabled={saving}
               className="w-full py-8 bg-red-600 text-white rounded-[2.5rem] text-sm font-black uppercase tracking-[0.2em] hover:scale-[1.01] transition-all shadow-2xl shadow-red-500/40"
             >
-               {saving ? "Registrando Protocolo Crítico..." : "Finalizar e Enviar Investigação de CAT"}
+               {saving ? "Registrando Protocolo Crítico..." : editingCatId ? "Salvar Alterações da CAT" : "Finalizar e Enviar Investigação de CAT"}
             </button>
           </div>
 
           <div className="lg:col-span-4 space-y-8">
-             <div className="bg-red-500/5 p-10 rounded-[3rem] border border-dashed border-red-500/20 text-center py-20">
-                <ShieldCheck className="text-red-500 mx-auto mb-6 opacity-30" size={48} />
-                <p className="text-[11px] font-black uppercase text-red-700 tracking-widest leading-loose">
-                   Preencha os dados <br /> manualmente para <br /> gerar o relatório legal
-                </p>
+             <div className="bg-[var(--bg-card)] p-8 rounded-[3rem] border border-[var(--border)] shadow-sm">
+                <h4 className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-8 flex items-center gap-2 italic">
+                   <ShieldCheck size={14} /> Registros Recentes (CAT)
+                </h4>
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                   {historicoCats.map((reg, idx) => (
+                     <div key={idx} className="p-5 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)] group hover:border-red-500/50 transition-all flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-start mb-3">
+                             <div>
+                                <span className="text-[8px] font-black text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded uppercase tracking-widest">{reg.tipo_acidente}</span>
+                                <p className="text-xs font-black uppercase text-[var(--text-primary)] mt-2">{reg.colaborador_nome}</p>
+                             </div>
+                             <span className="text-[8px] font-black text-[var(--text-muted)] uppercase">
+                               {reg.data_ocorrido ? new Date(reg.data_ocorrido + 'T12:00:00').toLocaleDateString('pt-BR') : ''}
+                             </span>
+                          </div>
+                          <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase mb-2">Unidade: {reg.unidade_alocada}</p>
+                        </div>
+                        <div className="flex gap-2 pt-3 border-t border-[var(--border)]">
+                          <button
+                            onClick={() => handleEditCAT(reg)}
+                            className="flex-1 py-2 bg-[var(--brand)] text-white text-[9px] font-black uppercase rounded-lg hover:scale-105 transition-all text-center"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => generateCATPDF(reg)}
+                            className="px-3 py-2 bg-slate-200 text-slate-700 text-[9px] font-black uppercase rounded-lg hover:scale-105 transition-all flex items-center justify-center gap-1"
+                          >
+                            <Printer size={12} /> PDF
+                          </button>
+                        </div>
+                     </div>
+                   ))}
+                   {historicoCats.length === 0 && (
+                     <div className="py-20 text-center opacity-30">
+                        <ShieldCheck size={48} className="mx-auto mb-4" />
+                        <p className="text-[10px] font-black uppercase">Nenhum registro de CAT localizado.</p>
+                     </div>
+                   )}
+                </div>
              </div>
 
              <div className="bg-amber-600 p-8 rounded-[2.5rem] text-white shadow-xl">
