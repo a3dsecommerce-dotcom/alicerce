@@ -137,6 +137,84 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
      horario: true
    });
 
+   const [selectedTicket, setSelectedTicket] = useState<any>(null);
+   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
+   const [setorDestino, setSetorDestino] = useState("RH Recursos Humanos");
+   const [motivoRejeicao, setMotivoRejeicao] = useState("");
+   const [showRejeitarForm, setShowRejeitarForm] = useState(false);
+   const [showEncaminharForm, setShowEncaminharForm] = useState(false);
+
+   const handleRecusarTicket = async () => {
+     if (!motivoRejeicao) return alert("Por favor, informe o motivo do cancelamento.");
+     setSaving(true);
+     try {
+       const { error } = await supabase
+         .from('tickets_sla')
+         .update({
+           status: 'REJEITADO',
+           solucao_descricao: `REJEITADO PELO ENCARREGADO: ${motivoRejeicao}`,
+           resolvido_por_id: user.id,
+           resolvido_por_nome: user.nome || user.name,
+           data_fechamento: new Date().toISOString()
+         })
+         .eq('id', selectedTicket.id);
+
+       if (error) throw error;
+
+       await supabase.from('atividades').insert({
+         usuario_id: user.id,
+         usuario_nome: user.nome || user.name,
+         mensagem: `Encarregado rejeitou chamado #${selectedTicket.id.slice(0, 8)}: ${motivoRejeicao}`,
+         tipo: "OCORRENCIA"
+       });
+
+       toast.success("Ocorrência rejeitada!");
+       setIsTicketModalOpen(false);
+       setSelectedTicket(null);
+       setMotivoRejeicao("");
+       setShowRejeitarForm(false);
+       fetchEncarregadoData();
+     } catch (e: any) {
+       toast.error("Erro ao processar: " + e.message);
+     } finally {
+       setSaving(false);
+     }
+   };
+
+   const handleEncaminharTicket = async () => {
+     if (!setorDestino) return alert("Selecione o setor de destino.");
+     setSaving(true);
+     try {
+       const { error } = await supabase
+         .from('tickets_sla')
+         .update({
+           setor_destino: setorDestino,
+           status: 'PENDENTE',
+           justificativa_solucao: `Aprovado pelo Encarregado ${user.nome || user.name} e encaminhado para ${setorDestino}.`
+         })
+         .eq('id', selectedTicket.id);
+
+       if (error) throw error;
+
+       await supabase.from('atividades').insert({
+         usuario_id: user.id,
+         usuario_nome: user.nome || user.name,
+         mensagem: `Encarregado aprovou e encaminhou chamado #${selectedTicket.id.slice(0, 8)} para ${setorDestino}`,
+         tipo: "OCORRENCIA"
+       });
+
+       toast.success(`Ocorrência encaminhada para ${setorDestino}!`);
+       setIsTicketModalOpen(false);
+       setSelectedTicket(null);
+       setShowEncaminharForm(false);
+       fetchEncarregadoData();
+     } catch (e: any) {
+       toast.error("Erro ao encaminhar: " + e.message);
+     } finally {
+       setSaving(false);
+     }
+   };
+
    // MEMOIZAÇÃO: Filtros da aba Equipe — evita re-cálculo a cada render do componente pai
    const colabsFiltrados = useMemo(() =>
      myColabs.filter(c =>
@@ -1717,7 +1795,10 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                         <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Abertura</p>
                         <p className="text-xs font-black text-[var(--text-primary)]">{new Date(ticket.data_abertura).toLocaleDateString()}</p>
                      </div>
-                     <button className="p-4 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-2xl text-[var(--brand)] transition-all shadow-sm group-hover:scale-105">
+                     <button 
+                       onClick={() => { setSelectedTicket(ticket); setIsTicketModalOpen(true); }}
+                       className="p-4 bg-[var(--bg-base)] hover:bg-[var(--brand)] hover:text-white rounded-2xl text-[var(--brand)] transition-all shadow-sm group-hover:scale-105"
+                     >
                         <ArrowUpRight size={20} />
                      </button>
                   </div>
@@ -1733,6 +1814,113 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
             </div>
           )}
         </div>
+
+        {/* MODAL DETALHES DO TICKET */}
+        <AdaptiveModal 
+          isOpen={isTicketModalOpen} 
+          onClose={() => { 
+            setIsTicketModalOpen(false); 
+            setSelectedTicket(null); 
+            setShowRejeitarForm(false); 
+            setShowEncaminharForm(false); 
+            setMotivoRejeicao("");
+          }} 
+          title="Central de Atendimento - Detalhes da Ocorrência"
+        >
+          {selectedTicket && (
+            <div className="p-8 space-y-6">
+              <div className="border-b border-[var(--border)] pb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-black text-[var(--brand)] uppercase tracking-widest">{selectedTicket.protocolo || `#${selectedTicket.id.slice(0,8)}`}</span>
+                  <span className="text-xs text-[var(--text-muted)]">• {new Date(selectedTicket.data_abertura).toLocaleString()}</span>
+                </div>
+                <h4 className="text-xl font-black text-[var(--text-primary)] uppercase">{selectedTicket.assunto}</h4>
+                <p className="text-sm font-bold text-slate-500 mt-2">Unidade: {selectedTicket.unidade}</p>
+                <p className="text-xs text-[var(--text-muted)] font-semibold mt-1">Interessado: {selectedTicket.interessado_nome} ({selectedTicket.funcao})</p>
+                <p className="text-xs text-[var(--text-muted)] font-semibold">Solicitado por: {selectedTicket.representante_nome || selectedTicket.criado_por}</p>
+              </div>
+
+              <div className="bg-[var(--bg-base)] p-6 rounded-2xl border border-[var(--border)]">
+                <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider mb-2">Descrição do Chamado</p>
+                <p className="text-sm font-semibold text-[var(--text-secondary)] leading-relaxed">{selectedTicket.descricao}</p>
+              </div>
+
+              {selectedTicket.solucao_descricao && (
+                <div className="bg-red-50 border border-red-200 p-6 rounded-2xl text-red-800">
+                  <p className="text-[10px] font-black uppercase tracking-wider mb-1">Status Final / Resolução</p>
+                  <p className="text-sm font-semibold italic">"{selectedTicket.solucao_descricao}"</p>
+                </div>
+              )}
+
+              {selectedTicket.justificativa_solucao && (
+                <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl text-blue-800">
+                  <p className="text-[10px] font-black uppercase tracking-wider mb-1">Nota de Encaminhamento</p>
+                  <p className="text-sm font-semibold italic">"{selectedTicket.justificativa_solucao}"</p>
+                </div>
+              )}
+
+              {selectedTicket.status === 'PENDENTE' && selectedTicket.setor_destino === 'Encarregado' && (
+                <div className="bg-[var(--bg-base)] p-6 rounded-2xl border border-[var(--border)] flex flex-col gap-4">
+                  <p className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wider">Ações do Encarregado</p>
+                  
+                  {!showRejeitarForm && !showEncaminharForm && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => setShowEncaminharForm(true)} 
+                        className="h-12 bg-[var(--brand)] text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-opacity-90 shadow-md transition-all"
+                      >
+                        Aprovar e Encaminhar
+                      </button>
+                      <button 
+                        onClick={() => setShowRejeitarForm(true)} 
+                        className="h-12 bg-transparent text-red-600 border-2 border-red-200 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-red-50 transition-all"
+                      >
+                        Recusar
+                      </button>
+                    </div>
+                  )}
+
+                  {showRejeitarForm && (
+                    <div className="space-y-4">
+                      <label className="text-xs font-bold text-red-700 block">Motivo da Recusa/Cancelamento</label>
+                      <textarea 
+                        className="input-field w-full h-24 p-3 text-xs font-medium resize-none border-red-200 focus:border-red-500" 
+                        value={motivoRejeicao} 
+                        onChange={e => setMotivoRejeicao(e.target.value)} 
+                        placeholder="Informe o motivo pelo qual esta solicitação foi recusada..."
+                      />
+                      <div className="flex gap-4">
+                        <button onClick={() => setShowRejeitarForm(false)} className="px-5 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold">Voltar</button>
+                        <button onClick={handleRecusarTicket} disabled={saving} className="flex-1 px-5 py-2 bg-red-600 text-white rounded-lg text-xs font-black uppercase tracking-wider">Confirmar Recusa</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {showEncaminharForm && (
+                    <div className="space-y-4">
+                      <label className="text-xs font-bold text-slate-700 block">Selecione o Setor Responsável para Encaminhamento</label>
+                      <select 
+                        className="input-field w-full h-12 text-xs font-bold" 
+                        value={setorDestino} 
+                        onChange={e => setSetorDestino(e.target.value)}
+                      >
+                        <option value="RH Recursos Humanos">RH Recursos Humanos</option>
+                        <option value="Gerência Operacional">Gerência Operacional</option>
+                        <option value="Almoxarifado">Almoxarifado</option>
+                        <option value="Técnico Segurança">Técnico Segurança</option>
+                        <option value="Gerência Regional">Gerência Regional</option>
+                      </select>
+                      <div className="flex gap-4">
+                        <button onClick={() => setShowEncaminharForm(false)} className="px-5 py-2 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold">Voltar</button>
+                        <button onClick={handleEncaminharTicket} disabled={saving} className="flex-1 px-5 py-2 bg-emerald-600 text-white rounded-lg text-xs font-black uppercase tracking-wider">Aprovar e Encaminhar</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </AdaptiveModal>
       </div>
     );
   };

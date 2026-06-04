@@ -134,24 +134,45 @@ export default function DiretorModule({ user }: { user: any }) {
 
   const handleUpdateInsalubridade = async (colabId: string, novoPercentual: string) => {
     try {
-      const { error } = await supabase
-        .from('usuarios')
-        .update({ percentual_insalubridade: novoPercentual })
-        .eq('id', colabId);
+      const colab = colaboradores.find(c => c.id === colabId);
+      if (!colab) return;
+
+      const insalubridadeAtual = colab.percentual_insalubridade || "N/A";
+      
+      const payload = {
+        assunto: `SOLICITAÇÃO DE ALTERAÇÃO: INSALUBRIDADE - ${colab.nome}`,
+        descricao: `[ALTERACAO_DADOS] ID: ${colabId} | Campo: percentual_insalubridade | Valor: ${novoPercentual} | Solicitado pelo Diretor para alterar de ${insalubridadeAtual} para ${novoPercentual}.`,
+        unidade: unidade.nome,
+        secretaria: unidade.secretaria || "SEMED",
+        prioridade: "NORMAL",
+        status: "PENDENTE",
+        criado_por: user.nome || user.name || "Diretor",
+        setor_destino: "Encarregado",
+        responsavel_citado_id: unidade.encarregado_id || null,
+        responsavel_citado_nome: unidade.encarregado_nome || "NÃO ATRIBUÍDO",
+        interessado_id: colabId,
+        interessado_nome: colab.nome,
+        funcao: colab.cargo || colab.funcao || "OPERACIONAL",
+        representante_id: user.id || null,
+        representante_nome: user.nome || user.name,
+        solicitante_tel: user.telefone || null
+      };
+
+      const { error } = await supabase.from('tickets_sla').insert([payload]);
 
       if (error) throw error;
 
       await supabase.from('atividades').insert({
         usuario_id: user.id,
-        tipo: 'GERENCIAL',
-        mensagem: `DIRETOR: Alterado percentual de insalubridade de ${colaboradores.find(c => c.id === colabId)?.nome} para ${novoPercentual}.`
+        tipo: 'OPERACIONAL',
+        mensagem: `DIRETOR: Solicitou alteração de insalubridade de ${colab.nome} para ${novoPercentual} na unidade ${unidade.nome}.`
       });
 
-      toast.success("Insalubridade atualizada!");
+      toast.success("Solicitação enviada para o Encarregado!");
       setModalInsalubridade(null);
       fetchData();
     } catch (err: any) {
-      toast.error("Erro ao atualizar insalubridade.");
+      toast.error("Erro ao solicitar alteração: " + err.message);
     }
   };
 
@@ -203,17 +224,36 @@ export default function DiretorModule({ user }: { user: any }) {
 
       if (error) throw error;
 
+      // Lançamento automático de falta/atestado
+      const colabAusente = colaboradores.find(c => c.nome === form.colaborador);
+      const isAtestado = form.motivo === 'ATESTADO';
+      await supabase.from('informativos_operacionais').insert([{
+        tipo: 'FALTA',
+        unidade: unidade.nome,
+        data: form.data,
+        periodo: form.turno || 'DIURNO',
+        horario: form.horario || '',
+        colaborador_ausente_id: colabAusente?.id || null,
+        colaborador_ausente_nome: form.colaborador,
+        tem_atestado: isAtestado,
+        dias_atestado: isAtestado ? parseInt(form.dias) || 1 : 0,
+        justificada: isAtestado,
+        observacoes: `LANÇAMENTO AUTOMÁTICO: Solicitado Volante em substituição a ${form.colaborador} (Motivo: ${form.motivo}).`,
+        criado_por_id: user.id,
+        criado_por_nome: user.nome || user.name
+      }]);
+
       await supabase.from('atividades').insert({
         usuario_id: user.id,
         tipo: 'OPERACIONAL',
-        mensagem: `DIRETOR: Solicitado VOLANTE para a unidade ${unidade.nome}.`
+        mensagem: `DIRETOR: Solicitado VOLANTE e registrado FALTA para ${form.colaborador} na unidade ${unidade.nome}.`
       });
 
-      toast.success("Pedido de volante enviado!");
+      toast.success("Pedido de volante e falta registrados!");
       setActiveTab("EQUIPE");
       fetchData();
     } catch (err: any) {
-      toast.error("Erro ao solicitar volante.");
+      toast.error("Erro ao processar solicitação de volante.");
     }
   };
 

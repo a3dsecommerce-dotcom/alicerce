@@ -192,6 +192,32 @@ export default function OcorrenciasModule({ user }: { user: any }) {
     const deadlineAcordado = selectedTicket.prazo_prometido ? new Date(selectedTicket.prazo_prometido) : null;
     const isFalit = deadlineAcordado && agora > deadlineAcordado;
 
+    // Se for uma solicitação de alteração de dados, aplica na tabela usuarios
+    if (selectedTicket.descricao && selectedTicket.descricao.startsWith("[ALTERACAO_DADOS]")) {
+      try {
+        const parts = selectedTicket.descricao.split(" | ");
+        const idPart = parts.find(p => p.startsWith("ID: "));
+        const campoPart = parts.find(p => p.startsWith("Campo: "));
+        const valorPart = parts.find(p => p.startsWith("Valor: "));
+        if (idPart && campoPart && valorPart) {
+          const colabId = idPart.replace("ID: ", "").trim();
+          const campo = campoPart.replace("Campo: ", "").trim();
+          const valor = valorPart.replace("Valor: ", "").trim();
+          
+          const updatePayload: any = {};
+          if (campo === "horario_trabalho") {
+            updatePayload.horario_trabalho = valor;
+          } else if (campo === "percentual_insalubridade") {
+            updatePayload.percentual_insalubridade = valor;
+          }
+          
+          await supabase.from('usuarios').update(updatePayload).eq('id', colabId);
+        }
+      } catch (err) {
+        console.error("Erro ao aplicar alteração automática no usuário:", err);
+      }
+    }
+
     const { error } = await supabase.from('tickets_sla').update({
       status: isFalit ? 'RESOLVIDO_COM_ATRASO' : 'RESOLVIDO',
       data_fechamento: agora.toISOString(),
