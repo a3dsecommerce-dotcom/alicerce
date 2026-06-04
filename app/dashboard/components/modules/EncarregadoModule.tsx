@@ -75,6 +75,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
    const [catForm, setCatForm] = useState<any>({
     colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
+    insalubridade: '', horario_trabalho: '',
     data_ocorrido: new Date().toISOString().split('T')[0],
     horario_ocorrido: '08:00',
     local_ocorrido: '',
@@ -679,14 +680,16 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   };
 
   const handleSaveCAT = async () => {
-    if (!catForm.colaborador_id || !catForm.descricao_ocorrido || (catForm.tipo_acidente !== 'DOENCA' && !catForm.endereco_acidente)) {
-      alert("Por favor, preencha o colaborador, endereço e descrição do ocorrido.");
+    if (!catForm.colaborador_nome || !catForm.descricao_ocorrido || (catForm.tipo_acidente !== 'DOENCA' && !catForm.endereco_acidente)) {
+      alert("Por favor, preencha o colaborador (nome), endereço e descrição do ocorrido.");
       return;
     }
     setSaving(true);
 
     const dados_especificos = {
       endereco_acidente: catForm.endereco_acidente,
+      insalubridade: catForm.insalubridade,
+      horario_trabalho: catForm.horario_trabalho,
       ...(catForm.tipo_acidente === 'TRAJETO' && {
         sentido_trajeto: catForm.sentido_trajeto,
         meio_transporte: catForm.meio_transporte,
@@ -707,7 +710,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     };
 
     const payload = {
-      colaborador_id: catForm.colaborador_id,
+      colaborador_id: catForm.colaborador_id || null,
       colaborador_nome: catForm.colaborador_nome,
       colaborador_cpf: catForm.colaborador_cpf,
       colaborador_cargo: catForm.colaborador_cargo,
@@ -738,6 +741,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       generateCATPDF({ ...payload, dados_especificos });
       setCatForm({
         colaborador_id: '', colaborador_nome: '', colaborador_cpf: '', colaborador_cargo: '', unidade_alocada: '',
+        insalubridade: '', horario_trabalho: '',
         data_ocorrido: new Date().toISOString().split('T')[0],
         horario_ocorrido: '08:00',
         local_ocorrido: '',
@@ -1191,14 +1195,64 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                   <Users size={14} /> 1. Identificação do Acidentado
                </p>
                <div className="p-8 bg-white rounded-[2rem] border border-[var(--border)] shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  <div className="relative">
                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Nome do Acidentado</label>
                     <input 
                       className="input-field w-full !h-14 font-black" 
-                      placeholder="Nome Completo..."
+                      placeholder="Comece a digitar o nome..."
                       value={catForm.colaborador_nome}
-                      onChange={e => setCatForm({...catForm, colaborador_nome: e.target.value.toUpperCase()})}
+                      onChange={e => {
+                        const val = e.target.value.toUpperCase();
+                        setCampoBuscaAtivo("cat_colaborador");
+                        setCatForm({
+                          ...catForm,
+                          colaborador_nome: val,
+                          colaborador_id: ''
+                        });
+                        if (val.length > 1) {
+                          setColabsSugeridos(myColabs.filter(c => c.nome.toUpperCase().includes(val) || c.cpf?.includes(val)));
+                        } else {
+                          setColabsSugeridos([]);
+                        }
+                      }}
+                      onFocus={() => {
+                        setCampoBuscaAtivo("cat_colaborador");
+                        setColabsSugeridos(myColabs);
+                      }}
                     />
+                    {campoBuscaAtivo === "cat_colaborador" && colabsSugeridos.length > 0 && (
+                      <div className="absolute z-[120] left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-[var(--border)] shadow-2xl overflow-hidden max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2">
+                         {colabsSugeridos.map((c, i) => (
+                           <button 
+                             key={i}
+                             type="button"
+                             onClick={() => {
+                               setCatForm({
+                                 ...catForm,
+                                 colaborador_id: c.id,
+                                 colaborador_nome: c.nome,
+                                 colaborador_cpf: c.cpf || '',
+                                 colaborador_cargo: c.cargo || c.funcao || 'OPERACIONAL',
+                                 unidade_alocada: c.unidade_alocacao || '',
+                                 insalubridade: c.insalubridade ? `${c.insalubridade}%` : (c.percentual_insalubridade || 'N/A'),
+                                 horario_trabalho: c.horario_trabalho || `${c.horario_entrada || '07:00'} às ${c.horario_saida || '17:00'}`
+                               });
+                               setColabsSugeridos([]);
+                               setCampoBuscaAtivo("");
+                             }}
+                             className="w-full p-4 flex items-center gap-4 hover:bg-[var(--bg-base)] transition-colors border-b border-[var(--border)] last:border-0 text-left"
+                           >
+                              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-600 font-black text-xs">
+                                 {c.nome.charAt(0)}
+                              </div>
+                              <div>
+                                 <p className="text-[10px] font-black uppercase text-[var(--text-primary)]">{c.nome}</p>
+                                 <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase">{c.funcao || c.cargo} • {c.unidade_alocacao}</p>
+                              </div>
+                           </button>
+                         ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">CPF</label>
@@ -1225,6 +1279,24 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                       placeholder="Nome da Escola/Unidade..."
                       value={catForm.unidade_alocada}
                       onChange={e => setCatForm({...catForm, unidade_alocada: e.target.value.toUpperCase()})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Insalubridade do Posto</label>
+                    <input 
+                      className="input-field w-full !h-14 font-black bg-slate-100" 
+                      readOnly
+                      placeholder="Insalubridade..."
+                      value={catForm.insalubridade}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Horário de Trabalho</label>
+                    <input 
+                      className="input-field w-full !h-14 font-black bg-slate-100" 
+                      readOnly
+                      placeholder="Horário..."
+                      value={catForm.horario_trabalho}
                     />
                   </div>
                </div>
