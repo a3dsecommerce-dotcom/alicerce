@@ -90,7 +90,7 @@ export default function DiretorModule({ user }: { user: any }) {
       const [feedsRes, quadroRes, volanteRes] = await Promise.all([
         supabase.from('feedback_diretor').select('*, colaborador:usuarios(nome)').eq('unidade_id', currentUnitId).order('created_at', { ascending: false }),
         supabase.from('vagas_quadro').select('*').ilike('unidade_nome', `%${cleanUnitName}%`),
-        supabase.from('solicitacoes_volante').select('*').eq('unidade_id', currentUnitId).order('created_at', { ascending: false })
+        supabase.from('requisicoes_volantes').select('*').eq('unidade_destino', currentUnitName).order('created_at', { ascending: false })
       ]);
 
       setColaboradores(colabs || []);
@@ -199,27 +199,20 @@ export default function DiretorModule({ user }: { user: any }) {
 
   const handlePedirVolante = async (form: any) => {
     try {
-      const { error } = await supabase.from('solicitacoes_volante').insert({
-        unidade_id: unidade.id,
-        unidade_nome: unidade.nome,
+      const { error } = await supabase.from('requisicoes_volantes').insert({
         solicitante_id: user.id,
-        solicitante_nome: user.nome || user.name,
-        turno: form.turno,
-        escala: form.escala,
-        horario: form.horario,
+        unidade_destino: unidade.nome,
+        data_inicio: form.data,
+        data_fim: form.data,
+        quantidade_necessaria: 1,
         motivo: form.motivo,
-        dias_afastamento: form.dias || 1,
-        cargo_alvo: form.cargo,
-        colaborador_alvo: form.colaborador,
-        data_necessidade: form.data,
-        insalubridade: form.insalubridade,
-        meta_contexto: {
-          alunos: unidade.quantidade_alunos,
-          fluxo: unidade.fluxo_diario,
-          cozinheiras_efetivas: unidade.tem_cozinheira_efetiva,
-          qtd_cozinheiras: unidade.quantidade_cozinheiras
-        },
-        status: 'PENDENTE'
+        status: 'PENDENTE',
+        prioridade: 'NORMAL',
+        quem_requisitou: 'DIRETOR',
+        colaborador_substituido_nome: form.colaborador,
+        is_atestado: form.motivo === 'ATESTADO',
+        asg_porcentagem: form.insalubridade ? parseInt(form.insalubridade.replace(/\D/g, '')) : null,
+        funcao_substituicao: form.cargo
       });
 
       if (error) throw error;
