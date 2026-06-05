@@ -50,7 +50,7 @@ export default function EstoqueTable({ estoque, busca, onEdit }: EstoqueTablePro
                 <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border inline-block min-w-[100px] ${
                   item.categoria === 'EPI' ? 'bg-orange-500/10 text-orange-600 border-orange-500/20' :
                   item.categoria === 'SUPRIMENTO' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                  'bg-purple-500/10 text-purple-600 border-purple-500/20'
+                  'bg-cyan-500/10 text-cyan-600 border-cyan-500/20'
                 }`}>
                   {item.categoria}
                 </span>

@@ -302,7 +302,7 @@ export default function IntelPage() {
                 {[
                   { secretaria: "SEMED (Educação)", progresso: 85, itens: 1200, falta: 180, cor: "#10B981" },
                   { secretaria: "SEMSA (Saúde)", progresso: 62, itens: 850, falta: 323, cor: "#3B82F6" },
-                  { secretaria: "SEMAD (Administração)", progresso: 95, itens: 400, falta: 20, cor: "#8B5CF6" },
+                  { secretaria: "SEMAD (Administração)", progresso: 95, itens: 400, falta: 20, cor: "#00d2ff" },
                 ].map((s, i) => (
                   <div key={i} className="card" style={{ padding: "1.5rem", border: "1px solid var(--border)" }}>
                     <div style={{ fontWeight: 700, fontSize: "0.9rem", marginBottom: "0.5rem" }}>{s.secretaria}</div>

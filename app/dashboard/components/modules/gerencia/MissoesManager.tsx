@@ -129,7 +129,7 @@ export default function MissoesManager() {
           missoes.map((missao) => (
             <div key={missao.id} className={`bg-[var(--bg-card)] p-8 rounded-[2.5rem] border ${missao.ativa ? "border-orange-500/30" : "border-[var(--border)]"} shadow-xl relative group`}>
                <div className="flex justify-between items-start mb-6">
-                  <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${missao.frequencia === 'SEMANAL' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}>
+                  <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${missao.frequencia === 'SEMANAL' ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
                     {missao.frequencia}
                   </div>
                   <div className="flex gap-2">

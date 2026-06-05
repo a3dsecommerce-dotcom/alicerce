@@ -168,7 +168,7 @@ export default function ColaboradoresTable({
       const faltam = 90 - diffDays;
       return { 
         label: `${diffDays}d / Exp 90d`, 
-        color: faltam <= 5 ? 'bg-red-600 text-white animate-pulse' : 'bg-indigo-100 text-indigo-700',
+        color: faltam <= 5 ? 'bg-red-600 text-white animate-pulse' : 'bg-cyan-100 text-cyan-700',
         alert: faltam <= 5 ? `Vence em ${faltam} dias!` : null
       };
     }
@@ -379,7 +379,7 @@ export default function ColaboradoresTable({
                         type="checkbox" 
                         checked={!!(c.checklist_extra?.[col.label])} 
                         onChange={(e) => onUpdateExtraCheck?.(c.id, col.label, e.target.checked)} 
-                        className="w-4 h-4 rounded border-[var(--border)] text-indigo-600 focus:ring-indigo-500" 
+                        className="w-4 h-4 rounded border-[var(--border)] text-cyan-600 focus:ring-cyan-500" 
                         onClick={e => e.stopPropagation()} 
                       />
                     </td>
@@ -458,7 +458,7 @@ export default function ColaboradoresTable({
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-modal-scale" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-600 text-white flex items-center justify-center shadow-lg">
                   <Settings size={20} />
                 </div>
                 <div>
@@ -478,7 +478,7 @@ export default function ColaboradoresTable({
                     type="text" 
                     defaultValue={modalConfig.label} 
                     id="newLabel"
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-black uppercase focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-black uppercase focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
                   />
                   <button 
                     onClick={() => {
@@ -499,14 +499,14 @@ export default function ColaboradoresTable({
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cor de Identificação</label>
                 <div className="grid grid-cols-6 gap-3">
-                  {['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 'transparent'].map(color => (
+                  {['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#00d2ff', 'transparent'].map(color => (
                     <button 
                       key={color}
                       onClick={() => {
                         onUpdateConfigColor?.(modalConfig.id, color);
                         setModalConfig(null);
                       }}
-                      className={`h-10 rounded-xl border-2 transition-all hover:scale-110 ${modalConfig.color === color ? 'border-indigo-600 shadow-inner' : 'border-slate-100 shadow-sm'}`}
+                      className={`h-10 rounded-xl border-2 transition-all hover:scale-110 ${modalConfig.color === color ? 'border-cyan-600 shadow-inner' : 'border-slate-100 shadow-sm'}`}
                       style={{ backgroundColor: color === 'transparent' ? '#f8fafc' : color }}
                       title={color}
                     >

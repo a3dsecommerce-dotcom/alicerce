@@ -147,9 +147,9 @@ export default function EntregasEPITable({
 
         {filtroData === "CUSTOM" && (
           <div className="flex items-center gap-2 animate-fade-in">
-             <input type="date" className="input-field !h-10 !text-[10px] !w-36" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
+             <input type="date" aria-label="Data Início" className="input-field !h-10 !text-[10px] !w-36" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
              <span className="text-[10px] font-black text-slate-400">ATÉ</span>
-             <input type="date" className="input-field !h-10 !text-[10px] !w-36" value={dataFim} onChange={e => setDataFim(e.target.value)} />
+             <input type="date" aria-label="Data Fim" className="input-field !h-10 !text-[10px] !w-36" value={dataFim} onChange={e => setDataFim(e.target.value)} />
           </div>
         )}
 

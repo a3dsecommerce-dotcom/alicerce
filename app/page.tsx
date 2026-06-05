@@ -309,8 +309,9 @@ export default function LoginPage() {
             )}
 
             <div className="input-group">
-              <label className="input-label">Identificação</label>
+              <label htmlFor="login-identificacao" className="input-label">Identificação</label>
               <input
+                id="login-identificacao"
                 type="tel"
                 className="modern-input"
                 placeholder="WhatsApp / Login"
@@ -321,9 +322,10 @@ export default function LoginPage() {
             </div>
 
             <div className="input-group">
-              <label className="input-label">Chave de Acesso</label>
+              <label htmlFor="login-senha" className="input-label">Chave de Acesso</label>
               <div className="relative">
                 <input
+                  id="login-senha"
                   type={showPassword ? "text" : "password"}
                   className="modern-input pr-14"
                   placeholder="••••"

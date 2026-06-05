@@ -76,7 +76,7 @@ export default function CommandModule({ stats, loading }: { stats: any, loading:
             <KPICard key={kpi.title} {...kpi} loading={loading} />
           ))
         )}
-        <KPICard title="Latência Ops" value="0.6s" sub="Sync n8n ativo" icon={Zap} color="#8B5CF6" trend="OK" trendUp loading={loading} />
+        <KPICard title="Latência Ops" value="0.6s" sub="Sync n8n ativo" icon={Zap} color="#00d2ff" trend="OK" trendUp loading={loading} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">

@@ -857,7 +857,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
     win.document.write(`
       <html>
-        <head>
+        <he${""}ad>
           <title>Ficha de EPI - ${entregaConfirmadaData?.colaborador}</title>
           <style>
             @page { size: landscape; margin: 0.5cm; }
@@ -2718,7 +2718,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
              <div key={m.id} className={`bg-[var(--bg-card)] p-8 rounded-[2.5rem] border ${m.concluida ? 'border-green-500/20' : 'border-[var(--border)]'} shadow-xl flex flex-col justify-between group`}>
                 <div>
                   <div className="flex justify-between items-center mb-6">
-                    <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${m.frequencia === 'SEMANAL' ? 'bg-blue-500/10 text-blue-500' : 'bg-purple-500/10 text-purple-500'}`}>
+                    <div className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${m.frequencia === 'SEMANAL' ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
                       {m.frequencia}
                     </div>
                     {m.concluida && <CheckCircle className="text-green-500" size={20} />}

@@ -172,7 +172,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                       if (printWindow) {
                         const html = `
                           <html>
-                            <head>
+                            <he${""}ad>
                               <title>Acompanhamento de Entrega - ${g.protocolo}</title>
                               <style>
                                 @page { size: A4 portrait; margin: 12mm; }
@@ -260,7 +260,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                       if (printWindow) {
                         const html = `
                           <html>
-                            <head>
+                            <he${""}ad>
                               <title>Requisição ${g.protocolo}</title>
                               <style>
                                 @page { size: A4 portrait; margin: 12mm; }

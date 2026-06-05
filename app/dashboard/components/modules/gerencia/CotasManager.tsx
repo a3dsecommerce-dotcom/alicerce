@@ -112,6 +112,7 @@ export default function CotasManager() {
                   </td>
                   <td className="table-cell">
                     <select
+                      aria-label={`Modo de Cálculo - ${cota.secretaria}`}
                       className="input-field !h-10 !text-xs font-bold w-48"
                       value={cota.modo_calculo}
                       onChange={(e) => updateCota(idx, 'modo_calculo', e.target.value)}
@@ -123,6 +124,7 @@ export default function CotasManager() {
                   <td className="table-cell">
                     <input
                       type="number"
+                      aria-label={`Quantidade de ASGs Manual - ${cota.secretaria}`}
                       className={`input-field !h-10 !text-sm font-black w-32 ${cota.modo_calculo === 'AUTOMATICO' ? 'opacity-30 cursor-not-allowed' : 'border-[var(--brand)]'}`}
                       value={cota.qtd_asg_manual}
                       disabled={cota.modo_calculo === 'AUTOMATICO'}

@@ -205,7 +205,7 @@ export default function ManualModule() {
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-8 lg:p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden text-white border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px] -mr-48 -mt-48" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[100px] -ml-32 -mb-32" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-[100px] -ml-32 -mb-32" />
         
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-6">

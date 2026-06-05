@@ -155,7 +155,7 @@ export default function RelatoriosPage() {
                     <PrintableFichaEPI colaborador={targetData.colaborador} itens={targetData.itens} />
                     {/* Hack para mostrar na prévia já que PrintableFichaEPI tem print-only */}
                     <div className="bg-white text-black font-serif p-8">
-                       <h1 className="text-2xl font-bold uppercase mb-4 text-center">FICHA DE EPI (PRÉVIA)</h1>
+                       <h2 className="text-2xl font-bold uppercase mb-4 text-center">FICHA DE EPI (PRÉVIA)</h2>
                        <div className="grid grid-cols-2 gap-4 mb-8">
                           <p><strong>NOME:</strong> {targetData.colaborador.nome}</p>
                           <p><strong>CPF:</strong> {targetData.colaborador.cpf}</p>

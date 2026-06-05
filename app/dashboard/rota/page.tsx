@@ -312,7 +312,7 @@ export default function RotaPage() {
           {/* Header */}
           <div className="border-b-2 border-black pb-4 mb-6 flex justify-between items-end">
             <div>
-              <h1 className="text-xl font-black uppercase">Alicerce Serviços e Gestão LTDA</h1>
+              <h2 className="text-xl font-black uppercase">Alicerce Serviços e Gestão LTDA</h2>
               <p className="text-[10px] font-bold">RELATÓRIO OPERACIONAL DE ROTA - DOCUMENTO DE CAMPO</p>
             </div>
             <div className="text-right">

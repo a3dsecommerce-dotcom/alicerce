@@ -76,7 +76,7 @@ export default function PortalDiretorPage() {
          {[
            { label: "Unidade Ativa", value: unidadeAtiva.nome, icon: MapPin, color: "text-blue-500" },
            { label: "Código Unidade", value: `#${(unidadeAtiva.id || "").toUpperCase()}`, icon: Hash, color: "text-orange-500" },
-           { label: "Secretaria", value: unidadeAtiva.secretária, icon: ShieldCheck, color: "text-purple-500" },
+           { label: "Secretaria", value: unidadeAtiva.secretária, icon: ShieldCheck, color: "text-orange-500" },
            { label: "Efetivo na Unidade", value: `${equipeFiltrada.length} Colaboradores`, icon: Users, color: "text-green-500" },
          ].map((stat, i) => (
            <div key={i} className="bg-[var(--bg-card)] p-10 rounded-[1.5rem] border border-[var(--border)] shadow-sm flex items-center gap-6">

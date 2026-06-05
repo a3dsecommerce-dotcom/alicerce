@@ -42,7 +42,7 @@ export default function VisaoGeral({
     { id: "ALMOX", label: "Almoxarifado", icon: Package, color: "#f59e0b" },
     { id: "ENCARREGADO", label: "Encarregado", icon: Shield, color: "#10b981" },
     { id: "RH", label: "RH & Pessoal", icon: Users, color: "#3b82f6" },
-    { id: "FISCAL", label: "Fiscalização", icon: UserCheck, color: "#8b5cf6" },
+    { id: "FISCAL", label: "Fiscalização", icon: UserCheck, color: "#00d2ff" },
   ];
 
   return (
@@ -138,7 +138,7 @@ export default function VisaoGeral({
            <KPICard label="Tickets Abertos" value={stats.ticketsAbertos} icon={AlertTriangle} color="bg-red-500" />
            <KPICard label="Vistoria Hoje" value="08" icon={Zap} color="bg-yellow-500" />
            <KPICard label="Transferências" value="05" icon={MapPin} color="bg-blue-500" />
-           <KPICard label="SLA Atendimento" value="4h" icon={Clock} color="bg-purple-500" />
+           <KPICard label="SLA Atendimento" value="4h" icon={Clock} color="bg-orange-500" />
         </div>
       )}
 
@@ -153,7 +153,7 @@ export default function VisaoGeral({
 
       {activeSector === "FISCAL" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-           <KPICard label="Diretores Ativos" value={stats.diretoresAtivos} icon={UserCheck} color="bg-purple-600" />
+           <KPICard label="Diretores Ativos" value={stats.diretoresAtivos} icon={UserCheck} color="bg-orange-600" />
            <KPICard label="Vontades / Pedidos" value={stats.solicitacoesDiretor} icon={Sparkles} color="bg-indigo-500" />
            <KPICard label="Alterações Hoje" value={logs.filter(l => l.mensagem.includes('DIRETOR:')).length} icon={RefreshCw} color="bg-blue-600" />
            <KPICard label="Unidades Sem Fiscal" value={42 - stats.diretoresAtivos} icon={Building2} color="bg-slate-500" />
@@ -185,7 +185,7 @@ export default function VisaoGeral({
                     <ProcessStat label="Atendimento SLA" status="ALERTA" pct={72} color="bg-orange-500" />
                     <ProcessStat label="Entregas Almox" status="EFICIENTE" pct={94} color="bg-blue-500" />
                     <ProcessStat label="Cobertura de Vagas" status="CRÍTICO" pct={45} color="bg-red-500" />
-                    <ProcessStat label="Fiscalização Direta" status={stats.diretoresAtivos > 10 ? "ATIVO" : "INICIAL"} pct={Math.round((stats.diretoresAtivos / 42) * 100)} color="bg-purple-500" />
+                    <ProcessStat label="Fiscalização Direta" status={stats.diretoresAtivos > 10 ? "ATIVO" : "INICIAL"} pct={Math.round((stats.diretoresAtivos / 42) * 100)} color="bg-orange-500" />
                   </div>
                </div>
 

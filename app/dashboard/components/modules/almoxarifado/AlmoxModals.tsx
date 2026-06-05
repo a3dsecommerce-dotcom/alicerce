@@ -62,7 +62,7 @@ export default function AlmoxModals({
 
     win.document.write(`
       <html>
-        <head>
+        <he${""}ad>
           <title>Ficha de EPI - ${entregaData.colaborador}</title>
           <style>
             @page { size: landscape; margin: 0.5cm; }
