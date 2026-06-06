@@ -34,7 +34,9 @@ export function useTransferencias(user: any) {
       unidade_origem: dados.unidade_origem,
       unidade_destino_pretendida: dados.unidade_destino,
       motivo_solicitacao: dados.motivo,
-      status: 'SOLICITADO'
+      status: 'SOLICITADO',
+      encarregado_id: user.id,
+      encarregado_nome: user.nome || user.name
     });
     if (error) throw error;
     await fetchTransferencias();

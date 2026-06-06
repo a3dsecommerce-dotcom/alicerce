@@ -35,11 +35,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
   const [fullUnits, setFullUnits] = useState<any[]>([]);
+  const [allUnits, setAllUnits] = useState<any[]>([]);
   const [cargos, setCargos] = useState<any[]>([]);
   const [myColabs, setMyColabs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const { transferencias, analisarEncarregado, refresh: refreshTransf } = useTransferencias(user);
+  const { transferencias, analisarEncarregado, criarSolicitacao, refresh: refreshTransf } = useTransferencias(user);
 
   const [admissao, setAdmissao] = useState<any>({ 
     nome: '', telefone: '', unidade: '', secretaria: '', funcao: '',
@@ -50,6 +51,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   });
   const [editandoColab, setEditandoColab] = useState<any>(null);
   const [justificativa, setJustificativa] = useState("");
+  const [selectedTransferColabId, setSelectedTransferColabId] = useState("");
+  const [destinationUnitName, setDestinationUnitName] = useState("");
+  const [transferReason, setTransferReason] = useState("");
   const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   const [historicoInformativos, setHistoricoInformativos] = useState<any[]>([]);
@@ -272,12 +276,13 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     setLoading(true);
     try {
       // Fix #3: queries paralelas para reduzir tempo de carregamento no campo (4G)
-      const [unitsRes, cargosRes, episRes, entregasRes] = await Promise.all([
+      const [unitsRes, cargosRes, episRes, entregasRes, allUnitsRes] = await Promise.all([
         supabase.from('unidades').select('*').eq('encarregado_id', user.id),
         supabase.from('cargos').select('*').order('nome'),
         supabase.from('almox_epi').select('*').gt('quantidade', 0).order('item'),
         supabase.from('requisicoes').select('*').eq('tipo_item', 'EPI').eq('status', 'ENTREGUE')
-          .order('data_solicitacao', { ascending: false }).limit(20)
+          .order('data_solicitacao', { ascending: false }).limit(20),
+        supabase.from('unidades').select('*').order('nome')
       ]);
 
       const units = unitsRes.data || [];
@@ -285,6 +290,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
       setMyUnits(unitNames);
       setFullUnits(units);
+      setAllUnits(allUnitsRes.data || []);
       if (cargosRes.data) setCargos(cargosRes.data);
       setEstoqueEpi(episRes.data || []);
       setEntregasEpi(entregasRes.data || []);
@@ -2775,6 +2781,195 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     );
   };
 
+  const renderTransferencias = () => {
+    const selectedColab = myColabs.find(c => c.id === selectedTransferColabId);
+    const colabSecretaria = selectedColab?.secretaria || selectedColab?.secretaria_destino || "";
+    // Filter units that belong to the same secretariat, excluding the collaborator's current unit
+    const sameSecUnits = allUnits.filter(u => u.secretaria === colabSecretaria && u.nome !== selectedColab?.unidade_alocacao);
+
+    const handleTransferir = async () => {
+      if (!selectedTransferColabId || !destinationUnitName || !transferReason) {
+        toast.warning("Preencha todos os campos!");
+        return;
+      }
+      setSaving(true);
+      try {
+        const colab = myColabs.find(c => c.id === selectedTransferColabId);
+        if (!colab) return;
+
+        // 1. Criar solicitação na tabela de transferências
+        await criarSolicitacao({
+          colaborador_id: colab.id,
+          colaborador_nome: colab.nome,
+          unidade_origem: colab.unidade_alocacao,
+          unidade_destino: destinationUnitName,
+          motivo: transferReason
+        });
+
+        // 2. Atualizar a unidade do usuário diretamente no banco
+        const { error: userUpdateError } = await supabase
+          .from('usuarios')
+          .update({ unidade_alocacao: destinationUnitName })
+          .eq('id', colab.id);
+
+        if (userUpdateError) throw userUpdateError;
+
+        // 3. Registrar atividade
+        await supabase.from('atividades').insert({
+          usuario_id: user.id,
+          usuario_nome: user.nome || user.name,
+          mensagem: `Encarregado transferiu ${colab.nome} de ${colab.unidade_alocacao} para ${destinationUnitName}`,
+          tipo: "RH"
+        });
+
+        toast.success("Colaborador transferido com sucesso!");
+        setSelectedTransferColabId("");
+        setDestinationUnitName("");
+        setTransferReason("");
+        fetchEncarregadoData();
+      } catch (e: any) {
+        toast.error("Erro ao transferir: " + e.message);
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    const myRecentTransfers = transferencias.filter(t => t.encarregado_id === user.id);
+
+    return (
+      <div className="flex flex-col gap-10 animate-fade-in">
+        <div className="bg-[var(--bg-card)] p-10 rounded-[2rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-2 h-full bg-[var(--brand)] opacity-20" />
+          <h3 className="text-xl font-black text-[var(--text-primary)] uppercase italic flex items-center gap-3">
+            <ArrowUpRight size={24} className="text-[var(--brand)]" />
+            Transferência de Colaborador
+          </h3>
+          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2">
+            Mova colaboradores entre postos de trabalho da mesma secretaria
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Formulário */}
+          <div className="lg:col-span-1 bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border)] shadow-xl flex flex-col gap-6">
+            <h4 className="text-sm font-black uppercase text-[var(--text-primary)]">Nova Transferência</h4>
+            
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest block">Selecione o Colaborador</label>
+              <select 
+                className="input-field w-full h-12 font-bold" 
+                value={selectedTransferColabId} 
+                onChange={e => {
+                  setSelectedTransferColabId(e.target.value);
+                  setDestinationUnitName("");
+                }}
+              >
+                <option value="">Selecione o Colaborador...</option>
+                {myColabs.map(c => (
+                  <option key={c.id} value={c.id}>{c.nome} ({c.unidade_alocacao || "Sem Unidade"})</option>
+                ))}
+              </select>
+            </div>
+
+            {selectedColab && (
+              <div className="p-4 bg-[var(--bg-base)]/50 rounded-xl border border-[var(--border)] text-[10px] font-bold uppercase tracking-wider space-y-1">
+                <p><span className="text-[var(--text-muted)]">Unidade Atual:</span> {selectedColab.unidade_alocacao || "Nenhuma"}</p>
+                <p><span className="text-[var(--text-muted)]">Secretaria:</span> <span className="text-[var(--brand)]">{colabSecretaria}</span></p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest block">Unidade de Destino</label>
+              <select 
+                className="input-field w-full h-12 font-bold" 
+                value={destinationUnitName} 
+                onChange={e => setDestinationUnitName(e.target.value)}
+                disabled={!selectedTransferColabId}
+              >
+                <option value="">Selecione o Destino...</option>
+                {sameSecUnits.map(u => (
+                  <option key={u.id} value={u.nome}>{u.nome}</option>
+                ))}
+              </select>
+              {selectedTransferColabId && sameSecUnits.length === 0 && (
+                <p className="text-[9px] text-orange-600 font-bold uppercase">Nenhum outro posto cadastrado na secretaria {colabSecretaria}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest block">Motivo / Justificativa</label>
+              <textarea 
+                className="input-field w-full min-h-[100px] p-4 text-xs font-bold" 
+                placeholder="Descreva o motivo da transferência..."
+                value={transferReason}
+                onChange={e => setTransferReason(e.target.value)}
+              />
+            </div>
+
+            <button 
+              disabled={saving || !selectedTransferColabId || !destinationUnitName || !transferReason}
+              onClick={handleTransferir}
+              className="w-full h-14 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-black transition-all shadow-xl"
+            >
+              {saving ? "Processando..." : "Confirmar Transferência"}
+            </button>
+          </div>
+
+          {/* Histórico Recente do Encarregado */}
+          <div className="lg:col-span-2 bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border)] shadow-xl flex flex-col gap-6">
+            <h4 className="text-sm font-black uppercase text-[var(--text-primary)]">Histórico de Transferências Enviadas</h4>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border)]">
+                    <th className="pb-4">Colaborador</th>
+                    <th className="pb-4">Origem → Destino</th>
+                    <th className="pb-4">Motivo</th>
+                    <th className="pb-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border)]">
+                  {myRecentTransfers.map((t: any) => (
+                    <tr key={t.id} className="text-xs font-bold">
+                      <td className="py-4 uppercase text-[var(--text-primary)]">{t.colaborador_nome}</td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-[var(--text-muted)]">{t.unidade_origem}</span>
+                          <ArrowUpRight size={12} className="text-[var(--brand)]" />
+                          <span className="text-[10px] text-[var(--text-primary)]">{t.unidade_destino_pretendida}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 text-[var(--text-muted)] italic max-w-xs truncate" title={t.motivo_solicitacao}>
+                        "{t.motivo_solicitacao}"
+                      </td>
+                      <td className="py-4 text-center">
+                        <span className={`px-2 py-1 rounded text-[8px] font-black uppercase ${
+                          t.status === 'FINALIZADO_RH' ? 'bg-green-100 text-green-700' :
+                          t.status === 'SOLICITADO' ? 'bg-amber-100 text-amber-700' :
+                          'bg-slate-100 text-slate-700'
+                        }`}>
+                          {t.status === 'FINALIZADO_RH' ? 'Ciente (RH)' : 'Pendente'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {myRecentTransfers.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-10 text-center text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] opacity-30 italic">
+                        Nenhuma transferência registrada por você.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1400px] mx-auto w-full">
       
@@ -2808,6 +3003,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "CAT", label: "CAT", icon: ShieldCheck },
            { id: "MY_MISSIONS", label: "Missões", icon: Trophy },
            { id: "DISCIPLINA", label: "Advertências", icon: ShieldAlert },
+           { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
            <button 
@@ -2837,6 +3033,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { activeTab === "CAT" && renderCAT() }
            { activeTab === "MY_MISSIONS" && renderMyMissions() }
            { activeTab === "DISCIPLINA" && <DisciplinaPanel user={user} myColabs={myColabs} /> }
+           { activeTab === "TRANSFERENCIAS" && renderTransferencias() }
         </div>
       )}
 

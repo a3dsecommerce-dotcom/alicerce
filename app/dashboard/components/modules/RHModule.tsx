@@ -732,11 +732,11 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "TRANSFERENCIAS" && (
            <TransferenciasList 
-             transferencias={transferencias.filter(t => t.status === 'APROVADO_GERENCIA')} 
+             transferencias={transferencias.filter(t => t.status === 'SOLICITADO')} 
              onAction={async (id, decisao, justificativa) => {
                 try {
                   await finalizarRH(id, justificativa);
-                  toast.success("Transferência finalizada pelo RH!");
+                  toast.success("Transferência aceita (RH ciente)!");
                 } catch(e: any) {
                   toast.error("Erro: " + e.message);
                 }
