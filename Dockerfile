@@ -3,7 +3,7 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --prefer-offline
+RUN npm install --frozen-lockfile --ignore-scripts
 
 # Stage 2: Build the application
 FROM node:20-alpine AS builder
@@ -13,7 +13,7 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 # As variáveis NEXT_PUBLIC_* são necessárias em build-time para Next.js embuti-las no bundle client.
-# Passe-as via --build-arg no EasyPanel ou defina no arquivo .env.production.
+# Configure-as como Build Arguments no EasyPanel.
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
