@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Shield, ShieldCheck, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -15,9 +15,7 @@ export default function LoginPage() {
   const [modalTrabalhe, setModalTrabalhe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1);
-  // Rate limiting: bloqueia após 5 tentativas por 10 min
-  const loginAttempts = useRef(typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('_la') || '0') : 0);
-  const loginBlockedUntil = useRef(typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('_lb') || '0') : 0);
+
   const [candidato, setCandidato] = useState({
     // Passo 1 - Identificação
     nome: "", data_nascimento: "", sexo: "", estado_civil: "",
@@ -36,101 +34,50 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     
-    // Rate limiting: bloqueia após 5 tentativas por 10 minutos
-    const now = Date.now();
-    if (loginBlockedUntil.current > now) {
-      const minLeft = Math.ceil((loginBlockedUntil.current - now) / 60000);
-      setError(`Muitas tentativas. Aguarde ${minLeft} minuto(s) e tente novamente.`);
-      return;
-    }
-    
     setLoading(true);
     setError("");
     const telLimpo = telefone.replace(/\D/g, "");
     if (telLimpo.length < 10) { setError("Telefone inválido."); setLoading(false); return; }
     
     try {
-      const telCom55 = telLimpo.startsWith("55") ? telLimpo : `55${telLimpo}`;
-      const telSem55 = telLimpo.startsWith("55") ? telLimpo.slice(2) : telLimpo;
-      
-      let { data: user, error: userError } = await supabase.from('usuarios').select('*')
-        .or(`telefone.eq.${telCom55},telefone.eq.${telSem55},telefone.eq.${telCom55}@s.whatsapp.net,telefone.eq.${telSem55}@s.whatsapp.net`)
-        .single();
-        
-      // FALLBACK: Se não achar em usuários, busca na tabela unidades (Diretores sem cadastro de usuário)
-      if (!user) {
-        const { data: unitData } = await supabase.from('unidades').select('*')
-          .or(`responsavel_telefone.eq.${telCom55},responsavel_telefone.eq.${telSem55},responsavel_telefone.eq.${telefone},telefone.eq.${telCom55},telefone.eq.${telSem55}`)
-          .single();
-        
-        if (unitData) {
-          user = {
-            id: `diretor_${unitData.id}`,
-            nome: unitData.diretor || unitData.responsavel_nome || "Diretor Unidade",
-            telefone: unitData.responsavel_telefone || unitData.telefone,
-            nivel_acesso: 2,
-            cargo: "DIRETOR_UNIDADE",
-            unidade_alocacao: unitData.nome,
-            secretaria: unitData.secretaria || "SEMED",
-            is_virtual: true
-          };
-        }
-      }
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telefone: telLimpo, senha }),
+      });
 
-      if (!user) { setError("Usuário não encontrado."); setLoading(false); return; }
+      const data = await response.json();
 
-      // Validação de Senha (Suporta senha customizada ou legado de 4 dígitos)
-      const senhaPadrao = telLimpo.slice(-4);
-      const senhaCorreta = user.senha || senhaPadrao;
-      
-      if (senha !== senhaCorreta) {
-        // Incrementa contador de tentativas
-        loginAttempts.current += 1;
-        sessionStorage.setItem('_la', String(loginAttempts.current));
-        if (loginAttempts.current >= 5) {
-          const blockedUntil = Date.now() + 10 * 60 * 1000;
-          loginBlockedUntil.current = blockedUntil;
-          sessionStorage.setItem('_lb', String(blockedUntil));
-          loginAttempts.current = 0;
-          sessionStorage.setItem('_la', '0');
-          setError("Conta bloqueada por 10 minutos após múltiplas tentativas incorretas.");
-        } else {
-          setError(user.senha ? "Senha incorreta." : "Senha incorreta — use os 4 últimos dígitos.");
-        }
+      if (!response.ok) {
+        setError(data.error || 'Erro ao autenticar.');
         setLoading(false);
         return;
       }
-      // Login bem-sucedido: limpa tentativas
-      loginAttempts.current = 0;
-      sessionStorage.removeItem('_la');
-      sessionStorage.removeItem('_lb');
+
+      const { user, isDefaultPassword } = data;
+
+      // Set auth cookie
       document.cookie = `auth_token=al_sovereign_${user.id}; path=/; max-age=86400`;
       
-      // LIMPEZA DE SEGURANÇA: Garante que sessões de simulação antigas sejam removidas no novo login
+      // Clear any impersonation from previous sessions
       localStorage.removeItem("impersonated_user");
       localStorage.removeItem("original_dev_user");
 
-      const dbFuncao = user.cargo;
-      const rawFuncao = dbFuncao ? String(dbFuncao).toUpperCase() : null;
-      const cargoResolvido = rawFuncao || (user.nivel_acesso >= 4 ? 'ADMIN' : user.nivel_acesso >= 3 ? 'GERENTE' : user.nivel_acesso >= 2 ? 'SUPERVISOR' : 'COLABORADOR');
-      localStorage.setItem("crm_user", JSON.stringify({ 
-        id: user.id,
-        email: user.telefone, 
-        telefone: user.telefone,
-        role: cargoResolvido, 
-        name: user.nome, 
-        nivel: user.nivel_acesso || 1,
-        nivel_acesso: user.nivel_acesso || 1,
-        unidade_alocacao: user.unidade_alocacao,
-        secretaria: user.secretaria,
-        funcao: dbFuncao
-      }));
+      // Store user data locally
+      localStorage.setItem("crm_user", JSON.stringify(user));
+
+      // Show warning if using default password
+      if (isDefaultPassword) {
+        toast.warning("⚠️ Você está usando a senha padrão (4 últimos dígitos). Recomendamos criar uma senha personalizada.", { duration: 6000 });
+      }
+
+      // Redirect based on role
       let dest = "/dashboard";
-      if (rawFuncao === "COMPRADOR") dest = "/dashboard?module=COMPRAS";
-      else if (rawFuncao === "ALMOXARIFADO" || rawFuncao === "ALMOXARIFE") dest = "/dashboard?module=ALMOXARIFADO";
+      if (user.role === "COMPRADOR") dest = "/dashboard?module=COMPRAS";
+      else if (user.role === "ALMOXARIFADO" || user.role === "ALMOXARIFE") dest = "/dashboard?module=ALMOXARIFADO";
       router.push(dest);
     } catch (err: any) {
-      setError(`Erro: ${err.message || String(err)}`);
+      setError(`Erro de conexão: ${err.message || String(err)}`);
     } finally {
       setLoading(false);
     }

@@ -50,7 +50,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     if (data && data.length > 0) {
       setPadroes(data);
       const cat = data[0].categoria;
-      const mot = data.find(p => p.categoria === cat)?.motivo_especifico || '';
+      const mot = data.find((p: any) => p.categoria === cat)?.motivo_especifico || '';
       setForm(f => ({ ...f, categoria_motivo: cat, descricao_motivo: mot }));
     }
   };
@@ -128,7 +128,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     const sysTags = ['NOME_COLABORADOR', 'FUNCAO', 'UNIDADE_ALOCACAO', 'DATA_OCORRENCIA', 'DATA_ATUAL', 'NARRATIVA_ENCARREGADO'];
     const matches = padraoSugerido.texto_template.match(/\[([A-Z_]+)\]/g) || [];
     const tags = matches.map((m: string) => m.replace('[', '').replace(']', ''));
-    return Array.from(new Set(tags)).filter((t: string) => !sysTags.includes(t));
+    return Array.from(new Set<string>(tags)).filter(t => !sysTags.includes(t));
   }, [padraoSugerido]);
 
   const generateAdvertenciaPDF = async (data: any, padrao: any) => {

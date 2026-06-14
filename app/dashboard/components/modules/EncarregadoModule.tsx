@@ -16,6 +16,13 @@ import FichaColaborador360 from "../FichaColaborador360";
 import DisciplinaPanel from "./encarregado/DisciplinaPanel";
 import TransferenciasList from "./encarregado/TransferenciasList";
 import { useTransferencias } from "@/hooks/useTransferencias";
+import {
+  MyUnitsTab,
+  MyColabsTab,
+  QuickAdmissionTab,
+  InformativosTab,
+  MyMissionsTab,
+} from "./encarregado";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
   const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA" | "TRANSFERENCIAS">(() => {
@@ -120,7 +127,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
    const [buscaColab, setBuscaColab] = useState("");
    const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
-   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado" | "epi_recebedor">("interessado");
+   const [campoBuscaAtivo, setCampoBuscaAtivo] = useState<"interessado" | "citado" | "substituto" | "ausente" | "acidentado" | "epi_recebedor" | "cat_colaborador" | "">("interessado");
 
    const [entregaConfirmadaData, setEntregaConfirmadaData] = useState<any>(null);
 
@@ -152,7 +159,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    const [showEncaminharForm, setShowEncaminharForm] = useState(false);
 
    const handleRecusarTicket = async () => {
-     if (!motivoRejeicao) return alert("Por favor, informe o motivo do cancelamento.");
+     if (!motivoRejeicao) { toast.warning("Por favor, informe o motivo do cancelamento."); return; }
      setSaving(true);
      try {
        const { error } = await supabase
@@ -189,7 +196,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    };
 
    const handleEncaminharTicket = async () => {
-     if (!setorDestino) return alert("Selecione o setor de destino.");
+     if (!setorDestino) { toast.warning("Selecione o setor de destino."); return; }
      setSaving(true);
      try {
        const { error } = await supabase
@@ -474,11 +481,11 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       .eq('id', unidadeEditando.id);
 
     if (!error) {
-      alert("Dados da unidade atualizados!");
+      toast.success("Dados da unidade atualizados!");
       setModalUnidade(null);
       fetchEncarregadoData();
     } else {
-      alert("Erro ao salvar: " + error.message);
+      toast.error("Erro ao salvar: " + error.message);
     }
     setSaving(false);
   };
@@ -647,12 +654,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
   const handleSaveInformativo = async () => {
     if (!informativo.unidade || !informativo.data) {
-      alert("Por favor, preencha a unidade e a data.");
+      toast.warning("Por favor, preencha a unidade e a data.");
       return;
     }
 
     if (informativo.tipo === 'EXTRA' && !informativo.colaborador_substituto_nome) {
-      alert("Para informativos do tipo EXTRA, é obrigatório informar o Colaborador (Substituto).");
+      toast.warning("Para informativos do tipo EXTRA, é obrigatório informar o Colaborador (Substituto).");
       return;
     }
 
@@ -673,7 +680,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       .insert([payload]);
 
     if (!error) {
-      alert("Informativo registrado com sucesso!");
+      toast.success("Informativo registrado com sucesso!");
       setInformativo({
         tipo: 'EXTRA',
         unidade: '',
@@ -700,14 +707,14 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       setHistoricoInformativos(infoAtual || []);
       setActiveTab("MY_UNITS");
     } else {
-      alert("Erro ao salvar: " + error.message);
+      toast.error("Erro ao salvar: " + error.message);
     }
     setSaving(false);
   };
 
   const handleSaveCAT = async () => {
     if (!catForm.colaborador_nome || !catForm.descricao_ocorrido || (catForm.tipo_acidente !== 'DOENCA' && !catForm.endereco_acidente)) {
-      alert("Por favor, preencha o colaborador (nome), endereço e descrição do ocorrido.");
+      toast.warning("Por favor, preencha o colaborador (nome), endereço e descrição do ocorrido.");
       return;
     }
     setSaving(true);
@@ -767,7 +774,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     const { error } = await query;
 
     if (!error) {
-      alert(editingCatId ? "Investigação de CAT atualizada com sucesso!" : "Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
+      toast.success(editingCatId ? "Investigação de CAT atualizada com sucesso!" : "Investigação de CAT registrada com sucesso! O SESMT/RH foi notificado.");
       generateCATPDF({ ...payload, dados_especificos });
       setEditingCatId(null);
       setCatForm({
@@ -803,13 +810,13 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       });
       fetchEncarregadoData();
       setActiveTab("MY_UNITS");
-    } else alert("Erro ao salvar CAT: " + error.message);
+    } else toast.error("Erro ao salvar CAT: " + error.message);
     setSaving(false);
   };
 
   const handleSaveEntregaEPI = async () => {
     if (!epiData.colaborador_nome || epiData.itens.length === 0) {
-      alert("Informe o colaborador e selecione pelo menos um item.");
+      toast.warning("Informe o colaborador e selecione pelo menos um item.");
       return;
     }
     setSaving(true);
@@ -838,7 +845,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         });
         if (rpcErr) throw rpcErr;
       }
-      alert("Entrega de EPI registrada e estoque atualizado com sucesso!");
+      toast.success("Entrega de EPI registrada e estoque atualizado com sucesso!");
       
       // Salva os dados para exibir o recibo de impressão
       setEntregaConfirmadaData({
@@ -849,7 +856,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       setEpiData({ colaborador_nome: '', unidade: '', itens: [] });
       fetchEncarregadoData();
     } catch (e: any) {
-      alert("Erro ao processar entrega: " + e.message);
+      toast.error("Erro ao processar entrega: " + e.message);
     }
     setSaving(false);
   };
@@ -1802,7 +1809,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                       <Plus size={14} /> Adicionar Itens à Entrega
                    </p>
                    <div className="grid grid-cols-1 gap-4 mb-8 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                      {estoqueEpi.filter(i => !epiData.itens.find(ei => ei.id === i.id)).map((item, idx) => (
+                      {estoqueEpi.filter((i: any) => !epiData.itens.find((ei: any) => ei.id === i.id)).map((item: any, idx: number) => (
                         <div key={idx} className="flex items-center justify-between p-4 bg-[var(--bg-base)]/50 rounded-2xl border border-[var(--border)] group hover:border-[var(--brand)] transition-all">
                            <div>
                               <p className="text-xs font-black uppercase">{item.item}</p>
@@ -1826,7 +1833,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                    {epiData.itens.length > 0 && (
                      <div className="space-y-4 animate-fade-in">
                         <p className="text-[10px] font-black uppercase text-slate-400">Itens Selecionados</p>
-                        {epiData.itens.map((item, idx) => (
+                        {epiData.itens.map((item: any, idx: number) => (
                           <div key={idx} className="flex items-center justify-between p-5 bg-[var(--brand)]/5 rounded-2xl border border-[var(--brand)]/20 shadow-sm">
                              <div className="flex items-center gap-4">
                                 <div className="w-8 h-8 rounded-lg bg-[var(--brand)] text-white flex items-center justify-center text-[10px] font-black">
@@ -1866,7 +1873,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                                   onClick={() => {
                                     setEpiData({
                                       ...epiData,
-                                      itens: epiData.itens.filter((_, i) => i !== idx)
+                                      itens: epiData.itens.filter((_: any, i: number) => i !== idx)
                                     });
                                   }}
                                   className="text-red-500 hover:bg-red-50 text-xs font-black p-2 rounded-lg"
@@ -2444,7 +2451,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
   const handleSalvarAdmissao = async () => {
     if (!admissao.nome || !admissao.telefone || !admissao.unidade) {
-      alert("Por favor, preencha todos os campos.");
+      toast.warning("Por favor, preencha todos os campos.");
       return;
     }
 
@@ -2472,12 +2479,12 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     }]);
 
     if (!error) {
-      alert("Colaborador cadastrado e ATIVO no sistema!");
+      toast.success("Colaborador cadastrado e ATIVO no sistema!");
       setAdmissao({ nome: '', telefone: '', unidade: '', secretaria: '' });
       fetchEncarregadoData();
       setActiveTab("MY_COLABS");
     } else {
-      alert("Erro ao cadastrar: " + error.message);
+      toast.error("Erro ao cadastrar: " + error.message);
     }
     setSaving(false);
   };
@@ -2672,9 +2679,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     const { data: activeMissoes } = await supabase.from('missoes').select('*').eq('ativa', true).order('created_at', { ascending: false });
     const { data: myAnswers } = await supabase.from('missoes_respostas').select('*').eq('usuario_id', user.id);
     
-    const combined = activeMissoes?.map(m => ({
+    const combined = activeMissoes?.map((m: any) => ({
       ...m,
-      concluida: myAnswers?.some(ans => ans.missao_id === m.id && ans.status === 'CONCLUIDO')
+      concluida: myAnswers?.some((ans: any) => ans.missao_id === m.id && ans.status === 'CONCLUIDO')
     })) || [];
 
     setMissoesAtivas(combined);
@@ -3024,16 +3031,96 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
         </div>
       ) : (
         <div className="flex-1">
-           {activeTab === "MY_UNITS" && renderMyUnits()}
-           {activeTab === "MY_COLABS" && renderMyColabs()}
-           {activeTab === "QUICK_ADMISSION" && renderQuickAdmission()}
+           {activeTab === "MY_UNITS" && (
+             <MyUnitsTab
+               myUnits={myUnits}
+               fullUnits={fullUnits}
+               myColabs={myColabs}
+               onPrintUnidades={handlePrintUnidadesInfo}
+               onPrintRoute={() => setIsPrintModalOpen(true)}
+               onEditUnidade={(unit) => {
+                 const unitObj = fullUnits.find(u => u.nome === unit);
+                 setUnidadeEditando(unitObj || { nome: unit });
+                 setModalUnidade(true);
+               }}
+               onGoToTickets={(unit) => { setFiltroUnidadeOcorrencia(unit); setActiveTab("TICKETS"); }}
+               onGoToAdmission={() => setActiveTab("QUICK_ADMISSION")}
+             />
+           )}
+           {activeTab === "MY_COLABS" && (
+             <MyColabsTab
+               myColabs={myColabs}
+               myUnits={myUnits}
+               colabsFiltrados={colabsFiltrados}
+               searchTerm={searchTerm}
+               filtroUnidadeColab={filtroUnidadeColab}
+               filtroCargoColab={filtroCargoColab}
+               onSearchChange={setSearchTerm}
+               onFiltroUnidadeChange={setFiltroUnidadeColab}
+               onFiltroCargoChange={setFiltroCargoColab}
+               onEditColab={setEditandoColab}
+               onPrintRoute={() => setIsPrintModalOpen(true)}
+               onGoToAdmission={() => setActiveTab("QUICK_ADMISSION")}
+             />
+           )}
+           {activeTab === "QUICK_ADMISSION" && (
+             <QuickAdmissionTab
+               admissao={admissao}
+               cargos={cargos}
+               myUnits={myUnits}
+               fullUnits={fullUnits}
+               saving={saving}
+               onAdmissaoChange={(field, value) => setAdmissao((prev: any) => ({ ...prev, [field]: value }))}
+               onAdmissaoFull={setAdmissao}
+               onSalvar={handleSalvarAdmissao}
+             />
+           )}
            {activeTab === "TICKETS" && renderTickets()}
-           {activeTab === "REPORTS" && renderReports()}
+           {activeTab === "REPORTS" && (
+             <InformativosTab
+               informativo={informativo}
+               myUnits={myUnits}
+               saving={saving}
+               historicoInformativos={historicoInformativos}
+               onInformativoChange={setInformativo}
+               onSalvar={handleSaveInformativo}
+               UserSearchInputComponent={UserSearchInput}
+             />
+           )}
            {activeTab === "EPI" && renderEPI()}
-           { activeTab === "CAT" && renderCAT() }
-           { activeTab === "MY_MISSIONS" && renderMyMissions() }
-           { activeTab === "DISCIPLINA" && <DisciplinaPanel user={user} myColabs={myColabs} /> }
-           { activeTab === "TRANSFERENCIAS" && renderTransferencias() }
+           {activeTab === "CAT" && renderCAT()}
+           {activeTab === "MY_MISSIONS" && (
+             <MyMissionsTab
+               missoesAtivas={missoesAtivas}
+               selectedMissao={selectedMissao}
+               respostasMissao={respostasMissao}
+               submittingMissao={submittingMissao}
+               onSelectMissao={(m) => { setSelectedMissao(m); setRespostasMissao({}); }}
+               onCloseMissao={() => setSelectedMissao(null)}
+               onRespostaChange={(task, value) => setRespostasMissao((prev: any) => ({ ...prev, [task]: value }))}
+               onAnswer={async () => {
+                 if (!selectedMissao) return;
+                 setSubmittingMissao(true);
+                 const { error } = await supabase.from('missoes_respostas').upsert([{
+                   missao_id: selectedMissao.id,
+                   usuario_id: user.id,
+                   respostas: respostasMissao,
+                   status: 'CONCLUIDO',
+                   updated_at: new Date().toISOString()
+                 }], { onConflict: 'missao_id,usuario_id' });
+                 if (!error) {
+                   toast.success("Missão cumprida! Parabéns!");
+                   setSelectedMissao(null);
+                   fetchMissions();
+                 } else {
+                   toast.error("Erro ao enviar: " + error.message);
+                 }
+                 setSubmittingMissao(false);
+               }}
+             />
+           )}
+           {activeTab === "DISCIPLINA" && <DisciplinaPanel user={user} myColabs={myColabs} />}
+           {activeTab === "TRANSFERENCIAS" && renderTransferencias()}
         </div>
       )}
 
@@ -3045,7 +3132,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
          onUpdate={fetchEncarregadoData}
        />
 
-       <AdaptiveModal isOpen={!!modalUnidade} onClose={() => setModalUnidade(null)}>
+       <AdaptiveModal isOpen={!!modalUnidade} onClose={() => setModalUnidade(null)} title="Editar Unidade">
           <div className="p-8">
              <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 rounded-2xl bg-[var(--brand)]/10 flex items-center justify-center text-[var(--brand)]">

@@ -17,8 +17,7 @@ import FichaColaborador360 from "../FichaColaborador360";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+
 import { supabase } from "@/lib/supabase";
 import { useTransferencias } from "@/hooks/useTransferencias";
 import TransferenciasList from "./encarregado/TransferenciasList";
@@ -347,7 +346,9 @@ export default function RHModule({ user }: { user: any }) {
     )
   );
 
-  const handleGerarPDFHistorico = (colab: any) => {
+  const handleGerarPDFHistorico = async (colab: any) => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     doc.text("Relatório Histórico", 14, 22);
     autoTable(doc, {
@@ -428,7 +429,9 @@ export default function RHModule({ user }: { user: any }) {
     }
   };
 
-  const handleGerarPDFCAT = (cat: any) => {
+  const handleGerarPDFCAT = async (cat: any) => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 

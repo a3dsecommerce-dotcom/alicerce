@@ -22,11 +22,9 @@ export function useOperacionalData(user?: any) {
       // 1. Unidades
       let unitData: any[] = [];
       if (isEncarregado) {
-        console.log("🔍 Buscando unidades para Encarregado ID:", user.id);
         // Busca direta na tabela de unidades pelo ID do encarregado vinculado
         const { data: units, error } = await supabase.from('unidades').select('*').eq('encarregado_id', user.id).order('nome');
-        if (error) console.error("❌ Erro ao buscar unidades:", error);
-        console.log("📦 Unidades encontradas:", units?.length || 0, units);
+        if (error && process.env.NODE_ENV === 'development') console.error("Erro ao buscar unidades:", error);
         unitData = units || [];
       } else {
         const { data: units } = await supabase.from('unidades').select('*').order('nome');
@@ -70,7 +68,7 @@ export function useOperacionalData(user?: any) {
       });
 
     } catch (err) {
-      console.error("Erro no fetch operacional:", err);
+      if (process.env.NODE_ENV === 'development') console.error("Erro no fetch operacional:", err);
     } finally {
       setLoading(false);
     }

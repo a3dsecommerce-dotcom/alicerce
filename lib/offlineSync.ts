@@ -24,7 +24,7 @@ export const OfflineSync = {
     const queue = OfflineSync.getQueue();
     queue.push({
       ...task,
-      id: Math.random().toString(36).substr(2, 9),
+      id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9),
       timestamp: Date.now()
     });
     localStorage.setItem('alicerce_sync_queue', JSON.stringify(queue));
@@ -55,7 +55,7 @@ export const OfflineSync = {
         // Remove da fila apenas se teve sucesso
         remainingQueue = remainingQueue.filter(t => t.id !== task.id);
       } catch (err: any) {
-        console.error('[OfflineSync] Falha ao sincronizar pacote:', task, err);
+        if (process.env.NODE_ENV === 'development') console.error('[OfflineSync] Falha ao sincronizar pacote:', task, err);
         // Se o erro foi de rede, interrompe a fila para tentar depois
         if (!navigator.onLine || err?.message === 'Failed to fetch') {
           break;
@@ -114,7 +114,7 @@ export const OfflineSync = {
 // Escutador Global de Conexão
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[OfflineSync] Conexão reestabelecida. Tentando sincronizar fila...');
+    if (process.env.NODE_ENV === 'development') console.log('[OfflineSync] Conexão reestabelecida. Tentando sincronizar fila...');
     OfflineSync.attemptSync();
   });
   
