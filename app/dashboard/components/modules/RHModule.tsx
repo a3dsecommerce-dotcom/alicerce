@@ -736,7 +736,7 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "TRANSFERENCIAS" && (
            <TransferenciasList 
-             transferencias={transferencias.filter(t => t.status === 'SOLICITADO')} 
+             transferencias={transferencias} 
              onAction={async (id, decisao, justificativa) => {
                 try {
                   await finalizarRH(id, justificativa);
