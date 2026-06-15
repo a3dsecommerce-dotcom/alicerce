@@ -14,6 +14,8 @@ interface MyColabsTabProps {
   onEditColab: (colab: any) => void;
   onPrintRoute: () => void;
   onGoToAdmission: () => void;
+  onDeleteColab?: (colab: any) => void;
+  user?: any;
 }
 
 export default function MyColabsTab({
@@ -29,8 +31,12 @@ export default function MyColabsTab({
   onEditColab,
   onPrintRoute,
   onGoToAdmission,
+  onDeleteColab,
+  user
 }: MyColabsTabProps) {
   const uniqueCargos = Array.from(new Set(myColabs.map(c => c.funcao || c.cargo || 'OPERACIONAL')));
+
+  const canDelete = user?.nivel_acesso >= 2 || user?.role === 'DEV' || user?.cargo === 'ENCARREGADO';
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
@@ -144,9 +150,24 @@ export default function MyColabsTab({
                     </span>
                   </td>
                   <td className="p-6 text-right">
-                    <button className="p-3 bg-[var(--bg-base)] text-[var(--text-muted)] rounded-xl group-hover:text-[var(--brand)] group-hover:bg-white transition-all">
-                      <Edit3 size={18} />
-                    </button>
+                    <div className="flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                      <button 
+                        onClick={() => onEditColab(colab)}
+                        className="p-3 bg-[var(--bg-base)] text-[var(--text-muted)] rounded-xl hover:text-[var(--brand)] hover:bg-white transition-all"
+                        title="Editar"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                      {canDelete && onDeleteColab && (
+                        <button 
+                          onClick={() => onDeleteColab(colab)}
+                          className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-600 hover:text-white transition-all border border-red-100"
+                          title="Excluir Colaborador (Hierárquico)"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

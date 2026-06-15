@@ -450,56 +450,116 @@ export default function ColaboradoresTable({
                   {onDelete && (
                     <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Desativar/Excluir (Fluxo RH)"><Trash2 size={16} /></button>
                   )}
-                  {((user?.nivel_acesso >= 4) || (user?.role === 'DEV')) && (
+                  {((user?.nivel_acesso >= 2) || (user?.role === 'DEV') || (user?.cargo === 'ENCARREGADO')) && (
                     <button 
                       onClick={async (e) => { 
                         e.stopPropagation(); 
                         const { supabase } = await import('@/lib/supabase');
                         const { toast } = await import('sonner');
                         
+                        const executorCargo = user?.cargo || user?.role || "Indefinido";
+                        const isEncarregado = executorCargo === 'ENCARREGADO';
+                        const isRH = !isEncarregado && (user?.nivel_acesso < 3);
+                        const isGerenteOuDev = user?.nivel_acesso >= 3 || user?.role === 'DEV';
+
                         if (c.status === 'ATIVO') {
-                          // Stage 1: Active -> DESLIGADO
-                          const confirmStage1 = window.confirm(`[ETAPA 1/3 - EXCLUSÃO MODO DEV]\n\nDeseja enviar ${c.nome} para a aba de "Desligamentos"?\n\nIsso alterará o status para DESLIGADO.`);
-                          if (confirmStage1) {
-                            toast.loading("Movendo para Desligamentos...", { id: 'dev-delete-user' });
-                            const { error } = await supabase.from('usuarios').update({ status: 'DESLIGADO' }).eq('id', c.id);
-                            if (error) {
-                              toast.error(`Erro: ${error.message}`, { id: 'dev-delete-user' });
-                            } else {
-                              toast.success("Enviado para Desligamentos!", { id: 'dev-delete-user' });
-                              window.location.reload();
-                            }
+                          // Stage 1: Active -> DESLIGADO (Allowed for Encarregado, RH, Gerente, DEV)
+                          const justificativa = window.prompt(`[ETAPA 1/3 - ENVIAR PARA DESLIGAMENTOS]\nColaborador: ${c.nome}\n\nJUSTIFICATIVA OBRIGATÓRIA PARA AUDITORIA:`);
+                          if (!justificativa) {
+                            toast.error("Ação cancelada. A justificativa é obrigatória.");
+                            return;
+                          }
+
+                          toast.loading("Movendo para Desligamentos...", { id: 'dev-delete-user' });
+                          
+                          // Log de Auditoria
+                          await supabase.from('logs_auditoria').insert({
+                            usuario_id: user.id,
+                            usuario_nome: user.nome || user.name,
+                            acao: 'ALTERAR_STATUS_DESLIGADO',
+                            entidade: 'usuarios',
+                            entidade_id: c.id,
+                            justificativa: justificativa,
+                            detalhes: { colaborador_nome: c.nome, status_anterior: c.status, status_novo: 'DESLIGADO', executor_cargo: executorCargo }
+                          });
+
+                          const { error } = await supabase.from('usuarios').update({ status: 'DESLIGADO' }).eq('id', c.id);
+                          if (error) {
+                            toast.error(`Erro: ${error.message}`, { id: 'dev-delete-user' });
+                          } else {
+                            toast.success("Enviado para Desligamentos com sucesso!", { id: 'dev-delete-user' });
+                            window.location.reload();
                           }
                         } else if (c.status === 'DESLIGADO') {
-                          // Stage 2: DESLIGADO -> INATIVO (Arquivo Morto)
-                          const confirmStage2 = window.confirm(`[ETAPA 2/3 - EXCLUSÃO MODO DEV]\n\nDeseja enviar ${c.nome} para o "Arquivo Morto"?\n\nIsso alterará o status para INATIVO.`);
-                          if (confirmStage2) {
-                            toast.loading("Movendo para Arquivo Morto...", { id: 'dev-delete-user' });
-                            const { error } = await supabase.from('usuarios').update({ status: 'INATIVO' }).eq('id', c.id);
-                            if (error) {
-                              toast.error(`Erro: ${error.message}`, { id: 'dev-delete-user' });
-                            } else {
-                              toast.success("Enviado para o Arquivo Morto!", { id: 'dev-delete-user' });
-                              window.location.reload();
-                            }
+                          // Stage 2: DESLIGADO -> INATIVO (Allowed for RH, Gerente, DEV)
+                          if (isEncarregado) {
+                            toast.error("Acesso negado. Apenas o RH, Gerente ou Desenvolvedor podem mover para o Arquivo Morto.");
+                            return;
+                          }
+
+                          const justificativa = window.prompt(`[ETAPA 2/3 - ENVIAR PARA ARQUIVO MORTO]\nColaborador: ${c.nome}\n\nJUSTIFICATIVA OBRIGATÓRIA PARA AUDITORIA:`);
+                          if (!justificativa) {
+                            toast.error("Ação cancelada. A justificativa é obrigatória.");
+                            return;
+                          }
+
+                          toast.loading("Movendo para Arquivo Morto...", { id: 'dev-delete-user' });
+                          
+                          // Log de Auditoria
+                          await supabase.from('logs_auditoria').insert({
+                            usuario_id: user.id,
+                            usuario_nome: user.nome || user.name,
+                            acao: 'ALTERAR_STATUS_INATIVO',
+                            entidade: 'usuarios',
+                            entidade_id: c.id,
+                            justificativa: justificativa,
+                            detalhes: { colaborador_nome: c.nome, status_anterior: c.status, status_novo: 'INATIVO', executor_cargo: executorCargo }
+                          });
+
+                          const { error } = await supabase.from('usuarios').update({ status: 'INATIVO' }).eq('id', c.id);
+                          if (error) {
+                            toast.error(`Erro: ${error.message}`, { id: 'dev-delete-user' });
+                          } else {
+                            toast.success("Enviado para o Arquivo Morto!", { id: 'dev-delete-user' });
+                            window.location.reload();
                           }
                         } else {
-                          // Stage 3: INATIVO/Other -> Permanent delete from database
-                          const confirmStage3 = window.confirm(`[ETAPA 3/3 - EXCLUSÃO PERMANENTE MODO DEV]\n\nATENÇÃO: Deseja EXCLUIR DEFINITIVAMENTE ${c.nome} do banco de dados?\n\nEsta ação é irreversível e apagará o registro do Supabase.`);
-                          if (confirmStage3) {
-                            toast.loading("Excluindo permanentemente...", { id: 'dev-delete-user' });
-                            const { error } = await supabase.from('usuarios').delete().eq('id', c.id);
-                            if (error) {
-                              toast.error(`Erro ao excluir permanentemente: ${error.message}`, { id: 'dev-delete-user' });
-                            } else {
-                              toast.success("Usuário excluído definitivamente!", { id: 'dev-delete-user' });
-                              window.location.reload();
-                            }
+                          // Stage 3: INATIVO/Other -> Permanent delete (Allowed for Gerente, DEV only)
+                          if (isEncarregado || isRH) {
+                            toast.error("Acesso negado. Apenas Gerente ou Desenvolvedor podem excluir permanentemente do banco de dados.");
+                            return;
+                          }
+
+                          const justificativa = window.prompt(`[ETAPA 3/3 - EXCLUSÃO PERMANENTE DO BANCO]\nColaborador: ${c.nome}\n\nATENÇÃO: Ação irreversível! Digite a JUSTIFICATIVA OBRIGATÓRIA para confirmar a exclusão definitiva do Supabase:`);
+                          if (!justificativa) {
+                            toast.error("Ação cancelada. A justificativa é obrigatória.");
+                            return;
+                          }
+
+                          toast.loading("Excluindo permanentemente...", { id: 'dev-delete-user' });
+                          
+                          // Log de Auditoria
+                          await supabase.from('logs_auditoria').insert({
+                            usuario_id: user.id,
+                            usuario_nome: user.nome || user.name,
+                            acao: 'EXCLUSAO_DEFINITIVA_USUARIO',
+                            entidade: 'usuarios',
+                            entidade_id: c.id,
+                            justificativa: justificativa,
+                            detalhes: { colaborador_nome: c.nome, status_anterior: c.status, executor_cargo: executorCargo }
+                          });
+
+                          const { error } = await supabase.from('usuarios').delete().eq('id', c.id);
+                          if (error) {
+                            toast.error(`Erro ao excluir: ${error.message}`, { id: 'dev-delete-user' });
+                          } else {
+                            toast.success("Usuário excluído definitivamente do banco de dados!", { id: 'dev-delete-user' });
+                            window.location.reload();
                           }
                         }
                       }} 
                       className="p-2 text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-lg transition-all border border-rose-200" 
-                      title="FLUXO EXCLUSÃO (DEV 3 ETAPAS)"
+                      title="FLUXO EXCLUSÃO HIERÁRQUICA"
                     >
                       <Trash2 size={16} className="stroke-[2.5]" />
                     </button>
