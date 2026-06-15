@@ -2862,20 +2862,15 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
             <h4 className="text-sm font-black uppercase text-[var(--text-primary)]">Nova Transferência</h4>
             
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest block">Selecione o Colaborador</label>
-              <select 
-                className="input-field w-full h-12 font-bold" 
-                value={selectedTransferColabId} 
-                onChange={e => {
-                  setSelectedTransferColabId(e.target.value);
+              <UserSearchInput 
+                label="Selecione o Colaborador"
+                placeholder="Digite o nome do colaborador..."
+                valueName={selectedColab?.nome || ""}
+                onSelect={(selected) => {
+                  setSelectedTransferColabId(selected.id);
                   setDestinationUnitName("");
                 }}
-              >
-                <option value="">Selecione o Colaborador...</option>
-                {myColabs.map(c => (
-                  <option key={c.id} value={c.id}>{c.nome} ({c.unidade_alocacao || "Sem Unidade"})</option>
-                ))}
-              </select>
+              />
             </div>
 
             {selectedColab && (
