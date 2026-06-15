@@ -96,8 +96,9 @@ interface ColaboradoresTableProps {
   onDeleteConfigChecklist?: (id: string) => void;
   onUpdateConfigColor?: (id: string, color: string) => void;
   onReorderConfig?: (id1: string, order1: number, id2: string, order2: number) => void;
-  onEdit: (c: Colaborador) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (c: Colaborador) => void;
+  onDelete?: (id: string) => void;
+  user?: any;
 }
 
 export default function ColaboradoresTable({ 
@@ -117,7 +118,8 @@ export default function ColaboradoresTable({
   onUpdateConfigColor,
   onReorderConfig,
   onEdit,
-  onDelete
+  onDelete,
+  user
 }: ColaboradoresTableProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [modalConfig, setModalConfig] = useState<any>(null);
@@ -437,13 +439,43 @@ export default function ColaboradoresTable({
                 </>
               ) : null}
 
-              <td className="p-6 text-right sticky right-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)] shadow-[-4px_0_8px_rgba(0,0,0,0.1)] z-10 w-[100px] min-w-[100px]">
+              <td className="p-6 text-right sticky right-0 bg-[var(--bg-card)] group-hover:bg-[var(--bg-base)] shadow-[-4px_0_8px_rgba(0,0,0,0.1)] z-10 w-[120px] min-w-[120px]">
                 <div className="flex items-center justify-end gap-2">
                   {(dpAba === 'arquivo' || dpAba === 'desligamentos') && (
                     <button onClick={(e) => { e.stopPropagation(); onGerarPDF(c); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="PDF"><FileText size={16} /></button>
                   )}
-                  <button onClick={(e) => { e.stopPropagation(); onEdit(c); }} className="p-2 text-[var(--brand)] hover:bg-[var(--brand)]/10 rounded-lg transition-colors" title="Editar"><Edit2 size={16} /></button>
-                  <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button>
+                  {onEdit && (
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(c); }} className="p-2 text-[var(--brand)] hover:bg-[var(--brand)]/10 rounded-lg transition-colors" title="Editar"><Edit2 size={16} /></button>
+                  )}
+                  {onDelete && (
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Desativar/Excluir (Fluxo RH)"><Trash2 size={16} /></button>
+                  )}
+                  {((user?.nivel_acesso >= 4) || (user?.role === 'DEV')) && (
+                    <button 
+                      onClick={async (e) => { 
+                        e.stopPropagation(); 
+                        const confirmDelete = window.confirm(`[MODO DESENVOLVEDOR] EXCLUIR USUÁRIO DEFINITIVAMENTE?\n\nUsuário: ${c.nome}\nTelefone: ${c.telefone}\nID: ${c.id}\n\nATENÇÃO: Esta ação é irreversível e excluirá o usuário diretamente do banco de dados (Supabase).`);
+                        if (confirmDelete) {
+                          const { supabase } = await import('@/lib/supabase');
+                          const { toast } = await import('sonner');
+                          
+                          toast.loading("Excluindo usuário...", { id: 'dev-delete-user' });
+                          const { error } = await supabase.from('usuarios').delete().eq('id', c.id);
+                          if (error) {
+                            toast.error(`Erro ao excluir usuário: ${error.message}`, { id: 'dev-delete-user' });
+                          } else {
+                            toast.success("Usuário excluído com sucesso!", { id: 'dev-delete-user' });
+                            // Trigger reload page or list
+                            window.location.reload();
+                          }
+                        }
+                      }} 
+                      className="p-2 text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-lg transition-all border border-rose-200" 
+                      title="EXCLUIR USUÁRIO (DEV)"
+                    >
+                      <Trash2 size={16} className="stroke-[2.5]" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>
