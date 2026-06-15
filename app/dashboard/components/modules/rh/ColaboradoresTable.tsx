@@ -454,24 +454,52 @@ export default function ColaboradoresTable({
                     <button 
                       onClick={async (e) => { 
                         e.stopPropagation(); 
-                        const confirmDelete = window.confirm(`[MODO DESENVOLVEDOR] EXCLUIR USUÁRIO DEFINITIVAMENTE?\n\nUsuário: ${c.nome}\nTelefone: ${c.telefone}\nID: ${c.id}\n\nATENÇÃO: Esta ação é irreversível e excluirá o usuário diretamente do banco de dados (Supabase).`);
-                        if (confirmDelete) {
-                          const { supabase } = await import('@/lib/supabase');
-                          const { toast } = await import('sonner');
-                          
-                          toast.loading("Excluindo usuário...", { id: 'dev-delete-user' });
-                          const { error } = await supabase.from('usuarios').delete().eq('id', c.id);
-                          if (error) {
-                            toast.error(`Erro ao excluir usuário: ${error.message}`, { id: 'dev-delete-user' });
-                          } else {
-                            toast.success("Usuário excluído com sucesso!", { id: 'dev-delete-user' });
-                            // Trigger reload page or list
-                            window.location.reload();
+                        const { supabase } = await import('@/lib/supabase');
+                        const { toast } = await import('sonner');
+                        
+                        if (c.status === 'ATIVO') {
+                          // Stage 1: Active -> DESLIGADO
+                          const confirmStage1 = window.confirm(`[ETAPA 1/3 - EXCLUSÃO MODO DEV]\n\nDeseja enviar ${c.nome} para a aba de "Desligamentos"?\n\nIsso alterará o status para DESLIGADO.`);
+                          if (confirmStage1) {
+                            toast.loading("Movendo para Desligamentos...", { id: 'dev-delete-user' });
+                            const { error } = await supabase.from('usuarios').update({ status: 'DESLIGADO' }).eq('id', c.id);
+                            if (error) {
+                              toast.error(`Erro: ${error.message}`, { id: 'dev-delete-user' });
+                            } else {
+                              toast.success("Enviado para Desligamentos!", { id: 'dev-delete-user' });
+                              window.location.reload();
+                            }
+                          }
+                        } else if (c.status === 'DESLIGADO') {
+                          // Stage 2: DESLIGADO -> INATIVO (Arquivo Morto)
+                          const confirmStage2 = window.confirm(`[ETAPA 2/3 - EXCLUSÃO MODO DEV]\n\nDeseja enviar ${c.nome} para o "Arquivo Morto"?\n\nIsso alterará o status para INATIVO.`);
+                          if (confirmStage2) {
+                            toast.loading("Movendo para Arquivo Morto...", { id: 'dev-delete-user' });
+                            const { error } = await supabase.from('usuarios').update({ status: 'INATIVO' }).eq('id', c.id);
+                            if (error) {
+                              toast.error(`Erro: ${error.message}`, { id: 'dev-delete-user' });
+                            } else {
+                              toast.success("Enviado para o Arquivo Morto!", { id: 'dev-delete-user' });
+                              window.location.reload();
+                            }
+                          }
+                        } else {
+                          // Stage 3: INATIVO/Other -> Permanent delete from database
+                          const confirmStage3 = window.confirm(`[ETAPA 3/3 - EXCLUSÃO PERMANENTE MODO DEV]\n\nATENÇÃO: Deseja EXCLUIR DEFINITIVAMENTE ${c.nome} do banco de dados?\n\nEsta ação é irreversível e apagará o registro do Supabase.`);
+                          if (confirmStage3) {
+                            toast.loading("Excluindo permanentemente...", { id: 'dev-delete-user' });
+                            const { error } = await supabase.from('usuarios').delete().eq('id', c.id);
+                            if (error) {
+                              toast.error(`Erro ao excluir permanentemente: ${error.message}`, { id: 'dev-delete-user' });
+                            } else {
+                              toast.success("Usuário excluído definitivamente!", { id: 'dev-delete-user' });
+                              window.location.reload();
+                            }
                           }
                         }
                       }} 
                       className="p-2 text-rose-700 bg-rose-50 hover:bg-rose-600 hover:text-white rounded-lg transition-all border border-rose-200" 
-                      title="EXCLUIR USUÁRIO (DEV)"
+                      title="FLUXO EXCLUSÃO (DEV 3 ETAPAS)"
                     >
                       <Trash2 size={16} className="stroke-[2.5]" />
                     </button>
