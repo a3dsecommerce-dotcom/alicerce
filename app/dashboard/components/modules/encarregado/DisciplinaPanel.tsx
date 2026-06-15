@@ -98,12 +98,13 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     return Array.from(new Set(padroes.filter(p => p.categoria === form.categoria_motivo).map(p => p.motivo_especifico)));
   }, [padroes, form.categoria_motivo]);
 
-  // Atualiza o motivo se a categoria mudar
+  // Permite sobrescrever o nível sugerido pelo sistema (null = usa o sugerido, 1 = Verbal, 2 = Escrita, 3 = Suspensão)
+  const [nivelSelecionadoOverride, setNivelSelecionadoOverride] = useState<number | null>(null);
+
+  // Limpa o override se o colaborador ou motivo mudar para recalculá-lo corretamente
   useEffect(() => {
-    if (motivosDaCategoria.length > 0 && !motivosDaCategoria.includes(form.descricao_motivo)) {
-      setForm(f => ({ ...f, descricao_motivo: motivosDaCategoria[0] }));
-    }
-  }, [form.categoria_motivo, motivosDaCategoria]);
+    setNivelSelecionadoOverride(null);
+  }, [form.colaborador_id, form.categoria_motivo, form.descricao_motivo]);
 
   const reincidencias = historicoColab.filter(h => h.categoria_motivo === form.categoria_motivo && h.status !== 'REJEITADO').length;
 
@@ -112,7 +113,14 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     const possiveis = padroes.filter(p => p.categoria === form.categoria_motivo && p.motivo_especifico === form.descricao_motivo).sort((a,b) => a.nivel_gravidade - b.nivel_gravidade);
     if (possiveis.length === 0) return null;
     
+    // Nível sugerido pelo sistema
     let nivelAlvo = reincidencias + 1;
+    
+    // Se o usuário selecionou manualmente um nível, usa ele
+    if (nivelSelecionadoOverride !== null) {
+      nivelAlvo = nivelSelecionadoOverride;
+    }
+    
     let selecionado = possiveis.find(p => p.nivel_gravidade === nivelAlvo);
     
     if (!selecionado) {
@@ -121,11 +129,11 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
       else selecionado = possiveis[possiveis.length - 1];
     }
     return selecionado;
-  }, [padroes, form.categoria_motivo, form.descricao_motivo, reincidencias]);
+  }, [padroes, form.categoria_motivo, form.descricao_motivo, reincidencias, nivelSelecionadoOverride]);
 
   const customTags = useMemo(() => {
     if (!padraoSugerido) return [];
-    const sysTags = ['NOME_COLABORADOR', 'FUNCAO', 'UNIDADE_ALOCACAO', 'DATA_OCORRENCIA', 'DATA_ATUAL', 'NARRATIVA_ENCARREGADO'];
+    const sysTags = ['NOME_COLABORADOR', 'FUNCAO', 'UNIDADE_ALOCACAO', 'DATA_OCORRENCIA', 'DATA_ATUAL', 'NARRATIVA_ENCARREGADO', 'DIAS_SUSPENSAO', 'DATA_INICIO', 'DATA_RETORNO'];
     const matches = padraoSugerido.texto_template.match(/\[([A-Z_]+)\]/g) || [];
     const tags = matches.map((m: string) => m.replace('[', '').replace(']', ''));
     return Array.from(new Set<string>(tags)).filter(t => !sysTags.includes(t));
@@ -157,6 +165,22 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     textoFinal = textoFinal.replace(/\[DATA_ATUAL\]/g, new Date().toLocaleDateString('pt-BR'));
     textoFinal = textoFinal.replace(/\[NARRATIVA_ENCARREGADO\]/g, data.detalhes_ocorrencia);
 
+    // Substituir tags específicas de suspensão se aplicável
+    if (padrao.nivel_gravidade === 3) {
+      const dias = data.variaveis_adicionais?.DIAS_SUSPENSAO || '';
+      const inicio = data.variaveis_adicionais?.DATA_INICIO ? new Date(data.variaveis_adicionais.DATA_INICIO).toLocaleDateString('pt-BR') : '';
+      const retorno = data.variaveis_adicionais?.DATA_RETORNO ? new Date(data.variaveis_adicionais.DATA_RETORNO).toLocaleDateString('pt-BR') : '';
+      
+      textoFinal = textoFinal.replace(/\[DIAS_SUSPENSAO\]/g, dias);
+      textoFinal = textoFinal.replace(/\[DATA_INICIO\]/g, inicio);
+      textoFinal = textoFinal.replace(/\[DATA_RETORNO\]/g, retorno);
+
+      // Injeção de garantia caso o texto template do BD não possua as tags configuradas
+      if (!padrao.texto_template.includes('[DIAS_SUSPENSAO]') && !padrao.texto_template.includes('[DATA_RETORNO]') && dias && inicio && retorno) {
+        textoFinal += `\n\nFica o(a) colaborador(a) ciente de que cumprirá a suspensão pelo período de ${dias} dia(s), iniciando-se em ${inicio} e retornando às suas atividades normais em ${retorno}.`;
+      }
+    }
+
     for (const tag of customTags) {
       const val = data.variaveis_adicionais[tag as string] || `[${tag}]`;
       textoFinal = textoFinal.replace(new RegExp(`\\[${tag}\\]`, 'g'), val);
@@ -168,7 +192,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     const lines = doc.splitTextToSize(textoFinal, pageWidth - 30);
     doc.text(lines, 15, 50);
 
-    const finalY = 50 + (lines.length * 5) + 30;
+    const finalY = Math.min(220, 50 + (lines.length * 5) + 20);
     
     // Assinatura Colaborador
     doc.line(20, finalY, 90, finalY);
@@ -192,7 +216,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     doc.text("CNPJ: 42.971.150/0001-92", 155, finalY + 10, { align: "center" });
 
     // Testemunhas (Recusa)
-    const testY = finalY + 35;
+    const testY = finalY + 30;
     doc.setFont("helvetica", "italic");
     doc.text("Em caso de recusa de assinatura pelo colaborador, colher a assinatura de 2 testemunhas:", 15, testY - 5);
     doc.setFont("helvetica", "normal");
@@ -211,6 +235,14 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     if (!form.colaborador_id || !form.detalhes_ocorrencia || !form.descricao_motivo || !padraoSugerido) {
       toast.error("Preencha todos os campos corretamente.");
       return;
+    }
+
+    // Validação de dados se for suspensão
+    if (padraoSugerido.nivel_gravidade === 3) {
+      if (!form.variaveis_adicionais?.DIAS_SUSPENSAO || !form.variaveis_adicionais?.DATA_INICIO || !form.variaveis_adicionais?.DATA_RETORNO) {
+        toast.error("Por favor, preencha a quantidade de dias de suspensão, a data de início e a data de retorno.");
+        return;
+      }
     }
 
     setSaving(true);
@@ -247,6 +279,7 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
         detalhes_ocorrencia: '', testemunhas: '', variaveis_adicionais: {}
       });
       setHistoricoColab([]);
+      setNivelSelecionadoOverride(null);
       fetchProcessos();
     } else {
       toast.error("Erro ao registrar: " + error.message);
@@ -298,7 +331,6 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
                 </div>
               )}
             </div>
-
             {form.colaborador_id && (
               <div className="space-y-6 animate-fade-in">
                 
@@ -312,8 +344,45 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
                     Ocorrências Anteriores na Categoria: {reincidencias}
                   </p>
                   <p className="text-xs mt-1 font-medium">
-                    {padraoSugerido ? `Punição Determinada pelo Sistema: Nível ${padraoSugerido.nivel_gravidade} (${padraoSugerido.nivel_gravidade === 3 ? 'Suspensão' : 'Advertência'})` : 'Buscando regras...'}
+                    {padraoSugerido ? `Punição Sugerida pelo Sistema: Nível ${padraoSugerido.nivel_gravidade} (${padraoSugerido.nivel_gravidade === 3 ? 'Suspensão' : 'Advertência'})` : 'Buscando regras...'}
                   </p>
+                </div>
+
+                {/* Seleção do Nível da Advertência (Sobrescrita Manual) */}
+                <div className="p-4 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl space-y-3">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest block">Selecionar Nível de Gravidade (Manual)</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { nivel: 1, label: "Verbal" },
+                      { nivel: 2, label: "Escrita" },
+                      { nivel: 3, label: "Suspensão" }
+                    ].map((opt) => {
+                      const isSelected = padraoSugerido?.nivel_gravidade === opt.nivel;
+                      return (
+                        <button
+                          key={opt.nivel}
+                          type="button"
+                          onClick={() => setNivelSelecionadoOverride(opt.nivel)}
+                          className={`py-2 px-3 rounded-lg text-xs font-bold transition-all border ${
+                            isSelected 
+                              ? 'bg-orange-600 border-orange-600 text-white shadow' 
+                              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {nivelSelecionadoOverride !== null && (
+                    <button 
+                      type="button"
+                      onClick={() => setNivelSelecionadoOverride(null)}
+                      className="text-[9px] font-black uppercase text-orange-600 hover:underline block pt-1"
+                    >
+                      Resetar para Sugestão Automática
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -344,6 +413,64 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
                   </select>
                 </div>
 
+                {/* Campos Dinâmicos de Suspensão */}
+                {padraoSugerido?.nivel_gravidade === 3 && (
+                  <div className="p-4 bg-red-50/50 border border-red-200 rounded-2xl space-y-4 animate-fade-in">
+                    <h4 className="text-[10px] font-black uppercase text-red-700 tracking-widest">Detalhes da Suspensão</h4>
+                    
+                    <div>
+                      <label className="text-[9px] font-black uppercase text-red-800 mb-1 block">Dias de Suspensão</label>
+                      <input 
+                        type="number"
+                        min="1"
+                        max="30"
+                        className="input-field w-full font-bold text-sm" 
+                        placeholder="Ex: 2"
+                        value={form.variaveis_adicionais?.DIAS_SUSPENSAO || ''}
+                        onChange={e => setForm({
+                          ...form, 
+                          variaveis_adicionais: { 
+                            ...form.variaveis_adicionais, 
+                            DIAS_SUSPENSAO: e.target.value 
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[9px] font-black uppercase text-red-800 mb-1 block">Data de Início</label>
+                        <input 
+                          type="date"
+                          className="input-field w-full font-bold text-sm" 
+                          value={form.variaveis_adicionais?.DATA_INICIO || ''}
+                          onChange={e => setForm({
+                            ...form, 
+                            variaveis_adicionais: { 
+                              ...form.variaveis_adicionais, 
+                              DATA_INICIO: e.target.value 
+                            }
+                          })}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[9px] font-black uppercase text-red-800 mb-1 block">Data de Retorno</label>
+                        <input 
+                          type="date"
+                          className="input-field w-full font-bold text-sm" 
+                          value={form.variaveis_adicionais?.DATA_RETORNO || ''}
+                          onChange={e => setForm({
+                            ...form, 
+                            variaveis_adicionais: { 
+                              ...form.variaveis_adicionais, 
+                              DATA_RETORNO: e.target.value 
+                            }
+                          })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {customTags.length > 0 && (
                   <div className="p-4 bg-[var(--bg-base)] border border-[var(--border)] rounded-2xl space-y-4">
                     <h4 className="text-[10px] font-black uppercase text-[var(--brand)] tracking-widest">Informações Específicas Necessárias</h4>
