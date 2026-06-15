@@ -30,8 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — .env.local pode conter segredos reais, nunca commitar
+# .env.production contém apenas NEXT_PUBLIC_* (variáveis públicas de build), pode commitar
+.env
+.env.local
 
 # vercel
 .vercel
