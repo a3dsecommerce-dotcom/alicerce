@@ -2791,8 +2791,24 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const renderTransferencias = () => {
     const selectedColab = myColabs.find(c => c.id === selectedTransferColabId);
     const colabSecretaria = selectedColab?.secretaria || selectedColab?.secretaria_destino || "";
-    // Filter units that belong to the same secretariat, excluding the collaborator's current unit
-    const sameSecUnits = allUnits.filter(u => u.secretaria === colabSecretaria && u.nome !== selectedColab?.unidade_alocacao);
+    
+    // Mostra TODAS as unidades disponíveis (exceto a atual do colaborador)
+    const availableUnits = allUnits.filter(u => u.nome !== selectedColab?.unidade_alocacao);
+    
+    // Agrupa por secretaria para facilitar navegação
+    const unitsBySecretaria = availableUnits.reduce((acc: Record<string, any[]>, u: any) => {
+      const sec = u.secretaria || 'Sem Secretaria';
+      if (!acc[sec]) acc[sec] = [];
+      acc[sec].push(u);
+      return acc;
+    }, {} as Record<string, any[]>);
+    
+    // Ordena para que a secretaria do colaborador venha primeiro
+    const sortedSecretarias = Object.keys(unitsBySecretaria).sort((a, b) => {
+      if (a === colabSecretaria) return -1;
+      if (b === colabSecretaria) return 1;
+      return a.localeCompare(b);
+    });
 
     const handleTransferir = async () => {
       if (!selectedTransferColabId || !destinationUnitName || !transferReason) {
@@ -2852,7 +2868,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
             Transferência de Colaborador
           </h3>
           <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2">
-            Mova colaboradores entre postos de trabalho da mesma secretaria
+            Mova colaboradores entre postos de trabalho
           </p>
         </div>
 
@@ -2889,12 +2905,16 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                 disabled={!selectedTransferColabId}
               >
                 <option value="">Selecione o Destino...</option>
-                {sameSecUnits.map(u => (
-                  <option key={u.id} value={u.nome}>{u.nome}</option>
+                {sortedSecretarias.map(sec => (
+                  <optgroup key={sec} label={sec === colabSecretaria ? `★ ${sec} (Mesma Secretaria)` : sec}>
+                    {unitsBySecretaria[sec].map((u: any) => (
+                      <option key={u.id} value={u.nome}>{u.nome}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
-              {selectedTransferColabId && sameSecUnits.length === 0 && (
-                <p className="text-[9px] text-orange-600 font-bold uppercase">Nenhum outro posto cadastrado na secretaria {colabSecretaria}</p>
+              {selectedTransferColabId && availableUnits.length === 0 && (
+                <p className="text-[9px] text-orange-600 font-bold uppercase">Nenhuma unidade disponível para transferência</p>
               )}
             </div>
 
