@@ -98,6 +98,13 @@ export default function DisciplinaPanel({ user, myColabs }: { user: any, myColab
     return Array.from(new Set(padroes.filter(p => p.categoria === form.categoria_motivo).map(p => p.motivo_especifico)));
   }, [padroes, form.categoria_motivo]);
 
+  // Atualiza o motivo se a categoria mudar
+  useEffect(() => {
+    if (motivosDaCategoria.length > 0 && !motivosDaCategoria.includes(form.descricao_motivo)) {
+      setForm(f => ({ ...f, descricao_motivo: motivosDaCategoria[0] }));
+    }
+  }, [form.categoria_motivo, motivosDaCategoria]);
+
   // Permite sobrescrever o nível sugerido pelo sistema (null = usa o sugerido, 1 = Verbal, 2 = Escrita, 3 = Suspensão)
   const [nivelSelecionadoOverride, setNivelSelecionadoOverride] = useState<number | null>(null);
 
