@@ -4,7 +4,8 @@ import {
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter, Trash2,
   CheckCircle, ArrowUpRight, Building2, User, UserPlus, Edit3,
-  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy, ShieldAlert, Printer
+  Settings, Save, Lock, LogOut, Send, Archive, Plus, Trophy, ShieldAlert, Printer,
+  BriefcaseBusiness, CalendarX, UserX, Bell
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -459,8 +460,37 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       return deadline && agora > deadline && !o.status?.startsWith('RESOLVIDO');
     }).length;
 
-    return { totalOcorrencias, emAberto, citadas, falit };
-  }, [ocorrencias, user.id]);
+    // Vagas em aberto: unidades com quantidade de vagas ou quadro funcional previsto vs alocados
+    const vagasEmAberto = fullUnits.reduce((total, u) => {
+      const vagasPrevistas = parseInt(u.quantidade_funcionarios_previsto || u.vagas_previstas || '0') || 0;
+      if (vagasPrevistas > 0) {
+        const alocados = myColabs.filter(c => c.unidade_alocacao === u.nome && c.status === 'ATIVO').length;
+        return total + Math.max(0, vagasPrevistas - alocados);
+      }
+      return total;
+    }, 0);
+
+    // Faltas no período (mês atual): informativos do tipo FALTA
+    const faltasNoPeriodo = historicoInformativos.filter(inf => {
+      if (inf.tipo !== 'FALTA') return false;
+      const dataInf = new Date(inf.data || inf.created_at);
+      return dataInf.getMonth() === mesAtual && dataInf.getFullYear() === anoAtual;
+    }).length;
+
+    // Colaboradores afastados
+    const colabsAfastados = myColabs.filter(c => {
+      const st = (c.status || '').toUpperCase();
+      return st === 'AFASTADO' || st === 'AFASTAMENTO' || st === 'LICENCA' || st === 'LICENÇA' || st === 'INSS';
+    }).length;
+
+    // Colaboradores de aviso (prévio)
+    const colabsAviso = myColabs.filter(c => {
+      const st = (c.status || '').toUpperCase();
+      return st === 'AVISO' || st === 'AVISO PRÉVIO' || st === 'AVISO PREVIO' || st === 'EM AVISO' || st === 'DEMISSAO' || st === 'DEMISSÃO';
+    }).length;
+
+    return { totalOcorrencias, emAberto, citadas, falit, vagasEmAberto, faltasNoPeriodo, colabsAfastados, colabsAviso };
+  }, [ocorrencias, user.id, myColabs, fullUnits, historicoInformativos]);
 
   const handleSaveUnidade = async () => {
     if (!unidadeEditando) return;
@@ -2996,20 +3026,24 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     <div className="flex flex-col gap-8 animate-fade-in pb-20 max-w-[1400px] mx-auto w-full">
       
       {/* DASHBOARD DE ESTATÍSTICAS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
          {[
            { label: 'Minhas Unidades', val: myUnits.length, icon: Building2, color: 'text-blue-600', bg: 'bg-blue-500/10' },
            { label: 'Meus Colaboradores', val: myColabs.length, icon: Users, color: 'text-green-600', bg: 'bg-green-500/10' },
            { label: 'Citado em Ocorrências', val: stats.citadas, icon: User, color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
            { label: 'Ocorrências Ativas', val: stats.emAberto, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-500/10' },
+           { label: 'Vagas em Aberto', val: stats.vagasEmAberto, icon: BriefcaseBusiness, color: 'text-amber-600', bg: 'bg-amber-500/10' },
+           { label: 'Faltas no Período', val: stats.faltasNoPeriodo, icon: CalendarX, color: 'text-rose-600', bg: 'bg-rose-500/10' },
+           { label: 'Colaborador Afastado', val: stats.colabsAfastados, icon: UserX, color: 'text-orange-600', bg: 'bg-orange-500/10' },
+           { label: 'Colaborador de Aviso', val: stats.colabsAviso, icon: Bell, color: 'text-yellow-600', bg: 'bg-yellow-500/10' },
          ].map((s, idx) => (
-            <div key={idx} className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] flex items-center justify-between group hover:scale-[1.02] transition-all cursor-default shadow-sm">
+            <div key={idx} className="bg-[var(--bg-card)] p-5 rounded-2xl border border-[var(--border)] flex items-center justify-between group hover:scale-[1.02] transition-all cursor-default shadow-sm">
                <div>
-                  <p className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider mb-1">{s.label}</p>
-                  <h3 className={`text-3xl font-black ${s.color}`}>{s.val}</h3>
+                  <p className="text-[8px] font-black uppercase text-[var(--text-muted)] tracking-wider mb-1">{s.label}</p>
+                  <h3 className={`text-2xl font-black ${s.color}`}>{s.val}</h3>
                </div>
-               <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-xl flex items-center justify-center`}>
-                  <s.icon size={22} />
+               <div className={`w-10 h-10 ${s.bg} ${s.color} rounded-xl flex items-center justify-center`}>
+                  <s.icon size={18} />
                </div>
             </div>
          ))}
