@@ -26,7 +26,7 @@ import {
 } from "./encarregado";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA" | "TRANSFERENCIAS">(() => {
+  const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA" | "TRANSFERENCIAS" | "AVISO_EXP">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
     if (t === "VISAO" || t === "UNIDADES") return "MY_UNITS";
@@ -39,6 +39,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     if (t === "MISSOES" || t === "MISSIONS") return "MY_MISSIONS";
     if (t === "DISCIPLINA" || t === "ADVERTENCIAS") return "DISCIPLINA";
     if (t === "TRANSFERENCIAS" || t === "TRANSFERENCIAS") return "TRANSFERENCIAS";
+    if (t === "AVISO_EXP" || t === "AVISO") return "AVISO_EXP";
     return "MY_UNITS";
   });
   const [myUnits, setMyUnits] = useState<any[]>([]);
@@ -64,6 +65,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
   const [transferReason, setTransferReason] = useState("");
   const [filtroUnidadeOcorrencia, setFiltroUnidadeOcorrencia] = useState("");
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
+  const [advertencias, setAdvertencias] = useState<any[]>([]);
   const [historicoInformativos, setHistoricoInformativos] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [modalUnidade, setModalUnidade] = useState<any>(null);
@@ -305,14 +307,17 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
 
       // Queries dependentes de unitNames
       if (unitNames.length > 0) {
-        const [colabsRes, ticketsRes] = await Promise.all([
+        const [colabsRes, ticketsRes, advRes] = await Promise.all([
           supabase.from('usuarios').select('*').in('unidade_alocacao', unitNames),
           supabase.from('tickets_sla').select('*')
             .or(`unidade.in.(${unitNames.map((u: string) => `"${u}"`).join(',')}),responsavel_citado_id.eq.${user.id},setor_destino.eq.${user.secretaria}`)
-            .order('data_abertura', { ascending: false })
+            .order('data_abertura', { ascending: false }),
+          supabase.from('processos_disciplinares').select('*')
+            .in('unidade_alocada', unitNames)
         ]);
         setMyColabs(colabsRes.data || []);
         setOcorrencias(ticketsRes.data || []);
+        setAdvertencias(advRes.data || []);
       } else {
         // Sem unidades: busca só tickets pessoais
         const { data: tickets } = await supabase
@@ -2818,7 +2823,193 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     );
   };
 
+
+  const renderAvisoExp = () => {
+    const agora = new Date();
+    
+    // 1. Experiência: Admissão (ou created_at) até 90 dias
+    const colabsEmExperiencia = myColabs.filter(c => {
+      const dataInicioStr = c.data_admissao || c.created_at;
+      if (!dataInicioStr) return false;
+      const dataInicio = new Date(dataInicioStr);
+      const diffMs = agora.getTime() - dataInicio.getTime();
+      const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      return diffDias >= 0 && diffDias <= 90;
+    }).map(c => {
+      const dataInicio = new Date(c.data_admissao || c.created_at);
+      const diffDias = Math.floor((agora.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24));
+      const temAdvertencia = advertencias.some(a => a.colaborador_id === c.id);
+      return { ...c, diasExperiencia: diffDias, temAdvertencia, dataInicio };
+    }).sort((a, b) => b.diasExperiencia - a.diasExperiencia);
+
+    // 2. Aviso Prévio: status === AVISO
+    const colabsEmAviso = myColabs.filter(c => {
+      const st = (c.status || '').toUpperCase();
+      return st === 'AVISO' || st === 'AVISO PRÉVIO' || st === 'AVISO PREVIO' || st === 'EM AVISO' || st === 'DEMISSAO' || st === 'DEMISSÃO';
+    });
+
+    const handleRegistrarAviso = async (colabId: string, tipoDias: 30 | 27) => {
+      setSaving(true);
+      try {
+        const dataAviso = new Date().toISOString();
+        const { error } = await supabase.from('usuarios').update({
+          data_aviso: dataAviso,
+          tipo_aviso: tipoDias
+        }).eq('id', colabId);
+        
+        if (error) throw error;
+        toast.success("Aviso registrado com sucesso!");
+        fetchEncarregadoData();
+      } catch (e: any) {
+        toast.error("Erro ao registrar: " + e.message);
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    return (
+      <div className="flex flex-col gap-10 animate-fade-in pb-20 max-w-[1400px] mx-auto w-full">
+        <div className="bg-[var(--bg-card)] p-10 rounded-[2rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-2 h-full bg-[var(--brand)] opacity-20" />
+          <h3 className="text-xl font-black text-[var(--text-primary)] uppercase italic flex items-center gap-3">
+            <Activity size={24} className="text-[var(--brand)]" />
+            Experiência e Aviso Prévio
+          </h3>
+          <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2">
+            Acompanhe o período de experiência (90 dias) e aviso dos colaboradores
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* COLUNA: EM EXPERIÊNCIA */}
+          <div className="flex flex-col gap-6">
+            <h4 className="text-sm font-black uppercase text-[var(--text-primary)] flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                {colabsEmExperiencia.length}
+              </span>
+              Em Experiência (até 90 dias)
+            </h4>
+
+            {colabsEmExperiencia.length === 0 ? (
+               <div className="p-8 text-center text-[var(--text-muted)] font-bold text-[10px] uppercase border border-dashed rounded-2xl">
+                 Nenhum colaborador em experiência
+               </div>
+            ) : (
+              colabsEmExperiencia.map(c => (
+                <div key={c.id} className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm relative overflow-hidden group">
+                  {c.temAdvertencia && (
+                    <div className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black uppercase px-3 py-1 rounded-bl-lg shadow-lg animate-pulse flex items-center gap-1">
+                      <ShieldAlert size={10} />
+                      Advertência no Período
+                    </div>
+                  )}
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="font-black text-[var(--text-primary)] truncate max-w-[200px]">{c.nome}</p>
+                      <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{c.cargo || c.funcao}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-blue-600 leading-none">{c.diasExperiencia}</p>
+                      <p className="text-[8px] font-black text-blue-400 uppercase tracking-widest">dias</p>
+                    </div>
+                  </div>
+
+                  <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+                    <div 
+                      className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ${c.diasExperiencia <= 30 ? 'bg-emerald-500' : 'bg-blue-500'}`}
+                      style={{ width: `${Math.min(100, (c.diasExperiencia / 90) * 100)}%` }}
+                    />
+                    <div className="absolute top-0 bottom-0 left-[33.33%] w-0.5 bg-white opacity-50 z-10" title="Fim dos 30 dias" />
+                  </div>
+                  <div className="flex justify-between mt-2 text-[8px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                    <span>Admissão: {c.dataInicio.toLocaleDateString('pt-BR')}</span>
+                    <span>Meta: 90 dias</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* COLUNA: EM AVISO */}
+          <div className="flex flex-col gap-6">
+            <h4 className="text-sm font-black uppercase text-[var(--text-primary)] flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                {colabsEmAviso.length}
+              </span>
+              Em Aviso Prévio
+            </h4>
+
+            {colabsEmAviso.length === 0 ? (
+               <div className="p-8 text-center text-[var(--text-muted)] font-bold text-[10px] uppercase border border-dashed rounded-2xl">
+                 Nenhum colaborador em aviso
+               </div>
+            ) : (
+              colabsEmAviso.map(c => {
+                let diasPassados = 0;
+                let diasTotais = c.tipo_aviso || 30;
+                let isRegistrado = !!c.data_aviso;
+
+                if (isRegistrado) {
+                  const dInicio = new Date(c.data_aviso);
+                  diasPassados = Math.floor((agora.getTime() - dInicio.getTime()) / (1000 * 60 * 60 * 24));
+                }
+
+                const diasRestantes = Math.max(0, diasTotais - diasPassados);
+                const perc = isRegistrado ? Math.min(100, (diasPassados / diasTotais) * 100) : 0;
+
+                return (
+                  <div key={c.id} className="bg-[var(--bg-card)] p-6 rounded-2xl border border-[var(--border)] shadow-sm relative overflow-hidden group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="font-black text-[var(--text-primary)] truncate max-w-[200px]">{c.nome}</p>
+                        <p className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{c.cargo || c.funcao}</p>
+                      </div>
+                      <div className="text-right">
+                        {isRegistrado ? (
+                          <>
+                            <p className="text-2xl font-black text-orange-600 leading-none">{diasRestantes}</p>
+                            <p className="text-[8px] font-black text-orange-400 uppercase tracking-widest">restantes</p>
+                          </>
+                        ) : (
+                          <span className="text-[8px] bg-red-100 text-red-600 px-2 py-1 rounded font-black uppercase">Pendente Data</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {!isRegistrado ? (
+                      <div className="mt-4 p-4 border border-dashed border-red-200 bg-red-50 rounded-xl flex flex-col gap-2">
+                        <p className="text-[9px] font-bold text-red-600 uppercase text-center">Registrar Início do Aviso</p>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleRegistrarAviso(c.id, 30)} className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[9px] font-black uppercase py-2 rounded-lg transition-all">30 Dias (Jornada)</button>
+                          <button onClick={() => handleRegistrarAviso(c.id, 27)} className="flex-1 bg-red-600 hover:bg-red-700 text-white text-[9px] font-black uppercase py-2 rounded-lg transition-all">27 Dias (Dias)</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 bg-orange-500"
+                            style={{ width: `${perc}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between mt-2 text-[8px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                          <span>Início: {new Date(c.data_aviso).toLocaleDateString('pt-BR')}</span>
+                          <span>Fim: {new Date(new Date(c.data_aviso).getTime() + (diasTotais * 24 * 60 * 60 * 1000)).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderTransferencias = () => {
+
     const selectedColab = myColabs.find(c => c.id === selectedTransferColabId);
     const colabSecretaria = selectedColab?.secretaria || selectedColab?.secretaria_destino || "";
     
@@ -3059,6 +3250,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "CAT", label: "CAT", icon: ShieldCheck },
            { id: "MY_MISSIONS", label: "Missões", icon: Trophy },
            { id: "DISCIPLINA", label: "Advertências", icon: ShieldAlert },
+           { id: "AVISO_EXP", label: "Aviso & Exp", icon: Activity },
            { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight },
            { id: "TICKETS", label: "Ocorrências", icon: AlertTriangle },
          ].map(tab => (
