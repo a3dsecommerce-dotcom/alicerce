@@ -25,7 +25,7 @@ import AdvertenciasList from "./rh/AdvertenciasList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "ADMISSAO_RAPIDA";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "ADMISSAO_RAPIDA" | "PONTO";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateChecklistColumn, deleteChecklistColumn, updateChecklistColor, reorderChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
@@ -600,9 +600,16 @@ export default function RHModule({ user }: { user: any }) {
             { id: "TRANSFERENCIAS", label: "Transferências", icon: ArrowUpRight, badge: transferencias.filter(t => t.status === 'SOLICITADO').length },
             { id: "QUADRO", label: "Quadro de Vagas", icon: Building2 },
             { id: "ADVERTENCIAS", label: "Advertências", icon: ShieldAlert },
-            { id: "ADMISSAO_RAPIDA", label: "Admissão Rápida", icon: UserPlus }
+            { id: "ADMISSAO_RAPIDA", label: "Admissão Rápida", icon: UserPlus },
+            { id: "PONTO", label: "Gestão de Ponto", icon: Clock }
           ].map((t: any) => (
-            <button key={t.id} onClick={() => setMasterTab(t.id as any)} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
+            <button key={t.id} onClick={() => {
+              if (t.id === "PONTO") {
+                window.location.href = "/dashboard/rh/ponto";
+              } else {
+                setMasterTab(t.id as any);
+              }
+            }} className={`flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] pb-3 transition-all relative ${masterTab === t.id ? 'text-[var(--brand)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>
               <t.icon size={16} /> 
               {t.label}
               {t.badge > 0 && (

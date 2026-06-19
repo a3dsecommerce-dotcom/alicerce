@@ -311,8 +311,12 @@ export default function RHPontoPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${a.resolvido ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700 animate-pulse'}`}>
-                          {a.resolvido ? 'RESOLVIDO' : 'COBRANDO...'}
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                          a.resolvido ? 'bg-green-100 text-green-700' : 
+                          a.autorizado ? 'bg-blue-100 text-blue-700 animate-pulse' : 
+                          'bg-slate-100 text-slate-700'
+                        }`}>
+                          {a.resolvido ? 'RESOLVIDO' : a.autorizado ? 'COBRANDO...' : 'AGUARDANDO'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
