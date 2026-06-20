@@ -134,10 +134,10 @@ export default function GestaoPontoPage() {
         timestamp: new Date().toISOString()
       };
 
-      const response = await fetch(webhookUrl, {
+      const response = await fetch("/api/cobranca", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ webhookUrl, ...payload })
       });
 
       if (!response.ok) {
