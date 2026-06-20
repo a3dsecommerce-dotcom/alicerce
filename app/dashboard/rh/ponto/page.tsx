@@ -18,7 +18,10 @@ import {
   HelpCircle,
   AlertCircle,
   Database,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Clock,
+  Plus,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -52,6 +55,11 @@ export default function GestaoPontoPage() {
   const [webhookUrl, setWebhookUrl] = useState("https://n8n-n8n.rvwwep.easypanel.host/webhook/cobranca-ponto");
   const [showConfig, setShowConfig] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(false);
+  
+  // Novos estados para Horários e Disparo
+  const [horarios, setHorarios] = useState<string[]>([]);
+  const [newHorario, setNewHorario] = useState("");
+  const [loadingDisparo, setLoadingDisparo] = useState(false);
 
   useEffect(() => {
     fetchOcorrencias();
@@ -83,38 +91,28 @@ export default function GestaoPontoPage() {
         .select("*");
 
       if (error) {
-        // Se a tabela não existir ainda, falha silenciosamente esperando a migração SQL
         console.warn("Tabela configuracoes_sistema não encontrada. Execute a migração SQL.");
-        return;
-      }
-
-      if (data) {
+      } else if (data) {
         const urlConfig = data.find((c: any) => c.chave === "N8N_PONTO_WEBHOOK_URL");
         const sheetConfig = data.find((c: any) => c.chave === "GOOGLE_SHEETS_SPREADSHEET_ID");
         if (urlConfig) setWebhookUrl(urlConfig.valor);
         if (sheetConfig) setSheetId(sheetConfig.valor);
       }
+
+      // Buscar horários cadastrados na tabela config_ponto
+      const { data: hData, error: hError } = await supabase
+        .from('config_ponto')
+        .select('valor')
+        .eq('chave', 'horarios_cobranca')
+        .single();
+      
+      if (!hError && hData && Array.isArray(hData.valor)) {
+        setHorarios(hData.valor);
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setLoadingConfig(false);
-    }
-  };
-  const handleSincronizar = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/ponto/sync");
-      if (!response.ok) {
-        throw new Error("Erro na requisição ao servidor");
-      }
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      
-      toast.success(`Sincronização com a Planilha concluída com sucesso! ${data.count || 0} registros analisados.`);
-    } catch (e: any) {
-      toast.error("Erro ao sincronizar planilha: " + e.message);
-    } finally {
-      fetchOcorrencias();
     }
   };
 
@@ -131,11 +129,94 @@ export default function GestaoPontoPage() {
         .upsert(updates, { onConflict: "chave" });
 
       if (error) throw error;
-      toast.success("Configurações salvas com sucesso!");
+
+      // Salvar horários na tabela config_ponto
+      const { error: hError } = await supabase
+        .from('config_ponto')
+        .upsert({
+          chave: 'horarios_cobranca',
+          valor: horarios,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'chave' });
+
+      if (hError) throw hError;
+
+      toast.success("Configurações e horários salvos com sucesso!");
     } catch (e: any) {
       toast.error("Erro ao salvar configurações: " + e.message);
     } finally {
       setLoadingConfig(false);
+    }
+  };
+
+  const handleAddHorario = () => {
+    if (!newHorario) return;
+    if (horarios.includes(newHorario)) {
+      toast.warning("Este horário já está cadastrado!");
+      return;
+    }
+    setHorarios([...horarios, newHorario].sort());
+    setNewHorario("");
+  };
+
+  const handleRemoveHorario = (hora: string) => {
+    setHorarios(horarios.filter(h => h !== hora));
+  };
+
+  const handleDispararImediato = async () => {
+    const totalAutorizados = ocorrencias.filter(o => o.autorizado && !o.resolvido).length;
+    if (totalAutorizados === 0) {
+      toast.info("Não há nenhuma cobrança autorizada e pendente na fila.");
+      return;
+    }
+
+    const confirmar = window.confirm(`Deseja disparar as cobranças de ponto imediatamente para os ${totalAutorizados} colaboradores autorizados na fila? (O envio ocorrerá de forma espaçada a cada 30-50 segundos em segundo plano para proteção de banimento).`);
+    if (!confirmar) return;
+
+    setLoadingDisparo(true);
+    try {
+      const response = await fetch("/api/ponto/disparar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ manual: true })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Erro desconhecido ao disparar cobranças");
+      }
+
+      const resData = await response.json();
+      if (resData.disparados > 0) {
+        toast.success(`Fila de disparo iniciada! ${resData.disparados} mensagens serão enviadas progressivamente.`);
+      } else {
+        toast.info("Nenhuma ocorrência elegível na fila para disparar (ou foram cobradas há menos de 5 min).");
+      }
+      
+      setTimeout(fetchOcorrencias, 1500);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erro ao disparar cobranças: " + err.message);
+    } finally {
+      setLoadingDisparo(false);
+    }
+  };
+
+  const handleSincronizar = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ponto/sync");
+      if (!response.ok) {
+        throw new Error("Erro na requisição ao servidor");
+      }
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      
+      toast.success(`Sincronização com a Planilha concluída com sucesso! ${data.count || 0} registros analisados.`);
+    } catch (e: any) {
+      toast.error("Erro ao sincronizar planilha: " + e.message);
+    } finally {
+      fetchOcorrencias();
     }
   };
 
@@ -180,23 +261,14 @@ export default function GestaoPontoPage() {
         .update({
           autorizado: true,
           fase_cobranca: 1,
-          data_ultima_cobranca: dataAgora,
+          data_ultima_cobranca: null, // Fica nulo até que ocorra o disparo manual ou automático
           updated_at: dataAgora
         })
         .eq("id", item.id);
 
       if (error) throw error;
 
-      toast.success(`Cobrança de ${item.nome} autorizada!`);
-      
-      // Dispara o fluxo no n8n
-      await dispararWebhookCobranca({
-        ...item,
-        autorizado: true,
-        fase_cobranca: 1,
-        data_ultima_cobranca: dataAgora
-      }, 1);
-
+      toast.success(`Cobrança de ${item.nome} autorizada! Ela aguardará o horário programado ou o disparo imediato.`);
       fetchOcorrencias();
     } catch (e: any) {
       toast.error("Erro ao autorizar: " + e.message);
@@ -311,7 +383,7 @@ export default function GestaoPontoPage() {
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
       }
       return new Date(dataStr).toLocaleDateString("pt-BR");
-    } catch (e) {
+    } catch {
       return dataStr;
     }
   };
@@ -335,6 +407,13 @@ export default function GestaoPontoPage() {
 
         <div className="flex gap-2">
           <button 
+            onClick={handleDispararImediato}
+            disabled={loadingDisparo}
+            className="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-orange-600/10"
+          >
+            <Send size={14} className={loadingDisparo ? "animate-pulse" : ""} /> Disparar Imediato
+          </button>
+          <button 
             onClick={handleSincronizar}
             className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
           >
@@ -344,7 +423,7 @@ export default function GestaoPontoPage() {
             onClick={() => setShowConfig(!showConfig)}
             className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
           >
-            <Settings size={14} /> Configuração Planilha/Webhook
+            <Settings size={14} /> Configurações
           </button>
         </div>
       </div>
@@ -353,10 +432,10 @@ export default function GestaoPontoPage() {
       {showConfig && (
         <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-xl animate-fade-in space-y-6">
           <h3 className="text-xs font-black uppercase text-[var(--text-primary)] tracking-widest flex items-center gap-2">
-            <Settings size={14} className="text-[var(--brand)]" /> Parâmetros de Automação (Google Sheets & n8n)
+            <Settings size={14} className="text-[var(--brand)]" /> Parâmetros de Automação e Horários de Disparo
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1.5 block flex items-center gap-1">
                 <FileSpreadsheet size={12} /> Link / ID da Planilha Google (Google Sheets)
@@ -387,13 +466,58 @@ export default function GestaoPontoPage() {
                 A URL do gatilho de webhook criado no seu workflow n8n.
               </p>
             </div>
+
+            {/* Configuração de Horários de Disparo */}
+            <div className="border-t md:border-t-0 md:border-l border-[var(--border)] md:pl-6 pt-6 md:pt-0">
+              <label className="text-[9px] font-black uppercase text-[var(--text-muted)] mb-1.5 block flex items-center gap-1">
+                <Clock size={12} /> Horários de Cobrança Automática
+              </label>
+              
+              <div className="flex gap-2 mb-3">
+                <input 
+                  type="time" 
+                  className="input-field py-1 font-bold text-xs" 
+                  value={newHorario}
+                  onChange={e => setNewHorario(e.target.value)}
+                />
+                <button
+                  onClick={handleAddHorario}
+                  className="p-2 bg-[var(--brand)] text-white rounded-xl hover:scale-105 transition-all flex items-center justify-center"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              {horarios.length === 0 ? (
+                <p className="text-[9px] text-orange-500 font-bold uppercase tracking-wider">
+                  Nenhum horário configurado! (Cobrança automática pausada).
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                  {horarios.map(hora => (
+                    <span 
+                      key={hora} 
+                      className="px-2 py-1 rounded-lg border border-[var(--border)] bg-[var(--bg-base)] text-[10px] font-black flex items-center gap-1.5 text-[var(--text-primary)] hover:border-red-300 transition-colors"
+                    >
+                      {hora}
+                      <button 
+                        onClick={() => handleRemoveHorario(hora)}
+                        className="text-[var(--text-muted)] hover:text-red-600 transition-colors"
+                      >
+                        <XCircle size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex justify-end pt-2">
+          <div className="flex justify-end pt-2 border-t border-[var(--border)]">
             <button 
               onClick={handleSalvarConfiguracoes}
               disabled={loadingConfig}
-              className="px-8 py-3 bg-[var(--brand)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all disabled:opacity-50"
+              className="px-8 py-3 bg-[var(--brand)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.02] transition-all disabled:opacity-50 shadow-md shadow-[var(--brand)]/10"
             >
               {loadingConfig ? "Gravando..." : "Salvar Configurações no Banco"}
             </button>
@@ -489,7 +613,10 @@ export default function GestaoPontoPage() {
                     badgeClass = "bg-green-100 text-green-700 border-green-200";
                     badgeText = "Resolvido";
                   } else if (item.autorizado) {
-                    if (item.fase_cobranca === 1) {
+                    if (!item.data_ultima_cobranca) {
+                      badgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+                      badgeText = "Autorizado (Fila)";
+                    } else if (item.fase_cobranca === 1) {
                       badgeClass = "bg-blue-100 text-blue-700 border-blue-200 animate-pulse";
                       badgeText = "1ª Fase (Cobrado)";
                     } else if (item.fase_cobranca === 2) {
@@ -536,7 +663,7 @@ export default function GestaoPontoPage() {
                           {item.resposta_colaborador && (
                             <div className="mt-1 bg-slate-50 border border-slate-100 rounded-xl p-2 max-w-[200px] shadow-sm text-left">
                               <span className="text-[10px] font-semibold text-slate-700 block italic leading-normal">
-                                💬 "{item.resposta_colaborador}"
+                                💬 &quot;{item.resposta_colaborador}&quot;
                               </span>
                               {item.data_resposta && (
                                 <span className="text-[7px] text-[var(--text-muted)] font-bold uppercase tracking-wider block mt-0.5">
