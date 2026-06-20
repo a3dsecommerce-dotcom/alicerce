@@ -98,6 +98,23 @@ export default function GestaoPontoPage() {
       setLoadingConfig(false);
     }
   };
+  const handleSincronizar = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/ponto/sync");
+      if (!response.ok) {
+        throw new Error("Erro na requisição ao servidor");
+      }
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      
+      toast.success(`Sincronização com a Planilha concluída com sucesso! ${data.count || 0} registros analisados.`);
+    } catch (e: any) {
+      toast.error("Erro ao sincronizar planilha: " + e.message);
+    } finally {
+      fetchOcorrencias();
+    }
+  };
 
   const handleSalvarConfiguracoes = async () => {
     setLoadingConfig(true);
@@ -316,7 +333,7 @@ export default function GestaoPontoPage() {
 
         <div className="flex gap-2">
           <button 
-            onClick={fetchOcorrencias}
+            onClick={handleSincronizar}
             className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Sincronizar
