@@ -9,12 +9,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "webhookUrl is required" }, { status: 400 });
     }
 
+    // 1. Obter credenciais da Evolution API das variáveis de ambiente (process.env)
+    const evolutionUrl = process.env.EVOLUTION_URL || "";
+    const evolutionApiKey = process.env.EVOLUTION_API_KEY || "";
+    const evolutionInstance = process.env.EVOLUTION_INSTANCE || "";
+
+    const enrichedData = {
+      ...data,
+      evolutionUrl,
+      evolutionApiKey,
+      evolutionInstance
+    };
+
     console.log(`📡 Backend Proxying Webhook to n8n: ${webhookUrl}`);
+    console.log(`💬 Enriquecido com Evolution URL: ${evolutionUrl ? "Configurado" : "Ausente"}`);
 
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(enrichedData)
     });
 
     if (!response.ok) {

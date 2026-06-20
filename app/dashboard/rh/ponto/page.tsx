@@ -34,6 +34,8 @@ interface AjustePonto {
   autorizado: boolean;
   fase_cobranca: number;
   data_ultima_cobranca: string | null;
+  resposta_colaborador: string | null;
+  data_resposta: string | null;
   created_at: string;
 }
 
@@ -87,8 +89,8 @@ export default function GestaoPontoPage() {
       }
 
       if (data) {
-        const urlConfig = data.find(c => c.chave === "N8N_PONTO_WEBHOOK_URL");
-        const sheetConfig = data.find(c => c.chave === "GOOGLE_SHEETS_SPREADSHEET_ID");
+        const urlConfig = data.find((c: any) => c.chave === "N8N_PONTO_WEBHOOK_URL");
+        const sheetConfig = data.find((c: any) => c.chave === "GOOGLE_SHEETS_SPREADSHEET_ID");
         if (urlConfig) setWebhookUrl(urlConfig.valor);
         if (sheetConfig) setSheetId(sheetConfig.valor);
       }
@@ -531,6 +533,18 @@ export default function GestaoPontoPage() {
                           <span className={`px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border w-fit ${badgeClass}`}>
                             {badgeText}
                           </span>
+                          {item.resposta_colaborador && (
+                            <div className="mt-1 bg-slate-50 border border-slate-100 rounded-xl p-2 max-w-[200px] shadow-sm text-left">
+                              <span className="text-[10px] font-semibold text-slate-700 block italic leading-normal">
+                                💬 "{item.resposta_colaborador}"
+                              </span>
+                              {item.data_resposta && (
+                                <span className="text-[7px] text-[var(--text-muted)] font-bold uppercase tracking-wider block mt-0.5">
+                                  Resp: {new Date(item.data_resposta).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {item.data_ultima_cobranca && (
                             <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase">
                               U.C: {new Date(item.data_ultima_cobranca).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
