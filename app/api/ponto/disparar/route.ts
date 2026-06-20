@@ -1,9 +1,103 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createClient as createServerSupabaseClient } from '@/utils/supabase/server';
 
 // Helper para atraso (delay)
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Função para limpar e normalizar telefone para padrão brasileiro (DDI 55)
+function cleanPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length <= 11 && digits.length >= 10) {
+    return '55' + digits;
+  }
+  return digits;
+}
+
+// Função para buscar o encarregado/supervisor responsável pelo colaborador
+async function buscarEncarregadoDoColaborador(colaboradorId: string) {
+  try {
+    // 1. Obter a unidade de alocação do colaborador
+    const { data: user, error: userError } = await supabase
+      .from('usuarios')
+      .select('unidade_alocacao')
+      .eq('id', colaboradorId)
+      .single();
+
+    if (userError || !user?.unidade_alocacao) {
+      console.log(`⚠️ Colaborador ${colaboradorId} sem unidade de alocação mapeada.`);
+      return null;
+    }
+
+    const unidadeNome = user.unidade_alocacao;
+
+    // 2. Buscar a unidade correspondente
+    const { data: unit, error: unitError } = await supabase
+      .from('unidades')
+      .select('rota, encarregado_id')
+      .eq('nome', unidadeNome)
+      .single();
+
+    if (unitError || !unit) {
+      console.log(`⚠️ Unidade "${unidadeNome}" não encontrada na tabela unidades.`);
+      return null;
+    }
+
+    let encarregadoId = unit.encarregado_id;
+    const rota = unit.rota || "Sem Rota";
+
+    // 3. Se a unidade não tiver encarregado_id, buscar na config_rotas
+    if (!encarregadoId && unit.rota) {
+      const { data: routeData } = await supabase
+        .from('config_rotas')
+        .select('encarregado_id')
+        .ilike('rota_nome', unit.rota)
+        .single();
+      if (routeData && routeData.encarregado_id) {
+        encarregadoId = routeData.encarregado_id;
+      }
+    }
+
+    if (!encarregadoId) {
+      console.log(`⚠️ Nenhum encarregado cadastrado para a unidade "${unidadeNome}" ou rota "${rota}".`);
+      return {
+        unidade: unidadeNome,
+        rota: rota,
+        encarregadoNome: null,
+        encarregadoTelefone: null
+      };
+    }
+
+    // 4. Buscar nome e telefone do encarregado na tabela usuarios
+    const { data: encarregado, error: encError } = await supabase
+      .from('usuarios')
+      .select('nome, telefone')
+      .eq('id', encarregadoId)
+      .single();
+
+    if (encError || !encarregado) {
+      console.log(`⚠️ Encarregado com ID ${encarregadoId} não encontrado na tabela usuarios.`);
+      return {
+        unidade: unidadeNome,
+        rota: rota,
+        encarregadoNome: null,
+        encarregadoTelefone: null
+      };
+    }
+
+    return {
+      unidade: unidadeNome,
+      rota: rota,
+      encarregadoNome: encarregado.nome,
+      encarregadoTelefone: encarregado.telefone
+    };
+
+  } catch (err: any) {
+    console.error("❌ Erro ao buscar encarregado do colaborador:", err.message);
+    return null;
+  }
+}
 
 // Função auxiliar para processar a fila em background
 async function processarFilaCobrancas(
@@ -40,7 +134,7 @@ async function processarFilaCobrancas(
         continue; // Passa para o próximo caso ocorra erro no BD
       }
 
-      // 2. Disparar o webhook para o n8n
+      // 2. Disparar o webhook para o n8n para cobrar o colaborador
       const payload = {
         id: ocorrencia.id,
         nome: ocorrencia.nome,
@@ -49,7 +143,9 @@ async function processarFilaCobrancas(
         motivo: ocorrencia.motivo || "Ajuste Geral de Ponto",
         fase_cobranca: faseAtual,
         timestamp: dataAgora,
-        ...evolutionConfig
+        evolutionUrl: evolutionConfig.evolutionUrl,
+        evolutionApiKey: evolutionConfig.evolutionApiKey,
+        evolutionInstance: evolutionConfig.evolutionInstance
       };
 
       const response = await fetch(webhookUrl, {
@@ -63,6 +159,48 @@ async function processarFilaCobrancas(
         console.error(`⚠️ Webhook n8n respondeu com erro para ${ocorrencia.nome}:`, response.status, errorText);
       } else {
         console.log(`✅ Webhook enviado com sucesso para ${ocorrencia.nome}`);
+      }
+
+      // 3. Se for Fase 3 (escalonamento), buscar encarregado e notificá-lo
+      if (faseAtual === 3 && ocorrencia.colaborador_id) {
+        console.log(`🚨 Escalando caso de ${ocorrencia.nome} (Fase 3) para o encarregado...`);
+        const encDados = await buscarEncarregadoDoColaborador(ocorrencia.colaborador_id);
+        
+        if (encDados && encDados.encarregadoTelefone) {
+          const telefoneEncLimpo = cleanPhone(encDados.encarregadoTelefone);
+          
+          if (telefoneEncLimpo) {
+            const mensagemEnc = `Olá, *${encDados.encarregadoNome}*! Identificamos que o colaborador *${ocorrencia.nome}* (alocado na rota *${encDados.rota}*, unidade *${encDados.unidade}*) possui uma pendência de ajuste de ponto no dia *${ocorrencia.data_referencia}* (${ocorrencia.motivo || 'Batida pendente'}).\n\nEssa pendência já foi cobrada 3 vezes de forma automática e não foi resolvida pelo colaborador. Por favor, faça a cobrança pessoalmente para regularização.\n\n_Esta é uma mensagem automática de suporte à gestão de ponto._`;
+
+            try {
+              console.log(`📡 Enviando notificação de escalonamento para o encarregado ${encDados.encarregadoNome} (${telefoneEncLimpo})...`);
+              
+              const responseEnc = await fetch(`${evolutionConfig.evolutionUrl}/message/sendText/${evolutionConfig.evolutionInstance}`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "apikey": evolutionConfig.evolutionApiKey
+                },
+                body: JSON.stringify({
+                  number: telefoneEncLimpo,
+                  text: mensagemEnc,
+                  delay: 1200
+                })
+              });
+
+              if (!responseEnc.ok) {
+                const errText = await responseEnc.text();
+                console.error(`⚠️ Erro ao enviar mensagem para o encarregado na Evolution: Status ${responseEnc.status}`, errText);
+              } else {
+                console.log(`✅ Notificação enviada com sucesso para o encarregado ${encDados.encarregadoNome}`);
+              }
+            } catch (fetchEncErr: any) {
+              console.error(`❌ Exceção ao enviar notificação para o encarregado:`, fetchEncErr.message);
+            }
+          }
+        } else {
+          console.log(`⚠️ Não foi possível determinar o encarregado ou obter telefone válido para escalonamento do colaborador ${ocorrencia.nome}.`);
+        }
       }
 
     } catch (err: any) {

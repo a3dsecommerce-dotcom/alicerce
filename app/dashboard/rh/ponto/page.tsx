@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
-  ClipboardList, 
   Search, 
   CheckCircle, 
   AlertTriangle, 
@@ -15,13 +15,11 @@ import {
   Settings, 
   ArrowLeft,
   XCircle,
-  HelpCircle,
   AlertCircle,
   Database,
   FileSpreadsheet,
   Clock,
-  Plus,
-  Trash2
+  Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -40,6 +38,12 @@ interface AjustePonto {
   resposta_colaborador: string | null;
   data_resposta: string | null;
   created_at: string;
+  colaborador?: {
+    id: string;
+    nome: string;
+    unidade_alocacao: string | null;
+    telefone: string | null;
+  } | null;
 }
 
 export default function GestaoPontoPage() {
@@ -61,17 +65,21 @@ export default function GestaoPontoPage() {
   const [newHorario, setNewHorario] = useState("");
   const [loadingDisparo, setLoadingDisparo] = useState(false);
 
-  useEffect(() => {
-    fetchOcorrencias();
-    fetchConfiguracoes();
-  }, []);
+  // Estados para dados de unidades e rotas auxiliares
+  const [unidadesList, setUnidadesList] = useState<any[]>([]);
+  const [rotasList, setRotasList] = useState<any[]>([]);
+
+
 
   const fetchOcorrencias = async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from("ajustes_ponto")
-        .select("*")
+        .select(`
+          *,
+          colaborador:usuarios(id, nome, unidade_alocacao, telefone)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -218,6 +226,50 @@ export default function GestaoPontoPage() {
     } finally {
       fetchOcorrencias();
     }
+  };
+
+  const fetchDadosAuxiliares = async () => {
+    try {
+      const { data: uData } = await supabase
+        .from('unidades')
+        .select('nome, rota, encarregado_nome, encarregado_id');
+      if (uData) setUnidadesList(uData);
+
+      const { data: rData } = await supabase
+        .from('config_rotas')
+        .select('rota_nome, encarregado_nome, encarregado_id');
+      if (rData) setRotasList(rData);
+    } catch (e) {
+      console.error("Erro ao buscar dados auxiliares de alocação:", e);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOcorrencias();
+    fetchConfiguracoes();
+    fetchDadosAuxiliares();
+  }, []);
+
+  const obterAlocacaoColaborador = (unidadeAlocacao: string | null) => {
+    if (!unidadeAlocacao) return { rota: "Sem Rota", encarregado: "Sem Encarregado" };
+
+    const unidade = unidadesList.find(u => u.nome === unidadeAlocacao);
+    if (!unidade) {
+      return { rota: "Rota não mapeada", encarregado: "Não mapeado" };
+    }
+
+    const rota = unidade.rota || "Sem Rota";
+    let encarregado = unidade.encarregado_nome || "Sem Encarregado";
+
+    if ((!encarregado || encarregado === "Sem Encarregado") && unidade.rota) {
+      const rotaConfig = rotasList.find(r => r.rota_nome?.toLowerCase() === unidade.rota.toLowerCase());
+      if (rotaConfig && rotaConfig.encarregado_nome) {
+        encarregado = rotaConfig.encarregado_nome;
+      }
+    }
+
+    return { rota, encarregado };
   };
 
   // Envia requisição para o n8n informando o início ou avanço de cobrança
@@ -640,6 +692,17 @@ export default function GestaoPontoPage() {
                             <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1 mt-0.5">
                               <Smartphone size={10} /> {item.telefone}
                             </div>
+                            {/* Rota e Encarregado */}
+                            {(() => {
+                              const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
+                              return (
+                                <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                                  <span>📍 {aloc.rota}</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span>👤 {aloc.encarregado}</span>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       </td>
