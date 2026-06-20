@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid telephone number format" }, { status: 400 });
     }
 
-    const match = ocorrencias.find(o => {
+    const matches = ocorrencias.filter(o => {
       const cleanDb = cleanPhone(o.telefone);
       if (cleanDb.length < 8) return false;
       
@@ -57,10 +57,23 @@ export async function POST(req: Request) {
       return cleanDb.slice(-8) === cleanIncoming.slice(-8);
     });
 
-    if (!match) {
+    if (matches.length === 0) {
       console.log(`ℹ️ Nenhuma ocorrência em aberto correspondente ao telefone ${telefone}`);
       return NextResponse.json({ success: true, message: "Colaborador correspondente não encontrado" });
     }
+
+    // Filtrar apenas as ocorrências que estão em cobrança ativa (data_ultima_cobranca não nula)
+    // e ordenar pela data de cobrança mais recente primeiro
+    const activeMatches = matches
+      .filter(o => o.data_ultima_cobranca !== null)
+      .sort((a, b) => new Date(b.data_ultima_cobranca!).getTime() - new Date(a.data_ultima_cobranca!).getTime());
+
+    if (activeMatches.length === 0) {
+      console.log(`ℹ️ Ocorrência encontrada para ${matches[0].nome}, mas não está em cobrança ativa (nunca foi enviado disparo de cobrança).`);
+      return NextResponse.json({ success: true, message: "Colaborador não está em cobrança ativa" });
+    }
+
+    const match = activeMatches[0];
 
     // 4. Atualizar a ocorrência com a resposta do colaborador
     console.log(`✅ Ocorrência vinculada: ${match.nome} (ID: ${match.id})`);
