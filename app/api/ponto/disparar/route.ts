@@ -321,7 +321,7 @@ export async function POST(req: Request) {
     const agoraMs = new Date().getTime();
     const tempoMinimoEntreCobrancasMs = 5 * 60 * 1000; // 5 minutos
 
-    const ocorrenciasFiltradas = ocorrencias.filter(o => {
+    const ocorrenciasFiltradas = ocorrencias.filter((o: any) => {
       // Se nunca foi cobrado, pode disparar
       if (!o.data_ultima_cobranca) return true;
 

@@ -37,6 +37,8 @@ interface AjustePonto {
   data_ultima_cobranca: string | null;
   resposta_colaborador: string | null;
   data_resposta: string | null;
+  resposta_encarregado: string | null;
+  data_resposta_encarregado: string | null;
   created_at: string;
   colaborador?: {
     id: string;
@@ -695,11 +697,14 @@ export default function GestaoPontoPage() {
                             {/* Rota e Encarregado */}
                             {(() => {
                               const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
+                              const confirmado = !!item.resposta_encarregado;
                               return (
-                                <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1">
+                                <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1 flex-wrap">
                                   <span>📍 {aloc.rota}</span>
                                   <span className="text-slate-300">•</span>
-                                  <span>👤 {aloc.encarregado}</span>
+                                  <span className={confirmado ? "text-green-600 font-bold" : ""}>
+                                    👤 {aloc.encarregado}{confirmado ? " ✓ (Confirmou)" : ""}
+                                  </span>
                                 </div>
                               );
                             })()}
@@ -724,17 +729,29 @@ export default function GestaoPontoPage() {
                             {badgeText}
                           </span>
                           {item.resposta_colaborador && (
-                            <div className="mt-1 bg-slate-50 border border-slate-100 rounded-xl p-2 max-w-[200px] shadow-sm text-left">
-                              <span className="text-[10px] font-semibold text-slate-700 block italic leading-normal">
-                                💬 &quot;{item.resposta_colaborador}&quot;
-                              </span>
-                              {item.data_resposta && (
-                                <span className="text-[7px] text-[var(--text-muted)] font-bold uppercase tracking-wider block mt-0.5">
-                                  Resp: {new Date(item.data_resposta).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                             <div className="mt-1 bg-slate-50 border border-slate-100 rounded-xl p-2 max-w-[200px] shadow-sm text-left">
+                               <span className="text-[10px] font-semibold text-slate-700 block italic leading-normal">
+                                 💬 Colab: &quot;{item.resposta_colaborador}&quot;
+                               </span>
+                               {item.data_resposta && (
+                                 <span className="text-[7px] text-[var(--text-muted)] font-bold uppercase tracking-wider block mt-0.5">
+                                   Resp: {new Date(item.data_resposta).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                                 </span>
+                               )}
+                             </div>
+                           )}
+                           {item.resposta_encarregado && (
+                             <div className="mt-1 bg-green-50 border border-green-100 rounded-xl p-2 max-w-[200px] shadow-sm text-left">
+                               <span className="text-[10px] font-semibold text-green-800 block italic leading-normal">
+                                 💬 Supervisor: &quot;{item.resposta_encarregado}&quot;
+                               </span>
+                               {item.data_resposta_encarregado && (
+                                 <span className="text-[7px] text-green-600 font-bold uppercase tracking-wider block mt-0.5">
+                                   Confirmou: {new Date(item.data_resposta_encarregado).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                                 </span>
+                               )}
+                             </div>
+                           )}
                           {item.data_ultima_cobranca && (
                             <span className="text-[8px] font-bold text-[var(--text-muted)] uppercase">
                               U.C: {new Date(item.data_ultima_cobranca).toLocaleString("pt-BR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
