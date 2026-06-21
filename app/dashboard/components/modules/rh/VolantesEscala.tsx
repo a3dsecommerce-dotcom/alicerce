@@ -25,25 +25,29 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [filtroSolicitacao, setFiltroSolicitacao] = useState<"todas" | "pendentes" | "concluidas">("pendentes");
   const [modalSettings, setModalSettings] = useState(false);
   const [grupoJid, setGrupoJid] = useState("");
+  const [n8nWebhookUrl, setN8nWebhookUrl] = useState("");
   const [loadingOS, setLoadingOS] = useState<string | null>(null);
+  const [loadingAmanha, setLoadingAmanha] = useState(false);
 
   useEffect(() => {
-    const fetchConfig = async () => {
+    const fetchConfigs = async () => {
       const { data } = await supabase
         .from('configuracoes_sistema')
-        .select('valor')
-        .eq('chave', 'WHATSAPP_GRUPO_VOLANTES_JID')
-        .single();
-      if (data && data.valor) {
-        setGrupoJid(data.valor);
+        .select('*')
+        .in('chave', ['WHATSAPP_GRUPO_VOLANTES_JID', 'N8N_ESCALA_AMANHA_WEBHOOK_URL']);
+      if (data) {
+        const jidConfig = data.find((c: any) => c.chave === 'WHATSAPP_GRUPO_VOLANTES_JID');
+        if (jidConfig) setGrupoJid(jidConfig.valor);
+        const webhookConfig = data.find((c: any) => c.chave === 'N8N_ESCALA_AMANHA_WEBHOOK_URL');
+        if (webhookConfig) setN8nWebhookUrl(webhookConfig.valor);
       }
     };
-    fetchConfig();
+    fetchConfigs();
   }, []);
 
-  const handleSaveGrupoJid = async () => {
+  const handleSaveConfigs = async () => {
     setLoading(true);
-    const { error } = await supabase
+    const { error: err1 } = await supabase
       .from('configuracoes_sistema')
       .upsert({
         chave: 'WHATSAPP_GRUPO_VOLANTES_JID',
@@ -51,13 +55,39 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         updated_at: new Date().toISOString()
       }, { onConflict: 'chave' });
 
-    if (!error) {
-      toast.success("ID do Grupo WhatsApp atualizado!");
+    const { error: err2 } = await supabase
+      .from('configuracoes_sistema')
+      .upsert({
+        chave: 'N8N_ESCALA_AMANHA_WEBHOOK_URL',
+        valor: n8nWebhookUrl,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'chave' });
+
+    if (!err1 && !err2) {
+      toast.success("Configurações atualizadas!");
       setModalSettings(false);
     } else {
-      toast.error("Erro ao salvar configuração: " + error.message);
+      toast.error("Erro ao salvar configurações.");
     }
     setLoading(false);
+  };
+
+  const handleDispararEscalaAmanha = async () => {
+    setLoadingAmanha(true);
+    try {
+      const res = await fetch('/api/volantes/escala-amanha', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || "Escala de amanhã disparada com sucesso!");
+      } else {
+        toast.error(data.error || "Erro ao disparar escala de amanhã.");
+      }
+    } catch (err: any) {
+      toast.error("Erro na comunicação com o servidor: " + err.message);
+    }
+    setLoadingAmanha(false);
   };
 
   const handleEnviarOrdemServico = async (escala: any, targetUnidade?: string) => {
@@ -514,15 +544,36 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         <div className="space-y-6">
           {/* QUADRO DE ESCALA DO DIA COMPACTO */}
           <div className="bg-[var(--bg-card)] border border-[var(--border)] p-6 rounded-3xl shadow-sm">
-             <div className="flex items-center justify-between pb-3 border-b border-[var(--border)] mb-4">
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[var(--border)] mb-4 gap-3">
                 <div className="flex items-center gap-2">
                    <Calendar size={16} className="text-indigo-600" />
                    <span className="text-xs font-black uppercase text-[var(--text-primary)]">Escala do Dia</span>
                    <span className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest">({format(new Date(), "dd 'de' MMMM", { locale: ptBR })})</span>
                 </div>
-                <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-full text-[9px] font-black uppercase border border-indigo-200/20">
-                   {todayVolantes.length} Volantes Ativos Hoje
-                </span>
+                <div className="flex flex-wrap items-center gap-3">
+                   <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-full text-[9px] font-black uppercase border border-indigo-200/20">
+                      {todayVolantes.length} Volantes Ativos Hoje
+                   </span>
+                   {canEdit && (
+                     <button
+                       onClick={handleDispararEscalaAmanha}
+                       disabled={loadingAmanha}
+                       className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                       title="Enviar escala consolidada de amanhã via n8n"
+                     >
+                       {loadingAmanha ? (
+                         <>
+                           <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                           Enviando...
+                         </>
+                       ) : (
+                         <>
+                           <Send size={12} /> Disparar Escala de Amanhã
+                         </>
+                       )}
+                     </button>
+                   )}
+                </div>
              </div>
              
              {todayVolantes.length === 0 ? (
@@ -1124,11 +1175,11 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         )}
       </AdaptiveModal>
 
-      {/* Modal de Configurações do WhatsApp Group JID */}
+      {/* Modal de Configurações de Integração de Volantes */}
       <AdaptiveModal
         isOpen={modalSettings}
         onClose={() => setModalSettings(false)}
-        title="Configurações de Integração do WhatsApp"
+        title="Configurações de Integração de Volantes"
         width="450px"
       >
         <div className="p-6 space-y-6">
@@ -1148,12 +1199,29 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
               Você também pode inserir um número pessoal de teste (DDI + DDD + Número) para testar os disparos.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2">
+              <Settings size={14} className="text-indigo-600" /> Webhook da Escala de Amanhã (n8n)
+            </label>
+            <input 
+              type="text" 
+              className="input-field h-12 font-bold" 
+              placeholder="Ex: https://n8n.seuservidor.com/webhook/escala-amanha" 
+              value={n8nWebhookUrl} 
+              onChange={(e) => setN8nWebhookUrl(e.target.value)} 
+            />
+            <p className="text-[9px] text-[var(--text-muted)] uppercase font-bold leading-normal">
+              Insira a URL do webhook correspondente no n8n que receberá o payload consolidado com as escalas do dia seguinte.
+            </p>
+          </div>
+
           <button 
-            onClick={handleSaveGrupoJid} 
+            onClick={handleSaveConfigs} 
             disabled={loading}
             className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
-            {loading ? "Salvando..." : "Salvar Configuração"}
+            {loading ? "Salvando..." : "Salvar Configurações"}
           </button>
         </div>
       </AdaptiveModal>
