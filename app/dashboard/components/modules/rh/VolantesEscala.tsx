@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Truck, Calendar, MapPin, User, FileText, Plus, Clock, Save, Trash2, TrendingUp, Building2, ClipboardList } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Truck, Calendar, MapPin, User, FileText, Plus, Clock, Save, Trash2, TrendingUp, Building2, ClipboardList, Settings, Send } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
@@ -23,6 +23,104 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<"escala" | "solicitacoes">("escala");
   const [filtroSolicitacao, setFiltroSolicitacao] = useState<"todas" | "pendentes" | "concluidas">("pendentes");
+  const [modalSettings, setModalSettings] = useState(false);
+  const [grupoJid, setGrupoJid] = useState("");
+  const [loadingOS, setLoadingOS] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const { data } = await supabase
+        .from('configuracoes_sistema')
+        .select('valor')
+        .eq('chave', 'WHATSAPP_GRUPO_VOLANTES_JID')
+        .single();
+      if (data && data.valor) {
+        setGrupoJid(data.valor);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleSaveGrupoJid = async () => {
+    setLoading(true);
+    const { error } = await supabase
+      .from('configuracoes_sistema')
+      .upsert({
+        chave: 'WHATSAPP_GRUPO_VOLANTES_JID',
+        valor: grupoJid,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'chave' });
+
+    if (!error) {
+      toast.success("ID do Grupo WhatsApp atualizado!");
+      setModalSettings(false);
+    } else {
+      toast.error("Erro ao salvar configuração: " + error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleEnviarOrdemServico = async (escala: any, targetUnidade?: string) => {
+    if (!grupoJid) {
+      return toast.error("Configure o ID do grupo do WhatsApp nas Configurações (ícone de engrenagem).");
+    }
+    const detalhes = escala.detalhes_visitas || [];
+    if (detalhes.length === 0) {
+      return toast.error("Esta escala não possui roteiro de visitas configurado.");
+    }
+
+    setLoadingOS(escala.id);
+    let sucessos = 0;
+    
+    for (const d of detalhes) {
+      if (targetUnidade && d.unidade !== targetUnidade) continue;
+
+      let substituindo = "";
+      const motivoUpper = (d.motivo || "").toUpperCase();
+      if (motivoUpper.includes("SUBST:")) {
+        substituindo = d.motivo.substring(motivoUpper.indexOf("SUBST:") + 6).trim();
+      } else {
+        substituindo = d.motivo || "";
+      }
+
+      let insalubridade = 0;
+      if (motivoUpper.includes("20%")) insalubridade = 20;
+      else if (motivoUpper.includes("40%")) insalubridade = 40;
+      
+      const payload = {
+        volanteNome: escala.colaborador_nome,
+        unidadeNome: d.unidade,
+        substituindoNome: substituindo,
+        horario: `${d.entrada} às ${d.saida || '17:00'}`,
+        insalubridade: insalubridade || null,
+        grupoJid: grupoJid
+      };
+
+      try {
+        const res = await fetch('/api/volantes/os', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const resData = await res.json();
+        if (res.ok && resData.success) {
+          sucessos++;
+        } else {
+          console.error(`Erro ao enviar OS para unidade ${d.unidade}:`, resData.error);
+        }
+      } catch (err: any) {
+        console.error("Exceção ao enviar OS:", err.message);
+      }
+    }
+
+    if (sucessos > 0) {
+      toast.success(`Ordem de Serviço enviada (${sucessos} mensagens)!`);
+    } else {
+      toast.error("Falha ao enviar Ordem de Serviço. Verifique as configurações e tente novamente.");
+    }
+    setLoadingOS(null);
+  };
+
   const canEdit = Number(user?.nivel || user?.nivel_acesso) >= 3 || 
                   user?.nivel === 3 || user?.nivel === '3' ||
                   user?.nivel_acesso === 3 || user?.nivel_acesso === '3' ||
@@ -130,6 +228,32 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
 
     if (!errReq) {
       toast.success("Dia aprovado e volante escalado com sucesso!");
+      
+      // Enviar Ordem de Serviço automatizada
+      if (grupoJid) {
+        const payloadOS = {
+          volanteNome: volanteAprovadoNome,
+          unidadeNome: modalRequisicao.unidade_destino,
+          substituindoNome: modalRequisicao.colaborador_substituido_nome || "",
+          horario: "07:00 às 17:00",
+          insalubridade: modalRequisicao.asg_porcentagem || null,
+          grupoJid: grupoJid
+        };
+        fetch('/api/volantes/os', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadOS)
+        }).then(res => res.json()).then(resData => {
+          if (resData.success) {
+            toast.success("Ordem de Serviço enviada ao WhatsApp!");
+          } else {
+            console.error("Erro ao enviar OS automática:", resData.error);
+          }
+        }).catch(err => {
+          console.error("Exceção ao enviar OS automática:", err.message);
+        });
+      }
+
       setModalRequisicao(null);
       refresh();
     } else {
@@ -255,6 +379,16 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
 
     if (!error) {
       toast.success(editingId ? "Escala atualizada!" : "Escala registrada!");
+      
+      // Se for um novo registro e houver grupoJid, enviar OS
+      if (!editingId && grupoJid) {
+        handleEnviarOrdemServico({
+          colaborador_nome: formData.colaborador_nome,
+          detalhes_visitas: formData.detalhes,
+          id: "new"
+        });
+      }
+
       setModalNovo(false);
       setEditingId(null);
       setFormData({ colaborador_id: "", colaborador_nome: "", data: format(new Date(), "yyyy-MM-dd"), observacoes: "", detalhes: [] });
@@ -339,9 +473,18 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
              <FileText size={16} /> Escala Mensal PDF
           </button>
           {canEdit && (
-            <button onClick={() => setModalNovo(true)} className="h-12 px-8 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-indigo-600/20">
-              <Plus size={16} /> Novo Registro
-            </button>
+            <>
+              <button 
+                onClick={() => setModalSettings(true)} 
+                className="h-12 w-12 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] rounded-xl flex items-center justify-center hover:bg-[var(--bg-base)] transition-all shadow-sm cursor-pointer"
+                title="Configurações do WhatsApp"
+              >
+                <Settings size={18} />
+              </button>
+              <button onClick={() => setModalNovo(true)} className="h-12 px-8 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all shadow-xl shadow-indigo-600/20">
+                <Plus size={16} /> Novo Registro
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -389,16 +532,35 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
              ) : (
                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                  {todayVolantes.map((v, i) => (
-                   <div key={i} className="bg-[var(--bg-base)]/50 border border-[var(--border)] p-4 rounded-2xl hover:border-indigo-400 dark:hover:border-indigo-800 transition-all cursor-pointer group" onClick={() => handleEdit(v)}>
-                      <div className="flex items-center gap-3 mb-3">
-                         <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-black text-white text-[10px] shadow-sm">
-                            {v.colaborador_nome?.charAt(0)}
-                         </div>
-                         <div className="min-w-0 flex-1">
-                            <p className="text-[10px] font-black uppercase tracking-tight truncate text-[var(--text-primary)]">{v.colaborador_nome}</p>
-                            <p className="text-[8px] font-bold text-indigo-500 uppercase truncate">Substituição Ativa</p>
-                         </div>
-                      </div>
+                    <div key={i} className="bg-[var(--bg-base)]/50 border border-[var(--border)] p-4 rounded-2xl hover:border-indigo-400 dark:hover:border-indigo-800 transition-all cursor-pointer group" onClick={() => handleEdit(v)}>
+                       <div className="flex items-center justify-between gap-3 mb-3">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                             <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-black text-white text-[10px] shadow-sm shrink-0">
+                                {v.colaborador_nome?.charAt(0)}
+                             </div>
+                             <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-tight truncate text-[var(--text-primary)]">{v.colaborador_nome}</p>
+                                <p className="text-[8px] font-bold text-indigo-500 uppercase truncate">Substituição Ativa</p>
+                             </div>
+                          </div>
+                          {canEdit && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEnviarOrdemServico(v);
+                              }}
+                              disabled={loadingOS === v.id}
+                              className="w-8 h-8 flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg hover:scale-105 transition-all cursor-pointer disabled:opacity-50 shrink-0 border border-emerald-200/50"
+                              title="Enviar Ordem de Serviço via WhatsApp"
+                            >
+                              {loadingOS === v.id ? (
+                                <div className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Send size={12} />
+                              )}
+                            </button>
+                          )}
+                       </div>
                       <div className="space-y-1">
                          {v.detalhes_visitas.map((d: any, idx: number) => (
                            <div key={idx} className="flex items-center justify-between p-2 bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl text-[8px] font-black uppercase shadow-xs">
@@ -422,6 +584,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                     <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] pl-8">Data / Registro</th>
                     <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Colaborador Volante</th>
                     <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Roteiro Diário (Máx 2 Unidades)</th>
+                    {canEdit && <th className="p-6 text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] text-right pr-8">Ações</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
@@ -471,6 +634,24 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                             )}
                         </div>
                       </td>
+                      {canEdit && (
+                        <td className="p-6 text-right pr-8">
+                          <button
+                            onClick={() => handleEnviarOrdemServico(v)}
+                            disabled={loadingOS === v.id}
+                            className="h-10 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200/50 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ml-auto"
+                            title="Disparar Ordem de Serviço no WhatsApp"
+                          >
+                            {loadingOS === v.id ? (
+                              <div className="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <>
+                                <Send size={12} className="text-emerald-600" /> OS
+                              </>
+                            )}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                    {volantes.filter(v => {
@@ -478,7 +659,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                     return d.getMonth() === selectedMonth.getMonth() && d.getFullYear() === selectedMonth.getFullYear();
                   }).length === 0 && (
                     <tr>
-                      <td colSpan={3} className="p-20 text-center opacity-30">
+                      <td colSpan={4} className="p-20 text-center opacity-30">
                         <Truck size={48} className="mx-auto mb-4" />
                         <p className="text-xs font-black uppercase tracking-widest">Nenhuma escala para este mês.</p>
                       </td>
@@ -941,6 +1122,40 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
 
           </div>
         )}
+      </AdaptiveModal>
+
+      {/* Modal de Configurações do WhatsApp Group JID */}
+      <AdaptiveModal
+        isOpen={modalSettings}
+        onClose={() => setModalSettings(false)}
+        title="Configurações de Integração do WhatsApp"
+        width="450px"
+      >
+        <div className="p-6 space-y-6">
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2">
+              <Settings size={14} className="text-indigo-600" /> ID do Grupo de Volantes (JID)
+            </label>
+            <input 
+              type="text" 
+              className="input-field h-12 font-bold" 
+              placeholder="Ex: 120363023942039482@g.us" 
+              value={grupoJid} 
+              onChange={(e) => setGrupoJid(e.target.value)} 
+            />
+            <p className="text-[9px] text-[var(--text-muted)] uppercase font-bold leading-normal">
+              Insira o ID completo do grupo do WhatsApp de volantes obtido na Evolution API (JID terminado em @g.us).
+              Você também pode inserir um número pessoal de teste (DDI + DDD + Número) para testar os disparos.
+            </p>
+          </div>
+          <button 
+            onClick={handleSaveGrupoJid} 
+            disabled={loading}
+            className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {loading ? "Salvando..." : "Salvar Configuração"}
+          </button>
+        </div>
       </AdaptiveModal>
     </div>
   );
