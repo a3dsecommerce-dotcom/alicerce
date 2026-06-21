@@ -144,8 +144,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     const { error } = await supabase
       .from('requisicoes_volantes')
       .update({
-        status: 'NAO_ATENDIDA',
-        updated_at: new Date().toISOString()
+        status: 'NAO_ATENDIDA'
       })
       .eq('id', modalRequisicao.id);
 
