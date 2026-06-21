@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Truck, Calendar, MapPin, User, FileText, Plus, Clock, Save, Trash2, TrendingUp, Building2, ClipboardList, Settings, Send, RefreshCw, Table2 } from "lucide-react";
+import { Truck, Calendar, MapPin, User, FileText, Plus, Clock, Save, Trash2, TrendingUp, Building2, ClipboardList, Settings, Send, RefreshCw, Table2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
@@ -141,6 +141,58 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [buscaUnidadeBase, setBuscaUnidadeBase] = useState("OPERAÇÃO");
   const [unidadesBaseSugeridas, setUnidadesBaseSugeridas] = useState<any[]>([]);
 
+  const [duplicateCheck, setDuplicateCheck] = useState<{
+    exists: boolean;
+    colaborador?: { nome: string; telefone: string; status: string } | null;
+    loading: boolean;
+  }>({ exists: false, colaborador: null, loading: false });
+
+  useEffect(() => {
+    const cleanNome = (formAdmissao.nome || "").trim().replace(/,/g, "");
+    const cleanTelefone = (formAdmissao.telefone || "").trim().replace(/,/g, "");
+
+    if (cleanNome.length < 3 && cleanTelefone.length < 8) {
+      setDuplicateCheck({ exists: false, colaborador: null, loading: false });
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setDuplicateCheck(prev => ({ ...prev, loading: true }));
+      try {
+        const filters = [];
+        if (cleanNome.length >= 3) {
+          filters.push(`nome.ilike.${cleanNome}`);
+        }
+        if (cleanTelefone.length >= 8) {
+          filters.push(`telefone.eq.${cleanTelefone}`);
+        }
+
+        if (filters.length > 0) {
+          const { data, error } = await supabase
+            .from('usuarios')
+            .select('nome, telefone, status')
+            .or(filters.join(','))
+            .limit(1);
+
+          if (!error && data && data.length > 0) {
+            setDuplicateCheck({
+              exists: true,
+              colaborador: data[0],
+              loading: false
+            });
+          } else {
+            setDuplicateCheck({ exists: false, colaborador: null, loading: false });
+          }
+        }
+      } catch (err) {
+        console.error("Erro na verificação de duplicados:", err);
+        setDuplicateCheck({ exists: false, colaborador: null, loading: false });
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [formAdmissao.nome, formAdmissao.telefone]);
+
   const fetchActiveVolantes = async () => {
     setLoadingVolantesList(true);
     const { data } = await supabase
@@ -217,6 +269,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
       insalubridade: 20
     });
     setBuscaUnidadeBase("OPERAÇÃO");
+    setDuplicateCheck({ exists: false, colaborador: null, loading: false });
     fetchActiveVolantes();
     refresh();
     setLoading(false);
@@ -1543,12 +1596,27 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             insalubridade: 20
           });
           setBuscaUnidadeBase("OPERAÇÃO");
+          setDuplicateCheck({ exists: false, colaborador: null, loading: false });
         }}
         title="Admissão de Colaborador Volante"
         width="600px"
       >
         <div className="p-8 space-y-6 max-h-[85vh] overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {duplicateCheck.exists && duplicateCheck.colaborador && (
+              <div className="col-span-2 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl flex items-start gap-3">
+                <AlertTriangle className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={16} />
+                <div>
+                  <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                    Atenção: Já existe um colaborador cadastrado com este Nome ou Telefone!
+                  </p>
+                  <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-1">
+                    Nome: <strong className="uppercase">{duplicateCheck.colaborador.nome}</strong> | Telefone: <strong>{duplicateCheck.colaborador.telefone}</strong> | Status: <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">{duplicateCheck.colaborador.status}</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Nome */}
             <div className="space-y-2 col-span-2">
               <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Nome Completo</label>
@@ -1677,9 +1745,9 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             <button
               className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black uppercase shadow-md transition-all disabled:opacity-50"
               onClick={handleFinalizarAdmissao}
-              disabled={loading}
+              disabled={loading || duplicateCheck.exists}
             >
-              {loading ? "Processando..." : "Confirmar Admissão"}
+              {loading ? "Processando..." : duplicateCheck.exists ? "Cadastro Duplicado" : "Confirmar Admissão"}
             </button>
           </div>
         </div>
