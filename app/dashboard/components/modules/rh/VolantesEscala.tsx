@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Truck, Calendar, MapPin, User, FileText, Plus, Clock, Save, Trash2, TrendingUp, Building2, ClipboardList, Settings, Send } from "lucide-react";
+import { Truck, Calendar, MapPin, User, FileText, Plus, Clock, Save, Trash2, TrendingUp, Building2, ClipboardList, Settings, Send, RefreshCw, Table2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/lib/supabase";
@@ -28,18 +28,23 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [n8nWebhookUrl, setN8nWebhookUrl] = useState("");
   const [loadingOS, setLoadingOS] = useState<string | null>(null);
   const [loadingAmanha, setLoadingAmanha] = useState(false);
+  const [loadingImport, setLoadingImport] = useState(false);
+  const [importResult, setImportResult] = useState<{imported: number; skipped: number; total_rows: number} | null>(null);
+  const [googleSheetUrl, setGoogleSheetUrl] = useState("");
 
   useEffect(() => {
     const fetchConfigs = async () => {
       const { data } = await supabase
         .from('configuracoes_sistema')
         .select('*')
-        .in('chave', ['WHATSAPP_GRUPO_VOLANTES_JID', 'N8N_ESCALA_AMANHA_WEBHOOK_URL']);
+        .in('chave', ['WHATSAPP_GRUPO_VOLANTES_JID', 'N8N_ESCALA_AMANHA_WEBHOOK_URL', 'GOOGLE_SHEET_VOLANTES_URL']);
       if (data) {
         const jidConfig = data.find((c: any) => c.chave === 'WHATSAPP_GRUPO_VOLANTES_JID');
         if (jidConfig) setGrupoJid(jidConfig.valor);
         const webhookConfig = data.find((c: any) => c.chave === 'N8N_ESCALA_AMANHA_WEBHOOK_URL');
         if (webhookConfig) setN8nWebhookUrl(webhookConfig.valor);
+        const sheetConfig = data.find((c: any) => c.chave === 'GOOGLE_SHEET_VOLANTES_URL');
+        if (sheetConfig) setGoogleSheetUrl(sheetConfig.valor);
       }
     };
     fetchConfigs();
@@ -63,7 +68,15 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         updated_at: new Date().toISOString()
       }, { onConflict: 'chave' });
 
-    if (!err1 && !err2) {
+    const { error: err3 } = await supabase
+      .from('configuracoes_sistema')
+      .upsert({
+        chave: 'GOOGLE_SHEET_VOLANTES_URL',
+        valor: googleSheetUrl,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'chave' });
+
+    if (!err1 && !err2 && !err3) {
       toast.success("Configurações atualizadas!");
       setModalSettings(false);
     } else {
@@ -88,6 +101,27 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
       toast.error("Erro na comunicação com o servidor: " + err.message);
     }
     setLoadingAmanha(false);
+  };
+
+  const handleImportarPlanilha = async () => {
+    setLoadingImport(true);
+    setImportResult(null);
+    try {
+      const res = await fetch('/api/volantes/importar-planilha', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setImportResult({ imported: data.imported, skipped: data.skipped, total_rows: data.total_rows });
+        toast.success(`Importação concluída! ${data.imported} novas solicitações importadas. ${data.skipped} já existentes ignoradas.`);
+        refresh();
+      } else {
+        toast.error(data.error || "Erro ao importar planilha.");
+      }
+    } catch (err: any) {
+      toast.error("Erro na comunicação com o servidor: " + err.message);
+    }
+    setLoadingImport(false);
   };
 
   const [activeVolantesList, setActiveVolantesList] = useState<any[]>([]);
@@ -301,7 +335,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     let query = supabase
       .from('usuarios')
       .select('*')
-      .or('cargo.ilike.%volante%,funcao.ilike.%volante%')
+      .ilike('cargo', '%volante%')
       .eq('status', 'ATIVO')
       .order('nome', { ascending: true });
 
@@ -438,7 +472,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     let query = supabase
       .from('usuarios')
       .select('*')
-      .or('cargo.ilike.%volante%,funcao.ilike.%volante%')
+      .ilike('cargo', '%volante%')
       .eq('status', 'ATIVO')
       .order('nome', { ascending: true });
 
@@ -862,7 +896,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
           </div>
 
           {/* Filtros e Lista de Solicitações */}
-          <div className="flex justify-between items-center gap-4 bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--border)] shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[var(--bg-card)] p-4 rounded-2xl border border-[var(--border)] shadow-sm">
             <div className="flex flex-wrap gap-2">
               {(["pendentes", "concluidas", "todas"] as const).map((filtro) => (
                 <button
@@ -874,7 +908,49 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                 </button>
               ))}
             </div>
+            {canEdit && (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleImportarPlanilha}
+                  disabled={loadingImport}
+                  className="h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  title="Sincronizar solicitações da planilha do Google Sheets"
+                >
+                  {loadingImport ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Importando...
+                    </>
+                  ) : (
+                    <>
+                      <Table2 size={14} /> Sincronizar Planilha
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Resultado da última importação */}
+          {importResult && (
+            <div className="flex items-center gap-4 p-4 bg-teal-50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 rounded-2xl animate-fade-in">
+              <RefreshCw size={18} className="text-teal-600 shrink-0" />
+              <div className="flex-1">
+                <p className="text-[10px] font-black uppercase text-teal-700 dark:text-teal-300">
+                  Última Sincronização: {importResult.imported} novas solicitações importadas
+                </p>
+                <p className="text-[9px] font-bold text-teal-600/70 dark:text-teal-400/70 mt-0.5">
+                  {importResult.total_rows} linhas processadas • {importResult.skipped} duplicatas ignoradas
+                </p>
+              </div>
+              <button
+                onClick={() => setImportResult(null)}
+                className="text-teal-400 hover:text-teal-600 transition-colors text-[9px] font-black uppercase cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {requisicoesFiltradas.length === 0 ? (
             <div className="p-20 bg-[var(--bg-card)] rounded-3xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--text-muted)] font-black uppercase tracking-widest">
@@ -1423,6 +1499,22 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             />
             <p className="text-[9px] text-[var(--text-muted)] uppercase font-bold leading-normal">
               Insira a URL do webhook correspondente no n8n que receberá o payload consolidado com as escalas do dia seguinte.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2">
+              <Table2 size={14} className="text-teal-600" /> URL da Planilha Google Sheets
+            </label>
+            <input 
+              type="text" 
+              className="input-field h-12 font-bold" 
+              placeholder="Ex: https://docs.google.com/spreadsheets/d/.../edit?usp=sharing" 
+              value={googleSheetUrl} 
+              onChange={(e) => setGoogleSheetUrl(e.target.value)} 
+            />
+            <p className="text-[9px] text-[var(--text-muted)] uppercase font-bold leading-normal">
+              URL da planilha do Google Sheets com os pedidos de volantes dos diretores. A planilha deve estar compartilhada como &quot;Qualquer pessoa com o link&quot;.
             </p>
           </div>
 
