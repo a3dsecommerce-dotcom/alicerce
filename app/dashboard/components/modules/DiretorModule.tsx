@@ -694,7 +694,7 @@ export default function DiretorModule({ user }: { user: any }) {
                                </span>
                             </div>
                             <p className="text-xs font-bold text-[var(--text-muted)] leading-relaxed italic border-l-4 border-slate-200 pl-4 py-2 bg-[var(--bg-base)]/50 rounded-r-xl">
-                               "{o.descricao}"
+                               &quot;{o.descricao}&quot;
                             </p>
                             {o.resposta_central ? (
                               <div className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20 space-y-2">
@@ -731,8 +731,8 @@ export default function DiretorModule({ user }: { user: any }) {
                                      <p className="text-sm font-black italic uppercase leading-none">{v.cargo_alvo || 'Volante Geral'}</p>
                                   </div>
                                </div>
-                               <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${v.status === 'APROVADO' ? 'bg-emerald-500/10 text-emerald-600' : v.status === 'NEGADO' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600 animate-pulse'}`}>
-                                  {v.status || 'PENDENTE'}
+                               <span className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest ${v.status === 'APROVADO' || v.status === 'ATENDIDA' ? 'bg-emerald-500/10 text-emerald-600' : v.status === 'NEGADO' || v.status === 'NAO_ATENDIDA' ? 'bg-red-500/10 text-red-600' : 'bg-amber-500/10 text-amber-600 animate-pulse'}`}>
+                                  {v.status === 'ATENDIDA' ? 'VAGA PREENCHIDA' : v.status === 'NAO_ATENDIDA' ? 'VAGA NÃO PREENCHIDA' : (v.status || 'PENDENTE')}
                                </span>
                             </div>
                             <div className="flex gap-2">
