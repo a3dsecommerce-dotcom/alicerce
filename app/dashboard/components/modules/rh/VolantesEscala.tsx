@@ -21,7 +21,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [activeSubTab, setActiveSubTab] = useState<"escala" | "solicitacoes">("escala");
+  const [activeSubTab, setActiveSubTab] = useState<"escala" | "solicitacoes" | "volantes">("escala");
   const [filtroSolicitacao, setFiltroSolicitacao] = useState<"todas" | "pendentes" | "concluidas">("pendentes");
   const [modalSettings, setModalSettings] = useState(false);
   const [grupoJid, setGrupoJid] = useState("");
@@ -88,6 +88,104 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
       toast.error("Erro na comunicação com o servidor: " + err.message);
     }
     setLoadingAmanha(false);
+  };
+
+  const [activeVolantesList, setActiveVolantesList] = useState<any[]>([]);
+  const [loadingVolantesList, setLoadingVolantesList] = useState(false);
+  const [modalAdmitir, setModalAdmitir] = useState(false);
+  
+  const [formAdmissao, setFormAdmissao] = useState({
+    nome: "",
+    telefone: "",
+    cpf: "",
+    cargo: "ASG VOLANTE",
+    unidade: "OPERAÇÃO",
+    data_admissao: format(new Date(), "yyyy-MM-dd"),
+    insalubridade: 20
+  });
+
+  const [buscaUnidadeBase, setBuscaUnidadeBase] = useState("OPERAÇÃO");
+  const [unidadesBaseSugeridas, setUnidadesBaseSugeridas] = useState<any[]>([]);
+
+  const fetchActiveVolantes = async () => {
+    setLoadingVolantesList(true);
+    const { data } = await supabase
+      .from('usuarios')
+      .select('*')
+      .ilike('cargo', '%volante%')
+      .eq('status', 'ATIVO')
+      .order('nome', { ascending: true });
+    
+    if (data) {
+      setActiveVolantesList(data);
+    }
+    setLoadingVolantesList(false);
+  };
+
+  useEffect(() => {
+    if (activeSubTab === "volantes") {
+      fetchActiveVolantes();
+    }
+  }, [activeSubTab]);
+
+  const searchUnidadesBase = async (val: string) => {
+    setBuscaUnidadeBase(val);
+    if (val.length > 1) {
+      const { data } = await supabase.from('unidades').select('*').ilike('nome', `%${val}%`).limit(5);
+      if (data) setUnidadesBaseSugeridas(data);
+    } else {
+      setUnidadesBaseSugeridas([]);
+    }
+  };
+
+  const handleFinalizarAdmissao = async () => {
+    if (!formAdmissao.nome || !formAdmissao.telefone) {
+      return toast.error("Preencha Nome e Telefone.");
+    }
+    setLoading(true);
+    
+    const { error: insertError } = await supabase.from('usuarios').insert([{
+      nome: formAdmissao.nome.toUpperCase(),
+      telefone: formAdmissao.telefone,
+      cpf: formAdmissao.cpf || "000.000.000-00",
+      cargo: formAdmissao.cargo,
+      unidade_alocacao: formAdmissao.unidade,
+      status: 'ATIVO',
+      data_admissao: formAdmissao.data_admissao,
+      nivel_acesso: 1,
+      insalubridade: formAdmissao.insalubridade || 0,
+      created_at: new Date().toISOString()
+    }]);
+
+    if (insertError) {
+      toast.error("Erro ao realizar admissão: " + insertError.message);
+      setLoading(false);
+      return;
+    }
+
+    await supabase.from('atividades').insert([{
+      usuario_id: user.id,
+      usuario_nome: user.nome || user.name,
+      mensagem: `Realizou admissão do volante ${formAdmissao.nome.toUpperCase()}`,
+      tipo: "RH",
+      created_at: new Date().toISOString()
+    }]);
+
+    toast.success("Volante admitido com sucesso!");
+    setModalAdmitir(false);
+    setFormAdmissao({
+      nome: "",
+      telefone: "",
+      cpf: "",
+      cargo: "ASG VOLANTE",
+      unidade: "OPERAÇÃO",
+      data_admissao: format(new Date(), "yyyy-MM-dd"),
+      insalubridade: 20
+    });
+    setBuscaUnidadeBase("OPERAÇÃO");
+    fetchActiveVolantes();
+    refresh();
+    setLoading(false);
   };
 
   const handleEnviarOrdemServico = async (escala: any, targetUnidade?: string) => {
@@ -538,6 +636,17 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             </span>
           )}
         </button>
+        <button
+          onClick={() => setActiveSubTab("volantes")}
+          className={`pb-4 text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 border-b-2 ${activeSubTab === "volantes" ? "border-indigo-600 text-indigo-600" : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+        >
+          <User size={14} /> Volantes Ativos
+          {activeVolantesList.length > 0 && (
+            <span className="ml-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[9px] font-black">
+              {activeVolantesList.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {activeSubTab === "escala" ? (
@@ -721,7 +830,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeSubTab === "solicitacoes" ? (
         <div className="space-y-6">
           {/* Relatório de Conformidade */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -822,6 +931,107 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                      </tbody>
                   </table>
                </div>
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {activeSubTab === "volantes" && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Header/Ações da Aba */}
+          <div className="flex justify-between items-center gap-4 bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm">
+            <div className="flex items-center gap-3">
+              <User size={18} className="text-indigo-600" />
+              <div>
+                <h3 className="text-xs font-black uppercase text-[var(--text-primary)]">Volantes Cadastrados</h3>
+                <p className="text-[9px] text-[var(--text-muted)] font-black uppercase mt-0.5">
+                  {activeVolantesList.length} {activeVolantesList.length === 1 ? "Volante Ativo" : "Volantes Ativos"} no sistema
+                </p>
+              </div>
+            </div>
+            {canEdit && (
+              <button
+                onClick={() => setModalAdmitir(true)}
+                className="h-10 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <Plus size={14} /> Admitir Novo Volante
+              </button>
+            )}
+          </div>
+
+          {/* Listagem/Tabela de Volantes */}
+          {loadingVolantesList ? (
+            <div className="p-20 bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent mx-auto mb-4"></div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Carregando volantes ativos...</p>
+            </div>
+          ) : activeVolantesList.length === 0 ? (
+            <div className="p-20 bg-[var(--bg-card)] rounded-3xl border border-dashed border-[var(--border)] text-center text-xs text-[var(--text-muted)] font-black uppercase tracking-widest space-y-4">
+              <User size={48} className="mx-auto mb-2 opacity-30 text-indigo-600" />
+              <p>Nenhum volante ativo cadastrado no sistema.</p>
+              {canEdit && (
+                <button
+                  onClick={() => setModalAdmitir(true)}
+                  className="mx-auto h-10 px-5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border border-indigo-200/50 flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus size={14} /> Admitir Primeiro Volante
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-[var(--bg-base)]/50 border-b border-[var(--border)] text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+                    <tr>
+                      <th className="p-5 pl-8">Colaborador</th>
+                      <th className="p-5">CPF</th>
+                      <th className="p-5">Cargo / Função</th>
+                      <th className="p-5">Unidade Base</th>
+                      <th className="p-5">Admissão</th>
+                      <th className="p-5">Insalubridade</th>
+                      <th className="p-5 pr-8 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--border)] font-bold text-[var(--text-primary)]">
+                    {activeVolantesList.map((volante) => (
+                      <tr key={volante.id} className="hover:bg-[var(--brand-alpha)] transition-all">
+                        <td className="p-5 pl-8">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 font-black text-xs border border-indigo-500/10 shadow-inner">
+                              {volante.nome?.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-black uppercase text-[11px] leading-none text-slate-800 dark:text-slate-100">{volante.nome}</p>
+                              <p className="text-[9px] text-[var(--text-muted)] font-bold mt-1">{volante.telefone || "Sem telefone"}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-5 font-mono text-[10px] tracking-tight">{volante.cpf || "000.000.000-00"}</td>
+                        <td className="p-5">
+                          <span className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 rounded-lg text-[9px] font-black uppercase border border-indigo-200/20">
+                            {volante.cargo || "VOLANTE"}
+                          </span>
+                        </td>
+                        <td className="p-5 uppercase font-bold text-slate-600 dark:text-slate-300">{volante.unidade_alocacao || "OPERAÇÃO"}</td>
+                        <td className="p-5">
+                          {volante.data_admissao ? format(new Date(volante.data_admissao + "T00:00:00"), "dd/MM/yyyy") : "—"}
+                        </td>
+                        <td className="p-5">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black ${volante.insalubridade > 0 ? "bg-red-50 text-red-700 border border-red-200/40" : "bg-slate-50 text-slate-500"}`}>
+                            {volante.insalubridade > 0 ? `${volante.insalubridade}%` : "Não"}
+                          </span>
+                        </td>
+                        <td className="p-5 pr-8 text-right">
+                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/50 rounded-full text-[8px] font-black uppercase">
+                            {volante.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
@@ -1223,6 +1433,163 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
           >
             {loading ? "Salvando..." : "Salvar Configurações"}
           </button>
+        </div>
+      </AdaptiveModal>
+
+      {/* Modal de Admissão de Volante */}
+      <AdaptiveModal
+        isOpen={modalAdmitir}
+        onClose={() => {
+          setModalAdmitir(false);
+          setFormAdmissao({
+            nome: "",
+            telefone: "",
+            cpf: "",
+            cargo: "ASG VOLANTE",
+            unidade: "OPERAÇÃO",
+            data_admissao: format(new Date(), "yyyy-MM-dd"),
+            insalubridade: 20
+          });
+          setBuscaUnidadeBase("OPERAÇÃO");
+        }}
+        title="Admissão de Colaborador Volante"
+        width="600px"
+      >
+        <div className="p-8 space-y-6 max-h-[85vh] overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Nome */}
+            <div className="space-y-2 col-span-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Nome Completo</label>
+              <input
+                type="text"
+                className="input-field h-12 font-bold uppercase"
+                placeholder="Ex: JOÃO DA SILVA"
+                value={formAdmissao.nome}
+                onChange={(e) => setFormAdmissao({ ...formAdmissao, nome: e.target.value })}
+              />
+            </div>
+
+            {/* Telefone */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Telefone / WhatsApp</label>
+              <input
+                type="text"
+                className="input-field h-12 font-bold"
+                placeholder="Ex: 27 99999-9999"
+                value={formAdmissao.telefone}
+                onChange={(e) => setFormAdmissao({ ...formAdmissao, telefone: e.target.value })}
+              />
+            </div>
+
+            {/* CPF */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">CPF</label>
+              <input
+                type="text"
+                className="input-field h-12 font-bold"
+                placeholder="Ex: 000.000.000-00"
+                value={formAdmissao.cpf}
+                onChange={(e) => setFormAdmissao({ ...formAdmissao, cpf: e.target.value })}
+              />
+            </div>
+
+            {/* Cargo */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Cargo / Função</label>
+              <select
+                className="w-full h-12 font-bold bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl px-3 text-xs"
+                value={formAdmissao.cargo}
+                onChange={(e) => setFormAdmissao({ ...formAdmissao, cargo: e.target.value })}
+              >
+                <option value="ASG VOLANTE">ASG VOLANTE</option>
+                <option value="COZINHEIRA VOLANTE">COZINHEIRA VOLANTE</option>
+                <option value="MOTORISTA VOLANTE">MOTORISTA VOLANTE</option>
+                <option value="SERVIÇOS GERAIS VOLANTE">SERVIÇOS GERAIS VOLANTE</option>
+              </select>
+            </div>
+
+            {/* Insalubridade */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Insalubridade</label>
+              <select
+                className="w-full h-12 font-bold bg-white dark:bg-slate-900 border border-[var(--border)] rounded-xl px-3 text-xs"
+                value={formAdmissao.insalubridade}
+                onChange={(e) => setFormAdmissao({ ...formAdmissao, insalubridade: Number(e.target.value) })}
+              >
+                <option value={20}>20% (Padrão ASG)</option>
+                <option value={40}>40% (Máxima)</option>
+                <option value={0}>Sem Insalubridade</option>
+              </select>
+            </div>
+
+            {/* Data de Admissão */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Data de Admissão</label>
+              <input
+                type="date"
+                className="input-field h-12 font-bold text-xs"
+                value={formAdmissao.data_admissao}
+                onChange={(e) => setFormAdmissao({ ...formAdmissao, data_admissao: e.target.value })}
+              />
+            </div>
+
+            {/* Unidade Base (Autocomplete) */}
+            <div className="space-y-2 relative">
+              <label className="text-[10px] font-black uppercase text-[var(--text-muted)]">Unidade Base (Alocação)</label>
+              <input
+                className="input-field h-12 font-bold"
+                placeholder="Ex: OPERAÇÃO ou Buscar Escola..."
+                value={buscaUnidadeBase}
+                onChange={(e) => searchUnidadesBase(e.target.value)}
+                onFocus={() => searchUnidadesBase(buscaUnidadeBase)}
+              />
+              {unidadesBaseSugeridas.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[130] overflow-hidden">
+                  {unidadesBaseSugeridas.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setFormAdmissao({ ...formAdmissao, unidade: u.nome });
+                        setBuscaUnidadeBase(u.nome);
+                        setUnidadesBaseSugeridas([]);
+                      }}
+                      className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none"
+                    >
+                      <p className="text-[10px] font-black uppercase text-indigo-900">{u.nome}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t border-[var(--border)]">
+            <button
+              className="flex-1 btn-ghost h-12 text-[9px] font-black uppercase"
+              onClick={() => {
+                setModalAdmitir(false);
+                setFormAdmissao({
+                  nome: "",
+                  telefone: "",
+                  cpf: "",
+                  cargo: "ASG VOLANTE",
+                  unidade: "OPERAÇÃO",
+                  data_admissao: format(new Date(), "yyyy-MM-dd"),
+                  insalubridade: 20
+                });
+                setBuscaUnidadeBase("OPERAÇÃO");
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[9px] font-black uppercase shadow-md transition-all disabled:opacity-50"
+              onClick={handleFinalizarAdmissao}
+              disabled={loading}
+            >
+              {loading ? "Processando..." : "Confirmar Admissão"}
+            </button>
+          </div>
         </div>
       </AdaptiveModal>
     </div>
