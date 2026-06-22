@@ -51,14 +51,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Nenhuma escala encontrada para amanhã (${format(tomorrowDate, 'dd/MM/yyyy')}). Certifique-se de cadastrar as escalas antes de disparar.` }, { status: 400 });
     }
 
-    // 4. Obter a URL do Webhook do n8n nas configurações do sistema
-    const { data: config } = await supabase
+    // 4. Obter a URL do Webhook do n8n e o JID do grupo nas configurações do sistema
+    const { data: configs } = await supabase
       .from('configuracoes_sistema')
-      .select('valor')
-      .eq('chave', 'N8N_ESCALA_AMANHA_WEBHOOK_URL')
-      .single();
+      .select('*')
+      .in('chave', ['N8N_ESCALA_AMANHA_WEBHOOK_URL', 'WHATSAPP_GRUPO_VOLANTES_JID']);
 
-    const webhookUrl = config?.valor || "https://n8n-n8n.rvwwep.easypanel.host/webhook/escala-amanha";
+    const webhookConfig = configs?.find((c: any) => c.chave === "N8N_ESCALA_AMANHA_WEBHOOK_URL");
+    const jidConfig = configs?.find((c: any) => c.chave === "WHATSAPP_GRUPO_VOLANTES_JID");
+
+    const webhookUrl = webhookConfig?.valor || "https://n8n-n8n.rvwwep.easypanel.host/webhook/escala-amanha";
+    const grupoJid = jidConfig?.valor || "";
+
+    const evolutionUrl = process.env.EVOLUTION_URL || "";
+    const evolutionApiKey = process.env.EVOLUTION_API_KEY || "";
+    const evolutionInstance = process.env.EVOLUTION_INSTANCE || "";
 
     // 5. Preparar payload consolidado para o n8n
     const payload = {
@@ -66,6 +73,10 @@ export async function POST(req: Request) {
       data_formatada: format(tomorrowDate, 'dd/MM/yyyy'),
       total_volantes: escalas.length,
       autorizado_por: "Central de Operações / RH",
+      grupo_jid: grupoJid,
+      evolutionUrl,
+      evolutionApiKey,
+      evolutionInstance,
       escalas: escalas.map((e: any) => ({
         id: e.id,
         colaborador_nome: e.colaborador_nome.toUpperCase(),
