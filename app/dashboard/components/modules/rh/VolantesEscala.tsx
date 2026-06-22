@@ -430,9 +430,17 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         unidade: modalRequisicao.unidade_destino, 
         entrada: "07:00", 
         saida: "17:00", 
-        motivo: `Subst: ${modalRequisicao.colaborador_substituido_nome || 'Colaborador'} (${modalRequisicao.funcao_substituicao || '—'})` 
+        motivo: (!modalRequisicao.colaborador_substituido_nome || 
+                 modalRequisicao.colaborador_substituido_nome === 'NÃO INFORMADO' || 
+                 modalRequisicao.colaborador_substituido_nome === 'VAGA ABERTA')
+          ? `Vaga Aberta (${modalRequisicao.funcao_substituicao || '—'})`
+          : `Subst: ${modalRequisicao.colaborador_substituido_nome} (${modalRequisicao.funcao_substituicao || '—'})` 
       }],
-      observacoes: `Aprovado via Solicitação. Subst: ${modalRequisicao.colaborador_substituido_nome || '—'}. Atestado: ${modalRequisicao.is_atestado ? 'Sim' : 'Não'}`,
+      observacoes: (!modalRequisicao.colaborador_substituido_nome || 
+                    modalRequisicao.colaborador_substituido_nome === 'NÃO INFORMADO' || 
+                    modalRequisicao.colaborador_substituido_nome === 'VAGA ABERTA')
+        ? `Aprovado via Solicitação (Vaga Aberta).`
+        : `Aprovado via Solicitação. Subst: ${modalRequisicao.colaborador_substituido_nome}. Atestado: ${modalRequisicao.is_atestado ? 'Sim' : 'Não'}`,
       criado_por_id: user.id,
       criado_por_nome: user.name || user.nome
     }]);
@@ -1045,9 +1053,20 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                               </td>
                               <td className="p-5 uppercase font-black">{req.unidade_destino}</td>
                               <td className="p-5">
-                                 <div className="flex flex-col">
-                                    <span className="uppercase">{req.colaborador_substituido_nome || 'Não Informado'}</span>
-                                    <span className="text-[8px] font-black text-indigo-600 uppercase mt-1">{req.funcao_substituicao || 'ASG'}</span>
+                                 <div className="flex flex-col gap-1">
+                                    {(!req.colaborador_substituido_nome || 
+                                      req.colaborador_substituido_nome === 'NÃO INFORMADO' || 
+                                      req.colaborador_substituido_nome === 'VAGA ABERTA') ? (
+                                       <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/50 text-[9px] font-black uppercase w-fit">
+                                          Vaga Aberta
+                                       </span>
+                                    ) : (
+                                       <div className="flex flex-col">
+                                          <span className="text-[8px] font-black text-[var(--text-muted)] uppercase">Substituindo:</span>
+                                          <span className="uppercase text-[11px] font-black text-[var(--text-primary)] leading-tight">{req.colaborador_substituido_nome}</span>
+                                       </div>
+                                    )}
+                                    <span className="text-[8px] font-black text-indigo-600 uppercase mt-0.5">{req.funcao_substituicao || 'ASG'}</span>
                                  </div>
                               </td>
                               <td className="p-5 max-w-[200px] truncate uppercase">{req.motivo || '—'}</td>
@@ -1344,10 +1363,18 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
               </div>
 
               <div className="p-4 bg-[var(--bg-base)] rounded-2xl border border-[var(--border)]">
-                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Colaborador Substituído</p>
-                <p className="text-sm font-black uppercase text-[var(--text-primary)] flex items-center gap-1.5">
-                  <User size={14} className="text-indigo-600" /> {modalRequisicao.colaborador_substituido_nome || 'NÃO INFORMADO'}
-                </p>
+                <p className="text-[9px] font-black text-[var(--text-muted)] uppercase mb-1">Tipo de Vaga / Substituição</p>
+                {(!modalRequisicao.colaborador_substituido_nome || 
+                  modalRequisicao.colaborador_substituido_nome === 'NÃO INFORMADO' || 
+                  modalRequisicao.colaborador_substituido_nome === 'VAGA ABERTA') ? (
+                  <span className="px-2.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/50 text-[9px] font-black uppercase w-fit block mt-1">
+                     Vaga Aberta
+                  </span>
+                ) : (
+                  <p className="text-sm font-black uppercase text-[var(--text-primary)] flex items-center gap-1.5 mt-1">
+                    <User size={14} className="text-indigo-600" /> {modalRequisicao.colaborador_substituido_nome}
+                  </p>
+                )}
               </div>
             </div>
 

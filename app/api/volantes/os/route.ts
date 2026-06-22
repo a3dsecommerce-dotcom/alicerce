@@ -56,7 +56,13 @@ export async function POST(req: Request) {
 
     // 5. Formatar mensagem da Ordem de Serviço
     const insalubridadeTexto = insalubridade ? `${insalubridade}%` : "Não Informada/Isento";
-    const substituindoTexto = substituindoNome && substituindoNome.trim() !== "" ? substituindoNome.toUpperCase() : "NÃO INFORMADO (COBERTURA GERAL)";
+    const isVagaAberta = !substituindoNome || 
+      substituindoNome.trim() === "" || 
+      substituindoNome.toUpperCase() === "NÃO INFORMADO" || 
+      substituindoNome.toUpperCase() === "NÃO INFORMADA" || 
+      substituindoNome.toUpperCase().includes("VAGA ABERTA");
+
+    const substituindoTexto = isVagaAberta ? "VAGA ABERTA (COBERTURA GERAL)" : substituindoNome.toUpperCase();
 
     const messageText = `*📢 ORDEM DE SERVIÇO - VOLANTE*\n\n👤 *Volante:* ${volanteNome.toUpperCase()}\n📍 *Unidade de Atendimento:* ${unidadeNome.toUpperCase()}\n👥 *Substituindo:* ${substituindoTexto}\n🕒 *Horário:* ${horario || "07:00 às 17:00"}\n⚠️ *Insalubridade:* ${insalubridadeTexto}\n\n_Mensagem enviada automaticamente pelo Alicerce ERP._`;
 

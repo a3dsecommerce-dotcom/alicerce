@@ -183,11 +183,15 @@ export async function POST() {
 
       const parsedDia = parseSheetDate(rawDia);
       const rawFaltoso = row[faltosoIdx] ? row[faltosoIdx].trim() : "";
+      let finalFaltoso = rawFaltoso;
+      if (!rawFaltoso || rawFaltoso.toUpperCase().includes("VAGA ABERTA") || rawFaltoso.toUpperCase().includes("ABERTA")) {
+        finalFaltoso = "VAGA ABERTA";
+      }
       const rawFuncao = row[funcaoIdx] ? row[funcaoIdx].trim() : "ASG";
 
       // Gerar fingerprint da planilha para evitar duplicados
       const cleanEscolaVal = cleanName(rawEscola);
-      const cleanFaltosoVal = cleanName(rawFaltoso || "NÃO INFORMADO");
+      const cleanFaltosoVal = cleanName(finalFaltoso);
       const cleanFuncaoVal = cleanName(rawFuncao);
       
       const sheetFingerprint = `${cleanEscolaVal}|${parsedDia}|${cleanFaltosoVal}|${cleanFuncaoVal}`;
@@ -251,7 +255,7 @@ export async function POST() {
         prioridade: "NORMAL",
         created_at: parsedTimestamp,
         quem_requisitou: "PLANILHA",
-        colaborador_substituido_nome: rawFaltoso || "NÃO INFORMADO",
+        colaborador_substituido_nome: finalFaltoso,
         is_atestado: isAtestado,
         asg_porcentagem: asgPorcentagem,
         funcao_substituicao: rawFuncao.toUpperCase()
