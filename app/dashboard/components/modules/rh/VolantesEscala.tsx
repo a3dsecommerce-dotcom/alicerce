@@ -31,13 +31,14 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [loadingImport, setLoadingImport] = useState(false);
   const [importResult, setImportResult] = useState<{imported: number; skipped: number; total_rows: number} | null>(null);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
+  const [horariosDisparo, setHorariosDisparo] = useState("");
 
   useEffect(() => {
     const fetchConfigs = async () => {
       const { data } = await supabase
         .from('configuracoes_sistema')
         .select('*')
-        .in('chave', ['WHATSAPP_GRUPO_VOLANTES_JID', 'N8N_ESCALA_AMANHA_WEBHOOK_URL', 'GOOGLE_SHEET_VOLANTES_URL']);
+        .in('chave', ['WHATSAPP_GRUPO_VOLANTES_JID', 'N8N_ESCALA_AMANHA_WEBHOOK_URL', 'GOOGLE_SHEET_VOLANTES_URL', 'HORARIO_DISPARO_ESCALA']);
       if (data) {
         const jidConfig = data.find((c: any) => c.chave === 'WHATSAPP_GRUPO_VOLANTES_JID');
         if (jidConfig) setGrupoJid(jidConfig.valor);
@@ -45,6 +46,8 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         if (webhookConfig) setN8nWebhookUrl(webhookConfig.valor);
         const sheetConfig = data.find((c: any) => c.chave === 'GOOGLE_SHEET_VOLANTES_URL');
         if (sheetConfig) setGoogleSheetUrl(sheetConfig.valor);
+        const horariosConfig = data.find((c: any) => c.chave === 'HORARIO_DISPARO_ESCALA');
+        if (horariosConfig) setHorariosDisparo(horariosConfig.valor);
       }
     };
     fetchConfigs();
@@ -76,7 +79,15 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
         updated_at: new Date().toISOString()
       }, { onConflict: 'chave' });
 
-    if (!err1 && !err2 && !err3) {
+    const { error: err4 } = await supabase
+      .from('configuracoes_sistema')
+      .upsert({
+        chave: 'HORARIO_DISPARO_ESCALA',
+        valor: horariosDisparo,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'chave' });
+
+    if (!err1 && !err2 && !err3 && !err4) {
       toast.success("Configurações atualizadas!");
       setModalSettings(false);
     } else {
@@ -1568,6 +1579,22 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             />
             <p className="text-[9px] text-[var(--text-muted)] uppercase font-bold leading-normal">
               URL da planilha do Google Sheets com os pedidos de volantes dos diretores. A planilha deve estar compartilhada como &quot;Qualquer pessoa com o link&quot;.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-black uppercase text-[var(--text-muted)] flex items-center gap-2">
+              <Clock size={14} className="text-indigo-600" /> Horários de Disparo Automático (Cron)
+            </label>
+            <input 
+              type="text" 
+              className="input-field h-12 font-bold" 
+              placeholder="Ex: 20:00 ou 19:30, 20:30" 
+              value={horariosDisparo} 
+              onChange={(e) => setHorariosDisparo(e.target.value)} 
+            />
+            <p className="text-[9px] text-[var(--text-muted)] uppercase font-bold leading-normal">
+              Insira os horários em que a escala de amanhã será disparada automaticamente para o grupo, separados por vírgula. Ex: &quot;20:00&quot; ou &quot;19:30, 20:30&quot;.
             </p>
           </div>
 
