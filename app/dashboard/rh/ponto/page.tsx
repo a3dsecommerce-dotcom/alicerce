@@ -19,10 +19,14 @@ import {
   Database,
   FileSpreadsheet,
   Clock,
-  Plus
+  Plus,
+  Printer,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface AjustePonto {
   id: string;
@@ -55,6 +59,20 @@ export default function GestaoPontoPage() {
   const [ocorrencias, setOcorrencias] = useState<AjustePonto[]>([]);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"TODOS" | "PENDENTES" | "COBRANDO" | "RESOLVIDOS">("PENDENTES");
+
+  const [dataInicio, setDataInicio] = useState(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}-01`;
+  });
+  const [dataFim, setDataFim] = useState(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+    return `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+  });
   
   // Parâmetros de Configuração
   const [sheetId, setSheetId] = useState("1xovtMOpwLF1HPgts-Yn5oHZsk0YIxU42JqGb8VWy8Qo");
@@ -393,6 +411,107 @@ export default function GestaoPontoPage() {
     }
   };
 
+  // Exportar Excel (CSV)
+  const handleExportarExcel = () => {
+    if (ocorrenciasFiltradas.length === 0) {
+      return toast.info("Não há dados para exportar no período selecionado.");
+    }
+
+    const headers = [
+      "Colaborador",
+      "Telefone",
+      "Rota",
+      "Encarregado",
+      "Data Ocorrencia",
+      "Motivo",
+      "Status",
+      "Fase Cobranca",
+      "Ultima Cobranca"
+    ];
+
+    const rows = ocorrenciasFiltradas.map(item => {
+      const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
+      let statusText = "Aguardando Autorização";
+      if (item.resolvido) statusText = "Resolvido";
+      else if (item.autorizado) statusText = item.data_ultima_cobranca ? `Fase ${item.fase_cobranca}` : "Autorizado (Fila)";
+
+      return [
+        item.nome,
+        item.telefone,
+        aloc.rota,
+        aloc.encarregado,
+        formatarData(item.data_referencia),
+        item.motivo || "Geral",
+        statusText,
+        item.fase_cobranca || 0,
+        item.data_ultima_cobranca ? new Date(item.data_ultima_cobranca).toLocaleDateString("pt-BR") : "Nunca"
+      ].map(val => `"${String(val).replace(/"/g, '""')}"`);
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `relatorio_ponto_${dataInicio}_a_${dataFim}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Excel (CSV) exportado com sucesso!");
+  };
+
+  // Imprimir PDF
+  const handleImprimirPDF = () => {
+    if (ocorrenciasFiltradas.length === 0) {
+      return toast.info("Não há dados para exportar no período selecionado.");
+    }
+
+    const doc = new jsPDF();
+    
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("ALICERCE CONSTRUTORA - GESTÃO DE PONTO", 14, 15);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Período do Relatório: ${formatarData(dataInicio)} até ${formatarData(dataFim)}`, 14, 22);
+    doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 14, 27);
+
+    const tableData = ocorrenciasFiltradas.map(item => {
+      const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
+      let statusText = "Aguardando Autorização";
+      if (item.resolvido) statusText = "Resolvido";
+      else if (item.autorizado) statusText = item.data_ultima_cobranca ? `Fase ${item.fase_cobranca}` : "Autorizado (Fila)";
+
+      return [
+        item.nome.toUpperCase(),
+        item.colaborador?.unidade_alocacao || "OPERAÇÃO",
+        formatarData(item.data_referencia),
+        item.motivo || "Ajuste Geral",
+        statusText
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 32,
+      head: [["Colaborador", "Unidade", "Data", "Motivo", "Status"]],
+      body: tableData,
+      theme: "striped",
+      headStyles: { fillColor: [79, 70, 229] },
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: 50 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 20 },
+        3: { cellWidth: 45 },
+        4: { cellWidth: 35 }
+      }
+    });
+
+    doc.save(`relatorio_ponto_${dataInicio}_a_${dataFim}.pdf`);
+    toast.success("Relatório PDF gerado com sucesso!");
+  };
+
   // Filtragem dos dados
   const ocorrenciasFiltradas = useMemo(() => {
     return ocorrencias.filter(item => {
@@ -401,6 +520,10 @@ export default function GestaoPontoPage() {
                          (item.motivo && item.motivo.toLowerCase().includes(busca.toLowerCase()));
       
       if (!matchBusca) return false;
+
+      const matchPeriodo = (!dataInicio || item.data_referencia >= dataInicio) &&
+                           (!dataFim || item.data_referencia <= dataFim);
+      if (!matchPeriodo) return false;
 
       if (filtroStatus === "PENDENTES") {
         return !item.resolvido && !item.autorizado;
@@ -413,20 +536,24 @@ export default function GestaoPontoPage() {
       }
       return true;
     });
-  }, [ocorrencias, busca, filtroStatus]);
+  }, [ocorrencias, busca, filtroStatus, dataInicio, dataFim]);
 
   // Estatísticas/KPIs
   const stats = useMemo(() => {
+    const periodData = ocorrencias.filter(item => {
+      return (!dataInicio || item.data_referencia >= dataInicio) &&
+             (!dataFim || item.data_referencia <= dataFim);
+    });
     return {
-      total: ocorrencias.length,
-      pendentes: ocorrencias.filter(i => !i.resolvido && !i.autorizado).length,
-      cobrando: ocorrencias.filter(i => !i.resolvido && i.autorizado).length,
-      resolvidos: ocorrencias.filter(i => i.resolvido).length,
-      fase1: ocorrencias.filter(i => !i.resolvido && i.fase_cobranca === 1).length,
-      fase2: ocorrencias.filter(i => !i.resolvido && i.fase_cobranca === 2).length,
-      fase3: ocorrencias.filter(i => !i.resolvido && i.fase_cobranca === 3).length,
+      total: periodData.length,
+      pendentes: periodData.filter(i => !i.resolvido && !i.autorizado).length,
+      cobrando: periodData.filter(i => !i.resolvido && i.autorizado).length,
+      resolvidos: periodData.filter(i => i.resolvido).length,
+      fase1: periodData.filter(i => !i.resolvido && i.fase_cobranca === 1).length,
+      fase2: periodData.filter(i => !i.resolvido && i.fase_cobranca === 2).length,
+      fase3: periodData.filter(i => !i.resolvido && i.fase_cobranca === 3).length,
     };
-  }, [ocorrencias]);
+  }, [ocorrencias, dataInicio, dataFim]);
 
   // Formatação de data
   const formatarData = (dataStr: string) => {
@@ -478,6 +605,52 @@ export default function GestaoPontoPage() {
             className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
           >
             <Settings size={14} /> Configurações
+          </button>
+        </div>
+      </div>
+
+      {/* Filtro de Período e Exportações */}
+      <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <Calendar size={16} className="text-[var(--brand)]" />
+            <span className="text-xs font-black uppercase text-[var(--text-primary)] tracking-wider">Período do Relatório:</span>
+          </div>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="flex flex-col gap-1 w-full md:w-auto">
+              <label className="text-[8px] font-black uppercase text-[var(--text-muted)]">Data Início</label>
+              <input 
+                type="date" 
+                className="input-field py-1 px-3 font-bold text-xs h-10 w-full md:w-40" 
+                value={dataInicio}
+                onChange={e => setDataInicio(e.target.value)}
+              />
+            </div>
+            <span className="text-[var(--text-muted)] mt-4">até</span>
+            <div className="flex flex-col gap-1 w-full md:w-auto">
+              <label className="text-[8px] font-black uppercase text-[var(--text-muted)]">Data Fim</label>
+              <input 
+                type="date" 
+                className="input-field py-1 px-3 font-bold text-xs h-10 w-full md:w-40" 
+                value={dataFim}
+                onChange={e => setDataFim(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 w-full md:w-auto justify-end">
+          <button 
+            onClick={handleExportarExcel}
+            className="flex-1 md:flex-none px-5 h-12 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition-all"
+          >
+            <FileSpreadsheet size={16} /> Exportar Excel
+          </button>
+          <button 
+            onClick={handleImprimirPDF}
+            className="flex-1 md:flex-none px-5 h-12 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-100/50 dark:hover:bg-indigo-900/30 transition-all"
+          >
+            <Printer size={16} /> Imprimir PDF
           </button>
         </div>
       </div>
