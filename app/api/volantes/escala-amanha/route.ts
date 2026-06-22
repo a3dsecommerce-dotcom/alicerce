@@ -16,8 +16,23 @@ export async function POST(req: Request) {
         const nivel = Number(user.nivel || user.user_metadata?.nivel || 1);
         const role = String(user.role || user.user_metadata?.role || "").toUpperCase();
         const cargo = String(user.cargo || user.user_metadata?.cargo || "").toUpperCase();
+        const email = String(user.email || "").toUpperCase();
         
-        if (nivel >= 3 || role.includes('GERENTE') || role.includes('ADMIN') || cargo.includes('GERENTE') || cargo.includes('ADMIN') || role.includes('MASTER')) {
+        if (
+          nivel >= 3 || 
+          role.includes('GERENTE') || 
+          role.includes('ADMIN') || 
+          role.includes('MASTER') ||
+          role.includes('DEV') ||
+          role.includes('DESENVOLVEDOR') ||
+          role.includes('SUPORTE') ||
+          cargo.includes('GERENTE') || 
+          cargo.includes('ADMIN') ||
+          cargo.includes('DEV') ||
+          cargo.includes('DESENVOLVEDOR') ||
+          email.includes('DIOGO') ||
+          email.includes('DEVELOPER')
+        ) {
           isAuthorized = true;
         }
       }
