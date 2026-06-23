@@ -271,10 +271,16 @@ export default function GestaoPontoPage() {
     fetchConfiguracoes();
     fetchDadosAuxiliares();
 
+    const impersonated = localStorage.getItem("impersonated_user");
     const saved = localStorage.getItem("crm_user");
     if (saved) {
       try {
-        setCurrentUser(JSON.parse(saved));
+        const localUser = JSON.parse(saved);
+        if (impersonated && localUser.nivel_acesso >= 4) {
+          setCurrentUser(JSON.parse(impersonated));
+        } else {
+          setCurrentUser(localUser);
+        }
       } catch (e) {
         console.error("Erro ao ler crm_user:", e);
       }
