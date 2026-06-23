@@ -59,6 +59,7 @@ export default function GestaoPontoPage() {
   const [ocorrencias, setOcorrencias] = useState<AjustePonto[]>([]);
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState<"TODOS" | "PENDENTES" | "COBRANDO" | "RESOLVIDOS">("PENDENTES");
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [dataInicio, setDataInicio] = useState(() => {
     const now = new Date();
@@ -269,27 +270,38 @@ export default function GestaoPontoPage() {
     fetchOcorrencias();
     fetchConfiguracoes();
     fetchDadosAuxiliares();
+
+    const saved = localStorage.getItem("crm_user");
+    if (saved) {
+      try {
+        setCurrentUser(JSON.parse(saved));
+      } catch (e) {
+        console.error("Erro ao ler crm_user:", e);
+      }
+    }
   }, []);
 
   const obterAlocacaoColaborador = (unidadeAlocacao: string | null) => {
-    if (!unidadeAlocacao) return { rota: "Sem Rota", encarregado: "Sem Encarregado" };
+    if (!unidadeAlocacao) return { rota: "Sem Rota", encarregado: "Sem Encarregado", encarregado_id: null };
 
     const unidade = unidadesList.find(u => u.nome === unidadeAlocacao);
     if (!unidade) {
-      return { rota: "Rota não mapeada", encarregado: "Não mapeado" };
+      return { rota: "Rota não mapeada", encarregado: "Não mapeado", encarregado_id: null };
     }
 
     const rota = unidade.rota || "Sem Rota";
     let encarregado = unidade.encarregado_nome || "Sem Encarregado";
+    let encarregado_id = unidade.encarregado_id || null;
 
     if ((!encarregado || encarregado === "Sem Encarregado") && unidade.rota) {
       const rotaConfig = rotasList.find(r => r.rota_nome?.toLowerCase() === unidade.rota.toLowerCase());
-      if (rotaConfig && rotaConfig.encarregado_nome) {
-        encarregado = rotaConfig.encarregado_nome;
+      if (rotaConfig) {
+        if (rotaConfig.encarregado_nome) encarregado = rotaConfig.encarregado_nome;
+        if (rotaConfig.encarregado_id) encarregado_id = rotaConfig.encarregado_id;
       }
     }
 
-    return { rota, encarregado };
+    return { rota, encarregado, encarregado_id };
   };
 
   // Envia requisição para o n8n informando o início ou avanço de cobrança
@@ -512,9 +524,57 @@ export default function GestaoPontoPage() {
     toast.success("Relatório PDF gerado com sucesso!");
   };
 
+  const isManagerOrAdmin = useMemo(() => {
+    if (!currentUser) return false;
+    const safeRole = String(currentUser.role || '').toUpperCase();
+    return (currentUser.nivel || 0) >= 3 || ["DEV", "ADMIN", "GERENTE", "GERENCIA"].includes(safeRole);
+  }, [currentUser]);
+
+  const supervisorRoutes = useMemo(() => {
+    if (!currentUser) return [];
+    const safeRole = String(currentUser.role || '').toUpperCase();
+    const isManager = (currentUser.nivel || 0) >= 3 || ["DEV", "ADMIN", "GERENTE", "GERENCIA"].includes(safeRole);
+    
+    if (isManager) return null; // Admin pode ver tudo
+
+    const myId = currentUser.id;
+    const myName = String(currentUser.nome || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    // Busca rotas de unidades associadas ao supervisor
+    const routesFromUnits = unidadesList
+      .filter(u => {
+        const matchId = u.encarregado_id === myId;
+        const uName = String(u.encarregado_nome || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const matchName = myName && uName === myName;
+        return (matchId || matchName) && u.rota;
+      })
+      .map(u => String(u.rota).trim().toLowerCase());
+
+    // Busca rotas da tabela config_rotas associadas ao supervisor
+    const routesFromConfig = rotasList
+      .filter(r => {
+        const matchId = r.encarregado_id === myId;
+        const rName = String(r.encarregado_nome || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const matchName = myName && rName === myName;
+        return (matchId || matchName) && r.rota_nome;
+      })
+      .map(r => String(r.rota_nome).trim().toLowerCase());
+
+    return Array.from(new Set([...routesFromUnits, ...routesFromConfig]));
+  }, [currentUser, unidadesList, rotasList]);
+
   // Filtragem dos dados
   const ocorrenciasFiltradas = useMemo(() => {
     return ocorrencias.filter(item => {
+      // Filtro de Rota para Supervisor
+      if (!isManagerOrAdmin && supervisorRoutes) {
+        const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
+        const itemRotaNormalized = String(aloc.rota || '').trim().toLowerCase();
+        const belongsToMyRoute = supervisorRoutes.includes(itemRotaNormalized) || 
+                                 (currentUser?.id && aloc.encarregado_id === currentUser.id);
+        if (!belongsToMyRoute) return false;
+      }
+
       const matchBusca = item.nome.toLowerCase().includes(busca.toLowerCase()) || 
                          item.telefone.includes(busca) || 
                          (item.motivo && item.motivo.toLowerCase().includes(busca.toLowerCase()));
@@ -536,11 +596,20 @@ export default function GestaoPontoPage() {
       }
       return true;
     });
-  }, [ocorrencias, busca, filtroStatus, dataInicio, dataFim]);
+  }, [ocorrencias, busca, filtroStatus, dataInicio, dataFim, isManagerOrAdmin, supervisorRoutes, currentUser]);
 
   // Estatísticas/KPIs
   const stats = useMemo(() => {
     const periodData = ocorrencias.filter(item => {
+      // Filtro de Rota para Supervisor
+      if (!isManagerOrAdmin && supervisorRoutes) {
+        const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
+        const itemRotaNormalized = String(aloc.rota || '').trim().toLowerCase();
+        const belongsToMyRoute = supervisorRoutes.includes(itemRotaNormalized) || 
+                                 (currentUser?.id && aloc.encarregado_id === currentUser.id);
+        if (!belongsToMyRoute) return false;
+      }
+
       return (!dataInicio || item.data_referencia >= dataInicio) &&
              (!dataFim || item.data_referencia <= dataFim);
     });
@@ -553,7 +622,7 @@ export default function GestaoPontoPage() {
       fase2: periodData.filter(i => !i.resolvido && i.fase_cobranca === 2).length,
       fase3: periodData.filter(i => !i.resolvido && i.fase_cobranca === 3).length,
     };
-  }, [ocorrencias, dataInicio, dataFim]);
+  }, [ocorrencias, dataInicio, dataFim, isManagerOrAdmin, supervisorRoutes, currentUser]);
 
   // Formatação de data
   const formatarData = (dataStr: string) => {
@@ -587,25 +656,29 @@ export default function GestaoPontoPage() {
         </div>
 
         <div className="flex gap-2">
-          <button 
-            onClick={handleDispararImediato}
-            disabled={loadingDisparo}
-            className="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-orange-600/10"
-          >
-            <Send size={14} className={loadingDisparo ? "animate-pulse" : ""} /> Disparar Imediato
-          </button>
-          <button 
-            onClick={handleSincronizar}
-            className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Sincronizar
-          </button>
-          <button 
-            onClick={() => setShowConfig(!showConfig)}
-            className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
-          >
-            <Settings size={14} /> Configurações
-          </button>
+          {isManagerOrAdmin && (
+            <>
+              <button 
+                onClick={handleDispararImediato}
+                disabled={loadingDisparo}
+                className="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-orange-600/10"
+              >
+                <Send size={14} className={loadingDisparo ? "animate-pulse" : ""} /> Disparar Imediato
+              </button>
+              <button 
+                onClick={handleSincronizar}
+                className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Sincronizar
+              </button>
+              <button 
+                onClick={() => setShowConfig(!showConfig)}
+                className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
+              >
+                <Settings size={14} /> Configurações
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -656,7 +729,7 @@ export default function GestaoPontoPage() {
       </div>
 
       {/* Painel de Configurações */}
-      {showConfig && (
+      {showConfig && isManagerOrAdmin && (
         <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-xl animate-fade-in space-y-6">
           <h3 className="text-xs font-black uppercase text-[var(--text-primary)] tracking-widest flex items-center gap-2">
             <Settings size={14} className="text-[var(--brand)]" /> Parâmetros de Automação e Horários de Disparo
