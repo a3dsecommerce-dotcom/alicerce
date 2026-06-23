@@ -47,7 +47,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           // Se for dev e estiver simulando alguém, o layout deve seguir as regras do simulado
           if (impersonated && localUser.nivel_acesso >= 4) {
              const impUser = JSON.parse(impersonated);
-             setUser(impUser);
+             const dbFuncao = impUser.cargo;
+             const rawFuncao = dbFuncao 
+               ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() 
+               : null;
+             const cargoResolvido = rawFuncao || (
+               impUser.nivel_acesso >= 4 ? 'DEV' : 
+               impUser.nivel_acesso >= 3 ? 'ADMIN' : 
+               impUser.nivel_acesso >= 2 ? (
+                 (impUser.cargo || '').toUpperCase().includes('DIRETOR') || (impUser.cargo || '').toUpperCase().includes('FISCAL') 
+                 ? 'DIRETOR_UNIDADE' 
+                 : 'SUPERVISOR'
+               ) : 'COLABORADOR'
+             );
+             setUser({ ...impUser, role: cargoResolvido });
              return;
           }
 

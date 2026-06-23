@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Users, Activity, ShieldCheck, AlertTriangle, 
   Clock, Package, MapPin, Search, Filter, Trash2,
@@ -26,6 +27,7 @@ import {
 } from "./encarregado";
 
 export default function EncarregadoModule({ user, initialTab }: { user: any, initialTab?: string }) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"MY_UNITS" | "MY_COLABS" | "QUICK_ADMISSION" | "TICKETS" | "REPORTS" | "CAT" | "EPI" | "MY_MISSIONS" | "DISCIPLINA" | "TRANSFERENCIAS" | "AVISO_EXP">(() => {
     if (!initialTab) return "MY_UNITS";
     const t = initialTab.toUpperCase();
@@ -3245,6 +3247,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
            { id: "MY_UNITS", label: "Unidades", icon: Building2 },
            { id: "MY_COLABS", label: "Equipe", icon: Users },
            { id: "QUICK_ADMISSION", label: "Admissão", icon: UserPlus },
+           { id: "PONTO", label: "Gestão de Ponto", icon: Clock, href: "/dashboard/rh/ponto" },
            { id: "REPORTS", label: "Informativos", icon: Send },
            { id: "EPI", label: "EPIs", icon: Package },
            { id: "CAT", label: "CAT", icon: ShieldCheck },
@@ -3256,7 +3259,13 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
          ].map(tab => (
            <button 
              key={tab.id}
-             onClick={() => setActiveTab(tab.id as any)}
+             onClick={() => {
+               if (tab.href) {
+                 router.push(tab.href);
+               } else {
+                 setActiveTab(tab.id as any);
+               }
+             }}
              className={`flex items-center gap-2 px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex-shrink-0 ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}
            >
              <tab.icon size={15} />

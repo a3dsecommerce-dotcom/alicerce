@@ -73,7 +73,21 @@ function CockpitContent() {
           // Se for um dev e estiver simulando alguém, o 'user' ativo será o simulado
           if (impersonated && localUser.nivel_acesso >= 4) {
             setOriginalDevUser(localUser);
-            setUser(JSON.parse(impersonated));
+            const impUser = JSON.parse(impersonated);
+            const dbFuncao = impUser.cargo;
+            const rawFuncao = dbFuncao 
+              ? String(dbFuncao).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() 
+              : null;
+            const cargoResolvido = rawFuncao || (
+              impUser.nivel_acesso >= 4 ? 'DEV' : 
+              impUser.nivel_acesso >= 3 ? 'ADMIN' : 
+              impUser.nivel_acesso >= 2 ? (
+                (impUser.cargo || '').toUpperCase().includes('DIRETOR') || (impUser.cargo || '').toUpperCase().includes('FISCAL') 
+                ? 'DIRETOR_UNIDADE' 
+                : 'SUPERVISOR'
+              ) : 'COLABORADOR'
+            );
+            setUser({ ...impUser, role: cargoResolvido });
             setLoading(false);
             return;
           }
