@@ -85,10 +85,23 @@ export async function POST() {
       const supabaseServer = await createServerSupabaseClient();
       const { data: { user }, error: authError } = await supabaseServer.auth.getUser();
       if (!authError && user) {
-        const nivel = Number(user.nivel || user.user_metadata?.nivel || 1);
-        const role = String(user.role || user.user_metadata?.role || "").toUpperCase();
-        const cargo = String(user.cargo || user.user_metadata?.cargo || "").toUpperCase();
-        const email = String(user.email || "").toUpperCase();
+        // Buscar dados do usuário na tabela pública `usuarios`
+        const { data: dbUser } = await supabase
+          .from('usuarios')
+          .select('nivel, role, cargo, email')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const dbNivel = dbUser?.nivel !== undefined ? dbUser.nivel : user.user_metadata?.nivel;
+        const dbRole = dbUser?.role || user.user_metadata?.role || "";
+        const dbCargo = dbUser?.cargo || user.user_metadata?.cargo || "";
+        const email = String(dbUser?.email || user.email || "").toUpperCase();
+
+        const nivel = Number(dbNivel || 1);
+        const role = String(dbRole).toUpperCase();
+        const cargo = String(dbCargo).toUpperCase();
+
+        console.log(`[AUTH IMPORTER] User ID: ${user.id} | Email: ${email} | Nivel: ${nivel} | Role: ${role} | Cargo: ${cargo}`);
         
         if (
           nivel >= 3 || 
