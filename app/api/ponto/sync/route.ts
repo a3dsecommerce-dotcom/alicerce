@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
@@ -36,7 +37,40 @@ function normalizarNome(nome: string): string {
     .trim();
 }
 
-function compararNomes(nomeP: string, nomeB: string): boolean {
+function obterApenasDigitos(tel: string): string {
+  if (!tel) return "";
+  return tel.replace(/\D/g, "");
+}
+
+function getLevenshteinDistance(a: string, b: string): number {
+  const tmp: number[][] = [];
+  let i: number, j: number;
+  for (i = 0; i <= a.length; i++) {
+    tmp.push([i]);
+  }
+  for (j = 0; j <= b.length; j++) {
+    tmp[0][j] = j;
+  }
+  for (i = 1; i <= a.length; i++) {
+    for (j = 1; j <= b.length; j++) {
+      tmp[i][j] = Math.min(
+        tmp[i - 1][j] + 1,
+        tmp[i][j - 1] + 1,
+        tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+  }
+  return tmp[a.length][b.length];
+}
+
+function getSimilarity(a: string, b: string): number {
+  const distance = getLevenshteinDistance(a, b);
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 1;
+  return (maxLen - distance) / maxLen;
+}
+
+function compararNomesExato(nomeP: string, nomeB: string): boolean {
   const np = normalizarNome(nomeP);
   const nb = normalizarNome(nomeB);
   
@@ -48,15 +82,9 @@ function compararNomes(nomeP: string, nomeB: string): boolean {
   
   if (npSemC === nbSemC) return true;
   
-  if (npSemC.length > 5 && nbSemC.length > 5) {
-    if (npSemC.includes(nbSemC) || nbSemC.includes(npSemC)) return true;
-  }
-
   const npSemEspacos = npSemC.replace(/\s+/g, "");
   const nbSemEspacos = nbSemC.replace(/\s+/g, "");
-  if (npSemEspacos.length > 5 && nbSemEspacos.length > 5) {
-    if (npSemEspacos.includes(nbSemEspacos) || nbSemEspacos.includes(npSemEspacos)) return true;
-  }
+  if (npSemEspacos === nbSemEspacos) return true;
   
   const partesP = npSemC.split(" ");
   const partesB = nbSemC.split(" ");
@@ -70,6 +98,12 @@ function compararNomes(nomeP: string, nomeB: string): boolean {
   }
 
   return false;
+}
+
+function compararNomesFuzzy(nomeP: string, nomeB: string): boolean {
+  const np = normalizarNome(nomeP);
+  const nb = normalizarNome(nomeB);
+  return getSimilarity(np, nb) >= 0.8;
 }
 
 export async function GET() {
@@ -88,10 +122,11 @@ export async function GET() {
       sheetId = dbConfig.valor;
     }
 
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
-    console.log(`📡 Baixando planilha CSV de: ${csvUrl}`);
+    const timestamp = Date.now();
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&t=${timestamp}`;
+    console.log(`📡 Baixando planilha CSV em tempo real de: ${csvUrl}`);
 
-    const res = await fetch(csvUrl);
+    const res = await fetch(csvUrl, { cache: 'no-store' });
     if (!res.ok) {
       throw new Error(`Falha ao baixar planilha do Google: ${res.statusText}`);
     }
@@ -121,22 +156,35 @@ export async function GET() {
 
       if (!nomePlanilha) continue;
 
-      // Encontrar correspondência aproximada do nome
-      const colabMatch = userList.find(u => compararNomes(nomePlanilha, u.nome));
+      let nomeParaBuscar = nomePlanilha;
+      if (normalizarNome(nomePlanilha) === "jocelene rosa") {
+        nomeParaBuscar = "Jocilene Rosa";
+      }
+
+      // 1. Tentar correspondência exata ou por substring
+      let colabMatch = userList.find(u => compararNomesExato(nomeParaBuscar, u.nome));
+      
+      // 2. Se não encontrar, tentar correspondência fuzzy (Levenshtein)
+      if (!colabMatch) {
+        colabMatch = userList.find(u => compararNomesFuzzy(nomeParaBuscar, u.nome));
+      }
 
       // Normaliza data de DD/MM/YYYY para YYYY-MM-DD
       let dataRef = dataPlanilha;
       if (dataPlanilha && dataPlanilha.includes('/')) {
         const partes = dataPlanilha.split('/');
         if (partes.length === 3) {
-          dataRef = `${partes[2]}-${partes[1]}-${partes[0]}`;
+          const dia = partes[0].trim().padStart(2, '0');
+          const mes = partes[1].trim().padStart(2, '0');
+          const ano = partes[2].trim();
+          dataRef = `${ano}-${mes}-${dia}`;
         }
       }
 
       if (colabMatch) {
         novosAjustes.push({
           colaborador_id: colabMatch.id,
-          nome: colabMatch.nome,
+          nome: String(nomePlanilha).toUpperCase().trim(),
           telefone: colabMatch.telefone || "Sem Telefone",
           data_referencia: dataRef,
           motivo: motivoPlanilha,
@@ -145,7 +193,8 @@ export async function GET() {
         });
       } else {
         novosAjustes.push({
-          nome: nomePlanilha,
+          colaborador_id: null,
+          nome: String(nomePlanilha).toUpperCase().trim(),
           telefone: "5500000000000",
           data_referencia: dataRef,
           motivo: motivoPlanilha + " (Colaborador não encontrado no banco)",
@@ -156,12 +205,72 @@ export async function GET() {
     }
 
     if (novosAjustes.length > 0) {
-      console.log(`Upserting ${novosAjustes.length} registros no Supabase...`);
-      const { error: errInsert } = await supabase
+      // Deduplica o lote em memória para evitar redundâncias na mesma execução (alinhado com unique constraint)
+      const novosAjustesUnicos: any[] = [];
+      for (const novo of novosAjustes) {
+        const jaExisteNoLote = novosAjustesUnicos.some((u: any) => {
+          const matchData = u.data_referencia === novo.data_referencia;
+          if (!matchData) return false;
+
+          return u.colaborador_id && novo.colaborador_id
+            ? u.colaborador_id === novo.colaborador_id
+            : normalizarNome(u.nome) === normalizarNome(novo.nome);
+        });
+
+        if (!jaExisteNoLote) {
+          novosAjustesUnicos.push(novo);
+        }
+      }
+
+      console.log(`Verificando e sincronizando ${novosAjustesUnicos.length} registros únicos no Supabase...`);
+      const { data: existentes, error: errExistentes } = await supabase
         .from('ajustes_ponto')
-        .upsert(novosAjustes, { onConflict: 'nome,data_referencia' });
+        .select('id, colaborador_id, nome, data_referencia, telefone');
       
-      if (errInsert) throw errInsert;
+      if (errExistentes) throw errExistentes;
+      const existentesList = existentes || [];
+
+      for (const novo of novosAjustesUnicos) {
+        // Encontra se já existe ocorrência no mesmo dia para o colaborador (por ID ou por Nome normalizado)
+        const matchExistente = existentesList.find((ext: any) => {
+          const matchData = ext.data_referencia === novo.data_referencia;
+          if (!matchData) return false;
+
+          if (ext.colaborador_id && novo.colaborador_id) {
+            return ext.colaborador_id === novo.colaborador_id;
+          }
+
+          const extNomeNorm = normalizarNome(ext.nome);
+          const novoNomeNorm = normalizarNome(novo.nome);
+          return extNomeNorm === novoNomeNorm;
+        });
+
+        if (matchExistente) {
+          const { error: errUpd } = await supabase
+            .from('ajustes_ponto')
+            .update({
+              colaborador_id: novo.colaborador_id,
+              nome: novo.nome,
+              telefone: novo.telefone,
+              motivo: novo.motivo,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', matchExistente.id);
+          
+          if (errUpd) throw errUpd;
+        } else {
+          const { data: insertedData, error: errIns } = await supabase
+            .from('ajustes_ponto')
+            .insert([novo])
+            .select();
+          
+          if (errIns) throw errIns;
+          
+          if (insertedData && insertedData[0]) {
+            existentesList.push(insertedData[0]);
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true, count: novosAjustes.length });

@@ -197,6 +197,7 @@ export default function FichaColaborador360({ colabId, isOpen, onClose, canEdit 
                     { key: "nome", label: "Nome Completo", type: "text" },
                     { key: "funcao", label: "Função Operacional", type: "text" },
                     { key: "unidade_alocacao", label: "Unidade de Trabalho", type: "text" },
+                    { key: "telefone", label: "Telefone / WhatsApp", type: "text" },
                     ...(restrictLevel ? [] : [{ key: "nivel_acesso", label: "Nível de Privilégio", type: "select", options: [1, 2, 3, 4] }]),
                     { key: "insalubridade", label: "Insalubridade", type: "select", options: ["N/A", "20%", "40%"] },
                     { key: "carga_horaria", label: "Carga Horária", type: "select", options: ["12X36", "44H", "20H"] },

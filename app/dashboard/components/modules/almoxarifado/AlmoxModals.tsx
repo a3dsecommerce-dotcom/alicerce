@@ -378,8 +378,11 @@ export default function AlmoxModals({
                  <div className="flex gap-3 flex-wrap">
                     <button
                       onClick={() => {
-                        if(confirm("Deseja APROVAR todos os itens deste protocolo com as quantidades originais?")) {
-                          reqEditando.itens.forEach((it:any) => onProcessarReq(it.id, 'APROVADO', it.quantidade));
+                        if(confirm("Deseja APROVAR todos os itens deste protocolo com as quantidades totais solicitadas (cota + extra)?")) {
+                          reqEditando.itens.forEach((it:any) => {
+                            const totalSolicitado = (it.quantidade || 0) + (it.quantidade_extra || 0);
+                            onProcessarReq(it.id, 'APROVADO', totalSolicitado);
+                          });
                           setModalAberto(null);
                         }
                       }}
@@ -401,10 +404,9 @@ export default function AlmoxModals({
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-2">
                 <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Legenda:</span>
                 {[
-                  { color: 'bg-green-500', label: 'Dentro da cota e com estoque' },
-                  { color: 'bg-red-500',   label: 'Acima da cota calculada' },
-                  { color: 'bg-amber-500', label: 'Estoque insuficiente' },
-                  { color: 'bg-blue-300',  label: 'EPI — cota não se aplica' },
+                  { color: 'bg-green-500', label: '100% Aprovado Automaticamente (Cota)' },
+                  { color: 'bg-amber-500', label: 'Possui Quantidades em Análise (Extra/Excedente)' },
+                  { color: 'bg-blue-300',  label: 'Análise Manual (Emergencial / Sem Cota)' },
                 ].map(l => (
                   <div key={l.label} className="flex items-center gap-1.5">
                     <div className={`w-2.5 h-2.5 rounded-full ${l.color}`} />
@@ -423,31 +425,37 @@ export default function AlmoxModals({
                   );
                   const estoqueAtual = estoqueItem?.quantidade ?? 0;
                   const coeficiente  = estoqueItem?.coeficiente ?? 0;
-                  const solicitado   = it.quantidade;
+                  
+                  const solicitado   = it.quantidade || 0;
+                  const extra        = it.quantidade_extra || 0;
+                  const totalSolicitado = solicitado + extra;
                   const isEPI        = it.tipo_item === 'EPI';
 
-                  // EPI não tem cota — cota só se aplica a suprimentos (calculada via coeficiente × ASGs)
                   const secretaria   = reqEditando.secretaria_destino || '';
                   const qtdAsg       = cotasMap[secretaria] ?? 0;
-                  // Se não há coeficiente ou secretaria sem ASGs → sem limite calculado
                   const cotaCalculada = (!isEPI && coeficiente > 0 && qtdAsg > 0)
                     ? Math.floor(qtdAsg * coeficiente)
                     : 0;
                   const temCota      = cotaCalculada > 0;
-                  const acimaDaQuota = temCota && solicitado > cotaCalculada;
-                  const excedente    = acimaDaQuota ? solicitado - cotaCalculada : 0;
-                  const semEstoque   = estoqueAtual < solicitado;
+                  const tipoPedido   = reqEditando.tipo_pedido || 'MENSAL';
 
-                  // Sugestão automática (não ultrapassa cota nem estoque)
-                  const sugestao = temCota
-                    ? Math.min(solicitado, cotaCalculada, estoqueAtual)
-                    : Math.min(solicitado, estoqueAtual);
+                  // Lógica de aprovação automática e análise manual
+                  const isMensalComCota = tipoPedido === 'MENSAL' && temCota;
+                  const cotaAutomatica = isMensalComCota ? Math.min(solicitado, cotaCalculada) : 0;
+                  const quantidadeEmAnalise = isMensalComCota
+                    ? Math.max(0, solicitado - cotaCalculada) + extra
+                    : totalSolicitado;
 
-                  const cardColor = acimaDaQuota
-                    ? 'border-red-300 bg-red-50/40'
-                    : semEstoque
-                    ? 'border-amber-300 bg-amber-50/40'
-                    : 'border-green-200 bg-green-50/20';
+                  let cardColor = 'border-slate-200 bg-white';
+                  if (isMensalComCota) {
+                    if (quantidadeEmAnalise > 0) {
+                      cardColor = 'border-amber-300 bg-amber-50/20'; // Possui extra em análise
+                    } else {
+                      cardColor = 'border-green-200 bg-green-50/20'; // 100% automático
+                    }
+                  } else {
+                    cardColor = 'border-blue-200 bg-blue-50/10'; // Emergencial ou Sem cota
+                  }
 
                   return (
                     <div key={it.id} className={`p-6 rounded-2xl border-2 transition-all ${cardColor}`}>
@@ -461,70 +469,100 @@ export default function AlmoxModals({
                           </p>
                         </div>
 
-                        {/* 4 cards de métricas */}
+                        {/* Cards de métricas */}
                         <div className="flex items-stretch gap-2 flex-wrap">
-                          {/* Pedido */}
-                          <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[68px]">
-                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Pedido</span>
-                            <span className="text-xl font-black text-slate-700">{solicitado}</span>
-                          </div>
-
-                          {/* Cota — só para suprimentos */}
+                          {/* Pedido Cota */}
                           {!isEPI && (
-                            <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
-                              !temCota ? 'bg-slate-100 border-slate-200'
-                              : acimaDaQuota ? 'bg-red-100 border-red-300'
-                              : 'bg-green-100 border-green-200'
-                            }`}>
-                              <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Cota</span>
-                              <span className={`text-xl font-black ${
-                                !temCota ? 'text-slate-400'
-                                : acimaDaQuota ? 'text-red-700'
-                                : 'text-green-700'
-                              }`}>{temCota ? cotaCalculada : '—'}</span>
+                            <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[68px]">
+                              <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Pedido Cota</span>
+                              <span className="text-xl font-black text-slate-700">{solicitado}</span>
                             </div>
                           )}
 
-                          {/* Estoque */}
-                          <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border ${
-                            semEstoque ? 'bg-amber-100 border-amber-300' : 'bg-blue-50 border-blue-200'
-                          }`}>
-                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque</span>
-                            <span className={`text-xl font-black ${semEstoque ? 'text-amber-700' : 'text-blue-700'}`}>
-                              {estoqueAtual}
-                            </span>
+                          {/* Pedido Extra */}
+                          {!isEPI && (
+                            <div className="flex flex-col items-center justify-center bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 min-w-[68px]">
+                              <span className="text-[7px] font-black uppercase text-orange-500 mb-1">Pedido Extra</span>
+                              <span className="text-xl font-black text-orange-600">{extra}</span>
+                            </div>
+                          )}
+
+                          {/* Total Solicitado */}
+                          <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[68px]">
+                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Total Pedido</span>
+                            <span className="text-xl font-black text-slate-800">{totalSolicitado}</span>
                           </div>
 
-                          {/* Sugestão */}
-                          <div className="flex flex-col items-center justify-center bg-[var(--brand)]/10 border border-[var(--brand)]/20 rounded-xl px-4 py-3 min-w-[68px]">
-                            <span className="text-[7px] font-black uppercase text-[var(--brand)] mb-1">Sugestão</span>
-                            <span className="text-xl font-black text-[var(--brand)]">{sugestao}</span>
+                          {/* Cota Limite */}
+                          {!isEPI && (
+                            <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border bg-slate-50 border-slate-200`}>
+                              <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Cota Limite</span>
+                              <span className="text-xl font-black text-slate-500">{temCota ? cotaCalculada : '—'}</span>
+                            </div>
+                          )}
+
+                          {/* Estoque Central */}
+                          <div className="flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border bg-blue-50/50 border-blue-100">
+                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque Central</span>
+                            <span className="text-xl font-black text-blue-600">{estoqueAtual}</span>
                           </div>
+
+                          {/* Aprovado Automático */}
+                          {isMensalComCota && (
+                            <div className="flex flex-col items-center justify-center bg-green-50 border border-green-200 rounded-xl px-4 py-3 min-w-[68px]">
+                              <span className="text-[7px] font-black uppercase text-green-600 mb-1">Aprov. Auto</span>
+                              <span className="text-xl font-black text-green-700">{cotaAutomatica}</span>
+                            </div>
+                          )}
 
                           {/* Campo de aprovação */}
-                          <div className="flex flex-col items-center justify-center gap-1">
-                            <label className="text-[7px] font-black uppercase text-slate-400">Aprovar</label>
-                            <input
-                              type="number"
-                              className={`w-20 h-12 border-2 rounded-xl text-center text-sm font-black focus:border-blue-500 transition-all ${
-                                acimaDaQuota ? 'bg-red-50 border-red-300 text-red-700' : 'bg-white border-slate-200'
-                              }`}
-                              defaultValue={sugestao}
-                              id={`qtd-apr-${it.id}`}
-                              min={0}
-                              max={Math.min(solicitado, estoqueAtual)}
-                            />
-                          </div>
+                          {isMensalComCota ? (
+                            quantidadeEmAnalise > 0 ? (
+                              <div className="flex flex-col items-center justify-center gap-1">
+                                <label className="text-[7px] font-black uppercase text-slate-400">Aprovar Extra</label>
+                                <input
+                                  type="number"
+                                  className="w-20 h-12 border-2 rounded-xl text-center text-sm font-black focus:border-blue-500 transition-all bg-white border-slate-200"
+                                  defaultValue={0}
+                                  id={`qtd-apr-extra-${it.id}`}
+                                  min={0}
+                                  max={quantidadeEmAnalise}
+                                />
+                              </div>
+                            ) : null
+                          ) : (
+                            <div className="flex flex-col items-center justify-center gap-1">
+                              <label className="text-[7px] font-black uppercase text-slate-400">Aprovar Total</label>
+                              <input
+                                type="number"
+                                className="w-20 h-12 border-2 rounded-xl text-center text-sm font-black focus:border-blue-500 transition-all bg-white border-slate-200"
+                                defaultValue={totalSolicitado}
+                                id={`qtd-apr-total-${it.id}`}
+                                min={0}
+                                max={totalSolicitado}
+                              />
+                            </div>
+                          )}
 
                           {/* Botões Aprovar / Reprovar */}
                           <div className="flex gap-2 items-center">
                             <button
                               onClick={() => {
-                                const val = (document.getElementById(`qtd-apr-${it.id}`) as HTMLInputElement).value;
-                                onProcessarReq(it.id, 'APROVADO', Number(val));
+                                if (isMensalComCota) {
+                                  if (quantidadeEmAnalise > 0) {
+                                    const valExtra = (document.getElementById(`qtd-apr-extra-${it.id}`) as HTMLInputElement).value;
+                                    const totalAprovado = cotaAutomatica + Number(valExtra);
+                                    onProcessarReq(it.id, 'APROVADO', totalAprovado);
+                                  } else {
+                                    onProcessarReq(it.id, 'APROVADO', cotaAutomatica);
+                                  }
+                                } else {
+                                  const valTotal = (document.getElementById(`qtd-apr-total-${it.id}`) as HTMLInputElement).value;
+                                  onProcessarReq(it.id, 'APROVADO', Number(valTotal));
+                                }
                               }}
                               className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                              title="Aprovar com quantidade definida"
+                              title="Aprovar item"
                             >
                               <CheckCircle2 size={18} />
                             </button>
@@ -541,41 +579,42 @@ export default function AlmoxModals({
 
                       {/* Alertas contextuais */}
                       <div className="flex flex-wrap gap-2 mt-3">
-                        {acimaDaQuota && (
-                          <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg border border-red-200">
-                            <AlertTriangle size={11} />
-                            <span className="text-[9px] font-black uppercase">
-                              +{excedente} {it.unidade_medida || 'UN'} acima da cota ({cotaCalculada} {it.unidade_medida || 'UN'} para {reqEditando.secretaria_destino})
-                            </span>
-                          </div>
-                        )}
-                        {semEstoque && (
-                          <div className="flex items-center gap-1.5 bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
-                            <AlertTriangle size={11} />
-                            <span className="text-[9px] font-black uppercase">
-                              Estoque insuficiente — disponível: {estoqueAtual} / pedido: {solicitado}
-                            </span>
-                          </div>
-                        )}
-                        {!isEPI && !temCota && (
-                          <div className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200">
-                            <span className="text-[9px] font-black uppercase">
-                              Cota não calculada — verifique ASGs cadastrados na secretaria &quot;{reqEditando.secretaria_destino}&quot;
-                            </span>
-                          </div>
-                        )}
-                        {isEPI && !semEstoque && (
-                          <div className="flex items-center gap-1.5 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-100">
-                            <span className="text-[9px] font-black uppercase">
-                              EPI — sem cota por requisição. Verifique necessidade com a equipe.
-                            </span>
-                          </div>
-                        )}
-                        {!acimaDaQuota && !semEstoque && temCota && (
-                          <div className="flex items-center gap-1.5 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
+                        {isMensalComCota && cotaAutomatica > 0 && (
+                          <div className="flex items-center gap-1.5 bg-green-100/60 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
                             <CheckCircle2 size={11} />
                             <span className="text-[9px] font-black uppercase">
-                              Dentro da cota e estoque suficiente — aprovação recomendada
+                              ✓ {cotaAutomatica} {it.unidade_medida || 'UN'} aprovados automaticamente (Dentro da cota de {cotaCalculada})
+                            </span>
+                          </div>
+                        )}
+                        {isMensalComCota && quantidadeEmAnalise > 0 && (
+                          <div className="flex items-center gap-1.5 bg-amber-100/60 text-amber-700 px-3 py-1.5 rounded-lg border border-amber-200">
+                            <AlertTriangle size={11} />
+                            <span className="text-[9px] font-black uppercase">
+                              {quantidadeEmAnalise} {it.unidade_medida || 'UN'} em análise (Excedente da cota: {Math.max(0, solicitado - cotaCalculada)} + Extra: {extra})
+                            </span>
+                          </div>
+                        )}
+                        {isMensalComCota && quantidadeEmAnalise === 0 && (
+                          <div className="flex items-center gap-1.5 bg-green-100/60 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
+                            <CheckCircle2 size={11} />
+                            <span className="text-[9px] font-black uppercase">
+                              ✓ Item 100% aprovado dentro da cota
+                            </span>
+                          </div>
+                        )}
+                        {!isMensalComCota && (
+                          <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200">
+                            <AlertTriangle size={11} />
+                            <span className="text-[9px] font-black uppercase">
+                              {tipoPedido === 'EMERGENCIAL' ? 'Pedido Emergencial' : 'Item sem cota calculada'} — Requer análise manual do total ({totalSolicitado} {it.unidade_medida || 'UN'})
+                            </span>
+                          </div>
+                        )}
+                        {estoqueAtual < totalSolicitado && (
+                          <div className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200">
+                            <span className="text-[9px] font-black uppercase">
+                              Estoque central insuficiente ({estoqueAtual} disp.) — Compra sob demanda (Não bloqueia a aprovação)
                             </span>
                           </div>
                         )}

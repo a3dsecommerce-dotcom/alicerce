@@ -438,6 +438,7 @@ export default function GestaoPontoPage() {
     const headers = [
       "Colaborador",
       "Telefone",
+      "Unidade",
       "Rota",
       "Encarregado",
       "Data Ocorrencia",
@@ -454,8 +455,9 @@ export default function GestaoPontoPage() {
       else if (item.autorizado) statusText = item.data_ultima_cobranca ? `Fase ${item.fase_cobranca}` : "Autorizado (Fila)";
 
       return [
-        item.nome,
-        item.telefone,
+        (item.colaborador?.nome || item.nome).toUpperCase(),
+        item.colaborador?.telefone || item.telefone,
+        item.colaborador?.unidade_alocacao || "Sem Unidade",
         aloc.rota,
         aloc.encarregado,
         formatarData(item.data_referencia),
@@ -939,12 +941,12 @@ export default function GestaoPontoPage() {
                       <td className="p-5">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-[var(--brand-alpha)] text-[var(--brand)] flex items-center justify-center font-black text-xs uppercase">
-                            {item.nome.slice(0, 2)}
+                            {(item.colaborador?.nome || item.nome).slice(0, 2)}
                           </div>
                           <div>
-                            <div className="text-xs font-black text-[var(--text-primary)]">{item.nome}</div>
+                            <div className="text-xs font-black text-[var(--text-primary)]">{(item.colaborador?.nome || item.nome).toUpperCase()}</div>
                             <div className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1 mt-0.5">
-                              <Smartphone size={10} /> {item.telefone}
+                              <Smartphone size={10} /> {item.colaborador?.telefone || item.telefone}
                             </div>
                             {/* Rota e Encarregado */}
                             {(() => {
@@ -952,7 +954,7 @@ export default function GestaoPontoPage() {
                               const confirmado = !!item.resposta_encarregado;
                               return (
                                 <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1 flex items-center gap-1 flex-wrap">
-                                  <span>📍 {aloc.rota}</span>
+                                  <span>📍 {aloc.rota} • {item.colaborador?.unidade_alocacao || "Sem Unidade"}</span>
                                   <span className="text-slate-300">•</span>
                                   <span className={confirmado ? "text-green-600 font-bold" : ""}>
                                     👤 {aloc.encarregado}{confirmado ? " ✓ (Confirmou)" : ""}
