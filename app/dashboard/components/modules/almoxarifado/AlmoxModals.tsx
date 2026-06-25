@@ -469,51 +469,43 @@ export default function AlmoxModals({
                           </p>
                         </div>
 
-                        {/* Cards de métricas */}
+                        {/* Cards de métricas simplificados */}
                         <div className="flex items-stretch gap-2 flex-wrap">
-                          {/* Pedido Cota */}
-                          {!isEPI && (
-                            <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[68px]">
-                              <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Pedido Cota</span>
-                              <span className="text-xl font-black text-slate-700">{solicitado}</span>
-                            </div>
-                          )}
-
-                          {/* Pedido Extra */}
-                          {!isEPI && (
-                            <div className="flex flex-col items-center justify-center bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 min-w-[68px]">
-                              <span className="text-[7px] font-black uppercase text-orange-500 mb-1">Pedido Extra</span>
-                              <span className="text-xl font-black text-orange-600">{extra}</span>
-                            </div>
-                          )}
-
                           {/* Total Solicitado */}
-                          <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[68px]">
+                          <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[75px]">
                             <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Total Pedido</span>
                             <span className="text-xl font-black text-slate-800">{totalSolicitado}</span>
                           </div>
 
-                          {/* Cota Limite */}
-                          {!isEPI && (
-                            <div className={`flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border bg-slate-50 border-slate-200`}>
+                          {/* Cota Limite — apenas se houver cota */}
+                          {!isEPI && temCota && (
+                            <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 min-w-[75px]">
                               <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Cota Limite</span>
-                              <span className="text-xl font-black text-slate-500">{temCota ? cotaCalculada : '—'}</span>
+                              <span className="text-xl font-black text-slate-500">{cotaCalculada}</span>
+                            </div>
+                          )}
+
+                          {/* Aprovado Auto (Pré-Aprovado) — apenas se houver cota aprovada automaticamente */}
+                          {isMensalComCota && cotaAutomatica > 0 && (
+                            <div className="flex flex-col items-center justify-center bg-green-50 border border-green-200 rounded-xl px-4 py-3 min-w-[75px]">
+                              <span className="text-[7px] font-black uppercase text-green-600 mb-1">Aprov. Auto (Cota)</span>
+                              <span className="text-xl font-black text-green-700">{cotaAutomatica}</span>
+                            </div>
+                          )}
+
+                          {/* A Mais / Em Análise — apenas se houver excedente/extra em análise */}
+                          {quantidadeEmAnalise > 0 && (
+                            <div className="flex flex-col items-center justify-center bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 min-w-[75px]">
+                              <span className="text-[7px] font-black uppercase text-amber-600 mb-1">A Mais (Em Análise)</span>
+                              <span className="text-xl font-black text-amber-700">{quantidadeEmAnalise}</span>
                             </div>
                           )}
 
                           {/* Estoque Central */}
-                          <div className="flex flex-col items-center justify-center rounded-xl px-4 py-3 min-w-[68px] border bg-blue-50/50 border-blue-100">
+                          <div className="flex flex-col items-center justify-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 min-w-[75px]">
                             <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque Central</span>
                             <span className="text-xl font-black text-blue-600">{estoqueAtual}</span>
                           </div>
-
-                          {/* Aprovado Automático */}
-                          {isMensalComCota && (
-                            <div className="flex flex-col items-center justify-center bg-green-50 border border-green-200 rounded-xl px-4 py-3 min-w-[68px]">
-                              <span className="text-[7px] font-black uppercase text-green-600 mb-1">Aprov. Auto</span>
-                              <span className="text-xl font-black text-green-700">{cotaAutomatica}</span>
-                            </div>
-                          )}
 
                           {/* Campo de aprovação */}
                           {isMensalComCota ? (
