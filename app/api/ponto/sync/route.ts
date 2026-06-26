@@ -181,6 +181,9 @@ export async function GET() {
         }
       }
 
+      const ajustePendentePlanilha = String(row['Ajuste Pendente'] || '').trim().toUpperCase();
+      const isAjustePendente = ajustePendentePlanilha === 'SIM';
+
       if (colabMatch) {
         novosAjustes.push({
           colaborador_id: colabMatch.id,
@@ -189,7 +192,8 @@ export async function GET() {
           data_referencia: dataRef,
           motivo: motivoPlanilha,
           resolvido: false,
-          autorizado: false
+          autorizado: true,
+          ajuste_pendente: isAjustePendente
         });
       } else {
         novosAjustes.push({
@@ -199,7 +203,8 @@ export async function GET() {
           data_referencia: dataRef,
           motivo: motivoPlanilha + " (Colaborador não encontrado no banco)",
           resolvido: false,
-          autorizado: false
+          autorizado: true,
+          ajuste_pendente: isAjustePendente
         });
       }
     }
@@ -253,6 +258,8 @@ export async function GET() {
               nome: novo.nome,
               telefone: novo.telefone,
               motivo: novo.motivo,
+              ajuste_pendente: novo.ajuste_pendente,
+              autorizado: true,
               updated_at: new Date().toISOString()
             })
             .eq('id', matchExistente.id);

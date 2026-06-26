@@ -317,11 +317,84 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: "Nenhuma ocorrência na fila de cobrança" });
     }
 
-    // 5. Filtrar ocorrências aplicando a trava de segurança de 5 minutos contra duplicidade
+    // Obter horário atual de Brasília
+    const horaMinutoBrasilia = new Date().toLocaleTimeString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+
+    // 4.1. Enviar notificações consolidadas aos Encarregados se for manual OU se for exatamente 09:00 ou 14:00
+    const isEncarregadoHour = manual || horaMinutoBrasilia === "09:00" || horaMinutoBrasilia === "14:00";
+    if (isEncarregadoHour) {
+      console.log(`📢 [Supervisor Alert] Agrupando pendências de ajuste no app para os Encarregados...`);
+      const ocorrenciasComAjustePendente = ocorrencias.filter((o: any) => o.ajuste_pendente === true);
+      
+      if (ocorrenciasComAjustePendente.length > 0) {
+        // Agrupar por encarregado
+        const supervisorMap: { [key: string]: { encNome: string; tel: string; rota: string; unidade: string; items: any[] } } = {};
+        
+        for (const o of ocorrenciasComAjustePendente) {
+          if (!o.colaborador_id) continue;
+          const encDados = await buscarEncarregadoDoColaborador(o.colaborador_id);
+          if (encDados && encDados.encarregadoTelefone) {
+            const telLimpo = cleanPhone(encDados.encarregadoTelefone);
+            if (!telLimpo) continue;
+            
+            if (!supervisorMap[telLimpo]) {
+              supervisorMap[telLimpo] = {
+                encNome: encDados.encarregadoNome || "Supervisor",
+                tel: telLimpo,
+                rota: encDados.rota || "Sem Rota",
+                unidade: encDados.unidade || "Sem Unidade",
+                items: []
+              };
+            }
+            supervisorMap[telLimpo].items.push(o);
+          }
+        }
+
+        // Enviar a mensagem para cada encarregado
+        for (const telKey of Object.keys(supervisorMap)) {
+          const supervisor = supervisorMap[telKey];
+          let msgEnc = `Olá, *${supervisor.encNome}*! Os seguintes colaboradores sob sua responsabilidade já solicitaram o ajuste no aplicativo *MarqPonto* e estão aguardando sua aprovação:\n\n`;
+          
+          supervisor.items.forEach((item, index) => {
+            msgEnc += `${index + 1}. *${item.nome}* - Data: *${item.data_referencia}* (Motivo: _${item.motivo || "Batida pendente"}_)\n`;
+          });
+          
+          msgEnc += `\nPor favor, acesse o MarqPonto e aprove as solicitações para regularizar o ponto.\n\n_Esta é uma mensagem automática de suporte à gestão de ponto._`;
+
+          try {
+            console.log(`📡 [Supervisor Alert] Enviando lista para ${supervisor.encNome} (${supervisor.tel})...`);
+            await fetch(`${evolutionConfig.evolutionUrl}/message/sendText/${evolutionConfig.evolutionInstance}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": evolutionConfig.evolutionApiKey
+              },
+              body: JSON.stringify({
+                number: supervisor.tel,
+                text: msgEnc,
+                delay: 1200
+              })
+            });
+          } catch (errEnc: any) {
+            console.error(`❌ Erro ao enviar mensagem agrupada para ${supervisor.encNome}:`, errEnc.message);
+          }
+        }
+      }
+    }
+
+    // 5. Filtrar ocorrências direcionadas aos colaboradores (ajuste_pendente = false) aplicando a trava de segurança de 5 minutos contra duplicidade
     const agoraMs = new Date().getTime();
     const tempoMinimoEntreCobrancasMs = 5 * 60 * 1000; // 5 minutos
 
     const ocorrenciasFiltradas = ocorrencias.filter((o: any) => {
+      // Ignorar se o ajuste já foi solicitado (pois a cobrança desse é enviada de forma agrupada aos supervisores)
+      if (o.ajuste_pendente === true) return false;
+
       // Se nunca foi cobrado, pode disparar
       if (!o.data_ultima_cobranca) return true;
 
@@ -331,8 +404,14 @@ export async function POST(req: Request) {
     });
 
     if (ocorrenciasFiltradas.length === 0) {
-      console.log("ℹ️ Todas as ocorrências ativas foram cobradas recentemente (< 5min). Ignorando disparo.");
-      return NextResponse.json({ success: true, message: "Todas as ocorrências cobradas recentemente" });
+      console.log("ℹ️ Nenhuma ocorrência de colaborador qualificada para envio direto.");
+      return NextResponse.json({ 
+        success: true, 
+        manual: !!manual,
+        total_na_fila: ocorrencias.length,
+        disparados: 0,
+        message: "Nenhum colaborador elegível para cobrança individual no momento (ou foram cobrados há < 5min)." 
+      });
     }
 
     // 6. Iniciar o processamento da fila em background (sem await para responder rápido ao cliente/cron)
@@ -345,7 +424,7 @@ export async function POST(req: Request) {
       manual: !!manual,
       total_na_fila: ocorrencias.length,
       disparados: ocorrenciasFiltradas.length,
-      message: `Processamento de ${ocorrenciasFiltradas.length} cobranças iniciado em background.`
+      message: `Processamento de ${ocorrenciasFiltradas.length} cobranças individuais iniciado em background.`
     });
 
   } catch (err: any) {

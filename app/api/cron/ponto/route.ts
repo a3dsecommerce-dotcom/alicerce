@@ -219,17 +219,78 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: true, action: "NO_ITEMS", message: "Nenhuma ocorrência ativa" });
     }
 
-    // 6. Filtrar por tempo mínimo entre cobranças (5 min)
+    // 5.1. Enviar notificações consolidadas aos Encarregados se for exatamente 09:00 ou 14:00
+    const isEncarregadoHour = horaMinutoBrasilia === "09:00" || horaMinutoBrasilia === "14:00";
+    if (isEncarregadoHour) {
+      console.log(`📢 [CRON Supervisor Alert] Agrupando pendências de ajuste no app para os Encarregados...`);
+      const ocorrenciasComAjustePendente = ocorrencias.filter((o: any) => o.ajuste_pendente === true);
+      
+      if (ocorrenciasComAjustePendente.length > 0) {
+        const supervisorMap: { [key: string]: { encNome: string; tel: string; rota: string; unidade: string; items: any[] } } = {};
+        
+        for (const o of ocorrenciasComAjustePendente) {
+          if (!o.colaborador_id) continue;
+          const encDados = await buscarEncarregadoDoColaborador(o.colaborador_id);
+          if (encDados && encDados.encarregadoTelefone) {
+            const telLimpo = cleanPhone(encDados.encarregadoTelefone);
+            if (!telLimpo) continue;
+            
+            if (!supervisorMap[telLimpo]) {
+              supervisorMap[telLimpo] = {
+                encNome: encDados.encarregadoNome || "Supervisor",
+                tel: telLimpo,
+                rota: encDados.rota || "Sem Rota",
+                unidade: encDados.unidade || "Sem Unidade",
+                items: []
+              };
+            }
+            supervisorMap[telLimpo].items.push(o);
+          }
+        }
+
+        for (const telKey of Object.keys(supervisorMap)) {
+          const supervisor = supervisorMap[telKey];
+          let msgEnc = `Olá, *${supervisor.encNome}*! Os seguintes colaboradores sob sua responsabilidade já solicitaram o ajuste no aplicativo *MarqPonto* e estão aguardando sua aprovação:\n\n`;
+          
+          supervisor.items.forEach((item, index) => {
+            msgEnc += `${index + 1}. *${item.nome}* - Data: *${item.data_referencia}* (Motivo: _${item.motivo || "Batida pendente"}_)\n`;
+          });
+          
+          msgEnc += `\nPor favor, acesse o MarqPonto e aprove as solicitações para regularizar o ponto.\n\n_Esta é uma mensagem automática de suporte à gestão de ponto._`;
+
+          try {
+            console.log(`📡 [CRON Supervisor Alert] Enviando lista para ${supervisor.encNome}...`);
+            await fetch(`${evolutionConfig.evolutionUrl}/message/sendText/${evolutionConfig.evolutionInstance}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "apikey": evolutionConfig.evolutionApiKey
+              },
+              body: JSON.stringify({
+                number: supervisor.tel,
+                text: msgEnc,
+                delay: 1200
+              })
+            });
+          } catch (errEnc: any) {
+            console.error(`❌ [CRON] Erro ao enviar mensagem agrupada para ${supervisor.encNome}:`, errEnc.message);
+          }
+        }
+      }
+    }
+
+    // 6. Filtrar por tempo mínimo entre cobranças (5 min) e apenas para quem não tem ajuste pendente no app
     const agoraMs = Date.now();
     const tempoMinimo = 5 * 60 * 1000;
 
     const filtradas = ocorrencias.filter((o: any) => {
+      if (o.ajuste_pendente === true) return false;
       if (!o.data_ultima_cobranca) return true;
       return (agoraMs - new Date(o.data_ultima_cobranca).getTime()) >= tempoMinimo;
     });
 
     if (filtradas.length === 0) {
-      return NextResponse.json({ success: true, action: "COOLDOWN", message: "Todas cobradas recentemente" });
+      return NextResponse.json({ success: true, action: "SKIP", message: "Nenhum colaborador elegível para cobrança individual no momento" });
     }
 
     // 7. Processar em background
@@ -243,7 +304,7 @@ export async function GET(req: Request) {
       time: horaMinutoBrasilia,
       total: ocorrencias.length,
       dispatched: filtradas.length,
-      message: `${filtradas.length} cobranças iniciadas em background.`
+      message: `${filtradas.length} cobranças individuais iniciadas em background.`
     });
 
   } catch (err: any) {

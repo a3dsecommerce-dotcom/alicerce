@@ -37,6 +37,7 @@ interface AjustePonto {
   motivo: string | null;
   resolvido: boolean;
   autorizado: boolean;
+  ajuste_pendente?: boolean;
   fase_cobranca: number;
   data_ultima_cobranca: string | null;
   resposta_colaborador: string | null;
@@ -58,7 +59,7 @@ export default function GestaoPontoPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [ocorrencias, setOcorrencias] = useState<AjustePonto[]>([]);
   const [busca, setBusca] = useState("");
-  const [filtroStatus, setFiltroStatus] = useState<"TODOS" | "PENDENTES" | "COBRANDO" | "RESOLVIDOS">("PENDENTES");
+  const [filtroStatus, setFiltroStatus] = useState<"TODOS" | "PENDENTES" | "COBRANDO" | "AGUARDANDO_SUPERVISOR" | "RESOLVIDOS">("PENDENTES");
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [dataInicio, setDataInicio] = useState(() => {
@@ -193,13 +194,13 @@ export default function GestaoPontoPage() {
   };
 
   const handleDispararImediato = async () => {
-    const totalAutorizados = ocorrencias.filter(o => o.autorizado && !o.resolvido).length;
+    const totalAutorizados = ocorrencias.filter(o => !o.resolvido && o.ajuste_pendente !== true).length;
     if (totalAutorizados === 0) {
-      toast.info("Não há nenhuma cobrança autorizada e pendente na fila.");
+      toast.info("Não há nenhuma cobrança pendente e ativa para colaboradores na fila.");
       return;
     }
 
-    const confirmar = window.confirm(`Deseja disparar as cobranças de ponto imediatamente para os ${totalAutorizados} colaboradores autorizados na fila? (O envio ocorrerá de forma espaçada a cada 30-50 segundos em segundo plano para proteção de banimento).`);
+    const confirmar = window.confirm(`Deseja disparar as cobranças de ponto imediatamente para os ${totalAutorizados} colaboradores na fila? (O envio ocorrerá de forma espaçada a cada 30-50 segundos em segundo plano para proteção de banimento). Também enviaremos os alertas consolidados para os Encarregados.`);
     if (!confirmar) return;
 
     setLoadingDisparo(true);
@@ -216,10 +217,10 @@ export default function GestaoPontoPage() {
       }
 
       const resData = await response.json();
-      if (resData.disparados > 0) {
-        toast.success(`Fila de disparo iniciada! ${resData.disparados} mensagens serão enviadas progressivamente.`);
+      if (resData.success) {
+        toast.success(`Disparos e alertas iniciados progressivamente!`);
       } else {
-        toast.info("Nenhuma ocorrência elegível na fila para disparar (ou foram cobradas há menos de 5 min).");
+        toast.info("Nenhuma ocorrência elegível na fila para disparar.");
       }
       
       setTimeout(fetchOcorrencias, 1500);
@@ -266,7 +267,6 @@ export default function GestaoPontoPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOcorrencias();
     fetchConfiguracoes();
     fetchDadosAuxiliares();
@@ -338,32 +338,6 @@ export default function GestaoPontoPage() {
       console.error("Erro ao disparar webhook n8n:", e);
       toast.warning("Cobrança salva no BD, mas falhou ao notificar o n8n: " + e.message);
       return false;
-    }
-  };
-
-  // Ação: Autorizar primeira cobrança (Fase 1)
-  const handleAutorizarCobranca = async (item: AjustePonto) => {
-    setSaving(item.id);
-    const dataAgora = new Date().toISOString();
-    try {
-      const { error } = await supabase
-        .from("ajustes_ponto")
-        .update({
-          autorizado: true,
-          fase_cobranca: 1,
-          data_ultima_cobranca: null, // Fica nulo até que ocorra o disparo manual ou automático
-          updated_at: dataAgora
-        })
-        .eq("id", item.id);
-
-      if (error) throw error;
-
-      toast.success(`Cobrança de ${item.nome} autorizada! Ela aguardará o horário programado ou o disparo imediato.`);
-      fetchOcorrencias();
-    } catch (e: any) {
-      toast.error("Erro ao autorizar: " + e.message);
-    } finally {
-      setSaving(null);
     }
   };
 
@@ -448,60 +422,69 @@ export default function GestaoPontoPage() {
       "Ultima Cobranca"
     ];
 
-    const rows = ocorrenciasFiltradas.map(item => {
+    const rowsCsv = ocorrenciasFiltradas.map(item => {
       const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
-      let statusText = "Aguardando Autorização";
+      let statusText = "Pendente";
       if (item.resolvido) statusText = "Resolvido";
-      else if (item.autorizado) statusText = item.data_ultima_cobranca ? `Fase ${item.fase_cobranca}` : "Autorizado (Fila)";
-
+      else if (item.ajuste_pendente) statusText = "Aguardando Supervisor";
+      else if (item.data_ultima_cobranca) statusText = `Fase ${item.fase_cobranca}`;
+      
       return [
-        (item.colaborador?.nome || item.nome).toUpperCase(),
-        item.colaborador?.telefone || item.telefone,
-        item.colaborador?.unidade_alocacao || "Sem Unidade",
+        item.nome,
+        item.telefone,
+        item.colaborador?.unidade_alocacao || "OPERAÇÃO",
         aloc.rota,
         aloc.encarregado,
-        formatarData(item.data_referencia),
-        item.motivo || "Geral",
+        item.data_referencia,
+        item.motivo || "",
         statusText,
-        item.fase_cobranca || 0,
-        item.data_ultima_cobranca ? new Date(item.data_ultima_cobranca).toLocaleDateString("pt-BR") : "Nunca"
-      ].map(val => `"${String(val).replace(/"/g, '""')}"`);
+        item.fase_cobranca,
+        item.data_ultima_cobranca ? new Date(item.data_ultima_cobranca).toLocaleDateString() : ""
+      ];
     });
 
-    const csvContent = "\uFEFF" + [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += headers.join(",") + "\n";
+    rowsCsv.forEach(rowArray => {
+      const rowClean = rowArray.map(val => {
+        const text = String(val || "").replace(/"/g, '""');
+        return text.includes(",") ? `"${text}"` : text;
+      });
+      csvContent += rowClean.join(",") + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
+    link.setAttribute("href", encodedUri);
     link.setAttribute("download", `relatorio_ponto_${dataInicio}_a_${dataFim}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Excel (CSV) exportado com sucesso!");
+    toast.success("Excel CSV exportado com sucesso!");
   };
 
   // Imprimir PDF
   const handleImprimirPDF = () => {
     if (ocorrenciasFiltradas.length === 0) {
-      return toast.info("Não há dados para exportar no período selecionado.");
+      return toast.info("Não há dados para imprimir.");
     }
 
     const doc = new jsPDF();
-    
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
-    doc.text("ALICERCE CONSTRUTORA - GESTÃO DE PONTO", 14, 15);
+    doc.text("RELATÓRIO GESTÃO DE PONTO E COBRANÇAS", 14, 15);
     
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Período do Relatório: ${formatarData(dataInicio)} até ${formatarData(dataFim)}`, 14, 22);
-    doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 14, 27);
+    doc.setFontSize(9);
+    doc.text(`Período de Análise: ${formatarData(dataInicio)} até ${formatarData(dataFim)}`, 14, 21);
+    doc.text(`Total de ocorrências filtradas: ${ocorrenciasFiltradas.length}`, 14, 25);
 
     const tableData = ocorrenciasFiltradas.map(item => {
       const aloc = obterAlocacaoColaborador(item.colaborador?.unidade_alocacao || null);
-      let statusText = "Aguardando Autorização";
+      let statusText = "Pendente";
       if (item.resolvido) statusText = "Resolvido";
-      else if (item.autorizado) statusText = item.data_ultima_cobranca ? `Fase ${item.fase_cobranca}` : "Autorizado (Fila)";
+      else if (item.ajuste_pendente) statusText = "Aguardando Supervisor";
+      else if (item.data_ultima_cobranca) statusText = `Fase ${item.fase_cobranca}`;
 
       return [
         item.nome.toUpperCase(),
@@ -519,13 +502,6 @@ export default function GestaoPontoPage() {
       theme: "striped",
       headStyles: { fillColor: [79, 70, 229] },
       styles: { fontSize: 8 },
-      columnStyles: {
-        0: { cellWidth: 50 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 45 },
-        4: { cellWidth: 35 }
-      }
     });
 
     doc.save(`relatorio_ponto_${dataInicio}_a_${dataFim}.pdf`);
@@ -594,10 +570,13 @@ export default function GestaoPontoPage() {
       if (!matchPeriodo) return false;
 
       if (filtroStatus === "PENDENTES") {
-        return !item.resolvido && !item.autorizado;
+        return !item.resolvido && !item.ajuste_pendente;
       }
       if (filtroStatus === "COBRANDO") {
-        return !item.resolvido && item.autorizado;
+        return !item.resolvido && !item.ajuste_pendente && item.data_ultima_cobranca !== null;
+      }
+      if (filtroStatus === "AGUARDANDO_SUPERVISOR") {
+        return !item.resolvido && item.ajuste_pendente === true;
       }
       if (filtroStatus === "RESOLVIDOS") {
         return item.resolvido;
@@ -623,12 +602,13 @@ export default function GestaoPontoPage() {
     });
     return {
       total: periodData.length,
-      pendentes: periodData.filter(i => !i.resolvido && !i.autorizado).length,
-      cobrando: periodData.filter(i => !i.resolvido && i.autorizado).length,
+      pendentes: periodData.filter(i => !i.resolvido && !i.ajuste_pendente).length,
+      cobrando: periodData.filter(i => !i.resolvido && !i.ajuste_pendente && i.data_ultima_cobranca !== null).length,
       resolvidos: periodData.filter(i => i.resolvido).length,
-      fase1: periodData.filter(i => !i.resolvido && i.fase_cobranca === 1).length,
-      fase2: periodData.filter(i => !i.resolvido && i.fase_cobranca === 2).length,
-      fase3: periodData.filter(i => !i.resolvido && i.fase_cobranca === 3).length,
+      ajusteNoApp: periodData.filter(i => !i.resolvido && i.ajuste_pendente === true).length,
+      fase1: periodData.filter(i => !i.resolvido && i.fase_cobranca === 1 && !i.ajuste_pendente).length,
+      fase2: periodData.filter(i => !i.resolvido && i.fase_cobranca === 2 && !i.ajuste_pendente).length,
+      fase3: periodData.filter(i => !i.resolvido && i.fase_cobranca === 3 && !i.ajuste_pendente).length,
     };
   }, [ocorrencias, dataInicio, dataFim, isManagerOrAdmin, supervisorRoutes, currentUser]);
 
@@ -671,13 +651,13 @@ export default function GestaoPontoPage() {
                 disabled={loadingDisparo}
                 className="px-4 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 shadow-md shadow-orange-600/10"
               >
-                <Send size={14} className={loadingDisparo ? "animate-pulse" : ""} /> Disparar Imediato
+                <Send size={14} className={loadingDisparo ? "animate-pulse" : ""} /> Disparar Cobranças/Alertas
               </button>
               <button 
                 onClick={handleSincronizar}
                 className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[var(--bg-card-hover)] transition-all text-[var(--text-primary)]"
               >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Sincronizar
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Sincronizar Planilha
               </button>
               <button 
                 onClick={() => setShowConfig(!showConfig)}
@@ -836,10 +816,10 @@ export default function GestaoPontoPage() {
       {/* KPI Dashboard */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Ocorrências Abertas", val: stats.pendentes, color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20", icon: AlertTriangle },
-          { label: "Cobranças Ativas", val: stats.cobrando, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: Send },
-          { label: "Casos Resolvidos", val: stats.resolvidos, color: "text-green-500", bg: "bg-green-500/10", border: "border-green-500/20", icon: CheckCircle },
-          { label: "Cobranças Fase 3", val: stats.fase3, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", icon: AlertCircle },
+          { label: "Ocorrências no App (Aguardando Supervisor)", val: stats.ajusteNoApp, color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", icon: CheckCircle },
+          { label: "Cobranças Colaborador Ativas", val: stats.pendentes, color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20", icon: Send },
+          { label: "Casos Resolvidos", val: stats.resolvidos, color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20", icon: CheckCircle },
+          { label: "Cobranças em Fase 3", val: stats.fase3, color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20", icon: AlertCircle },
         ].map((kpi, idx) => (
           <div key={idx} className={`bg-[var(--bg-card)] p-6 rounded-3xl border ${kpi.border} shadow-sm flex items-center justify-between`}>
             <div>
@@ -857,8 +837,9 @@ export default function GestaoPontoPage() {
       <div className="bg-[var(--bg-card)] p-6 rounded-3xl border border-[var(--border)] shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex gap-2 bg-[var(--bg-base)]/40 p-1 rounded-xl border border-[var(--border)] w-full md:w-auto overflow-x-auto">
           {[
-            { id: "PENDENTES", label: "Aguardando Autorização", count: stats.pendentes },
+            { id: "PENDENTES", label: "Aguardando Ajuste Colaborador", count: stats.pendentes },
             { id: "COBRANDO", label: "Em Cobrança Ativa", count: stats.cobrando },
+            { id: "AGUARDANDO_SUPERVISOR", label: "Aguardando Supervisor", count: stats.ajusteNoApp },
             { id: "RESOLVIDOS", label: "Resolvidos", count: stats.resolvidos },
             { id: "TODOS", label: "Todos", count: stats.total }
           ].map(opt => (
@@ -914,25 +895,27 @@ export default function GestaoPontoPage() {
                 </tr>
               ) : (
                 ocorrenciasFiltradas.map((item) => {
-                  let badgeClass = "bg-slate-100 text-slate-700 border-slate-200";
-                  let badgeText = "Aguardando Autorização";
+                  let badgeClass = "bg-blue-100 text-blue-700 border-blue-200 animate-pulse";
+                  let badgeText = "Fila de Envio (Pendente)";
                   
                   if (item.resolvido) {
                     badgeClass = "bg-green-100 text-green-700 border-green-200";
                     badgeText = "Resolvido";
-                  } else if (item.autorizado) {
-                    if (!item.data_ultima_cobranca) {
-                      badgeClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
-                      badgeText = "Autorizado (Fila)";
-                    } else if (item.fase_cobranca === 1) {
-                      badgeClass = "bg-blue-100 text-blue-700 border-blue-200 animate-pulse";
-                      badgeText = "1ª Fase (Cobrado)";
-                    } else if (item.fase_cobranca === 2) {
-                      badgeClass = "bg-orange-100 text-orange-700 border-orange-200";
-                      badgeText = "2ª Fase (Cobrança Forte)";
-                    } else if (item.fase_cobranca === 3) {
-                      badgeClass = "bg-red-100 text-red-700 border-red-200";
-                      badgeText = "3ª Fase (Último Alerta)";
+                  } else if (item.ajuste_pendente) {
+                    badgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200 font-bold";
+                    badgeText = "Aguardando Supervisor (Ajuste no App)";
+                  } else {
+                    if (item.data_ultima_cobranca) {
+                      if (item.fase_cobranca === 1) {
+                        badgeClass = "bg-blue-100 text-blue-700 border-blue-200";
+                        badgeText = "1ª Fase (Cobrado)";
+                      } else if (item.fase_cobranca === 2) {
+                        badgeClass = "bg-orange-100 text-orange-700 border-orange-200";
+                        badgeText = "2ª Fase (Cobrança Forte)";
+                      } else if (item.fase_cobranca === 3) {
+                        badgeClass = "bg-red-100 text-red-700 border-red-200";
+                        badgeText = "3ª Fase (Último Alerta)";
+                      }
                     }
                   }
 
@@ -1016,24 +999,14 @@ export default function GestaoPontoPage() {
 
                       <td className="p-5 text-center">
                         <div className="flex justify-center gap-2">
-                          {!item.resolvido && !item.autorizado && (
-                            <button
-                              onClick={() => handleAutorizarCobranca(item)}
-                              disabled={saving === item.id}
-                              className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all disabled:opacity-50"
-                            >
-                              {saving === item.id ? "Enviando..." : "Autorizar Cobrança"}
-                            </button>
-                          )}
-
-                          {!item.resolvido && item.autorizado && item.fase_cobranca < 3 && (
+                          {!item.resolvido && !item.ajuste_pendente && (
                             <button
                               onClick={() => handleForcarRecobranca(item)}
                               disabled={saving === item.id}
                               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[9px] font-black uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-1"
                             >
                               <RefreshCw size={10} className={saving === item.id ? "animate-spin" : ""} />
-                              Cobrar Fase {item.fase_cobranca + 1}
+                              Cobrar Novamente
                             </button>
                           )}
 
