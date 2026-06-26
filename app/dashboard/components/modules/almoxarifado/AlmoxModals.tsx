@@ -501,11 +501,13 @@ export default function AlmoxModals({
                             </div>
                           )}
 
-                          {/* Estoque Central */}
-                          <div className="flex flex-col items-center justify-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 min-w-[75px]">
-                            <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque Central</span>
-                            <span className="text-xl font-black text-blue-600">{estoqueAtual}</span>
-                          </div>
+                          {/* Estoque Central — ocultado para suprimentos */}
+                          {it.tipo_item !== 'SUPRIMENTO' && (
+                            <div className="flex flex-col items-center justify-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 min-w-[75px]">
+                              <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque Central</span>
+                              <span className="text-xl font-black text-blue-600">{estoqueAtual}</span>
+                            </div>
+                          )}
 
                           {/* Campo de aprovação */}
                           {isMensalComCota ? (
@@ -603,7 +605,7 @@ export default function AlmoxModals({
                             </span>
                           </div>
                         )}
-                        {estoqueAtual < totalSolicitado && (
+                        {it.tipo_item !== 'SUPRIMENTO' && estoqueAtual < totalSolicitado && (
                           <div className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200">
                             <span className="text-[9px] font-black uppercase">
                               Estoque central insuficiente ({estoqueAtual} disp.) — Compra sob demanda (Não bloqueia a aprovação)
