@@ -109,9 +109,170 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "telefone and resposta are required" }, { status: 400 });
     }
 
-    console.log(`💬 Recebida resposta de WhatsApp de: ${telefone} - Conteúdo: "${resposta}"`);
+    const rawResposta = String(resposta).trim();
+    console.log(`💬 Recebida resposta de WhatsApp de: ${telefone} - Conteúdo: "${rawResposta}"`);
 
-    // 2. Buscar todas as ocorrências não resolvidas
+    const cleanIncoming = cleanPhone(telefone);
+    if (cleanIncoming.length < 8) {
+      return NextResponse.json({ error: "Invalid telephone number format" }, { status: 400 });
+    }
+
+    const evolutionUrl = process.env.EVOLUTION_URL || "";
+    const evolutionApiKey = process.env.EVOLUTION_API_KEY || "";
+    const rawInstance = process.env.EVOLUTION_INSTANCE || "";
+    const evolutionInstance = rawInstance === "b3fc1313-37c6-465f-8641-9ca0c5e1dd51" ? "ALICERCE" : rawInstance;
+
+    // Helper para enviar mensagens via Evolution API
+    const enviarMensagemBot = async (texto: string) => {
+      try {
+        await fetch(`${evolutionUrl}/message/sendText/${evolutionInstance}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": evolutionApiKey
+          },
+          body: JSON.stringify({
+            number: cleanIncoming,
+            text: texto,
+            delay: 800
+          })
+        });
+      } catch (errBot) {
+        console.error("❌ Erro ao disparar resposta do Bot no WhatsApp:", errBot);
+      }
+    };
+
+    // 2. Fluxo de Sessão Interativa do Bot via configuracoes_sistema
+    const sessionKey = `PONTO_INTERACT_SESSION_${cleanIncoming}`;
+    const { data: dbSession } = await supabase
+      .from('configuracoes_sistema')
+      .select('valor')
+      .eq('chave', sessionKey)
+      .single();
+
+    if (dbSession && dbSession.valor) {
+      let sessionData: any = {};
+      try {
+        sessionData = typeof dbSession.valor === 'string' ? JSON.parse(dbSession.valor) : dbSession.valor;
+      } catch {
+        sessionData = {};
+      }
+
+      // Validar expiração (10 minutos)
+      const isExpired = sessionData.created_at 
+        ? (Date.now() - new Date(sessionData.created_at).getTime()) > 10 * 60 * 1000 
+        : true;
+
+      if (!isExpired && sessionData.step === "AWAITING_SELECTION") {
+        if (rawResposta.toLowerCase() === 'cancelar') {
+          // Encerrar sessão
+          await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKey);
+          await enviarMensagemBot("❌ Operação cancelada. Se precisar, digite *-ponto* novamente para iniciar.");
+          return NextResponse.json({ success: true, message: "Sessão cancelada pelo usuário" });
+        }
+
+        const opcaoEscolhida = parseInt(rawResposta);
+        const optionsList = sessionData.options || [];
+
+        if (isNaN(opcaoEscolhida) || opcaoEscolhida < 1 || opcaoEscolhida > optionsList.length) {
+          await enviarMensagemBot(`⚠️ Opção inválida. Por favor, digite o número correspondente ao colaborador (de 1 a ${optionsList.length}) ou digite *cancelar* para fechar o menu.`);
+          return NextResponse.json({ success: true, message: "Opção do menu inválida" });
+        }
+
+        const itemEscolhido = optionsList[opcaoEscolhida - 1];
+        const dataAgora = new Date().toISOString();
+
+        // Resolver o ponto no banco
+        const { error: errUpd } = await supabase
+          .from('ajustes_ponto')
+          .update({
+            resolvido: true,
+            resposta_encarregado: `Resolvido via comando de WhatsApp por Encarregado`,
+            data_resposta_encarregado: dataAgora,
+            updated_at: dataAgora
+          })
+          .eq('id', itemEscolhido.id);
+
+        if (errUpd) throw errUpd;
+
+        // Limpar sessão
+        await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKey);
+
+        await enviarMensagemBot(`✅ Sucesso! O ponto de *${itemEscolhido.nome}* referente ao dia *${itemEscolhido.data}* foi marcado como *RESOLVIDO* no sistema. As cobranças automáticas para ele foram encerradas.`);
+        return NextResponse.json({ success: true, message: "Ocorrência resolvida via bot" });
+      } else {
+        // Sessão expirada
+        await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKey);
+      }
+    }
+
+    // 3. Comando de inicialização: "-ponto"
+    if (rawResposta.toLowerCase() === '-ponto') {
+      console.log(`🤖 Iniciando interação de comando -ponto para o remetente ${cleanIncoming}`);
+      
+      // Buscar todas as ocorrências pendentes
+      const { data: ocorrenciasAbertas, error: errOco } = await supabase
+        .from('ajustes_ponto')
+        .select('*')
+        .eq('resolvido', false);
+
+      if (errOco) throw errOco;
+
+      const pendenciasDoSupervisor: any[] = [];
+
+      // Filtrar as ocorrências do supervisor remetente
+      for (const o of (ocorrenciasAbertas || [])) {
+        if (!o.colaborador_id) continue;
+        const encDados = await buscarEncarregadoDoColaborador(o.colaborador_id);
+        if (encDados && encDados.encarregadoTelefone) {
+          const cleanEncPhone = cleanPhone(encDados.encarregadoTelefone);
+          if (cleanEncPhone.length >= 8 && cleanEncPhone.slice(-8) === cleanIncoming.slice(-8)) {
+            pendenciasDoSupervisor.push({
+              id: o.id,
+              nome: o.nome,
+              data: o.data_referencia,
+              motivo: o.motivo || "Ajuste Geral"
+            });
+          }
+        }
+      }
+
+      if (pendenciasDoSupervisor.length === 0) {
+        await enviarMensagemBot("Olá! Não identifiquei nenhuma pendência de ponto pendente sob sua responsabilidade no momento. Bom trabalho! 👍");
+        return NextResponse.json({ success: true, message: "Nenhuma pendência encontrada para o supervisor" });
+      }
+
+      // Montar menu numerado
+      let menuText = `Olá! Identifiquei os seguintes colaboradores sob sua responsabilidade com pendências de ponto:\n\n`;
+      
+      const sessionOptions: any[] = [];
+      pendenciasDoSupervisor.forEach((p, idx) => {
+        menuText += `${idx + 1}️⃣ *${p.nome}*\n📅 Data: ${p.data}\n❓ Motivo: _${p.motivo}_\n\n`;
+        sessionOptions.push({ id: p.id, nome: p.nome, data: p.data });
+      });
+
+      menuText += `👉 Digite o número correspondente para marcar como *RESOLVIDO* e suspender as cobranças.\n\n_(Ou digite *cancelar* para fechar o menu)_`;
+
+      // Salvar sessão no banco
+      const novaSessao = {
+        step: "AWAITING_SELECTION",
+        options: sessionOptions,
+        created_at: new Date().toISOString()
+      };
+
+      await supabase
+        .from('configuracoes_sistema')
+        .upsert({
+          chave: sessionKey,
+          valor: JSON.stringify(novaSessao),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'chave' });
+
+      await enviarMensagemBot(menuText);
+      return NextResponse.json({ success: true, message: "Menu de seleção enviado" });
+    }
+
+    // 4. Fallback padrão: Resposta de Cobrança Direta (Código legado mantido e executado caso não seja comando)
     const { data: ocorrencias, error: fetchError } = await supabase
       .from('ajustes_ponto')
       .select('*')
@@ -122,33 +283,22 @@ export async function POST(req: Request) {
     }
 
     if (!ocorrencias || ocorrencias.length === 0) {
-      console.log(`ℹ️ Nenhuma ocorrência em aberto encontrada para associar à resposta.`);
       return NextResponse.json({ success: true, message: "Nenhuma ocorrência em aberto" });
-    }
-
-    // 3. Fazer cruzamento aproximado de número de telefone (sufixo dos últimos 8 dígitos)
-    const cleanIncoming = cleanPhone(telefone);
-    
-    if (cleanIncoming.length < 8) {
-      return NextResponse.json({ error: "Invalid telephone number format" }, { status: 400 });
     }
 
     let resolvedMatch: any = null;
     let matchType: 'colaborador' | 'encarregado' | null = null;
 
-    // Buscar correspondência de telefone entre colaboradores ou supervisores
     for (const ocorrencia of ocorrencias) {
-      // 3.1. Verificar se quem respondeu é o Colaborador
       const cleanColabPhone = cleanPhone(ocorrencia.telefone);
       if (cleanColabPhone.length >= 8 && cleanColabPhone.slice(-8) === cleanIncoming.slice(-8)) {
         if (ocorrencia.data_ultima_cobranca !== null) {
           resolvedMatch = ocorrencia;
           matchType = 'colaborador';
-          break; // Colaboradores cobrados ativos têm prioridade de resposta
+          break;
         }
       }
 
-      // 3.2. Verificar se quem respondeu é o Encarregado
       if (ocorrencia.colaborador_id) {
         const encDados = await buscarEncarregadoDoColaborador(ocorrencia.colaborador_id);
         if (encDados && encDados.encarregadoTelefone) {
@@ -164,20 +314,18 @@ export async function POST(req: Request) {
     }
 
     if (!resolvedMatch || !matchType) {
-      console.log(`ℹ️ Nenhuma ocorrência em cobrança ativa correspondente ao telefone ${telefone} (colaborador ou encarregado).`);
       return NextResponse.json({ success: true, message: "Correspondente ativo não encontrado ou não está em cobrança ativa" });
     }
 
     const dataAgora = new Date().toISOString();
 
-    // 4. Atualizar a ocorrência com a resposta correspondente
     if (matchType === 'colaborador') {
       console.log(`✅ Ocorrência vinculada: Resposta do Colaborador ${resolvedMatch.nome} (ID: ${resolvedMatch.id})`);
       
       const { error: updateError } = await supabase
         .from('ajustes_ponto')
         .update({
-          resposta_colaborador: resposta,
+          resposta_colaborador: rawResposta,
           data_resposta: dataAgora,
           updated_at: dataAgora
         })
@@ -192,7 +340,7 @@ export async function POST(req: Request) {
       const { error: updateError } = await supabase
         .from('ajustes_ponto')
         .update({
-          resposta_encarregado: resposta,
+          resposta_encarregado: rawResposta,
           data_resposta_encarregado: dataAgora,
           updated_at: dataAgora
         })
