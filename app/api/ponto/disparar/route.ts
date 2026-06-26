@@ -134,6 +134,17 @@ async function processarFilaCobrancas(
         continue; // Passa para o próximo caso ocorra erro no BD
       }
 
+      // Buscar dados do encarregado para injetar no payload
+      let encarregadoNome = "Encarregado";
+      let encarregadoTelefone = "";
+      if (ocorrencia.colaborador_id) {
+        const encDados = await buscarEncarregadoDoColaborador(ocorrencia.colaborador_id);
+        if (encDados) {
+          encarregadoNome = encDados.encarregadoNome || "Encarregado";
+          encarregadoTelefone = encDados.encarregadoTelefone || "";
+        }
+      }
+
       // 2. Disparar o webhook para o n8n para cobrar o colaborador
       const payload = {
         id: ocorrencia.id,
@@ -142,6 +153,8 @@ async function processarFilaCobrancas(
         data_referencia: ocorrencia.data_referencia,
         motivo: ocorrencia.motivo || "Ajuste Geral de Ponto",
         fase_cobranca: faseAtual,
+        encarregado_nome: encarregadoNome,
+        encarregado_telefone: encarregadoTelefone,
         timestamp: dataAgora,
         evolutionUrl: evolutionConfig.evolutionUrl,
         evolutionApiKey: evolutionConfig.evolutionApiKey,

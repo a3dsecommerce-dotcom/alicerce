@@ -116,6 +116,7 @@ export async function POST(req: Request) {
     if (cleanIncoming.length < 8) {
       return NextResponse.json({ error: "Invalid telephone number format" }, { status: 400 });
     }
+    const cleanSuffix = cleanIncoming.slice(-8);
 
     const evolutionUrl = process.env.EVOLUTION_URL || "";
     const evolutionApiKey = process.env.EVOLUTION_API_KEY || "";
@@ -142,7 +143,32 @@ export async function POST(req: Request) {
       }
     };
 
-    // 2. Fluxo de Sessão Interativa do Bot via configuracoes_sistema
+    // 2. Verificar se o remetente está registrado no banco de dados (tabela usuarios)
+    const { data: userRecords, error: userError } = await supabase
+      .from('usuarios')
+      .select('id, nome, role, cargo, nivel_acesso, status')
+      .or(`telefone.ilike.%${cleanSuffix}%`);
+
+    if (userError) {
+      throw new Error(`Erro ao buscar usuário: ${userError.message}`);
+    }
+
+    const senderUser = userRecords && userRecords.length > 0 ? userRecords[0] : null;
+
+    if (!senderUser) {
+      console.log(`⚠️ Remetente ${cleanIncoming} não está registrado na tabela de usuários. Ignorando.`);
+      return NextResponse.json({ success: true, message: "Ignorado: Remetente não cadastrado" });
+    }
+
+    // Identificar se o usuário é um Encarregado/Supervisor/Admin
+    const isEncarregado = senderUser.role === 'GERENTE' || 
+                         senderUser.role === 'ADMIN' || 
+                         senderUser.role === 'SUPERVISOR' || 
+                         senderUser.role === 'ENCARREGADO' || 
+                         senderUser.role === 'LIDER' ||
+                         (senderUser.cargo && /gerente|admin|supervisor|encarregado|lider|coordenador/i.test(senderUser.cargo));
+
+    // 3. Fluxo de Sessão Interativa do Bot via configuracoes_sistema
     const sessionKey = `PONTO_INTERACT_SESSION_${cleanIncoming}`;
     const { data: dbSession } = await supabase
       .from('configuracoes_sistema')
@@ -206,9 +232,14 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Comando de inicialização: "-ponto"
+    // 4. Comando de inicialização para Encarregados: "-ponto"
     if (rawResposta.toLowerCase() === '-ponto') {
-      console.log(`🤖 Iniciando interação de comando -ponto para o remetente ${cleanIncoming}`);
+      if (!isEncarregado) {
+        console.log(`⚠️ Colaborador comum ${senderUser.nome} (${cleanIncoming}) tentou executar o comando -ponto.`);
+        return NextResponse.json({ success: true, message: "Ignorado: Comando restrito a encarregados" });
+      }
+
+      console.log(`🤖 Iniciando interação de comando -ponto para o encarregado ${cleanIncoming}`);
       
       // Buscar todas as ocorrências pendentes
       const { data: ocorrenciasAbertas, error: errOco } = await supabase
@@ -226,7 +257,7 @@ export async function POST(req: Request) {
         const encDados = await buscarEncarregadoDoColaborador(o.colaborador_id);
         if (encDados && encDados.encarregadoTelefone) {
           const cleanEncPhone = cleanPhone(encDados.encarregadoTelefone);
-          if (cleanEncPhone.length >= 8 && cleanEncPhone.slice(-8) === cleanIncoming.slice(-8)) {
+          if (cleanEncPhone.length >= 8 && cleanEncPhone.slice(-8) === cleanSuffix) {
             pendenciasDoSupervisor.push({
               id: o.id,
               nome: o.nome,
@@ -272,89 +303,66 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: "Menu de seleção enviado" });
     }
 
-    // 4. Fallback padrão: Resposta de Cobrança Direta (Código legado mantido e executado caso não seja comando)
+    // 5. Se o remetente for Encarregado e enviou outra mensagem (fora da sessão e sem comando)
+    if (isEncarregado) {
+      console.log(`🤖 Encarregado ${senderUser.nome} enviou mensagem genérica. Enviando instrução de comando.`);
+      await enviarMensagemBot("Olá! Sou o *Thoth*, seu assistente virtual da Alicerce. 🤖\n\nPara consultar as pendências de ponto dos colaboradores sob sua responsabilidade, envie o comando: *-ponto*");
+      return NextResponse.json({ success: true, message: "Resposta de instrução enviada ao encarregado" });
+    }
+
+    // 6. Fluxo para Colaboradores Comuns (Verificar se ativo em cobrança)
     const { data: ocorrencias, error: fetchError } = await supabase
       .from('ajustes_ponto')
       .select('*')
-      .eq('resolvido', false);
+      .eq('resolvido', false)
+      .not('data_ultima_cobranca', 'is', null);
 
     if (fetchError) {
       throw new Error(`Erro ao buscar ocorrencias: ${fetchError.message}`);
     }
 
-    if (!ocorrencias || ocorrencias.length === 0) {
-      return NextResponse.json({ success: true, message: "Nenhuma ocorrência em aberto" });
-    }
+    // Encontrar ocorrência ativa vinculada ao colaborador
+    const resolvedMatch = (ocorrencias || []).find(o => {
+      const oPhoneClean = cleanPhone(o.telefone);
+      return oPhoneClean.length >= 8 && oPhoneClean.slice(-8) === cleanSuffix;
+    });
 
-    let resolvedMatch: any = null;
-    let matchType: 'colaborador' | 'encarregado' | null = null;
-
-    for (const ocorrencia of ocorrencias) {
-      const cleanColabPhone = cleanPhone(ocorrencia.telefone);
-      if (cleanColabPhone.length >= 8 && cleanColabPhone.slice(-8) === cleanIncoming.slice(-8)) {
-        if (ocorrencia.data_ultima_cobranca !== null) {
-          resolvedMatch = ocorrencia;
-          matchType = 'colaborador';
-          break;
-        }
-      }
-
-      if (ocorrencia.colaborador_id) {
-        const encDados = await buscarEncarregadoDoColaborador(ocorrencia.colaborador_id);
-        if (encDados && encDados.encarregadoTelefone) {
-          const cleanEncPhone = cleanPhone(encDados.encarregadoTelefone);
-          if (cleanEncPhone.length >= 8 && cleanEncPhone.slice(-8) === cleanIncoming.slice(-8)) {
-            if (ocorrencia.data_ultima_cobranca !== null) {
-              resolvedMatch = ocorrencia;
-              matchType = 'encarregado';
-            }
-          }
-        }
-      }
-    }
-
-    if (!resolvedMatch || !matchType) {
-      return NextResponse.json({ success: true, message: "Correspondente ativo não encontrado ou não está em cobrança ativa" });
+    if (!resolvedMatch) {
+      console.log(`⚠️ Colaborador ${senderUser.nome} (${cleanIncoming}) não possui cobrança de ponto ativa. Ignorando.`);
+      return NextResponse.json({ success: true, message: "Ignorado: Colaborador não está em cobrança ativa" });
     }
 
     const dataAgora = new Date().toISOString();
 
-    if (matchType === 'colaborador') {
-      console.log(`✅ Ocorrência vinculada: Resposta do Colaborador ${resolvedMatch.nome} (ID: ${resolvedMatch.id})`);
-      
-      const { error: updateError } = await supabase
-        .from('ajustes_ponto')
-        .update({
-          resposta_colaborador: rawResposta,
-          data_resposta: dataAgora,
-          updated_at: dataAgora
-        })
-        .eq('id', resolvedMatch.id);
+    console.log(`✅ Ocorrência vinculada: Resposta do Colaborador ${resolvedMatch.nome} (ID: ${resolvedMatch.id})`);
+    
+    // Salvar resposta do colaborador no banco
+    const { error: updateError } = await supabase
+      .from('ajustes_ponto')
+      .update({
+        resposta_colaborador: rawResposta,
+        data_resposta: dataAgora,
+        updated_at: dataAgora
+      })
+      .eq('id', resolvedMatch.id);
 
-      if (updateError) {
-        throw new Error(`Erro ao salvar resposta do colaborador: ${updateError.message}`);
-      }
-    } else if (matchType === 'encarregado') {
-      console.log(`✅ Ocorrência vinculada: Confirmação do Encarregado para ${resolvedMatch.nome} (ID: ${resolvedMatch.id})`);
-      
-      const { error: updateError } = await supabase
-        .from('ajustes_ponto')
-        .update({
-          resposta_encarregado: rawResposta,
-          data_resposta_encarregado: dataAgora,
-          updated_at: dataAgora
-        })
-        .eq('id', resolvedMatch.id);
-
-      if (updateError) {
-        throw new Error(`Erro ao salvar resposta do encarregado: ${updateError.message}`);
-      }
+    if (updateError) {
+      throw new Error(`Erro ao salvar resposta do colaborador: ${updateError.message}`);
     }
+
+    // Buscar dados do encarregado para orientar o colaborador
+    const encDados = await buscarEncarregadoDoColaborador(resolvedMatch.colaborador_id);
+    const nomeEncarregado = encDados?.encarregadoNome || "seu Encarregado";
+
+    // Enviar mensagem curta e amigável do Thoth reforçando o papel e direcionamento
+    const msgRetorno = `Olá, *${resolvedMatch.nome}*! Aqui é o *Thoth*, assistente virtual da Alicerce. 🤖\n\nRecebi a sua mensagem e registrei no sistema. Lembre-se de fazer a solicitação de ajuste no app *MarqPonto*.\n\nPara qualquer outra dúvida ou problema, por favor procure o(a) seu Encarregado(a) *${nomeEncarregado}*. Obrigado!`;
+
+    await enviarMensagemBot(msgRetorno);
 
     return NextResponse.json({ 
       success: true, 
       updatedId: resolvedMatch.id, 
-      matchType 
+      matchType: 'colaborador'
     });
 
   } catch (err: any) {
