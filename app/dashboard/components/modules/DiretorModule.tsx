@@ -143,7 +143,11 @@ export default function DiretorModule({ user }: { user: any }) {
         assunto: `SOLICITAÇÃO DE ALTERAÇÃO: INSALUBRIDADE - ${colab.nome}`,
         descricao: `[ALTERACAO_DADOS] ID: ${colabId} | Campo: percentual_insalubridade | Valor: ${novoPercentual} | Solicitado pelo Diretor para alterar de ${insalubridadeAtual} para ${novoPercentual}.`,
         unidade: unidade.nome,
-        secretaria: unidade.secretaria || "SEMED",
+        secretaria: unidade.secretaria || (
+          (unidade.nome?.toUpperCase().includes("SEMSA") || 
+           unidade.nome?.toUpperCase().includes("POSTO") || 
+           unidade.nome?.toUpperCase().includes("UBS")) ? "SEMSA" : "SEMED"
+        ),
         prioridade: "NORMAL",
         status: "PENDENTE",
         criado_por: user.nome || user.name || "Diretor",
@@ -199,6 +203,9 @@ export default function DiretorModule({ user }: { user: any }) {
 
   const handlePedirVolante = async (form: any) => {
     try {
+      const parsedInsalubridade = form.insalubridade ? parseInt(form.insalubridade.replace(/\D/g, '')) : null;
+      const asg_porcentagem = (parsedInsalubridade !== null && !isNaN(parsedInsalubridade)) ? parsedInsalubridade : null;
+
       const { error } = await supabase.from('requisicoes_volantes').insert({
         solicitante_id: user.id,
         unidade_destino: unidade.nome,
@@ -211,7 +218,7 @@ export default function DiretorModule({ user }: { user: any }) {
         quem_requisitou: 'DIRETOR',
         colaborador_substituido_nome: form.colaborador,
         is_atestado: form.motivo === 'ATESTADO',
-        asg_porcentagem: form.insalubridade ? parseInt(form.insalubridade.replace(/\D/g, '')) : null,
+        asg_porcentagem,
         funcao_substituicao: form.cargo
       });
 

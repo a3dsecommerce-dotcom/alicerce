@@ -14,7 +14,7 @@ export default function PortalDiretorPage() {
   const [userRole, setUserRole] = useState("DIRETOR"); 
   const [userUnidadeId, setUserUnidadeId] = useState("nabuco"); 
   const [userRotaUnidades, setUserRotaUnidades] = useState(["nabuco", "geraldo"]); 
-  const [unidadeAtiva, setUnidadeAtiva] = useState({ id: "nabuco", nome: "Escola Joaquim Nabuco", secretária: "SEMED", vinculo: "(92) 98111-XXXX" });
+  const [unidadeAtiva, setUnidadeAtiva] = useState({ id: "nabuco", nome: "Escola Joaquim Nabuco", secretaria: "SEMED", vinculo: "(92) 98111-XXXX" });
 
   const canEdit = (unidadeId: string) => {
     const rolesComPoderTotal = ["ADMIN", "RH_PESSOAL", "RH_PREFEITURA", "GERENTE"];
@@ -46,7 +46,8 @@ export default function PortalDiretorPage() {
         prioridade: 'NORMAL', status: 'PENDENTE',
         setor_destino: 'RH Recursos Humanos',
         responsavel_citado: modalAjuste.colab.nome,
-        criado_por: "Diretor(a) " + unidadeAtiva.nome
+        criado_por: "Diretor(a) " + unidadeAtiva.nome,
+        secretaria: unidadeAtiva.secretaria || "SEMED"
       });
 
       n8n.trigger('ajuste-colaborador-diretor', {
@@ -76,7 +77,7 @@ export default function PortalDiretorPage() {
          {[
            { label: "Unidade Ativa", value: unidadeAtiva.nome, icon: MapPin, color: "text-blue-500" },
            { label: "Código Unidade", value: `#${(unidadeAtiva.id || "").toUpperCase()}`, icon: Hash, color: "text-orange-500" },
-           { label: "Secretaria", value: unidadeAtiva.secretária, icon: ShieldCheck, color: "text-orange-500" },
+           { label: "Secretaria", value: unidadeAtiva.secretaria, icon: ShieldCheck, color: "text-orange-500" },
            { label: "Efetivo na Unidade", value: `${equipeFiltrada.length} Colaboradores`, icon: Users, color: "text-green-500" },
          ].map((stat, i) => (
            <div key={i} className="bg-[var(--bg-card)] p-10 rounded-[1.5rem] border border-[var(--border)] shadow-sm flex items-center gap-6">
@@ -217,7 +218,8 @@ export default function PortalDiretorPage() {
                           descricao: `Unidade: ${unidadeAtiva.nome} | Motivo relatado pela Diretoria: ${motivo}`,
                           prioridade: 'ALTA', status: 'PENDENTE',
                           setor_destino: 'RH Recursos Humanos', responsavel_citado: nome,
-                          criado_por: "Diretor(a) " + unidadeAtiva.nome
+                          criado_por: "Diretor(a) " + unidadeAtiva.nome,
+                          secretaria: unidadeAtiva.secretaria || "SEMED"
                         });
                         alert("Falta registrada e enviada para a fila de controle do RH!");
                       }}>Confirmar Registro</button>
@@ -233,7 +235,8 @@ export default function PortalDiretorPage() {
                            descricao: 'Pedido emergencial de cobertura (Volante) acionado pela Diretoria do posto.',
                            prioridade: 'ALTA', status: 'PENDENTE',
                            setor_destino: 'Gerência Operacional',
-                           criado_por: "Diretor(a) " + unidadeAtiva.nome
+                           criado_por: "Diretor(a) " + unidadeAtiva.nome,
+                           secretaria: unidadeAtiva.secretaria || "SEMED"
                          });
                          alert("Solicitação enviada e registrada na Gerência Operacional!"); 
                        }}>Solicitar agora</button>
@@ -273,7 +276,8 @@ export default function PortalDiretorPage() {
                         descricao: `Tipo: ${tipo} | Relato da Diretoria: ${desc}`,
                         prioridade: 'NORMAL', status: 'PENDENTE',
                         setor_destino: 'RH Recursos Humanos',
-                        criado_por: "Diretor(a) " + unidadeAtiva.nome
+                        criado_por: "Diretor(a) " + unidadeAtiva.nome,
+                        secretaria: unidadeAtiva.secretaria || "SEMED"
                       });
                       alert("Ticket de suporte cadastrado com sucesso para o RH!");
                     }}><Send size={24} /> Enviar Ticket</button>
