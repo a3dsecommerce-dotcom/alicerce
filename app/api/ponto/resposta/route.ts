@@ -354,15 +354,17 @@ export async function POST(req: Request) {
     const encDados = await buscarEncarregadoDoColaborador(resolvedMatch.colaborador_id);
     const nomeEncarregado = encDados?.encarregadoNome || "seu Encarregado";
 
-    // Enviar mensagem curta e amigável do Thoth reforçando o papel e direcionamento
-    const msgRetorno = `Olá, *${resolvedMatch.nome}*! Aqui é o *Thoth*, assistente virtual da Alicerce. 🤖\n\nRecebi a sua mensagem e registrei no sistema. Lembre-se de fazer a solicitação de ajuste no app *MarqPonto*.\n\nPara qualquer outra dúvida ou problema, por favor procure o(a) seu Encarregado(a) *${nomeEncarregado}*. Obrigado!`;
-
-    await enviarMensagemBot(msgRetorno);
-
+    // Retornar a ação de resposta da IA para o n8n gerar e enviar
     return NextResponse.json({ 
       success: true, 
-      updatedId: resolvedMatch.id, 
-      matchType: 'colaborador'
+      action: "send_ai_response",
+      updatedId: resolvedMatch.id,
+      colaborador_nome: resolvedMatch.nome,
+      data_referencia: resolvedMatch.data_referencia,
+      motivo: resolvedMatch.motivo || "Ajuste Geral",
+      encarregado_nome: nomeEncarregado,
+      resposta_colaborador: rawResposta,
+      telefone: cleanIncoming
     });
 
   } catch (err: any) {
