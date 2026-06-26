@@ -232,8 +232,102 @@ export async function POST(req: Request) {
       }
     }
 
-    // 4. Comando de inicialização para Encarregados: "-ponto"
-    if (rawResposta.toLowerCase() === '-ponto') {
+    // 4. Comando de inicialização para Encarregados / Devs: "-ponto" ou "/ponto"
+    const isPontoCommand = rawResposta.toLowerCase() === '-ponto' || rawResposta.toLowerCase() === '/ponto';
+    if (isPontoCommand) {
+      const isDeveloper = senderUser.role === 'DEV' || 
+                          senderUser.role === 'ADMIN' || 
+                          senderUser.role === 'GERENTE' ||
+                          (senderUser.cargo && /dev|desenvolvedor|admin|gerente/i.test(senderUser.cargo));
+
+      if (isDeveloper) {
+        console.log(`🤖 Gerando relatório global de ponto para o desenvolvedor/admin ${senderUser.nome}`);
+        
+        // 1. Buscar todas as ocorrências pendentes
+        const { data: allUnresolved, error: errUnresolved } = await supabase
+          .from('ajustes_ponto')
+          .select('*')
+          .eq('resolvido', false);
+
+        if (errUnresolved) throw errUnresolved;
+
+        const cobradosAut = allUnresolved?.filter(x => !x.ajuste_pendente) || [];
+        const pediuAjuste = allUnresolved?.filter(x => x.ajuste_pendente) || [];
+
+        // 2. Ajustes por rota
+        const { data: units } = await supabase.from('unidades').select('nome, rota');
+        const unitToRouteMap: Record<string, string> = {};
+        units?.forEach(u => {
+          if (u.nome && u.rota) {
+            unitToRouteMap[u.nome.toLowerCase().trim()] = u.rota;
+          }
+        });
+
+        const colabIds = allUnresolved ? allUnresolved.map(x => x.colaborador_id).filter(Boolean) : [];
+        const { data: colabsInfo } = colabIds.length > 0 
+          ? await supabase.from('usuarios').select('id, unidade_alocacao').in('id', colabIds)
+          : { data: [] };
+
+        const colabToRouteMap: Record<string, string> = {};
+        colabsInfo?.forEach(c => {
+          if (c.unidade_alocacao) {
+            const unitClean = c.unidade_alocacao.toLowerCase().trim();
+            const route = unitToRouteMap[unitClean] || "Sem Rota";
+            colabToRouteMap[c.id] = route;
+          }
+        });
+
+        const routeCounts: Record<string, number> = {};
+        allUnresolved?.forEach(o => {
+          const route = (o.colaborador_id && colabToRouteMap[o.colaborador_id]) || "Sem Rota";
+          routeCounts[route] = (routeCounts[route] || 0) + 1;
+        });
+
+        // 3. Colaborador que mais gerou ocorrências nos últimos 30 dias
+        const dateLimit = new Date();
+        dateLimit.setDate(dateLimit.getDate() - 30);
+        const { data: recentAjustes } = await supabase
+          .from('ajustes_ponto')
+          .select('nome')
+          .gte('created_at', dateLimit.toISOString());
+
+        const occurrenceCounts: Record<string, number> = {};
+        recentAjustes?.forEach(r => {
+          if (r.nome) {
+            occurrenceCounts[r.nome] = (occurrenceCounts[r.nome] || 0) + 1;
+          }
+        });
+
+        let topColab = "Nenhum";
+        let topCount = 0;
+        Object.entries(occurrenceCounts).forEach(([name, count]) => {
+          if (count > topCount) {
+            topCount = count;
+            topColab = name;
+          }
+        });
+
+        let devText = `📊 *PAINEL GLOBAL - GESTÃO DE PONTO* 📊\n\n`;
+        devText += `🤖 *Cobrados por automação:* ${cobradosAut.length} colaborador(es)\n`;
+        devText += `📱 *Com ajuste pendente (MarqPonto):* ${pediuAjuste.length} colaborador(es)\n\n`;
+        
+        devText += `📍 *Pendências por Rota:*\n`;
+        if (Object.keys(routeCounts).length > 0) {
+          Object.entries(routeCounts).forEach(([route, count]) => {
+            devText += `• Rota *${route}*: ${count} pendência(s)\n`;
+          });
+        } else {
+          devText += `• Nenhuma rota com pendências.\n`;
+        }
+
+        devText += `\n🔥 *Top Colaborador (Últimos 30 dias):*\n`;
+        devText += `• *${topColab}* (${topCount} ocorrência(s))\n\n`;
+        devText += `💡 _Comando executado como Administrador/Desenvolvedor._`;
+
+        await enviarMensagemBot(devText);
+        return NextResponse.json({ success: true, message: "Relatório global de dev enviado" });
+      }
+
       if (!isEncarregado) {
         console.log(`⚠️ Colaborador comum ${senderUser.nome} (${cleanIncoming}) tentou executar o comando -ponto.`);
         return NextResponse.json({ success: true, message: "Ignorado: Comando restrito a encarregados" });
@@ -241,6 +335,23 @@ export async function POST(req: Request) {
 
       console.log(`🤖 Iniciando interação de comando -ponto para o encarregado ${cleanIncoming}`);
       
+      // Buscar rota/unidades do Encarregado
+      const { data: encUnits } = await supabase.from('unidades')
+        .select('nome, rota')
+        .or(`encarregado_id.eq.${senderUser.id},responsavel_telefone.ilike.%${cleanSuffix}%`);
+
+      const unitNames = encUnits ? encUnits.map(u => u.nome) : [];
+      const routeNames = Array.from(new Set(encUnits?.map(u => u.rota).filter(Boolean) || []));
+
+      let routeColabs: any[] = [];
+      if (unitNames.length > 0) {
+        const { data: usersInRoute } = await supabase.from('usuarios')
+          .select('id, nome, status, unidade_alocacao')
+          .eq('status', 'ATIVO')
+          .in('unidade_alocacao', unitNames);
+        routeColabs = usersInRoute || [];
+      }
+
       // Buscar todas as ocorrências pendentes
       const { data: ocorrenciasAbertas, error: errOco } = await supabase
         .from('ajustes_ponto')
@@ -262,27 +373,43 @@ export async function POST(req: Request) {
               id: o.id,
               nome: o.nome,
               data: o.data_referencia,
-              motivo: o.motivo || "Ajuste Geral"
+              motivo: o.motivo || "Ajuste Geral",
+              ajuste_pendente: o.ajuste_pendente
             });
           }
         }
       }
 
-      if (pendenciasDoSupervisor.length === 0) {
-        await enviarMensagemBot("Olá! Não identifiquei nenhuma pendência de ponto pendente sob sua responsabilidade no momento. Bom trabalho! 👍");
-        return NextResponse.json({ success: true, message: "Nenhuma pendência encontrada para o supervisor" });
+      let encText = `📋 *GESTÃO DE PONTO - SUA ROTA* 📋\n`;
+      encText += `📍 *Rota(s):* ${routeNames.join(", ") || "Sem Rota"}\n`;
+      encText += `👥 *Total de Colaboradores:* ${routeColabs.length}\n`;
+      encText += `⚠️ *Pendências Ativas:* ${pendenciasDoSupervisor.length}\n\n`;
+
+      if (routeColabs.length > 0) {
+        encText += `👥 *Lista de Colaboradores na Rota:*\n`;
+        routeColabs.forEach(c => {
+          const hasPendency = pendenciasDoSupervisor.some(p => p.nome === c.nome);
+          encText += `• ${c.nome} (${c.unidade_alocacao || "Sem Unidade"}) ${hasPendency ? "⚠️ *Pendente*" : "✅ OK"}\n`;
+        });
+        encText += `\n`;
       }
 
-      // Montar menu numerado
-      let menuText = `Olá! Identifiquei os seguintes colaboradores sob sua responsabilidade com pendências de ponto:\n\n`;
+      if (pendenciasDoSupervisor.length === 0) {
+        encText += `🎉 Excelente! Nenhuma pendência de ponto na sua rota no momento.`;
+        await enviarMensagemBot(encText);
+        return NextResponse.json({ success: true, message: "Relatório de encarregado enviado (sem pendencias)" });
+      }
+
+      encText += `👉 *Selecione o número correspondente abaixo para marcar como RESOLVIDO:*\n\n`;
       
       const sessionOptions: any[] = [];
       pendenciasDoSupervisor.forEach((p, idx) => {
-        menuText += `${idx + 1}️⃣ *${p.nome}*\n📅 Data: ${p.data}\n❓ Motivo: _${p.motivo}_\n\n`;
+        const flagAjuste = p.ajuste_pendente ? " (Ajuste no App)" : "";
+        encText += `${idx + 1}️⃣ *${p.nome}*${flagAjuste}\n📅 Data: ${p.data}\n❓ Motivo: _${p.motivo}_\n\n`;
         sessionOptions.push({ id: p.id, nome: p.nome, data: p.data });
       });
 
-      menuText += `👉 Digite o número correspondente para marcar como *RESOLVIDO* e suspender as cobranças.\n\n_(Ou digite *cancelar* para fechar o menu)_`;
+      encText += `_(Ou digite *cancelar* para fechar o menu)_`;
 
       // Salvar sessão no banco
       const novaSessao = {
@@ -299,7 +426,7 @@ export async function POST(req: Request) {
           updated_at: new Date().toISOString()
         }, { onConflict: 'chave' });
 
-      await enviarMensagemBot(menuText);
+      await enviarMensagemBot(encText);
       return NextResponse.json({ success: true, message: "Menu de seleção enviado" });
     }
 
