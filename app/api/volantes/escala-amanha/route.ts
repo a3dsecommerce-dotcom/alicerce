@@ -158,9 +158,8 @@ export async function POST(req: Request) {
           const motivoUpper = (d.motivo || "").toUpperCase();
           if (motivoUpper.includes("SUBST:")) {
             substituindo = d.motivo.substring(motivoUpper.indexOf("SUBST:") + 6).trim();
-          } else {
-            substituindo = d.motivo || "";
           }
+          // Se o motivo for Vaga Aberta ou similar, substituindo fica vazio (não exibir na mensagem)
 
           let insalubridade = 0;
           if (motivoUpper.includes("20%")) insalubridade = 20;
