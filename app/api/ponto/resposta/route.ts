@@ -168,14 +168,274 @@ export async function POST(req: Request) {
                          senderUser.role === 'LIDER' ||
                          (senderUser.cargo && /gerente|admin|supervisor|encarregado|lider|coordenador/i.test(senderUser.cargo));
 
+    const isDeveloper = senderUser.role === 'DEV' || 
+                        senderUser.role === 'ADMIN' || 
+                        senderUser.role === 'GERENTE' ||
+                        (senderUser.cargo && /dev|desenvolvedor|admin|gerente/i.test(senderUser.cargo));
+
+    const isDiretor = senderUser.role === 'DIRETOR' || 
+                      (senderUser.cargo && /diretor/i.test(senderUser.cargo));
+
     // 3. Fluxo de Sessão Interativa do Bot via configuracoes_sistema
     const sessionKey = `PONTO_INTERACT_SESSION_${cleanIncoming}`;
-    const { data: dbSession } = await supabase
-      .from('configuracoes_sistema')
-      .select('valor')
-      .eq('chave', sessionKey)
-      .single();
+    const sessionKeyVolante = `VOLANTE_INTERACT_SESSION_${cleanIncoming}`;
 
+    const [dbSessionRes, dbSessionVolanteRes] = await Promise.all([
+      supabase.from('configuracoes_sistema').select('valor').eq('chave', sessionKey).maybeSingle(),
+      supabase.from('configuracoes_sistema').select('valor').eq('chave', sessionKeyVolante).maybeSingle()
+    ]);
+
+    const dbSession = dbSessionRes?.data;
+    const dbSessionVolante = dbSessionVolanteRes?.data;
+
+    // --- TRATAMENTO DE SESSÃO VOLANTE ---
+    if (dbSessionVolante && dbSessionVolante.valor) {
+      let sessionData: any = {};
+      try {
+        sessionData = typeof dbSessionVolante.valor === 'string' ? JSON.parse(dbSessionVolante.valor) : dbSessionVolante.valor;
+      } catch {
+        sessionData = {};
+      }
+
+      const isExpired = sessionData.created_at 
+        ? (Date.now() - new Date(sessionData.created_at).getTime()) > 15 * 60 * 1000 
+        : true;
+
+      if (!isExpired) {
+        if (rawResposta.toLowerCase() === 'cancelar') {
+          await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKeyVolante);
+          await enviarMensagemBot("❌ Solicitação de volante cancelada.");
+          return NextResponse.json({ success: true, message: "Sessão Volante cancelada pelo usuário" });
+        }
+
+        // --- SELECT_UNIT ---
+        if (sessionData.step === "SELECT_UNIT") {
+          const opt = parseInt(rawResposta);
+          const list = sessionData.units || [];
+          if (isNaN(opt) || opt < 1 || opt > list.length) {
+            await enviarMensagemBot(`⚠️ Opção inválida. Digite o número correspondente (1 a ${list.length}) ou cancela.`);
+            return NextResponse.json({ success: true });
+          }
+          const chosenUnit = list[opt - 1];
+
+          await enviarMensagemBot(`🔍 Buscando colaboradores ativos da unidade *${chosenUnit.nome}*...`);
+          const { data: colabs } = await supabase
+            .from('usuarios')
+            .select('id, nome, cargo, percentual_insalubridade')
+            .eq('status', 'ATIVO')
+            .ilike('unidade_alocacao', `%${chosenUnit.nome.replace(/ESCOLA|MUNICIPAL|POSTO|CENTRO|EME|EMEF/gi, "").trim()}%`);
+
+          if (!colabs || colabs.length === 0) {
+            await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKeyVolante);
+            await enviarMensagemBot(`⚠️ Não encontrei colaboradores ativos nesta unidade para substituir.`);
+            return NextResponse.json({ success: true });
+          }
+
+          let msg = `👥 *Etapa 2/6 - Selecionar Colaborador:*\nDigite o número correspondente ao colaborador a ser substituído:\n\n`;
+          colabs.forEach((c, idx) => {
+            msg += `${idx + 1}️⃣ *${c.nome}* (${c.cargo || 'Sem Cargo'})\n`;
+          });
+          msg += `\n_(Ou digite cancelar)_`;
+
+          sessionData.step = "SELECT_COLABORADOR";
+          sessionData.selected_unit = chosenUnit;
+          sessionData.colaboradores = colabs;
+          sessionData.created_at = new Date().toISOString();
+
+          await supabase.from('configuracoes_sistema').upsert({
+            chave: sessionKeyVolante,
+            valor: JSON.stringify(sessionData),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'chave' });
+
+          await enviarMensagemBot(msg);
+          return NextResponse.json({ success: true });
+        }
+
+        // --- SELECT_COLABORADOR ---
+        if (sessionData.step === "SELECT_COLABORADOR") {
+          const opt = parseInt(rawResposta);
+          const list = sessionData.colaboradores || [];
+          if (isNaN(opt) || opt < 1 || opt > list.length) {
+            await enviarMensagemBot(`⚠️ Opção inválida. Digite o número correspondente (1 a ${list.length}) ou cancela.`);
+            return NextResponse.json({ success: true });
+          }
+          const chosenColab = list[opt - 1];
+
+          let msg = `❓ *Etapa 3/6 - Selecionar Motivo:*\nQual o motivo da substituição? Digite o número:\n\n`;
+          msg += `1️⃣ Falta Não Justificada\n`;
+          msg += `2️⃣ Atestado Médico\n`;
+          msg += `3️⃣ Férias\n`;
+          msg += `4️⃣ Outros\n\n`;
+          msg += `_(Ou digite cancelar)_`;
+
+          sessionData.step = "SELECT_MOTIVO";
+          sessionData.selected_colab = chosenColab;
+          sessionData.created_at = new Date().toISOString();
+
+          await supabase.from('configuracoes_sistema').upsert({
+            chave: sessionKeyVolante,
+            valor: JSON.stringify(sessionData),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'chave' });
+
+          await enviarMensagemBot(msg);
+          return NextResponse.json({ success: true });
+        }
+
+        // --- SELECT_MOTIVO ---
+        if (sessionData.step === "SELECT_MOTIVO") {
+          const opt = parseInt(rawResposta);
+          if (isNaN(opt) || opt < 1 || opt > 4) {
+            await enviarMensagemBot(`⚠️ Opção inválida. Digite o número correspondente (1 a 4) ou cancela.`);
+            return NextResponse.json({ success: true });
+          }
+          const motives = ["FALTA", "ATESTADO", "FERIAS", "OUTROS"];
+          const chosenMotivo = motives[opt - 1];
+
+          let msg = `📅 *Etapa 4/6 - Data da Substituição:*\nPara qual data você precisa do volante? Digite a data (ex: *Hoje*, *Amanhã*, ou no formato *DD/MM/AAAA*):\n\n_(Ou digite cancelar)_`;
+
+          sessionData.step = "INPUT_DATE";
+          sessionData.motivo = chosenMotivo;
+          sessionData.created_at = new Date().toISOString();
+
+          await supabase.from('configuracoes_sistema').upsert({
+            chave: sessionKeyVolante,
+            valor: JSON.stringify(sessionData),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'chave' });
+
+          await enviarMensagemBot(msg);
+          return NextResponse.json({ success: true });
+        }
+
+        // --- INPUT_DATE ---
+        if (sessionData.step === "INPUT_DATE") {
+          let parsedDate = rawResposta;
+          if (rawResposta.toLowerCase() === 'hoje') {
+            parsedDate = new Date().toISOString().split('T')[0];
+          } else if (rawResposta.toLowerCase() === 'amanhã' || rawResposta.toLowerCase() === 'amanha') {
+            const tom = new Date();
+            tom.setDate(tom.getDate() + 1);
+            parsedDate = tom.toISOString().split('T')[0];
+          }
+
+          let msg = `⏰ *Etapa 5/6 - Horário/Turno:*\nQual o horário/turno de trabalho do volante? (ex: *Diurno*, *Noturno*, ou *07:00 - 17:00*):\n\n_(Ou digite cancelar)_`;
+
+          sessionData.step = "INPUT_TIME";
+          sessionData.date = parsedDate;
+          sessionData.created_at = new Date().toISOString();
+
+          await supabase.from('configuracoes_sistema').upsert({
+            chave: sessionKeyVolante,
+            valor: JSON.stringify(sessionData),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'chave' });
+
+          await enviarMensagemBot(msg);
+          return NextResponse.json({ success: true });
+        }
+
+        // --- INPUT_TIME ---
+        if (sessionData.step === "INPUT_TIME") {
+          const time = rawResposta;
+
+          let msg = `📝 *Etapa 6/6 - Resumo do Pedido de Volante:*\n\n`;
+          msg += `• 🏢 *Unidade:* ${sessionData.selected_unit.nome}\n`;
+          msg += `• 👤 *Substituir:* ${sessionData.selected_colab.nome} (${sessionData.selected_colab.cargo || 'ASG'})\n`;
+          msg += `• ❓ *Motivo:* ${sessionData.motivo}\n`;
+          msg += `• 📅 *Data:* ${sessionData.date}\n`;
+          msg += `• ⏰ *Horário/Turno:* ${time}\n\n`;
+          msg += `👉 Digite *CONFIRMAR* para oficializar o pedido de volante e enviar a Falta do colaborador para o RH, ou *CANCELAR*.`;
+
+          sessionData.step = "CONFIRM";
+          sessionData.time = time;
+          sessionData.created_at = new Date().toISOString();
+
+          await supabase.from('configuracoes_sistema').upsert({
+            chave: sessionKeyVolante,
+            valor: JSON.stringify(sessionData),
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'chave' });
+
+          await enviarMensagemBot(msg);
+          return NextResponse.json({ success: true });
+        }
+
+        // --- CONFIRM ---
+        if (sessionData.step === "CONFIRM") {
+          if (rawResposta.toLowerCase() !== 'confirmar') {
+            await enviarMensagemBot(`⚠️ Digite *CONFIRMAR* para finalizar ou *cancelar* para desistir.`);
+            return NextResponse.json({ success: true });
+          }
+
+          await enviarMensagemBot(`⚙️ *Processando solicitação...*`);
+
+          // 1. Inserir em requisicoes_volantes
+          const asgPct = sessionData.selected_colab.percentual_insalubridade 
+            ? parseInt(sessionData.selected_colab.percentual_insalubridade.replace(/\D/g, '')) 
+            : null;
+          const asg_porcentagem = (asgPct !== null && !isNaN(asgPct)) ? asgPct : null;
+
+          const { error: errVol } = await supabase.from('requisicoes_volantes').insert({
+            solicitante_id: senderUser.id,
+            unidade_destino: sessionData.selected_unit.nome,
+            data_inicio: sessionData.date,
+            data_fim: sessionData.date,
+            quantidade_necessaria: 1,
+            motivo: sessionData.motivo,
+            status: 'PENDENTE',
+            prioridade: 'NORMAL',
+            quem_requisitou: senderUser.role === 'DIRETOR' ? 'DIRETOR' : 'ENCARREGADO',
+            colaborador_substituido_nome: sessionData.selected_colab.nome,
+            is_atestado: sessionData.motivo === 'ATESTADO',
+            asg_porcentagem,
+            funcao_substituicao: sessionData.selected_colab.cargo || 'ASG'
+          });
+
+          if (errVol) throw errVol;
+
+          // 2. Inserir falta em informativos_operacionais
+          await supabase.from('informativos_operacionais').insert([{
+            tipo: 'FALTA',
+            unidade: sessionData.selected_unit.nome,
+            data: sessionData.date,
+            periodo: sessionData.time.toUpperCase().includes("NOTURNO") ? 'NOTURNO' : 'DIURNO',
+            horario: sessionData.time,
+            colaborador_ausente_id: sessionData.selected_colab.id,
+            colaborador_ausente_nome: sessionData.selected_colab.nome,
+            tem_atestado: sessionData.motivo === 'ATESTADO',
+            dias_atestado: sessionData.motivo === 'ATESTADO' ? 1 : 0,
+            justificada: sessionData.motivo === 'ATESTADO' || sessionData.motivo === 'FERIAS',
+            observacoes: `LANÇAMENTO AUTOMÁTICO BOT: Solicitado Volante em substituição a ${sessionData.selected_colab.nome} (Motivo: ${sessionData.motivo}).`,
+            criado_por_id: senderUser.id,
+            criado_por_nome: senderUser.nome
+          }]);
+
+          // 3. Inserir falta em tickets_sla para a aba do RH do CRM
+          await supabase.from('tickets_sla').insert({
+            assunto: `FALTA REGISTRADA VIA BOT: ${sessionData.selected_colab.nome}`,
+            descricao: `Falta registrada automaticamente via solicitação de Volante no WhatsApp.\nUnidade: ${sessionData.selected_unit.nome}\nMotivo: ${sessionData.motivo}\nData: ${sessionData.date}\nHorário: ${sessionData.time}`,
+            prioridade: 'ALTA',
+            status: 'PENDENTE',
+            setor_destino: 'RH Recursos Humanos',
+            responsavel_citado: sessionData.selected_colab.nome,
+            criado_por: `Assistente Thoth (${senderUser.nome})`,
+            secretaria: sessionData.selected_unit.secretaria || "SEMED"
+          });
+
+          // Limpar sessão
+          await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKeyVolante);
+
+          await enviarMensagemBot(`✅ *Processo Concluído com Sucesso!* 🚀\n\nSeu pedido de volante foi registrado e a falta de *${sessionData.selected_colab.nome}* foi enviada para a aba de faltas do RH.`);
+          return NextResponse.json({ success: true, message: "Pedido de volante enviado" });
+        }
+      } else {
+        await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKeyVolante);
+      }
+    }
+
+    // --- TRATAMENTO DE SESSÃO PONTO ---
     if (dbSession && dbSession.valor) {
       let sessionData: any = {};
       try {
@@ -239,11 +499,6 @@ export async function POST(req: Request) {
     // 4. Comando de inicialização para Encarregados / Devs: "-ponto" ou "/ponto"
     const isPontoCommand = rawResposta.toLowerCase() === '-ponto' || rawResposta.toLowerCase() === '/ponto';
     if (isPontoCommand) {
-      const isDeveloper = senderUser.role === 'DEV' || 
-                          senderUser.role === 'ADMIN' || 
-                          senderUser.role === 'GERENTE' ||
-                          (senderUser.cargo && /dev|desenvolvedor|admin|gerente/i.test(senderUser.cargo));
-
       if (isDeveloper) {
         console.log(`🤖 Gerando relatório global de ponto para o desenvolvedor/admin ${senderUser.nome}`);
         await enviarMensagemBot(`🔍 *Etapa 1/2 - Buscando Estatísticas:* Consultando as pendências gerais no banco de dados da Alicerce...`);
@@ -441,11 +696,106 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: "Menu de seleção enviado" });
     }
 
-    // 5. Se o remetente for Encarregado e enviou outra mensagem (fora da sessão e sem comando)
-    if (isEncarregado) {
-      console.log(`🤖 Encarregado ${senderUser.nome} enviou mensagem genérica. Enviando instrução de comando.`);
-      await enviarMensagemBot("Olá! Sou o *Thoth*, seu assistente virtual da Alicerce. 🤖\n\nPara consultar as pendências de ponto dos colaboradores sob sua responsabilidade, envie o comando: *-ponto*");
-      return NextResponse.json({ success: true, message: "Resposta de instrução enviada ao encarregado" });
+    // 4.1 Comando /volante ou -volante
+    const isVolanteCommand = rawResposta.toLowerCase() === '-volante' || rawResposta.toLowerCase() === '/volante';
+    if (isVolanteCommand) {
+      const isAuthorized = senderUser.role === 'DEV' || 
+                           senderUser.role === 'ADMIN' || 
+                           senderUser.role === 'GERENTE' ||
+                           senderUser.role === 'SUPERVISOR' ||
+                           senderUser.role === 'ENCARREGADO' || 
+                           senderUser.role === 'DIRETOR' ||
+                           senderUser.role === 'LIDER' ||
+                           (senderUser.cargo && /dev|admin|gerente|supervisor|encarregado|diretor|lider/i.test(senderUser.cargo));
+
+      if (!isAuthorized) {
+        await enviarMensagemBot("⚠️ Desculpe, o comando /volante é restrito a Diretores e Encarregados.");
+        return NextResponse.json({ success: true, message: "Comando /volante negado" });
+      }
+
+      await enviarMensagemBot(`🔍 *Iniciando solicitação de Volante...*`);
+
+      // Buscar unidades vinculadas
+      const { data: userUnits } = await supabase.from('unidades')
+        .select('id, nome, secretaria')
+        .or(`encarregado_id.eq.${senderUser.id},diretor.ilike.%${senderUser.nome}%,responsavel_telefone.ilike.%${cleanSuffix}%`);
+
+      if (!userUnits || userUnits.length === 0) {
+        await enviarMensagemBot("⚠️ Não encontrei nenhuma unidade vinculada ao seu cadastro no momento.");
+        return NextResponse.json({ success: true });
+      }
+
+      if (userUnits.length === 1) {
+        const chosenUnit = userUnits[0];
+        // Pular etapa de seleção da unidade e buscar colaboradores
+        const { data: colabs } = await supabase
+          .from('usuarios')
+          .select('id, nome, cargo, percentual_insalubridade')
+          .eq('status', 'ATIVO')
+          .ilike('unidade_alocacao', `%${chosenUnit.nome.replace(/ESCOLA|MUNICIPAL|POSTO|CENTRO|EME|EMEF/gi, "").trim()}%`);
+
+        if (!colabs || colabs.length === 0) {
+          await enviarMensagemBot(`⚠️ Não encontrei colaboradores ativos nesta unidade para substituir.`);
+          return NextResponse.json({ success: true });
+        }
+
+        let msg = `👥 *Etapa 1/5 - Selecionar Colaborador (Unidade: ${chosenUnit.nome}):*\nDigite o número correspondente ao colaborador a ser substituído:\n\n`;
+        colabs.forEach((c, idx) => {
+          msg += `${idx + 1}️⃣ *${c.nome}* (${c.cargo || 'Sem Cargo'})\n`;
+        });
+        msg += `\n_(Ou digite cancelar)_`;
+
+        const novaSessao = {
+          step: "SELECT_COLABORADOR",
+          selected_unit: chosenUnit,
+          colaboradores: colabs,
+          created_at: new Date().toISOString()
+        };
+
+        await supabase.from('configuracoes_sistema').upsert({
+          chave: sessionKeyVolante,
+          valor: JSON.stringify(novaSessao),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'chave' });
+
+        await enviarMensagemBot(msg);
+        return NextResponse.json({ success: true });
+      } else {
+        // Enviar menu de unidades
+        let msg = `🏢 *Etapa 1/6 - Selecionar Unidade:*\nIdentifiquei as seguintes unidades sob sua gestão. Digite o número correspondente:\n\n`;
+        userUnits.forEach((u, idx) => {
+          msg += `${idx + 1}️⃣ *${u.nome}*\n`;
+        });
+        msg += `\n_(Ou digite cancelar)_`;
+
+        const novaSessao = {
+          step: "SELECT_UNIT",
+          units: userUnits,
+          created_at: new Date().toISOString()
+        };
+
+        await supabase.from('configuracoes_sistema').upsert({
+          chave: sessionKeyVolante,
+          valor: JSON.stringify(novaSessao),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'chave' });
+
+        await enviarMensagemBot(msg);
+        return NextResponse.json({ success: true });
+      }
+    }
+
+    // 5. Se o remetente for Encarregado ou Diretor e enviou outra mensagem (fora da sessão e sem comando)
+    if (isEncarregado || isDiretor) {
+      console.log(`🤖 Gestor ${senderUser.nome} enviou mensagem genérica. Enviando instrução de comando.`);
+      if (isDeveloper) {
+        await enviarMensagemBot("Olá! Sou o *Thoth*, seu assistente virtual da Alicerce. 🤖\n\nComo Administrador/Dev, você pode usar os comandos:\n• */ponto* - Relatório global e por rotas\n• */volante* - Processo de solicitação de volante");
+      } else if (isDiretor) {
+        await enviarMensagemBot("Olá! Sou o *Thoth*, seu assistente virtual da Alicerce. 🤖\n\nPara solicitar um volante para sua unidade de ensino, envie o comando: */volante*");
+      } else {
+        await enviarMensagemBot("Olá! Sou o *Thoth*, seu assistente virtual da Alicerce. 🤖\n\nPara consultar as pendências de ponto da sua rota, envie o comando: */ponto* (ou *-ponto*)\n\nPara solicitar um volante de cobertura para uma unidade, envie o comando: */volante*");
+      }
+      return NextResponse.json({ success: true, message: "Resposta de instrução enviada ao gestor" });
     }
 
     // 6. Fluxo para Colaboradores Comuns (Verificar se ativo em cobrança)
