@@ -83,26 +83,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Apenas gerentes e administradores podem autorizar o disparo da escala." }, { status: 403 });
     }
 
-    // 2. Obter data do dia seguinte (Amanhã)
-    // Usamos o fuso horário de Brasília/SP para o cálculo
-    const dateSp = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    const tomorrowDate = addDays(dateSp, 1);
-    const tomorrowStr = format(tomorrowDate, 'yyyy-MM-dd');
+    // 2. Obter data alvo (Amanhã ou Data especificada no body)
+    let targetDateStr = "";
+    let targetDateObj: Date;
 
-    console.log(`📅 Buscando escala para o dia seguinte: ${tomorrowStr}`);
+    try {
+      const body = await req.json().catch(() => ({}));
+      if (body && body.data) {
+        targetDateStr = String(body.data).trim();
+        const parts = targetDateStr.split('-');
+        targetDateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      }
+    } catch (e) {
+      console.warn("Nenhuma data especificada ou erro ao ler payload:", e);
+    }
 
-    // 3. Buscar todas as escalas cadastradas para amanhã
+    if (!targetDateStr) {
+      // Usamos o fuso horário de Brasília/SP para o cálculo padrão (Amanhã)
+      const dateSp = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      targetDateObj = addDays(dateSp, 1);
+      targetDateStr = format(targetDateObj, 'yyyy-MM-dd');
+    }
+
+    console.log(`📅 Buscando escala para o dia: ${targetDateStr}`);
+
+    // 3. Buscar todas as escalas cadastradas para o dia alvo
     const { data: escalas, error: dbError } = await supabase
       .from('escala_volantes')
       .select('*')
-      .eq('data', tomorrowStr);
+      .eq('data', targetDateStr);
 
     if (dbError) {
       return NextResponse.json({ error: "Erro ao buscar escalas no banco de dados: " + dbError.message }, { status: 500 });
     }
 
     if (!escalas || escalas.length === 0) {
-      return NextResponse.json({ error: `Nenhuma escala encontrada para amanhã (${format(tomorrowDate, 'dd/MM/yyyy')}). Certifique-se de cadastrar as escalas antes de disparar.` }, { status: 400 });
+      const formattedLabel = format(targetDateObj!, 'dd/MM/yyyy');
+      return NextResponse.json({ error: `Nenhuma escala encontrada para o dia ${formattedLabel}. Certifique-se de cadastrar as escalas antes de disparar.` }, { status: 400 });
     }
 
     // 4. Obter a URL do Webhook do n8n e o JID do grupo nas configurações do sistema
@@ -123,8 +140,8 @@ export async function POST(req: Request) {
 
     // 5. Preparar payload consolidado para o n8n
     const payload = {
-      data: tomorrowStr,
-      data_formatada: format(tomorrowDate, 'dd/MM/yyyy'),
+      data: targetDateStr,
+      data_formatada: format(targetDateObj, 'dd/MM/yyyy'),
       total_volantes: escalas.length,
       autorizado_por: "Central de Operações / RH",
       grupo_jid: grupoJid,
@@ -161,7 +178,7 @@ export async function POST(req: Request) {
     };
 
     // 6. Enviar para o n8n
-    console.log(`📡 Disparando escala do dia seguinte para o n8n no webhook ${webhookUrl}...`);
+    console.log(`📡 Disparando escala para o n8n no webhook ${webhookUrl} para o dia ${targetDateStr}...`);
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
@@ -172,14 +189,14 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`⚠️ Erro ao disparar escala do dia seguinte no n8n: Status ${response.status}`, errText);
+      console.error(`⚠️ Erro ao disparar escala no n8n: Status ${response.status}`, errText);
       return NextResponse.json({ error: "Erro na resposta do webhook do n8n: " + errText }, { status: 502 });
     }
 
-    console.log(`✅ Escala do dia seguinte disparada com sucesso via n8n.`);
+    console.log(`✅ Escala do dia ${targetDateStr} disparada com sucesso via n8n.`);
     return NextResponse.json({ 
       success: true, 
-      message: `Escala de amanhã (${payload.data_formatada}) com ${payload.total_volantes} volantes enviada com sucesso!`,
+      message: `Escala do dia ${payload.data_formatada} com ${payload.total_volantes} volantes enviada com sucesso!`,
       webhook: webhookUrl
     });
 

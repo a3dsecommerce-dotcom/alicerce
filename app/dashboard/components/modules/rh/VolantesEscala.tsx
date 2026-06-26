@@ -28,6 +28,11 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
   const [n8nWebhookUrl, setN8nWebhookUrl] = useState("");
   const [loadingOS, setLoadingOS] = useState<string | null>(null);
   const [loadingAmanha, setLoadingAmanha] = useState(false);
+  const [dataDisparo, setDataDisparo] = useState(() => {
+    const t = new Date();
+    t.setDate(t.getDate() + 1);
+    return format(t, "yyyy-MM-dd");
+  });
   const [loadingImport, setLoadingImport] = useState(false);
   const [importResult, setImportResult] = useState<{imported: number; skipped: number; total_rows: number} | null>(null);
   const [googleSheetUrl, setGoogleSheetUrl] = useState("");
@@ -100,13 +105,15 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     setLoadingAmanha(true);
     try {
       const res = await fetch('/api/volantes/escala-amanha', {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: dataDisparo })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(data.message || "Escala de amanhã disparada com sucesso!");
+        toast.success(data.message || "Escala disparada com sucesso!");
       } else {
-        toast.error(data.error || "Erro ao disparar escala de amanhã.");
+        toast.error(data.error || "Erro ao disparar escala.");
       }
     } catch (err: any) {
       toast.error("Erro na comunicação com o servidor: " + err.message);
@@ -763,24 +770,32 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
                       {todayVolantes.length} Volantes Ativos Hoje
                    </span>
                    {canEdit && (
-                     <button
-                       onClick={handleDispararEscalaAmanha}
-                       disabled={loadingAmanha}
-                       className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                       title="Enviar escala consolidada de amanhã via n8n"
-                     >
-                       {loadingAmanha ? (
-                         <>
-                           <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                           Enviando...
-                         </>
-                       ) : (
-                         <>
-                           <Send size={12} /> Disparar Escala de Amanhã
-                         </>
-                       )}
-                     </button>
-                   )}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={dataDisparo}
+                          onChange={(e) => setDataDisparo(e.target.value)}
+                          className="h-10 px-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-[10px] font-black text-[var(--text-primary)] outline-none focus:border-indigo-500 transition-all"
+                        />
+                        <button
+                          onClick={handleDispararEscalaAmanha}
+                          disabled={loadingAmanha}
+                          className="h-10 px-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                          title="Enviar escala consolidada da data selecionada via n8n"
+                        >
+                          {loadingAmanha ? (
+                            <>
+                              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <Send size={12} /> Disparar Escala
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                 </div>
              </div>
              
