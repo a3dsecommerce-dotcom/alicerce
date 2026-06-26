@@ -162,7 +162,8 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     const cleanNome = (formAdmissao.nome || "").trim().replace(/,/g, "");
     const cleanTelefone = (formAdmissao.telefone || "").trim().replace(/,/g, "");
 
-    if (cleanNome.length < 3 && cleanTelefone.length < 8) {
+    // Exige que ambos os campos estejam devidamente preenchidos para iniciar a verificação de duplicados
+    if (cleanNome.length < 3 || cleanTelefone.length < 8) {
       setDuplicateCheck({ exists: false, colaborador: null, loading: false });
       return;
     }
@@ -170,30 +171,22 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     const delayDebounceFn = setTimeout(async () => {
       setDuplicateCheck(prev => ({ ...prev, loading: true }));
       try {
-        const filters = [];
-        if (cleanNome.length >= 3) {
-          filters.push(`nome.ilike.${cleanNome}`);
-        }
-        if (cleanTelefone.length >= 8) {
-          filters.push(`telefone.eq.${cleanTelefone}`);
-        }
+        // Busca um usuário que possua o MESMO nome E o MESMO telefone (condição AND)
+        const { data, error } = await supabase
+          .from('usuarios')
+          .select('nome, telefone, status')
+          .ilike('nome', cleanNome)
+          .eq('telefone', cleanTelefone)
+          .limit(1);
 
-        if (filters.length > 0) {
-          const { data, error } = await supabase
-            .from('usuarios')
-            .select('nome, telefone, status')
-            .or(filters.join(','))
-            .limit(1);
-
-          if (!error && data && data.length > 0) {
-            setDuplicateCheck({
-              exists: true,
-              colaborador: data[0],
-              loading: false
-            });
-          } else {
-            setDuplicateCheck({ exists: false, colaborador: null, loading: false });
-          }
+        if (!error && data && data.length > 0) {
+          setDuplicateCheck({
+            exists: true,
+            colaborador: data[0],
+            loading: false
+          });
+        } else {
+          setDuplicateCheck({ exists: false, colaborador: null, loading: false });
         }
       } catch (err) {
         console.error("Erro na verificação de duplicados:", err);
