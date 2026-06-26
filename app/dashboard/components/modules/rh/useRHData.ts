@@ -189,7 +189,7 @@ export function useRHData(user: any) {
       unidade_alocacao: form.unidade,
       cargo: form.cargo,
       data_admissao: form.data,
-      cpf: candidato.cpf || "000.000.000-00",
+      cpf: (candidato.cpf || "").trim() || null,
       telefone: candidato.telefone || candidato.whatsapp || "---"
     });
 

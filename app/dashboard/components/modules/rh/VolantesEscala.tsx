@@ -237,7 +237,7 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     const { error: insertError } = await supabase.from('usuarios').insert([{
       nome: formAdmissao.nome.toUpperCase(),
       telefone: formAdmissao.telefone,
-      cpf: formAdmissao.cpf || "000.000.000-00",
+      cpf: (formAdmissao.cpf || "").trim() || null,
       cargo: formAdmissao.cargo,
       unidade_alocacao: formAdmissao.unidade,
       status: 'ATIVO',
