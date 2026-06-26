@@ -208,6 +208,8 @@ export async function POST(req: Request) {
         const itemEscolhido = optionsList[opcaoEscolhida - 1];
         const dataAgora = new Date().toISOString();
 
+        await enviarMensagemBot(`🔍 *Etapa 1/3 - Localizando Registro:*\nBuscando a ocorrência de ponto de *${itemEscolhido.nome}* para a data *${itemEscolhido.data}* no banco de dados...`);
+
         // Resolver o ponto no banco
         const { error: errUpd } = await supabase
           .from('ajustes_ponto')
@@ -221,10 +223,12 @@ export async function POST(req: Request) {
 
         if (errUpd) throw errUpd;
 
+        await enviarMensagemBot(`💾 *Etapa 2/3 - Registrando no CRM:*\nMarcando a pendência como resolvida e suspendendo a automação de cobranças diárias...`);
+
         // Limpar sessão
         await supabase.from('configuracoes_sistema').delete().eq('chave', sessionKey);
 
-        await enviarMensagemBot(`✅ Sucesso! O ponto de *${itemEscolhido.nome}* referente ao dia *${itemEscolhido.data}* foi marcado como *RESOLVIDO* no sistema. As cobranças automáticas para ele foram encerradas.`);
+        await enviarMensagemBot(`✅ *Etapa 3/3 - Processo Finalizado com Sucesso!*\nO ponto de *${itemEscolhido.nome}* referente ao dia *${itemEscolhido.data}* está marcado como *RESOLVIDO*. Obrigado pelo retorno! 👍`);
         return NextResponse.json({ success: true, message: "Ocorrência resolvida via bot" });
       } else {
         // Sessão expirada
@@ -242,6 +246,7 @@ export async function POST(req: Request) {
 
       if (isDeveloper) {
         console.log(`🤖 Gerando relatório global de ponto para o desenvolvedor/admin ${senderUser.nome}`);
+        await enviarMensagemBot(`🔍 *Etapa 1/2 - Buscando Estatísticas:* Consultando as pendências gerais no banco de dados da Alicerce...`);
         
         // 1. Buscar todas as ocorrências pendentes
         const { data: allUnresolved, error: errUnresolved } = await supabase
@@ -324,6 +329,7 @@ export async function POST(req: Request) {
         devText += `• *${topColab}* (${topCount} ocorrência(s))\n\n`;
         devText += `💡 _Comando executado como Administrador/Desenvolvedor._`;
 
+        await enviarMensagemBot(`✅ *Etapa 2/2 - Compilando Painel:* Gerando o relatório de pendências globais e rotas...`);
         await enviarMensagemBot(devText);
         return NextResponse.json({ success: true, message: "Relatório global de dev enviado" });
       }
@@ -334,6 +340,7 @@ export async function POST(req: Request) {
       }
 
       console.log(`🤖 Iniciando interação de comando -ponto para o encarregado ${cleanIncoming}`);
+      await enviarMensagemBot(`🔍 *Etapa 1/3 - Mapeando Rota:* Localizando suas unidades de atuação e equipe...`);
       
       // Buscar rota/unidades do Encarregado
       const { data: encUnits } = await supabase.from('unidades')
@@ -351,6 +358,8 @@ export async function POST(req: Request) {
           .in('unidade_alocacao', unitNames);
         routeColabs = usersInRoute || [];
       }
+
+      await enviarMensagemBot(`📊 *Etapa 2/3 - Verificando Pendências:* Cruzando dados de equipe com ocorrências de ponto em aberto...`);
 
       // Buscar todas as ocorrências pendentes
       const { data: ocorrenciasAbertas, error: errOco } = await supabase
@@ -396,6 +405,7 @@ export async function POST(req: Request) {
 
       if (pendenciasDoSupervisor.length === 0) {
         encText += `🎉 Excelente! Nenhuma pendência de ponto na sua rota no momento.`;
+        await enviarMensagemBot(`✅ *Etapa 3/3 - Finalizando:* Carregando relatório de rota...`);
         await enviarMensagemBot(encText);
         return NextResponse.json({ success: true, message: "Relatório de encarregado enviado (sem pendencias)" });
       }
@@ -426,6 +436,7 @@ export async function POST(req: Request) {
           updated_at: new Date().toISOString()
         }, { onConflict: 'chave' });
 
+      await enviarMensagemBot(`✅ *Etapa 3/3 - Finalizando:* Carregando painel e menu interativo...`);
       await enviarMensagemBot(encText);
       return NextResponse.json({ success: true, message: "Menu de seleção enviado" });
     }
