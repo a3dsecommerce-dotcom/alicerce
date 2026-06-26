@@ -3,32 +3,59 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createClient as createServerSupabaseClient } from '@/utils/supabase/server';
 import { addDays, format } from 'date-fns';
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
-    // 1. Validar a autenticação (Sessão do Usuário do Supabase)
+    // 1. Validar a autenticação (Sessão do Usuário do Supabase ou Cookie customizado auth_token)
     let isAuthorized = false;
+    let userId = "";
+    let userEmailFromAuth = "";
+
     try {
+      // Tentar por Supabase Auth
       const supabaseServer = await createServerSupabaseClient();
       const { data: { user }, error: authError } = await supabaseServer.auth.getUser();
       if (!authError && user) {
+        userId = user.id;
+        userEmailFromAuth = user.email || "";
+      }
+    } catch (authErr) {
+      console.error("Erro ao autenticar usuário via Supabase Auth:", authErr);
+    }
+
+    // Fallback para Cookie customizado auth_token
+    if (!userId) {
+      try {
+        const cookieStore = await cookies();
+        const mockToken = cookieStore.get('auth_token')?.value;
+        if (mockToken && mockToken.startsWith('al_sovereign_')) {
+          userId = mockToken.replace('al_sovereign_', '');
+        }
+      } catch (cookieErr) {
+        console.error("Erro ao obter cookie auth_token:", cookieErr);
+      }
+    }
+
+    if (userId) {
+      try {
         // Buscar dados do usuário na tabela pública `usuarios`
         const { data: dbUser } = await supabase
           .from('usuarios')
           .select('nivel, role, cargo, email')
-          .eq('id', user.id)
+          .eq('id', userId)
           .maybeSingle();
 
-        const dbNivel = dbUser?.nivel !== undefined ? dbUser.nivel : user.user_metadata?.nivel;
-        const dbRole = dbUser?.role || user.user_metadata?.role || "";
-        const dbCargo = dbUser?.cargo || user.user_metadata?.cargo || "";
-        const email = String(dbUser?.email || user.email || "").toUpperCase();
+        const dbNivel = dbUser?.nivel !== undefined ? dbUser.nivel : 1;
+        const dbRole = dbUser?.role || "";
+        const dbCargo = dbUser?.cargo || "";
+        const email = String(dbUser?.email || userEmailFromAuth).toUpperCase();
 
-        const nivel = Number(dbNivel || 1);
+        const nivel = Number(dbNivel);
         const role = String(dbRole).toUpperCase();
         const cargo = String(dbCargo).toUpperCase();
 
-        console.log(`[AUTH ESCALA] User ID: ${user.id} | Email: ${email} | Nivel: ${nivel} | Role: ${role} | Cargo: ${cargo}`);
+        console.log(`[AUTH ESCALA] User ID: ${userId} | Email: ${email} | Nivel: ${nivel} | Role: ${role} | Cargo: ${cargo}`);
         
         if (
           nivel >= 3 || 
@@ -47,9 +74,9 @@ export async function POST(req: Request) {
         ) {
           isAuthorized = true;
         }
+      } catch (dbErr) {
+        console.error("Erro ao obter dados de permissões do banco:", dbErr);
       }
-    } catch (authErr) {
-      console.error("Erro ao autenticar usuário da sessão:", authErr);
     }
 
     if (!isAuthorized) {

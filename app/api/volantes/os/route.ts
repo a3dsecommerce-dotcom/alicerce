@@ -2,19 +2,38 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { createClient as createServerSupabaseClient } from '@/utils/supabase/server';
+import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
   try {
-    // 1. Validar a autenticação (Sessão do Usuário do Supabase)
+    // 1. Validar a autenticação (Sessão do Usuário do Supabase ou Cookie customizado auth_token)
     let isAuthorized = false;
+    let userId = "";
+
     try {
+      // Tentar por Supabase Auth
       const supabaseServer = await createServerSupabaseClient();
       const { data: { user }, error: authError } = await supabaseServer.auth.getUser();
       if (!authError && user) {
+        userId = user.id;
         isAuthorized = true;
       }
     } catch (authErr) {
-      console.error("Erro ao autenticar usuário da sessão:", authErr);
+      console.error("Erro ao autenticar usuário via Supabase Auth:", authErr);
+    }
+
+    // Fallback para Cookie customizado auth_token
+    if (!userId) {
+      try {
+        const cookieStore = await cookies();
+        const mockToken = cookieStore.get('auth_token')?.value;
+        if (mockToken && mockToken.startsWith('al_sovereign_')) {
+          userId = mockToken.replace('al_sovereign_', '');
+          isAuthorized = true;
+        }
+      } catch (cookieErr) {
+        console.error("Erro ao obter cookie auth_token:", cookieErr);
+      }
     }
 
     if (!isAuthorized) {
