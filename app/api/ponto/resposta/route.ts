@@ -354,6 +354,24 @@ export async function POST(req: Request) {
     const encDados = await buscarEncarregadoDoColaborador(resolvedMatch.colaborador_id);
     const nomeEncarregado = encDados?.encarregadoNome || "seu Encarregado";
 
+    // Buscar histórico das últimas 3 interações com o colaborador
+    const { data: previousInteractions } = await supabase
+      .from('ajustes_ponto')
+      .select('data_referencia, motivo, resposta_colaborador, resolvido')
+      .eq('colaborador_id', resolvedMatch.colaborador_id)
+      .not('resposta_colaborador', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(3);
+
+    let historicoTexto = "";
+    if (previousInteractions && previousInteractions.length > 0) {
+      historicoTexto = previousInteractions.map((p, idx) => 
+        `Ocorrência ${idx + 1}: Dia ${p.data_referencia} (${p.motivo}) - Colaborador respondeu: "${p.resposta_colaborador}" (Resolvido? ${p.resolvido ? 'Sim' : 'Não'})`
+      ).join("\n");
+    } else {
+      historicoTexto = "Sem interações anteriores registradas.";
+    }
+
     // Retornar a ação de resposta da IA para o n8n gerar e enviar
     return NextResponse.json({ 
       success: true, 
@@ -364,7 +382,8 @@ export async function POST(req: Request) {
       motivo: resolvedMatch.motivo || "Ajuste Geral",
       encarregado_nome: nomeEncarregado,
       resposta_colaborador: rawResposta,
-      telefone: cleanIncoming
+      telefone: cleanIncoming,
+      historico_interacoes: historicoTexto
     });
 
   } catch (err: any) {
