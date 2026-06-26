@@ -533,10 +533,31 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     unidade: "",
     entrada: "",
     saida: "",
-    motivo: ""
+    motivo: "",
+    substituindo_id: "",
+    substituindo_nome: "",
+    insalubridade: 0
   });
 
-  // Busca de colaboradores
+  // Colaboradores da unidade selecionada para substituição
+  const [colabsUnidade, setColabsUnidade] = useState<any[]>([]);
+  const [loadingColabsUnidade, setLoadingColabsUnidade] = useState(false);
+  const [buscaSubstituindo, setBuscaSubstituindo] = useState("");
+
+  const fetchColabsUnidade = async (nomeUnidade: string) => {
+    if (!nomeUnidade) { setColabsUnidade([]); return; }
+    setLoadingColabsUnidade(true);
+    const { data } = await supabase
+      .from('usuarios')
+      .select('id, nome, cargo, telefone')
+      .ilike('unidade_alocacao', `%${nomeUnidade}%`)
+      .eq('status', 'ATIVO')
+      .order('nome', { ascending: true });
+    setColabsUnidade(data || []);
+    setLoadingColabsUnidade(false);
+  };
+
+  // Busca de colaboradores (volantes)
   const [buscaColab, setBuscaColab] = useState("");
   const [colabsSugeridos, setColabsSugeridos] = useState<any[]>([]);
   const searchColabs = async (val: string) => {
@@ -575,9 +596,18 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
 
   const addDetalhe = () => {
     if (!novoDetalhe.unidade || !novoDetalhe.entrada) return toast.error("Preencha unidade e entrada");
-    setFormData({ ...formData, detalhes: [...formData.detalhes, novoDetalhe] });
-    setNovoDetalhe({ unidade: "", entrada: "", saida: "", motivo: "" });
+    // Auto-build motivo from substituição info
+    const detalheComMotivo = {
+      ...novoDetalhe,
+      motivo: novoDetalhe.substituindo_nome
+        ? `Subst: ${novoDetalhe.substituindo_nome}`
+        : (novoDetalhe.motivo || "Vaga Aberta")
+    };
+    setFormData({ ...formData, detalhes: [...formData.detalhes, detalheComMotivo] });
+    setNovoDetalhe({ unidade: "", entrada: "", saida: "", motivo: "", substituindo_id: "", substituindo_nome: "", insalubridade: 0 });
     setBuscaUnidade("");
+    setBuscaSubstituindo("");
+    setColabsUnidade([]);
   };
 
   const removeDetalhe = (idx: number) => {
@@ -614,13 +644,40 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
     if (!error) {
       toast.success(editingId ? "Escala atualizada!" : "Escala registrada!");
       
-      // Se for um novo registro e houver grupoJid, enviar OS
-      if (!editingId && grupoJid) {
-        handleEnviarOrdemServico({
-          colaborador_nome: formData.colaborador_nome,
-          detalhes_visitas: formData.detalhes,
-          id: "new"
-        });
+      // Registrar faltas automaticamente para cada substituição informada
+      if (!editingId) {
+        const detalhesComSubst = formData.detalhes.filter((d: any) => d.substituindo_id && d.substituindo_nome);
+        if (detalhesComSubst.length > 0) {
+          const faltasParaInserir = detalhesComSubst.map((d: any) => ({
+            tipo: 'FALTA',
+            data: formData.data,
+            unidade: d.unidade,
+            colaborador_ausente_id: d.substituindo_id,
+            colaborador_ausente_nome: d.substituindo_nome,
+            colaborador_substituto_nome: formData.colaborador_nome,
+            tem_atestado: false,
+            justificada: false,
+            observacoes: `Substituído(a) por Volante ${formData.colaborador_nome}. Registrado automaticamente pela Escala de Volantes.`,
+            criado_por_id: user.id,
+            criado_por_nome: user.name || user.nome,
+            created_at: new Date().toISOString()
+          }));
+          const { error: faltaError } = await supabase.from('informativos_operacionais').insert(faltasParaInserir);
+          if (!faltaError) {
+            toast.success(`${detalhesComSubst.length} falta(s) registrada(s) automaticamente no RH!`);
+          } else {
+            console.error('Erro ao registrar faltas:', faltaError.message);
+          }
+        }
+
+        // Enviar Ordem de Serviço se grupoJid configurado
+        if (grupoJid) {
+          handleEnviarOrdemServico({
+            colaborador_nome: formData.colaborador_nome,
+            detalhes_visitas: formData.detalhes,
+            id: "new"
+          });
+        }
       }
 
       setModalNovo(false);
@@ -628,6 +685,8 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
       setFormData({ colaborador_id: "", colaborador_nome: "", data: format(new Date(), "yyyy-MM-dd"), observacoes: "", detalhes: [] });
       setBuscaColab("");
       setBuscaUnidade("");
+      setBuscaSubstituindo("");
+      setColabsUnidade([]);
       refresh();
     } else {
       toast.error("Erro ao salvar escala.");
@@ -1240,80 +1299,219 @@ export default function VolantesEscala({ volantes, requisicoes = [], refresh, us
             </div>
           </div>
 
-            {(!editingId || canEdit) && (
-              <div className="p-8 bg-white rounded-3xl border-2 border-indigo-100 shadow-sm space-y-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-                   <MapPin size={120} />
+          {(!editingId || canEdit) && (
+            <div className="rounded-3xl border-2 border-indigo-100 dark:border-indigo-900/50 shadow-sm overflow-hidden">
+              {/* Header da seção */}
+              <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 px-8 py-5 flex items-center gap-3">
+                <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
+                  <MapPin size={16} className="text-white" />
                 </div>
-                
-                <h5 className="text-[11px] font-black uppercase text-indigo-600 flex items-center gap-3 italic">
-                  <Plus size={18} className="bg-indigo-600 text-white rounded-lg p-0.5" /> Adicionar Roteiro de Visitas
-                </h5>
-    
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="space-y-2 relative">
-                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Unidade</p>
+                <div>
+                  <h5 className="text-[11px] font-black uppercase text-white tracking-wider">Adicionar Visita ao Roteiro</h5>
+                  <p className="text-[9px] text-indigo-200 font-bold uppercase mt-0.5">Selecione a unidade e quem está sendo substituído</p>
+                </div>
+              </div>
+
+              <div className="p-8 bg-white dark:bg-slate-900/50 space-y-6">
+                {/* Linha 1: Unidade + Horários */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="space-y-2 relative md:col-span-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1.5"><Building2 size={10} /> Unidade / Escola</p>
                     <input 
-                      className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" 
-                      placeholder="Buscar Escola..." 
+                      className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-400" 
+                      placeholder="Buscar escola..." 
                       value={buscaUnidade} 
                       onChange={(e) => searchUnidades(e.target.value)} 
                     />
                     {unidadesSugeridas.length > 0 && (
                       <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[var(--border)] rounded-xl shadow-2xl z-[110] overflow-hidden">
                         {unidadesSugeridas.map(u => (
-                          <button key={u.id} onClick={() => { setNovoDetalhe({...novoDetalhe, unidade: u.nome}); setBuscaUnidade(u.nome); setUnidadesSugeridas([]); }} className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none">
+                          <button 
+                            key={u.id} 
+                            onClick={() => { 
+                              setNovoDetalhe({...novoDetalhe, unidade: u.nome, substituindo_id: "", substituindo_nome: ""});
+                              setBuscaUnidade(u.nome);
+                              setBuscaSubstituindo("");
+                              setUnidadesSugeridas([]);
+                              fetchColabsUnidade(u.nome);
+                            }} 
+                            className="w-full p-3 text-left hover:bg-indigo-50 border-b border-[var(--border)] last:border-none"
+                          >
                             <p className="text-[10px] font-black uppercase text-indigo-900">{u.nome}</p>
+                            {u.secretaria && <p className="text-[9px] font-bold text-slate-500">{u.secretaria}</p>}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Entrada</p>
-                    <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="08:00" value={novoDetalhe.entrada} onChange={(e) => setNovoDetalhe({...novoDetalhe, entrada: e.target.value})} />
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1.5"><Clock size={10} /> Entrada</p>
+                    <select 
+                      className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-400 cursor-pointer"
+                      value={novoDetalhe.entrada}
+                      onChange={(e) => setNovoDetalhe({...novoDetalhe, entrada: e.target.value})}
+                    >
+                      <option value="">Selecionar...</option>
+                      {["06:00","06:30","07:00","07:30","08:00","08:30","09:00","13:00","14:00"].map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Saída</p>
-                    <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="12:00" value={novoDetalhe.saida} onChange={(e) => setNovoDetalhe({...novoDetalhe, saida: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1">Motivo</p>
-                    <input className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-200" placeholder="Substituição" value={novoDetalhe.motivo} onChange={(e) => setNovoDetalhe({...novoDetalhe, motivo: e.target.value})} />
+                    <p className="text-[9px] font-black text-slate-400 uppercase ml-1 flex items-center gap-1.5"><Clock size={10} /> Saída</p>
+                    <select 
+                      className="input-field !h-12 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-400 cursor-pointer"
+                      value={novoDetalhe.saida}
+                      onChange={(e) => setNovoDetalhe({...novoDetalhe, saida: e.target.value})}
+                    >
+                      <option value="">Selecionar...</option>
+                      {["11:00","12:00","13:00","14:00","15:00","16:00","17:00","17:30","18:00"].map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
                   </div>
                 </div>
-    
+
+                {/* Linha 2: Colaborador substituído */}
+                {novoDetalhe.unidade && (
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="flex items-center gap-2">
+                      <div className="h-px flex-1 bg-indigo-100"></div>
+                      <p className="text-[9px] font-black text-indigo-600 uppercase tracking-wider px-2 flex items-center gap-1.5">
+                        <User size={10} /> Quem está sendo substituído?
+                      </p>
+                      <div className="h-px flex-1 bg-indigo-100"></div>
+                    </div>
+
+                    {loadingColabsUnidade ? (
+                      <div className="flex items-center gap-2 p-4 bg-indigo-50 rounded-2xl">
+                        <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-[9px] font-black uppercase text-indigo-600">Buscando colaboradores da unidade...</span>
+                      </div>
+                    ) : colabsUnidade.length > 0 ? (
+                      <div className="space-y-2">
+                        <input
+                          className="input-field !h-11 text-[11px] font-bold !bg-slate-50 border-transparent focus:!bg-white focus:border-indigo-400"
+                          placeholder="Filtrar por nome..."
+                          value={buscaSubstituindo}
+                          onChange={(e) => setBuscaSubstituindo(e.target.value)}
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                          {/* Opção Vaga Aberta */}
+                          <button
+                            onClick={() => setNovoDetalhe({...novoDetalhe, substituindo_id: "", substituindo_nome: ""})}
+                            className={`flex items-center gap-3 p-3 rounded-xl text-left border-2 transition-all ${
+                              !novoDetalhe.substituindo_id
+                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                                : "border-[var(--border)] hover:border-blue-300 hover:bg-blue-50/50"
+                            }`}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 font-black text-[10px] shrink-0">+</div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase text-blue-700 dark:text-blue-300">Vaga Aberta</p>
+                              <p className="text-[8px] font-bold text-blue-500">Sem substituição específica</p>
+                            </div>
+                          </button>
+                          {/* Colaboradores da unidade */}
+                          {colabsUnidade
+                            .filter(c => !buscaSubstituindo || c.nome.toLowerCase().includes(buscaSubstituindo.toLowerCase()))
+                            .map(c => (
+                              <button
+                                key={c.id}
+                                onClick={() => setNovoDetalhe({...novoDetalhe, substituindo_id: c.id, substituindo_nome: c.nome})}
+                                className={`flex items-center gap-3 p-3 rounded-xl text-left border-2 transition-all ${
+                                  novoDetalhe.substituindo_id === c.id
+                                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30"
+                                    : "border-[var(--border)] hover:border-indigo-300 hover:bg-indigo-50/50"
+                                }`}
+                              >
+                                <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 font-black text-[10px] shrink-0">
+                                  {c.nome.charAt(0)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] font-black uppercase text-slate-800 dark:text-slate-100 truncate leading-none">{c.nome}</p>
+                                  <p className="text-[8px] font-bold text-indigo-500 uppercase mt-0.5">{c.cargo || 'ASG'}</p>
+                                </div>
+                                {novoDetalhe.substituindo_id === c.id && (
+                                  <div className="w-4 h-4 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+                                    <span className="text-white text-[8px] font-black">✓</span>
+                                  </div>
+                                )}
+                              </button>
+                            ))
+                          }
+                        </div>
+                        {/* Alerta de falta automática */}
+                        {novoDetalhe.substituindo_id && (
+                          <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl animate-fade-in">
+                            <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+                            <p className="text-[9px] font-black uppercase text-amber-700 dark:text-amber-400">
+                              Falta será registrada automaticamente para <span className="text-amber-900 dark:text-amber-200">{novoDetalhe.substituindo_nome}</span> na aba de Faltas do RH.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                        <p className="text-[9px] font-black uppercase text-slate-400">Nenhum colaborador ativo encontrado nesta unidade</p>
+                        <p className="text-[8px] font-bold text-slate-400 mt-1">Será considerado como Vaga Aberta</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <button 
                   onClick={addDetalhe} 
-                  className="w-full h-14 bg-indigo-50 text-indigo-700 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                  disabled={!novoDetalhe.unidade || !novoDetalhe.entrada}
+                  className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-3"
                 >
-                  Confirmar Unidade no Roteiro
+                  <Plus size={16} />
+                  Adicionar esta Visita ao Roteiro
                 </button>
               </div>
-            )}
+            </div>
+          )}
 
           {formData.detalhes.length > 0 && (
-            <div className="space-y-6">
-              <h5 className="text-[11px] font-black uppercase text-slate-900 flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div> Resumo do Roteiro Gerado
+            <div className="space-y-4">
+              <h5 className="text-[11px] font-black uppercase text-[var(--text-primary)] flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Roteiro Gerado ({formData.detalhes.length} {formData.detalhes.length === 1 ? 'visita' : 'visitas'})
               </h5>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {formData.detalhes.map((d, i) => (
-                  <div key={i} className="flex items-center justify-between p-6 bg-white border-2 border-indigo-50 rounded-2xl shadow-sm hover:border-indigo-200 transition-all relative group">
-                    <div>
-                      <p className="text-sm font-black text-slate-900 uppercase tracking-tight">{d.unidade}</p>
-                      <p className="text-[10px] font-bold text-indigo-600 uppercase mt-1 flex items-center gap-1.5">
-                         <Clock size={12} /> {d.entrada} às {d.saida || '...'}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {formData.detalhes.map((d: any, i) => (
+                  <div key={i} className="flex items-start gap-3 p-5 bg-white dark:bg-slate-900 border-2 border-emerald-100 dark:border-emerald-900/50 rounded-2xl shadow-sm hover:border-emerald-300 transition-all group">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center font-black text-white text-sm shrink-0 shadow-sm">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight truncate">{d.unidade}</p>
+                      <p className="text-[9px] font-bold text-emerald-600 uppercase mt-0.5 flex items-center gap-1">
+                         <Clock size={10} /> {d.entrada} às {d.saida || '...'}
                       </p>
+                      {d.substituindo_nome ? (
+                        <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-lg text-[8px] font-black uppercase">
+                          <User size={8} /> Subst: {d.substituindo_nome}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-lg text-[8px] font-black uppercase">
+                          Vaga Aberta
+                        </span>
+                      )}
                     </div>
                     {(!editingId || canEdit) && (
-                      <button onClick={() => removeDetalhe(i)} className="w-10 h-10 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                        <Trash2 size={18} />
+                      <button onClick={() => removeDetalhe(i)} className="w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all shrink-0">
+                        <Trash2 size={16} />
                       </button>
                     )}
                   </div>
                 ))}
               </div>
+              {formData.detalhes.some((d: any) => d.substituindo_id) && (
+                <div className="flex items-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <span className="text-white text-[8px] font-black">✓</span>
+                  </div>
+                  <p className="text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400">
+                    {formData.detalhes.filter((d: any) => d.substituindo_id).length} falta(s) serão registradas automaticamente ao salvar.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
