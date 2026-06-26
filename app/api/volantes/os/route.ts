@@ -67,7 +67,8 @@ export async function POST(req: Request) {
     // 4. Carregar chaves do Evolution das variáveis de ambiente
     const evolutionUrl = process.env.EVOLUTION_URL || "";
     const evolutionApiKey = process.env.EVOLUTION_API_KEY || "";
-    const evolutionInstance = process.env.EVOLUTION_INSTANCE || "";
+    const rawInstance = process.env.EVOLUTION_INSTANCE || "";
+    const evolutionInstance = rawInstance === "b3fc1313-37c6-465f-8641-9ca0c5e1dd51" ? "ALICERCE" : rawInstance;
 
     if (!evolutionUrl || !evolutionApiKey || !evolutionInstance) {
       return NextResponse.json({ error: "Evolution API não configurada no servidor." }, { status: 500 });

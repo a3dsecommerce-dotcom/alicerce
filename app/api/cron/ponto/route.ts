@@ -202,7 +202,8 @@ export async function GET(req: Request) {
 
     const evolutionUrl = process.env.EVOLUTION_URL || "";
     const evolutionApiKey = process.env.EVOLUTION_API_KEY || "";
-    const evolutionInstance = process.env.EVOLUTION_INSTANCE || "";
+    const rawInstance = process.env.EVOLUTION_INSTANCE || "";
+    const evolutionInstance = rawInstance === "b3fc1313-37c6-465f-8641-9ca0c5e1dd51" ? "ALICERCE" : rawInstance;
     const evolutionConfig = { evolutionUrl, evolutionApiKey, evolutionInstance };
 
     // 5. Buscar ocorrências ativas
