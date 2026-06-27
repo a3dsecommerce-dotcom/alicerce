@@ -188,8 +188,19 @@ export async function POST(req: Request) {
     const dbSession = dbSessionRes?.data;
     const dbSessionVolante = dbSessionVolanteRes?.data;
 
+    const isPontoCommand = rawResposta.toLowerCase() === '-ponto' || rawResposta.toLowerCase() === '/ponto';
+    const isVolanteCommand = rawResposta.toLowerCase() === '-volante' || rawResposta.toLowerCase() === '/volante';
+
+    // Se for um comando novo, limpa qualquer sessão anterior para não interceptar
+    if (isPontoCommand || isVolanteCommand) {
+      await Promise.all([
+        supabase.from('configuracoes_sistema').delete().eq('chave', sessionKey),
+        supabase.from('configuracoes_sistema').delete().eq('chave', sessionKeyVolante)
+      ]);
+    }
+
     // --- TRATAMENTO DE SESSÃO VOLANTE ---
-    if (dbSessionVolante && dbSessionVolante.valor) {
+    if (dbSessionVolante && dbSessionVolante.valor && !isPontoCommand && !isVolanteCommand) {
       let sessionData: any = {};
       try {
         sessionData = typeof dbSessionVolante.valor === 'string' ? JSON.parse(dbSessionVolante.valor) : dbSessionVolante.valor;
@@ -436,7 +447,7 @@ export async function POST(req: Request) {
     }
 
     // --- TRATAMENTO DE SESSÃO PONTO ---
-    if (dbSession && dbSession.valor) {
+    if (dbSession && dbSession.valor && !isPontoCommand && !isVolanteCommand) {
       let sessionData: any = {};
       try {
         sessionData = typeof dbSession.valor === 'string' ? JSON.parse(dbSession.valor) : dbSession.valor;
@@ -497,7 +508,6 @@ export async function POST(req: Request) {
     }
 
     // 4. Comando de inicialização para Encarregados / Devs: "-ponto" ou "/ponto"
-    const isPontoCommand = rawResposta.toLowerCase() === '-ponto' || rawResposta.toLowerCase() === '/ponto';
     if (isPontoCommand) {
       if (isDeveloper) {
         console.log(`🤖 Gerando relatório global de ponto para o desenvolvedor/admin ${senderUser.nome}`);
@@ -697,7 +707,6 @@ export async function POST(req: Request) {
     }
 
     // 4.1 Comando /volante ou -volante
-    const isVolanteCommand = rawResposta.toLowerCase() === '-volante' || rawResposta.toLowerCase() === '/volante';
     if (isVolanteCommand) {
       const isAuthorized = senderUser.role === 'DEV' || 
                            senderUser.role === 'ADMIN' || 
