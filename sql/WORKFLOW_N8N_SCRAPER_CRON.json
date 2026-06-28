@@ -23,7 +23,7 @@
     },
     {
       "parameters": {
-        "method": "POST",
+        "method": "GET",
         "url": "https://db.alicerce.cloud/rest/v1/historico_grupos_raw?select=id,group_id,group_name,sender_phone,sender_name,message_text&processed=eq.false&order=group_id.asc,created_at.asc",
         "sendHeaders": true,
         "specifyHeaders": "keypair",
@@ -51,7 +51,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const messages = items;\nif (messages.length === 0 || !messages[0]?.json?.group_id) return [];\n\nconst grouped = {};\nmessages.forEach(item => {\n  const data = item.json;\n  const key = data.group_id;\n  if (!grouped[key]) {\n    grouped[key] = {\n      group_id: data.group_id,\n      group_name: data.group_name || \"Grupo Sem Nome\",\n      ids: [],\n      conversa: \"\"\n    };\n  }\n  grouped[key].ids.push(data.id);\n  grouped[key].conversa += `[${data.sender_name || 'Desconhecido'} - Tel: ${data.sender_phone}]: ${data.message_text}\\n`;\n});\n\nreturn Object.values(grouped).map(group => ({\n  json: {\n    group_id: group.group_id,\n    group_name: group.group_name,\n    raw_ids: group.ids,\n    conversa_acumulada: group.conversa\n  }\n}));"
+        "jsCode": "const messages = items;\nif (messages.length === 0 || !messages[0]?.json?.group_id) return [];\n\nconst grouped = {};\nmessages.forEach(item => {\n  const data = item.json;\n  const key = data.group_id;\n  if (!grouped[key]) {\n    grouped[key] = {\n      group_id: data.group_id,\n      group_name: data.group_name || \"Grupo Sem Nome\",\n      ids: [],\n      conversa: \"\"\n    };\n  }\n  grouped[key].ids.push(data.id);\n  grouped[key].conversa += `[${data.sender_name || 'Desconhecido'} - Tel: ${data.sender_phone}]: ${data.message_text}\\n`;\n});\n\nreturn Object.values(grouped).map(group => ({ \n  json: { \n    group_id: group.group_id, \n    group_name: group.group_name, \n    raw_ids: group.ids, \n    conversa_acumulada: group.conversa \n  } \n}));"
       },
       "id": "js_group_messages",
       "name": "JS Group Messages",
@@ -102,7 +102,11 @@
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKIC29..."
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
             }
           ]
         },
@@ -121,15 +125,19 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://db.alicerce.cloud/rest/v1/historico_grupos_raw",
+        "method": "PATCH",
+        "url": "=https://db.alicerce.cloud/rest/v1/historico_grupos_raw?id=in.({{ $json.ids_to_update.join(\",\") }})",
         "sendHeaders": true,
         "specifyHeaders": "keypair",
         "headerParameters": {
           "parameters": [
             {
               "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKIC29..."
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
             }
           ]
         },
