@@ -1,0 +1,212 @@
+{
+  "name": "Módulo 2 - Analista e Scraper de Grupos (Cron)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 4
+            }
+          ]
+        }
+      },
+      "id": "cron_trigger_4h",
+      "name": "Cron - Cada 4 Horas",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://db.alicerce.cloud/rest/v1/historico_grupos_raw?select=id,group_id,group_name,sender_phone,sender_name,message_text&processed=eq.false&order=group_id.asc,created_at.asc",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_unprocessed",
+      "name": "Supabase - Get Unprocessed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const messages = items;\nif (messages.length === 0 || !messages[0]?.json?.group_id) return [];\n\nconst grouped = {};\nmessages.forEach(item => {\n  const data = item.json;\n  const key = data.group_id;\n  if (!grouped[key]) {\n    grouped[key] = {\n      group_id: data.group_id,\n      group_name: data.group_name || \"Grupo Sem Nome\",\n      ids: [],\n      conversa: \"\"\n    };\n  }\n  grouped[key].ids.push(data.id);\n  grouped[key].conversa += `[${data.sender_name || 'Desconhecido'} - Tel: ${data.sender_phone}]: ${data.message_text}\\n`;\n});\n\nreturn Object.values(grouped).map(group => ({\n  json: {\n    group_id: group.group_id,\n    group_name: group.group_name,\n    raw_ids: group.ids,\n    conversa_acumulada: group.conversa\n  }\n}));"
+      },
+      "id": "js_group_messages",
+      "name": "JS Group Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyAt4UthufEzs18Xl4JLImZcAvlwFjxI9yo",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Você é um Engenheiro de Dados e Analista Operacional especialista em triagem de mensagens de campo. Sua tarefa é analisar o seguinte bloco de mensagens vindas de um grupo de WhatsApp de operações e extrair estritamente as ocorrências reais que exigem atenção.\\n\\nCONVERSA ACUMULADA DO GRUPO:\\n\\\"\\\"\\\"\\n{{ $json.conversa_acumulada }}\\n\\\"\\\"\\\"\\n\\nREGRAS DE EXTRAÇÃO E LIMPEZA DE RUÍDO:\\n- Ignore completamente saudações de rotina (\\\"Bom dia\\\", \\\"Boa tarde\\\", \\\"Boa noite\\\"), confirmações padrão (\\\"Tudo limpo\\\", \\\"Entrada ok\\\", \\\"QAP\\\"), emojis isolados ou mensagens sem impacto operacional direto.\\n- Foque estritamente em extrair dados relacionados a:\\n  1. FALTAS E ATRASOS: Ausências relatadas, atrasos significativos ou necessidade urgente de substituição/volante.\\n  2. INFRAESTRUTURA: Problemas físicos graves no posto de trabalho (falta de energia elétrica, falta de água, ar-condicionado quebrado, infiltrações estruturais).\\n  3. INSUMOS: Falta de materiais operacionais, materiais de limpeza, EPIs de uso obrigatório em falta.\\n  4. INCIDENTES: Eventos inesperados, acidentes de trabalho, brigas, problemas com fiscal do posto, furtos ou danos ao patrimônio.\\n\\nVocê deve responder RIGOROSAMENTE seguindo o formato do JSON Schema fornecido, sem qualquer texto introdutório ou explicativo. O campo status deve ser 'sucesso' se encontrar ocorrências operacionais reais, ou 'sem_ocorrencias' se a conversa contiver apenas saudações e rotinas sem problemas.\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"responseMimeType\": \"application/json\",\n    \"responseSchema\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\"sucesso\", \"sem_ocorrencias\"]\n        },\n        \"posto\": {\n          \"type\": \"string\"\n        },\n        \"ocorrencias\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"categoria\": {\n                \"type\": \"string\",\n                \"enum\": [\"Falta/Atraso\", \"Infraestrutura\", \"Insumos\", \"Incidente\"]\n              },\n              \"gravidade\": {\n                \"type\": \"string\",\n                \"enum\": [\"Baixa\", \"Média\", \"Alta\", \"Crítica\"]\n              },\n              \"colaborador_envolvido\": {\n                \"type\": \"string\"\n              },\n              \"resumo_operacional\": {\n                \"type\": \"string\"\n              },\n              \"trecho_original\": {\n                \"type\": \"string\"\n              }\n            },\n            \"required\": [\"categoria\", \"gravidade\", \"colaborador_envolvido\", \"resumo_operacional\", \"trecho_original\"]\n          }\n        }\n      },\n      \"required\": [\"status\", \"posto\", \"ocorrencias\"]\n    }\n  }\n}"
+      },
+      "id": "gemini_scraper",
+      "name": "Gemini - Scraper IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const iaResponse = JSON.parse(items[0]?.json?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');\nconst rawIds = $('JS Group Messages').first().json.raw_ids || [];\nconst groupName = $('JS Group Messages').first().json.group_name || \"Desconhecido\";\nconst posto = iaResponse.posto || groupName;\n\nconst insertsOcorrencias = [];\n\nif (iaResponse.status === \"sucesso\" && Array.isArray(iaResponse.ocorrencias)) {\n  iaResponse.ocorrencias.forEach(o => {\n    insertsOcorrencias.push({\n      posto_afetado: posto,\n      categoria: o.categoria,\n      gravidade: o.gravidade,\n      descricao_fato: `[Envolvido: ${o.colaborador_envolvido}] - ${o.resumo_operacional}`,\n      trecho_original: o.trecho_original,\n      resolvido: false\n    });\n  });\n}\n\nreturn [{\n  json: {\n    inserts: insertsOcorrencias,\n    ids_to_update: rawIds,\n    has_inserts: insertsOcorrencias.length > 0\n  }\n}];"
+      },
+      "id": "js_output_prep",
+      "name": "JS Output Prep",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://db.alicerce.cloud/rest/v1/ocorrencias_campo",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKIC29..."
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.inserts }}"
+      },
+      "id": "supabase_insert_ocorrencias",
+      "name": "Supabase - Insert Ocorrencias",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://db.alicerce.cloud/rest/v1/historico_grupos_raw",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKIC29..."
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"processed\": true\n}"
+      },
+      "id": "supabase_mark_processed",
+      "name": "Supabase - Mark Processed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1100,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Cron - Cada 4 Horas": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Get Unprocessed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Get Unprocessed": {
+      "main": [
+        [
+          {
+            "node": "JS Group Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Group Messages": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Scraper IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Scraper IA": {
+      "main": [
+        [
+          {
+            "node": "JS Output Prep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JS Output Prep": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Insert Ocorrencias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase - Mark Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
