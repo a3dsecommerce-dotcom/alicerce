@@ -40,7 +40,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://db.alicerce.cloud/rest/v1/usuarios?select=id,nome,cargo,unidade_alocacao,responsavel_nome,lider_nome,tamanho_camisa,tamanho_calca,tamanho_sapato,carga_horaria,horario_trabalho,telefone",
+        "url": "https://db.alicerce.cloud/rest/v1/usuarios?select=id,nome,cargo,unidade_alocacao,tamanho_camisa,tamanho_calca,tamanho_sapato,carga_horaria,horario_trabalho,telefone",
         "sendHeaders": true,
         "specifyHeaders": "keypair",
         "headerParameters": {
@@ -97,15 +97,43 @@
     },
     {
       "parameters": {
-        "jsCode": "const user = items[0]?.json || {};\nlet supervisorNome = \"Não atribuído\";\nif (user.responsavel_nome) {\n  supervisorNome = user.responsavel_nome;\n} else if (user.lider_nome) {\n  supervisorNome = user.lider_nome;\n}\n\nconst colab_info = {\n  nome: user.nome || \"Colaborador\",\n  cargo: user.cargo || \"Operacional\",\n  posto_trabalho: user.unidade_alocacao || \"Não alocado\",\n  supervisor: supervisorNome,\n  tamanho_uniforme: user.tamanho_camisa || \"Não informado\",\n  tamanho_calca: user.tamanho_calca || \"Não informado\",\n  tamanho_calcado: user.tamanho_sapato || \"Não informado\",\n  escala_trabalho: user.carga_horaria || user.horario_trabalho || \"07:00 às 17:00 (5x2)\"\n};\n\nreturn [{\n  json: {\n    telefone: user.telefone,\n    colaborador_nome: user.nome,\n    colaborador_id: user.id,\n    prompt_variables: JSON.stringify(colab_info, null, 2),\n    mensagem_usuario: $('Webhook - Atendimento Clara').first().json.body.data.message?.conversation || $('Webhook - Atendimento Clara').first().json.body.data.message?.extendedTextMessage?.text || \"\"\n  }\n}];"
+        "method": "GET",
+        "url": "=https://db.alicerce.cloud/rest/v1/unidades?select=encarregado_nome,responsavel_nome,responsavel_telefone&nome=eq.{{ $json[0].unidade_alocacao }}",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE"
+            }
+          ]
+        }
+      },
+      "id": "supabase_get_unidade",
+      "name": "Supabase - Get Unidade",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const user = $('Supabase - Get Colaborador').first().json || {};\nconst unit = items[0]?.json || {};\nlet supervisorNome = \"Não atribuído\";\nif (unit.responsavel_nome) {\n  supervisorNome = unit.responsavel_nome;\n} else if (unit.encarregado_nome) {\n  supervisorNome = unit.encarregado_nome;\n}\n\nconst colab_info = {\n  nome: user.nome || \"Colaborador\",\n  cargo: user.cargo || \"Operacional\",\n  posto_trabalho: user.unidade_alocacao || \"Não alocado\",\n  supervisor: supervisorNome,\n  tamanho_uniforme: user.tamanho_camisa || \"Não informado\",\n  tamanho_calca: user.tamanho_calca || \"Não informado\",\n  tamanho_calcado: user.tamanho_sapato || \"Não informado\",\n  escala_trabalho: user.carga_horaria || user.horario_trabalho || \"07:00 às 17:00 (5x2)\"\n};\n\nreturn [{\n  json: {\n    telefone: user.telefone,\n    colaborador_nome: user.nome,\n    colaborador_id: user.id,\n    prompt_variables: JSON.stringify(colab_info, null, 2),\n    mensagem_usuario: $('Webhook - Atendimento Clara').first().json.body.data.message?.conversation || $('Webhook - Atendimento Clara').first().json.body.data.message?.extendedTextMessage?.text || \"\"\n  }\n}];"
       },
       "id": "code_data_prep",
       "name": "JS Data Prep",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        200
+        1100,
+        300
       ]
     },
     {
@@ -114,15 +142,15 @@
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyAt4UthufEzs18Xl4JLImZcAvlwFjxI9yo",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Você é a Clara, a assistente virtual inteligente de Recursos Humanos da Alicerce. Seu objetivo é ajudar os colaboradores de forma humana, empática, e sem usar termos complicados, burocráticos ou jurídicos. Seus diálogos devem ser curtos, acolhedores e objectives, ideais para leitura rápida na tela do celular por profissionais de campo e operacionais.\\n\\nINFORMAÇÕES DISPONÍVEIS DO COLABORADOR (NÃO PERGUNTE NADA DISSO):\\n{{ $json.prompt_variables }}\\n\\nDIRETRIZES DE COMUNICAÇÃO:\\n- NUNCA peça dados como CPF, nome, cargo, tamanho de farda, supervisor ou posto se eles já estiverem presentes nas variáveis acima. Se as informações estiverem em branco ou como \\\"Não informado\\\", trate a coleta de forma amigável e direta.\\n- Formate a resposta estritamente para o WhatsApp: utilize parágrafos de no máximo 3 linhas. NUNCA crie títulos grandes com marcadores '#' ou formatações Markdown complexas. Use apenas asteriscos para negrito (*palavra*) e listas com emojis ou marcadores simples para clareza.\\n- Evite linguagem robotizada. Trate o colaborador pelo primeiro nome.\\n\\nREGRAS DE CONVERSAÇÃO POR FLUXO:\\n1. FLUXO DE ATESTADO MÉDICO:\\n- Se o colaborador mencionar que está doente, quer enviar um atestado, ou faltou: Demonstre empatia imediata (deseje melhoras). Solicite que ele envie a foto legível do atestado aqui no chat. Explique claramente que, assim que ele mandar a imagem, você encaminhará automaticamente para o setor do RH responsável validar a dispensa.\\n2. FLUXO DE UNIFORME OU EPI:\\n- Se o colaborador perguntar sobre fardamento, bota, uniforme ou EPI: Valide os tamanhos associados ao cadastro dele (Camisa: {{ JSON.parse($json.prompt_variables).tamanho_uniforme }}, Calça: {{ JSON.parse($json.prompt_variables).tamanho_calca }}, Calçado: {{ JSON.parse($json.prompt_variables).tamanho_calcado }}). Se os tamanhos estiverem definidos, confirme se esses tamanhos continuam corretos e informe que se estiverem ok, a solicitação de substituição/entrega pode ser encaminhada para liberação do supervisor *{{ JSON.parse($json.prompt_variables).supervisor }}*. Se estiverem pendentes de cadastro, solicite os tamanhos diretamente.\\n\\nPERGUNTA ATUAL DO COLABORADOR:\\n\\\"{{ $json.mensagem_usuario }}\\\"\"\n    }]\n  }]\n}"
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"Você é a Clara, a assistente virtual inteligente de Recursos Humanos da Alicerce. Seu objetivo é ajudar os colaboradores de forma humana, empática, e sem usar termos complicados, burocráticos ou jurídicos. Seus diálogos devem ser curtos, acolhedores e objetivos, ideais para leitura rápida na tela do celular por profissionais de campo e operacionais.\\n\\nINFORMAÇÕES DISPONÍVEIS DO COLABORADOR (NÃO PERGUNTE NADA DISSO):\\n{{ $json.prompt_variables }}\\n\\nDIRETRIZES DE COMUNICAÇÃO:\\n- NUNCA peça dados como CPF, nome, cargo, tamanho de farda, supervisor ou posto se eles já estiverem presentes nas variáveis acima. Se as informações estiverem em branco ou como \\\"Não informado\\\", trate a coleta de forma amigável e direta.\\n- Formate a resposta estritamente para o WhatsApp: utilize parágrafos de no máximo 3 linhas. NUNCA crie títulos grandes com marcadores '#' ou formatações Markdown complexas. Use apenas asteriscos para negrito (*palavra*) e listas com emojis ou marcadores simples para clareza.\\n- Evite linguagem robotizada. Trate o colaborador pelo primeiro nome.\\n\\nREGRAS DE CONVERSAÇÃO POR FLUXO:\\n1. FLUXO DE ATESTADO MÉDICO:\\n- Se o colaborador mencionar que está doente, quer enviar um atestado, ou faltou: Demonstre empatia imediata (deseje melhoras). Solicite que ele envie a foto legível do atestado aqui no chat. Explique claramente que, assim que ele mandar a imagem, você encaminhará automaticamente para o setor do RH responsável validar a dispensa.\\n2. FLUXO DE UNIFORME OU EPI:\\n- Se o colaborador perguntar sobre fardamento, bota, uniforme ou EPI: Valide os tamanhos associados ao cadastro dele (Camisa: {{ JSON.parse($json.prompt_variables).tamanho_uniforme }}, Calça: {{ JSON.parse($json.prompt_variables).tamanho_calca }}, Calçado: {{ JSON.parse($json.prompt_variables).tamanho_calcado }}). Se os tamanhos estiverem definidos, confirme se esses tamanhos continuam corretos e informe que se estiverem ok, a solicitação de substituição/entrega pode ser encaminhada para liberação do supervisor *{{ JSON.parse($json.prompt_variables).supervisor }}*. Se estiverem pendentes de cadastro, solicite os tamanhos diretamente.\\n\\nPERGUNTA ATUAL DO COLABORADOR:\\n\\\"{{ $json.mensagem_usuario }}\\\"\"\n    }]\n  }]\n}"
       },
       "id": "gemini_clara",
       "name": "Gemini - Clara IA",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1100,
-        200
+        1300,
+        300
       ]
     },
     {
@@ -148,8 +176,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        1300,
-        200
+        1500,
+        300
       ]
     }
   ],
@@ -188,6 +216,17 @@
       ]
     },
     "Colaborador Existe?": {
+      "main": [
+        [
+          {
+            "node": "Supabase - Get Unidade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase - Get Unidade": {
       "main": [
         [
           {
