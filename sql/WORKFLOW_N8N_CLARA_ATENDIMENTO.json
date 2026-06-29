@@ -40,7 +40,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://db.alicerce.cloud/rest/v1/usuarios?select=id,nome,cargo,unidade_alocacao,tamanho_camisa,tamanho_calca,tamanho_sapato,carga_horaria,horario_trabalho,telefone",
+        "url": "https://db.alicerce.cloud/rest/v1/usuarios?select=id,nome,cargo,unidade_alocacao,tamanho_camisa,tamanho_calca,tamanho_sapato,carga_horaria,horario_entrada,horario_saida,telefone",
         "sendHeaders": true,
         "specifyHeaders": "keypair",
         "headerParameters": {
@@ -125,7 +125,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const user = $('Supabase - Get Colaborador').first().json || {};\nconst unit = items[0]?.json || {};\nlet supervisorNome = \"Não atribuído\";\nif (unit.responsavel_nome) {\n  supervisorNome = unit.responsavel_nome;\n} else if (unit.encarregado_nome) {\n  supervisorNome = unit.encarregado_nome;\n}\n\nconst colab_info = {\n  nome: user.nome || \"Colaborador\",\n  cargo: user.cargo || \"Operacional\",\n  posto_trabalho: user.unidade_alocacao || \"Não alocado\",\n  supervisor: supervisorNome,\n  tamanho_uniforme: user.tamanho_camisa || \"Não informado\",\n  tamanho_calca: user.tamanho_calca || \"Não informado\",\n  tamanho_calcado: user.tamanho_sapato || \"Não informado\",\n  escala_trabalho: user.carga_horaria || user.horario_trabalho || \"07:00 às 17:00 (5x2)\"\n};\n\nreturn [{\n  json: {\n    telefone: user.telefone,\n    colaborador_nome: user.nome,\n    colaborador_id: user.id,\n    prompt_variables: JSON.stringify(colab_info, null, 2),\n    mensagem_usuario: $('Webhook - Atendimento Clara').first().json.body.data.message?.conversation || $('Webhook - Atendimento Clara').first().json.body.data.message?.extendedTextMessage?.text || \"\"\n  }\n}];"
+        "jsCode": "const user = $('Supabase - Get Colaborador').first().json || {};\nconst unit = items[0]?.json || {};\nlet supervisorNome = \"Não atribuído\";\nif (unit.responsavel_nome) {\n  supervisorNome = unit.responsavel_nome;\n} else if (unit.encarregado_nome) {\n  supervisorNome = unit.encarregado_nome;\n}\n\nconst escala = user.horario_entrada && user.horario_saida ? `${user.horario_entrada} às ${user.horario_saida} (${user.carga_horaria || ''})` : (user.carga_horaria || \"07:00 às 17:00 (5x2)\");\n\nconst colab_info = {\n  nome: user.nome || \"Colaborador\",\n  cargo: user.cargo || \"Operacional\",\n  posto_trabalho: user.unidade_alocacao || \"Não alocado\",\n  supervisor: supervisorNome,\n  tamanho_uniforme: user.tamanho_camisa || \"Não informado\",\n  tamanho_calca: user.tamanho_calca || \"Não informado\",\n  tamanho_calcado: user.tamanho_sapato || \"Não informado\",\n  escala_trabalho: escala\n};\n\nreturn [{ \n  json: { \n    telefone: user.telefone, \n    colaborador_nome: user.nome, \n    colaborador_id: user.id, \n    prompt_variables: JSON.stringify(colab_info, null, 2), \n    mensagem_usuario: $('Webhook - Atendimento Clara').first().json.body.data.message?.conversation || $('Webhook - Atendimento Clara').first().json.body.data.message?.extendedTextMessage?.text || \"\" \n  } \n}];"
       },
       "id": "code_data_prep",
       "name": "JS Data Prep",
