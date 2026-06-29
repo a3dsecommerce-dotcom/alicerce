@@ -811,8 +811,30 @@ export async function POST(req: Request) {
     });
 
     if (!resolvedMatch) {
-      console.log(`⚠️ Colaborador ${senderUser.nome} (${cleanIncoming}) não possui cobrança de ponto ativa. Ignorando.`);
-      return NextResponse.json({ success: true, message: "Ignorado: Colaborador não está em cobrança ativa" });
+      console.log(`⚠️ Colaborador ${senderUser.nome} (${cleanIncoming}) não possui cobrança de ponto ativa. Encaminhando para Clara.`);
+      
+      // Encaminha a mensagem para o webhook da Clara no n8n
+      fetch("https://n8n-n8n.rvwwep.easypanel.host/webhook/atendimento-clara", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          event: "messages.upsert",
+          instance: "ALICERCE",
+          data: {
+            key: {
+              remoteJid: `${cleanIncoming}@s.whatsapp.net`,
+              fromMe: false,
+              id: "FORWARDED_" + Date.now()
+            },
+            message: {
+              conversation: rawResposta
+            },
+            messageType: "conversation"
+          }
+        })
+      }).catch(err => console.error("Erro ao encaminhar para Clara:", err));
+
+      return NextResponse.json({ success: true, message: "Encaminhado para Clara" });
     }
 
     const dataAgora = new Date().toISOString();
