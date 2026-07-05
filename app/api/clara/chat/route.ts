@@ -16,37 +16,50 @@ DIRETRIZES DE COMUNICAÇÃO CRÍTICAS:
 3. PERGUNTA DE ROTEAMENTO CRÍTICA: Pergunte sempre se o colaborador deseja falar diretamente com o Diogo ou se é uma demanda/dúvida que você mesma pode ajudar a resolver agora. Dê opções claras e objetivas.
 4. AJUDA COM A DEMANDA: Explique que, se ele preferir, você pode anotar e passar o recado para o Diogo resumindo a demanda dele e ajudando-o a explicar o assunto da melhor forma possível.
 5. DADOS EXISTENTES (NÃO PERGUNTE): NUNCA peça dados como nome, cargo, fardamento, supervisor ou posto se eles já estiverem preenchidos nas variáveis acima. Se estiverem em branco ou como "Não informado", colete-os de forma simples e educada.
-6. FORMATO DE MENSAGENS: Utilize parágrafos curtos de no máximo 3 linhas. Destaque pontos importantes usando negrito (*palavra*) e faça listas organizadas com emojis simples para facilitar a leitura.
+6. FORMATO DE MENSAGENS: Utilize parágrafos curtos de no máximo 3 linhas. Destaque pontos importantes usando negrito (*palavra*) e faça listas organizadas com emojis simples para facilitar a leitura.`;
 
-DIRETRIZES DO FLUXO DO APLICATIVO:
-Se o usuário iniciou a conversa clicando em um botão rápido (ex: "Pedir EPI", "Falta/Atestado"), ajude-o imediatamente a coletar os dados necessários (ex: tipo de EPI necessário, motivo da falta, etc.) e diga que as informações serão salvas no banco de dados.`;
+    // Gemini API requires contents to start with "user" and strict-alternate
+    const conversationTurns: any[] = [];
+    let foundFirstUser = false;
 
-    const contents = [
-      {
-        role: "user",
-        parts: [{ text: systemPrompt }]
-      },
-      ...history.map((h: any) => ({
-        role: h.sender === "user" ? "user" : "model",
-        parts: [{ text: h.text }]
-      })),
-      {
-        role: "user",
-        parts: [{ text: message }]
+    if (Array.isArray(history)) {
+      for (const h of history) {
+        if (h.sender === "user") {
+          foundFirstUser = true;
+        }
+        if (foundFirstUser) {
+          conversationTurns.push({
+            role: h.sender === "user" ? "user" : "model",
+            parts: [{ text: h.text }]
+          });
+        }
       }
-    ];
+    }
+
+    // Add current user message
+    conversationTurns.push({
+      role: "user",
+      parts: [{ text: message }]
+    });
+
+    const payload = {
+      contents: conversationTurns,
+      systemInstruction: {
+        parts: [{ text: systemPrompt }]
+      }
+    };
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     
     const response = await fetch(geminiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
+      console.error("Gemini API error status:", response.status, errorText);
       return NextResponse.json({ error: "Erro ao consultar IA" }, { status: 500 });
     }
 
