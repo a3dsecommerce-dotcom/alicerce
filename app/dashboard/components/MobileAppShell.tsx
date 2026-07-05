@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   Home, MessageSquare, Bot, Bell, User, Send, ChevronLeft,
   Package, AlertTriangle, ShieldAlert, Megaphone, HelpCircle,
-  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info
+  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
 
   // Clara Chat state
   const [claraMessages, setClaraMessages] = useState<any[]>([
-    { id: "1", sender: "clara", text: `Olá! Eu sou a Clara, assistente virtual da Alicerce. Como posso te ajudar hoje?` }
+    { id: "1", sender: "clara", text: `Olá! Eu sou a Clara, assistente virtual da Alicerce. Posso tirar suas dúvidas sobre escalas, férias e regulamentos internos!` }
   ]);
   const [claraInput, setClaraInput] = useState("");
   const [claraLoading, setClaraLoading] = useState(false);
@@ -36,8 +36,34 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
   // Notifications state
   const [notifs, setNotifs] = useState<any[]>([]);
   
-  // Impersonated Denúncia state
+  // Modals state for Independent Forms
+  const [epiModal, setEpiModal] = useState(false);
+  const [faltaModal, setFaltaModal] = useState(false);
+  const [ocorrenciaModal, setOcorrenciaModal] = useState(false);
   const [denunciaModal, setDenunciaModal] = useState(false);
+
+  // EPI Form State
+  const [epiCamisa, setEpiCamisa] = useState(user.tamanho_camisa || "M");
+  const [epiCalca, setEpiCalca] = useState(user.tamanho_calca || "38");
+  const [epiSapato, setEpiSapato] = useState(user.tamanho_sapato || "40");
+  const [epiObs, setEpiObs] = useState("");
+  const [enviandoEpi, setEnviandoEpi] = useState(false);
+
+  // Falta/Atestado Form State
+  const [faltaData, setFaltaData] = useState("");
+  const [faltaTipo, setFaltaTipo] = useState("Falta Justificada (com Atestado)");
+  const [faltaMotivo, setFaltaMotivo] = useState("");
+  const [faltaFile, setFaltaFile] = useState<File | null>(null);
+  const [enviandoFalta, setEnviandoFalta] = useState(false);
+
+  // Ocorrência Form State
+  const [ocPosto, setOcPosto] = useState(user.unidade_alocacao || "");
+  const [ocCategoria, setOcCategoria] = useState("Incidente");
+  const [ocGravidade, setOcGravidade] = useState("Média");
+  const [ocDesc, setOcDesc] = useState("");
+  const [enviandoOc, setEnviandoOc] = useState(false);
+
+  // Denúncia State
   const [denunciaNatureza, setDenunciaNatureza] = useState("Conduta Ética / Assédio");
   const [denunciaDetalhe, setDenunciaDetalhe] = useState("");
   const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
@@ -91,7 +117,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
           .order("nome");
         
         if (!error && data) {
-          // Filter out logged user
           setContacts(data.filter((c: any) => c.id !== user.id));
         }
       } catch (err) {
@@ -122,7 +147,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         if (!error && data) {
           setChatMessages(data);
           
-          // Mark received messages as read
           const unreadIds = data
             .filter((m: any) => m.receiver_id === user.id && !m.lida)
             .map((m: any) => m.id);
@@ -144,7 +168,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     loadMessages();
   }, [selectedContact, user?.id]);
 
-  // Supabase Realtime Subscription for direct chat messages
+  // Realtime messages subscription
   useEffect(() => {
     if (!user?.id) return;
 
@@ -156,7 +180,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         (payload) => {
           const newMsg = payload.new as any;
           
-          // If the message concerns the active chat
           if (selectedContact && (
             (newMsg.sender_id === selectedContact.id && newMsg.receiver_id === user.id) ||
             (newMsg.sender_id === user.id && newMsg.receiver_id === selectedContact.id)
@@ -166,13 +189,11 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               return [...prev, newMsg];
             });
 
-            // Mark received as read
             if (newMsg.receiver_id === user.id) {
               supabase.from("chat_mensagens").update({ lida: true }).eq("id", newMsg.id).then();
               playChime();
             }
           } else if (newMsg.receiver_id === user.id) {
-            // Message from someone else, show alert and play chime
             playChime();
             toast.info(`Nova mensagem de outro colaborador no Chat!`);
           }
@@ -218,6 +239,120 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   }, [activeTab, user?.id, user?.secretaria]);
 
+  // Submit EPI Request Form
+  const handleSubmitEpi = async () => {
+    if (!user?.id) return;
+    setEnviandoEpi(true);
+    try {
+      const demandDescription = `Solicitação de Uniforme/EPI: Camisa ${epiCamisa}, Calça ${epiCalca}, Calçado ${epiSapato}. Obs: ${epiObs || "Sem observações"}`;
+      
+      const { error } = await supabase
+        .from("chamados_interacoes")
+        .insert([{
+          colaborador_id: user.id,
+          categoria: "Uniforme/EPI",
+          descricao_demanda: demandDescription,
+          status: "Pendente"
+        }]);
+
+      if (!error) {
+        toast.success("Solicitação de EPI enviada com sucesso para a plataforma!");
+        setEpiModal(false);
+        setEpiObs("");
+      } else {
+        toast.error("Erro ao enviar solicitação: " + error.message);
+      }
+    } catch (err: any) {
+      toast.error("Ocorreu um erro ao processar a solicitação.");
+    } finally {
+      setEnviandoEpi(false);
+    }
+  };
+
+  // Submit Falta/Atestado Form
+  const handleSubmitFalta = async () => {
+    if (!user?.id || !faltaData) {
+      toast.error("Selecione a data da ausência.");
+      return;
+    }
+    setEnviandoFalta(true);
+    try {
+      let fileUrl = "";
+      if (faltaFile) {
+        const fileExt = faltaFile.name.split('.').pop();
+        const filePath = `atestados/${user.id}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("curriculos") // Utilizing the default open public bucket for simple storage
+          .upload(filePath, faltaFile);
+        
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from("curriculos")
+            .getPublicUrl(filePath);
+          fileUrl = publicUrl;
+        }
+      }
+
+      const demandDescription = `Falta informada (${faltaTipo}) em ${faltaData}. Motivo: ${faltaMotivo || "Não informado"}. Anexo: ${fileUrl || "Nenhum arquivo anexado"}`;
+      
+      const { error } = await supabase
+        .from("chamados_interacoes")
+        .insert([{
+          colaborador_id: user.id,
+          categoria: "Atestado",
+          descricao_demanda: demandDescription,
+          status: "Pendente"
+        }]);
+
+      if (!error) {
+        toast.success("Aviso de falta/atestado registrado com sucesso!");
+        setFaltaModal(false);
+        setFaltaData("");
+        setFaltaMotivo("");
+        setFaltaFile(null);
+      } else {
+        toast.error("Erro ao enviar: " + error.message);
+      }
+    } catch (err: any) {
+      toast.error("Ocorreu um erro ao processar.");
+    } finally {
+      setEnviandoFalta(false);
+    }
+  };
+
+  // Submit Ocorrência Form
+  const handleSubmitOcorrencia = async () => {
+    if (!ocDesc.trim()) {
+      toast.error("Descreva o fato da ocorrência.");
+      return;
+    }
+    setEnviandoOc(true);
+    try {
+      const { error } = await supabase
+        .from("ocorrencias_campo")
+        .insert([{
+          posto_afetado: ocPosto || "Não especificado",
+          categoria: ocCategoria,
+          gravidade: ocGravidade,
+          descricao_fato: ocDesc,
+          trecho_original: `Registrado diretamente via App Mobile por ${user.nome} (${user.telefone})`,
+          resolvido: false
+        }]);
+
+      if (!error) {
+        toast.success("Ocorrência operacional registrada com sucesso na plataforma!");
+        setOcorrenciaModal(false);
+        setOcDesc("");
+      } else {
+        toast.error("Erro ao registrar ocorrência: " + error.message);
+      }
+    } catch (err: any) {
+      toast.error("Erro de conexão com o banco de dados.");
+    } finally {
+      setEnviandoOc(false);
+    }
+  };
+
   // Handle direct message sending
   const handleSendDirectMessage = async () => {
     if (!inputText.trim() || !selectedContact || !user?.id) return;
@@ -240,7 +375,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
       if (!error && data) {
         setChatMessages(prev => [...prev, data]);
         
-        // Send WhatsApp notification alert using the endpoint
         fetch("/api/chat/notificar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -259,12 +393,11 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
   };
 
   // Handle Clara AI message sending
-  const handleSendClaraMessage = async (customMessage?: string) => {
-    const textToSend = customMessage || claraInput.trim();
-    if (!textToSend && !customMessage) return;
+  const handleSendClaraMessage = async () => {
+    const textToSend = claraInput.trim();
+    if (!textToSend) return;
     
-    if (!customMessage) setClaraInput("");
-    
+    setClaraInput("");
     const userMsg = { id: Date.now().toString(), sender: "user", text: textToSend };
     setClaraMessages(prev => [...prev, userMsg]);
     setClaraLoading(true);
@@ -304,16 +437,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   };
 
-  // Handle Quick Action Trigger
-  const triggerQuickAction = (topic: string, text: string) => {
-    setActiveTab("clara");
-    // clear history and set action message
-    setClaraMessages([
-      { id: "1", sender: "clara", text: `Entendi que você precisa solicitar um serviço de: *${topic}*. Como posso te ajudar com isso?` }
-    ]);
-    handleSendClaraMessage(text);
-  };
-
   // Handle Anonymous Denúncia registration
   const handleRegisterDenuncia = async () => {
     if (!denunciaDetalhe.trim()) return;
@@ -343,7 +466,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   };
 
-  // Filter contacts by search query
   const filteredContacts = contacts.filter(c => 
     c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -351,7 +473,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
 
   return (
     <div className="mobile-app-shell">
-      {/* Dynamic CSS Styling for Premium Futuristic Dark Look */}
+      {/* Dynamic CSS Styling */}
       <style>{`
         .mobile-app-shell {
           position: fixed;
@@ -370,7 +492,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         }
 
         .glow-card {
-          background: rgba(24, 24, 27, 0.7);
+          background: rgba(24, 24, 27, 0.75);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.05);
           box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
@@ -425,8 +547,8 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 16px;
-          border-radius: 20px;
+          padding: 18px 16px;
+          border-radius: 24px;
           border: 1px solid rgba(255, 255, 255, 0.03);
           transition: all 0.2s ease;
           cursor: pointer;
@@ -467,6 +589,23 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
+
+        .form-input {
+          width: 100%;
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 14px;
+          padding: 12px 16px;
+          color: white;
+          font-size: 13px;
+          outline: none;
+          transition: all 0.2s;
+        }
+
+        .form-input:focus {
+          border-color: #ea580c;
+          background: rgba(234, 88, 12, 0.05);
+        }
       `}</style>
 
       {/* TOP HEADER */}
@@ -501,7 +640,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         {/* ==================== TAB: HOME ==================== */}
         {activeTab === "home" && (
           <div className="flex flex-col gap-5 animate-fade-in">
-            {/* User details card */}
+            {/* User credentials summary */}
             <div className="glow-card p-6 rounded-3xl flex flex-col gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl" />
               <div>
@@ -535,41 +674,41 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
             {/* Quick Actions Grid */}
             <div className="flex flex-col gap-3 mt-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
-                Serviços e Solicitações
+                Serviços Operacionais
               </h3>
               
               <div className="grid grid-cols-2 gap-3">
                 <div 
-                  onClick={() => triggerQuickAction("Fardamento e EPI", "Olá Clara, gostaria de solicitar novos equipamentos de EPI ou fardamento.")}
+                  onClick={() => setEpiModal(true)}
                   className="action-button bg-zinc-900/50"
                 >
                   <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-3">
                     <Package size={20} />
                   </div>
-                  <span className="text-xs font-bold">Solicitar EPI</span>
-                  <span className="text-[9px] text-zinc-500 text-center mt-1">Óculos, bota, camisa</span>
+                  <span className="text-xs font-bold text-center">Pedir Uniforme/EPI</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Calça, sapato, camisa</span>
                 </div>
 
                 <div 
-                  onClick={() => triggerQuickAction("Falta ou Atestado", "Olá Clara, preciso justificar uma falta ou enviar um atestado médico.")}
+                  onClick={() => setFaltaModal(true)}
                   className="action-button bg-zinc-900/50"
                 >
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-3">
                     <AlertTriangle size={20} />
                   </div>
-                  <span className="text-xs font-bold">Atestado / Falta</span>
-                  <span className="text-[9px] text-zinc-500 text-center mt-1">Enviar foto do atestado</span>
+                  <span className="text-xs font-bold text-center">Falta e Atestado</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Justificar ausência</span>
                 </div>
 
                 <div 
-                  onClick={() => triggerQuickAction("Registrar Ocorrência", "Olá Clara, preciso relatar um problema ou ocorrência na minha unidade.")}
+                  onClick={() => setOcorrenciaModal(true)}
                   className="action-button bg-zinc-900/50"
                 >
                   <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 mb-3">
                     <ShieldAlert size={20} />
                   </div>
-                  <span className="text-xs font-bold">Ocorrência</span>
-                  <span className="text-[9px] text-zinc-500 text-center mt-1">Relatar problemas</span>
+                  <span className="text-xs font-bold text-center">Nova Ocorrência</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Reportar incidente</span>
                 </div>
 
                 <div 
@@ -579,21 +718,8 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-3">
                     <Megaphone size={20} />
                   </div>
-                  <span className="text-xs font-bold">Canal de Ética</span>
-                  <span className="text-[9px] text-zinc-500 text-center mt-1">Denúncia anônima</span>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => triggerQuickAction("Dúvidas Gerais", "Olá Clara, tenho dúvidas sobre benefícios, datas ou escala.")}
-                className="w-full p-4 rounded-2xl bg-zinc-900/40 border border-white/5 flex items-center gap-4 hover:bg-zinc-900/60 active:scale-95 transition-all mt-1"
-              >
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                  <HelpCircle size={20} />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-xs font-bold">Tirar Dúvidas / Suporte</h4>
-                  <p className="text-[9px] text-zinc-500 mt-0.5">Pergunte sobre sua escala ou férias</p>
+                  <span className="text-xs font-bold text-center">Canal de Ética</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Anonimato total</span>
                 </div>
               </div>
             </div>
@@ -647,7 +773,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
             ) : (
               // DIRECT MESSAGE BOX VIEW
               <div className="fixed inset-0 z-50 bg-[#09090b] flex flex-col overflow-hidden">
-                {/* Chat header */}
                 <header className="px-5 py-4 border-b border-white/5 flex items-center gap-3 bg-zinc-950">
                   <button onClick={() => setSelectedContact(null)} className="p-2 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400">
                     <ChevronLeft size={20} />
@@ -661,7 +786,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   </div>
                 </header>
 
-                {/* Messages body */}
                 <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3 hide-scrollbar">
                   {loadingMessages ? (
                     <div className="flex-1 flex items-center justify-center">
@@ -697,7 +821,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input bar */}
                 <div className="p-4 border-t border-white/5 bg-zinc-950 flex gap-2 items-center">
                   <input 
                     type="text" 
@@ -741,7 +864,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               <div ref={claraEndRef} />
             </div>
 
-            {/* Input bar for Clara */}
             <div className="mt-auto flex gap-2 items-center pt-3 border-t border-white/5">
               <input 
                 type="text" 
@@ -766,7 +888,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         {activeTab === "notifs" && (
           <div className="flex flex-col gap-3 animate-fade-in">
             <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
-              Notificações do Sistema
+              Informativos e Avisos
             </h3>
             <div className="flex flex-col gap-2">
               {notifs.length > 0 ? (
@@ -790,7 +912,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               ) : (
                 <div className="text-center py-20 text-zinc-500">
                   <Bell size={36} className="opacity-20 mx-auto mb-3" />
-                  <p className="text-xs font-bold">Sem notificações no momento.</p>
+                  <p className="text-xs font-bold">Sem avisos no momento.</p>
                 </div>
               )}
             </div>
@@ -800,7 +922,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         {/* ==================== TAB: PROFILE ==================== */}
         {activeTab === "profile" && (
           <div className="flex flex-col gap-5 animate-fade-in">
-            {/* Detailed profile credentials */}
             <div className="glow-card p-6 rounded-3xl flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-lg">
@@ -828,10 +949,10 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               </div>
             </div>
 
-            {/* Uniform Size Cards */}
+            {/* Uniform Size Info */}
             <div className="flex flex-col gap-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
-                Fardamento / Medidas
+                Medidas Cadastradas
               </h3>
               <div className="grid grid-cols-3 gap-3">
                 <div className="p-3 bg-zinc-900/40 border border-white/5 rounded-2xl flex flex-col items-center">
@@ -849,7 +970,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               </div>
             </div>
 
-            {/* Logout actions */}
             {onLogout && (
               <button 
                 onClick={onLogout}
@@ -863,7 +983,237 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         )}
       </div>
 
-      {/* MODAL: DENÚNCIA ANÔNIMA */}
+      {/* MODAL 1: FORM SOLICITAR EPI/UNIFORME */}
+      {epiModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-orange-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500">
+                <Package size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Solicitar Fardamento/EPI</h3>
+                <p className="text-[9px] text-zinc-400">Os dados serão enviados à central de suprimentos.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Tamanho Camisa</label>
+                  <select 
+                    className="form-input"
+                    value={epiCamisa}
+                    onChange={e => setEpiCamisa(e.target.value)}
+                  >
+                    <option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>EG</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Tamanho Calça</label>
+                  <select 
+                    className="form-input"
+                    value={epiCalca}
+                    onChange={e => setEpiCalca(e.target.value)}
+                  >
+                    {Array.from({ length: 18 }, (_, i) => 34 + i).map(n => <option key={n}>{n}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Tamanho Calçado</label>
+                  <select 
+                    className="form-input"
+                    value={epiSapato}
+                    onChange={e => setEpiSapato(e.target.value)}
+                  >
+                    {Array.from({ length: 13 }, (_, i) => 34 + i).map(n => <option key={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Observações ou Itens Extras</label>
+                <textarea 
+                  className="form-input resize-none min-h-[90px]"
+                  placeholder="Ex: Preciso também de luvas de raspa ou protetor auricular..."
+                  value={epiObs}
+                  onChange={e => setEpiObs(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400" onClick={() => setEpiModal(false)}>Voltar</button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-orange-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoEpi}
+                onClick={handleSubmitEpi}
+              >
+                {enviandoEpi ? "Enviando..." : "Confirmar Pedido"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: FORM FALTA OU ATESTADO */}
+      {faltaModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-amber-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-500">
+                <AlertTriangle size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Informar Falta / Atestado</h3>
+                <p className="text-[9px] text-zinc-400">Aviso imediato para gestão de escalas da equipe.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Tipo de Ausência</label>
+                <select 
+                  className="form-input"
+                  value={faltaTipo}
+                  onChange={e => setFaltaTipo(e.target.value)}
+                >
+                  <option>Falta Justificada (com Atestado)</option>
+                  <option>Falta sem Justificativa / Atraso</option>
+                  <option>Ausência Planejada (Licença/Folga)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Data da Falta</label>
+                  <input 
+                    type="date"
+                    className="form-input"
+                    value={faltaData}
+                    onChange={e => setFaltaData(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Foto do Atestado (Opcional)</label>
+                  <label className="form-input flex items-center justify-center gap-2 cursor-pointer text-zinc-400 border-dashed hover:border-orange-500/30">
+                    <Upload size={14} />
+                    <span className="text-[10px] truncate max-w-[120px]">{faltaFile ? faltaFile.name : "Anexar arquivo"}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*,application/pdf"
+                      onChange={e => e.target.files && setFaltaFile(e.target.files[0])}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Motivo / Justificativa</label>
+                <textarea 
+                  className="form-input resize-none min-h-[70px]"
+                  placeholder="Explique o motivo do seu afastamento..."
+                  value={faltaMotivo}
+                  onChange={e => setFaltaMotivo(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400" onClick={() => setFaltaModal(false)}>Voltar</button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-orange-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoFalta}
+                onClick={handleSubmitFalta}
+              >
+                {enviandoFalta ? "Processando..." : "Registrar Falta"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: FORM REGISTRAR OCORRÊNCIA */}
+      {ocorrenciaModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-red-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500">
+                <ShieldAlert size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Registrar Ocorrência Operacional</h3>
+                <p className="text-[9px] text-zinc-400">Relate incidentes, faltas de insumos ou problemas no posto.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Categoria</label>
+                  <select 
+                    className="form-input"
+                    value={ocCategoria}
+                    onChange={e => setOcCategoria(e.target.value)}
+                  >
+                    <option>Incidente</option>
+                    <option>Infraestrutura</option>
+                    <option>Insumos</option>
+                    <option>Falta/Atraso</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Gravidade</label>
+                  <select 
+                    className="form-input"
+                    value={ocGravidade}
+                    onChange={e => setOcGravidade(e.target.value)}
+                  >
+                    <option>Baixa</option>
+                    <option>Média</option>
+                    <option>Alta</option>
+                    <option>Crítica</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Posto Afetado (Unidade)</label>
+                <input 
+                  type="text" 
+                  className="form-input"
+                  value={ocPosto}
+                  onChange={e => setOcPosto(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Descrição Completa dos Fatos</label>
+                <textarea 
+                  className="form-input resize-none min-h-[90px]"
+                  placeholder="Relate detalhadamente o que ocorreu no canteiro/posto..."
+                  value={ocDesc}
+                  onChange={e => setOcDesc(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400" onClick={() => setOcorrenciaModal(false)}>Voltar</button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-orange-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoOc}
+                onClick={handleSubmitOcorrencia}
+              >
+                {enviandoOc ? "Registrando..." : "Enviar Ocorrência"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: CANAL DE ÉTICA / DENÚNCIA */}
       {denunciaModal && (
         <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-orange-500">
@@ -879,9 +1229,9 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
 
             <div className="flex flex-col gap-4">
               <div>
-                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-2 block">Natureza do Assunto</label>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Natureza do Assunto</label>
                 <select 
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-orange-500 text-white font-semibold"
+                  className="form-input"
                   value={denunciaNatureza}
                   onChange={e => setDenunciaNatureza(e.target.value)}
                 >
@@ -893,9 +1243,9 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               </div>
 
               <div>
-                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-2 block">Detalhe o ocorrido</label>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Detalhe o ocorrido</label>
                 <textarea 
-                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-orange-500 text-white min-h-[120px] resize-none font-semibold"
+                  className="form-input resize-none min-h-[120px]"
                   placeholder="Descreva a situação com o máximo de detalhes possível..."
                   value={denunciaDetalhe}
                   onChange={e => setDenunciaDetalhe(e.target.value)}
