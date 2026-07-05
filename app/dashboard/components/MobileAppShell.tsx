@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   Home, MessageSquare, Bot, Bell, User, Send, ChevronLeft,
   Package, AlertTriangle, ShieldAlert, Megaphone, HelpCircle,
-  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload
+  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload, X
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -70,6 +70,28 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const claraEndRef = useRef<HTMLDivElement>(null);
+
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(true);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === "accepted") {
+      setDeferredPrompt(null);
+    }
+  };
 
   // play sound chime synthesized via Web Audio API
   const playChime = () => {
@@ -670,6 +692,40 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                 </div>
               </div>
             </div>
+
+            {/* PWA Install Banner */}
+            {showInstallBanner && (
+              <div className="p-4 rounded-3xl bg-orange-600/10 border border-orange-500/20 flex flex-col gap-3 relative overflow-hidden">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 bg-orange-500/20 rounded-2xl flex items-center justify-center text-orange-500 shrink-0">
+                    <Sparkles size={20} className="animate-pulse" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xs font-bold text-white leading-tight">Instalar Aplicativo Alicerce</h4>
+                    <p className="text-[10px] text-zinc-400 mt-0.5">Adicione o portal à tela inicial do celular como um aplicativo.</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowInstallBanner(false)}
+                    className="text-zinc-500 hover:text-zinc-300 p-1"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                
+                {deferredPrompt ? (
+                  <button 
+                    onClick={handleInstallApp}
+                    className="w-full py-2.5 rounded-2xl bg-orange-600 text-white font-bold text-xs hover:bg-orange-500 transition-all flex items-center justify-center gap-2"
+                  >
+                    Instalar Agora
+                  </button>
+                ) : (
+                  <div className="text-[10px] text-zinc-400 bg-zinc-950/50 p-3 rounded-2xl leading-relaxed">
+                    💡 **No iPhone (iOS)**: clique no botão de **Compartilhar** do navegador e escolha **"Adicionar à Tela de Início"**.
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quick Actions Grid */}
             <div className="flex flex-col gap-3 mt-2">
