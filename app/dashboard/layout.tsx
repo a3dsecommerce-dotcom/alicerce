@@ -15,6 +15,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { n8n } from "@/lib/n8n";
 import { Toaster } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { MobileAppShell } from "./components/MobileAppShell";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -186,6 +187,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       supabase.removeChannel(channel);
     };
   }, [user?.id, user?.secretaria]);
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <>
+        <MobileAppShell 
+          user={user} 
+          onLogout={() => {
+            document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+            localStorage.removeItem("crm_user");
+            window.location.href = "/";
+          }}
+        />
+        <Toaster position="top-right" richColors />
+      </>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden p-4 gap-4 relative z-10">

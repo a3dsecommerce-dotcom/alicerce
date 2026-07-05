@@ -1,0 +1,982 @@
+"use client";
+import React, { useState, useEffect, useRef } from "react";
+import { 
+  Home, MessageSquare, Bot, Bell, User, Send, ChevronLeft,
+  Package, AlertTriangle, ShieldAlert, Megaphone, HelpCircle,
+  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+
+interface MobileAppShellProps {
+  user: any;
+  onLogout?: () => void;
+}
+
+export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
+  const [activeTab, setActiveTab] = useState<"home" | "chat" | "clara" | "notifs" | "profile">("home");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [selectedContact, setSelectedContact] = useState<any | null>(null);
+  
+  // Real-time peer-to-peer chat state
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+
+  // Clara Chat state
+  const [claraMessages, setClaraMessages] = useState<any[]>([
+    { id: "1", sender: "clara", text: `Olá! Eu sou a Clara, assistente virtual da Alicerce. Como posso te ajudar hoje?` }
+  ]);
+  const [claraInput, setClaraInput] = useState("");
+  const [claraLoading, setClaraLoading] = useState(false);
+
+  // Notifications state
+  const [notifs, setNotifs] = useState<any[]>([]);
+  
+  // Impersonated Denúncia state
+  const [denunciaModal, setDenunciaModal] = useState(false);
+  const [denunciaNatureza, setDenunciaNatureza] = useState("Conduta Ética / Assédio");
+  const [denunciaDetalhe, setDenunciaDetalhe] = useState("");
+  const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const claraEndRef = useRef<HTMLDivElement>(null);
+
+  // play sound chime synthesized via Web Audio API
+  const playChime = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + 0.05);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+      
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (err) {}
+  };
+
+  // Scroll to bottom helper
+  useEffect(() => {
+    if (activeTab === "chat" && selectedContact) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages, selectedContact, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "clara") {
+      claraEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [claraMessages, activeTab]);
+
+  // Fetch contacts for chat
+  useEffect(() => {
+    async function loadContacts() {
+      setLoadingContacts(true);
+      try {
+        const { data, error } = await supabase
+          .from("usuarios")
+          .select("id, nome, cargo, telefone, unidade_alocacao")
+          .eq("status", "ATIVO")
+          .order("nome");
+        
+        if (!error && data) {
+          // Filter out logged user
+          setContacts(data.filter((c: any) => c.id !== user.id));
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingContacts(false);
+      }
+    }
+    
+    if (user?.id) {
+      loadContacts();
+    }
+  }, [user?.id]);
+
+  // Load chat messages when contact is selected
+  useEffect(() => {
+    if (!selectedContact || !user?.id) return;
+    
+    async function loadMessages() {
+      setLoadingMessages(true);
+      try {
+        const { data, error } = await supabase
+          .from("chat_mensagens")
+          .select("*")
+          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedContact.id}),and(sender_id.eq.${selectedContact.id},receiver_id.eq.${user.id})`)
+          .order("created_at", { ascending: true });
+        
+        if (!error && data) {
+          setChatMessages(data);
+          
+          // Mark received messages as read
+          const unreadIds = data
+            .filter((m: any) => m.receiver_id === user.id && !m.lida)
+            .map((m: any) => m.id);
+          
+          if (unreadIds.length > 0) {
+            await supabase
+              .from("chat_mensagens")
+              .update({ lida: true })
+              .in("id", unreadIds);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingMessages(false);
+      }
+    }
+    
+    loadMessages();
+  }, [selectedContact, user?.id]);
+
+  // Supabase Realtime Subscription for direct chat messages
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel("chat-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_mensagens" },
+        (payload) => {
+          const newMsg = payload.new as any;
+          
+          // If the message concerns the active chat
+          if (selectedContact && (
+            (newMsg.sender_id === selectedContact.id && newMsg.receiver_id === user.id) ||
+            (newMsg.sender_id === user.id && newMsg.receiver_id === selectedContact.id)
+          )) {
+            setChatMessages(prev => {
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+
+            // Mark received as read
+            if (newMsg.receiver_id === user.id) {
+              supabase.from("chat_mensagens").update({ lida: true }).eq("id", newMsg.id).then();
+              playChime();
+            }
+          } else if (newMsg.receiver_id === user.id) {
+            // Message from someone else, show alert and play chime
+            playChime();
+            toast.info(`Nova mensagem de outro colaborador no Chat!`);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_mensagens" },
+        (payload) => {
+          const updatedMsg = payload.new as any;
+          setChatMessages(prev => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedContact, user?.id]);
+
+  // Load system notifications
+  useEffect(() => {
+    async function loadNotifications() {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from("notificacoes")
+          .select("*")
+          .or(`user_id.eq.${user.id}${user.secretaria ? `,setor_destino.eq.${user.secretaria}` : ""}`)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        
+        if (!error && data) {
+          setNotifs(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    
+    if (activeTab === "notifs") {
+      loadNotifications();
+    }
+  }, [activeTab, user?.id, user?.secretaria]);
+
+  // Handle direct message sending
+  const handleSendDirectMessage = async () => {
+    if (!inputText.trim() || !selectedContact || !user?.id) return;
+    
+    setSendingMessage(true);
+    const textToSend = inputText.trim();
+    setInputText("");
+    
+    try {
+      const { data, error } = await supabase
+        .from("chat_mensagens")
+        .insert([{
+          sender_id: user.id,
+          receiver_id: selectedContact.id,
+          conteudo: textToSend
+        }])
+        .select()
+        .single();
+      
+      if (!error && data) {
+        setChatMessages(prev => [...prev, data]);
+        
+        // Send WhatsApp notification alert using the endpoint
+        fetch("/api/chat/notificar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            senderName: user.nome,
+            receiverPhone: selectedContact.telefone,
+            text: textToSend
+          })
+        }).catch(err => console.error("Error triggering WhatsApp alert:", err));
+      }
+    } catch (err) {
+      toast.error("Erro ao enviar mensagem.");
+    } finally {
+      setSendingMessage(false);
+    }
+  };
+
+  // Handle Clara AI message sending
+  const handleSendClaraMessage = async (customMessage?: string) => {
+    const textToSend = customMessage || claraInput.trim();
+    if (!textToSend && !customMessage) return;
+    
+    if (!customMessage) setClaraInput("");
+    
+    const userMsg = { id: Date.now().toString(), sender: "user", text: textToSend };
+    setClaraMessages(prev => [...prev, userMsg]);
+    setClaraLoading(true);
+    
+    try {
+      const history = claraMessages.map(m => ({ sender: m.sender, text: m.text }));
+      
+      const res = await fetch("/api/clara/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: textToSend,
+          history,
+          userVariables: {
+            nome: user.nome,
+            cargo: user.cargo,
+            unidade: user.unidade_alocacao,
+            supervisor: user.encarregado_rota || "Não informado",
+            escala: user.carga_horaria || "Não informada",
+            uniforme_camisa: user.tamanho_camisa || "Não informado",
+            uniforme_calca: user.tamanho_calca || "Não informado",
+            uniforme_calcado: user.tamanho_sapato || "Não informado"
+          }
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setClaraMessages(prev => [...prev, { id: Date.now().toString(), sender: "clara", text: data.response }]);
+      } else {
+        throw new Error();
+      }
+    } catch (err) {
+      setClaraMessages(prev => [...prev, { id: Date.now().toString(), sender: "clara", text: "Desculpe, tive uma oscilação na minha conexão. Pode repetir, por favor?" }]);
+    } finally {
+      setClaraLoading(false);
+    }
+  };
+
+  // Handle Quick Action Trigger
+  const triggerQuickAction = (topic: string, text: string) => {
+    setActiveTab("clara");
+    // clear history and set action message
+    setClaraMessages([
+      { id: "1", sender: "clara", text: `Entendi que você precisa solicitar um serviço de: *${topic}*. Como posso te ajudar com isso?` }
+    ]);
+    handleSendClaraMessage(text);
+  };
+
+  // Handle Anonymous Denúncia registration
+  const handleRegisterDenuncia = async () => {
+    if (!denunciaDetalhe.trim()) return;
+    setEnviandoDenuncia(true);
+    const protocol = `ETI-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    
+    try {
+      const { error } = await supabase
+        .from("denuncias_anonimas")
+        .insert([{
+          natureza: denunciaNatureza,
+          detalhamento: denunciaDetalhe,
+          protocolo: protocol
+        }]);
+
+      if (!error) {
+        toast.success(`Denúncia registrada com sucesso! Guarde seu protocolo: ${protocol}`);
+        setDenunciaModal(false);
+        setDenunciaDetalhe("");
+      } else {
+        toast.error("Falha ao registrar relato.");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setEnviandoDenuncia(false);
+    }
+  };
+
+  // Filter contacts by search query
+  const filteredContacts = contacts.filter(c => 
+    c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  return (
+    <div className="mobile-app-shell">
+      {/* Dynamic CSS Styling for Premium Futuristic Dark Look */}
+      <style>{`
+        .mobile-app-shell {
+          position: fixed;
+          inset: 0;
+          background: #09090b;
+          color: #f4f4f5;
+          font-family: var(--font-inter), -apple-system, sans-serif;
+          display: flex;
+          flex-direction: column;
+          z-index: 9999;
+          overflow: hidden;
+        }
+
+        .glow-text {
+          text-shadow: 0 0 10px rgba(234, 88, 12, 0.4);
+        }
+
+        .glow-card {
+          background: rgba(24, 24, 27, 0.7);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px 16px 85px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .bottom-bar {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 70px;
+          background: rgba(18, 18, 18, 0.85);
+          backdrop-filter: blur(25px);
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .tab-btn {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: none;
+          border: none;
+          color: #71717a;
+          font-size: 10px;
+          font-weight: 600;
+          gap: 4px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tab-btn.active {
+          color: #ea580c;
+          transform: translateY(-2px);
+          text-shadow: 0 0 8px rgba(234, 88, 12, 0.3);
+        }
+
+        .action-button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          border-radius: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.03);
+          transition: all 0.2s ease;
+          cursor: pointer;
+        }
+
+        .action-button:active {
+          transform: scale(0.95);
+          background: rgba(234, 88, 12, 0.1) !important;
+          border-color: rgba(234, 88, 12, 0.3);
+        }
+
+        .chat-bubble {
+          max-width: 80%;
+          padding: 12px 16px;
+          border-radius: 20px;
+          font-size: 14px;
+          line-height: 1.4;
+          margin-bottom: 8px;
+          word-break: break-word;
+        }
+
+        .chat-bubble.sent {
+          background: linear-gradient(135deg, #ea580c, #f97316);
+          color: white;
+          align-self: flex-end;
+          border-bottom-right-radius: 4px;
+          box-shadow: 0 4px 15px rgba(234, 88, 12, 0.25);
+        }
+
+        .chat-bubble.received {
+          background: rgba(39, 39, 42, 0.85);
+          color: #f4f4f5;
+          align-self: flex-start;
+          border-bottom-left-radius: 4px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+
+      {/* TOP HEADER */}
+      <header className="px-5 py-4 border-b border-white/5 flex items-center justify-between bg-zinc-950/80 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-orange-400 p-0.5 shadow-lg shadow-orange-600/10">
+            <div className="w-full h-full rounded-2xl bg-zinc-900 flex items-center justify-center font-bold text-orange-500 text-sm uppercase">
+              {user.nome.slice(0, 2)}
+            </div>
+          </div>
+          <div>
+            <h2 className="text-sm font-bold tracking-tight text-white leading-tight">
+              Olá, {user.nome.split(" ")[0]}
+            </h2>
+            <p className="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">
+              {user.cargo || "COLABORADOR"} • {user.unidade_alocacao || "NÃO ALOCADO"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {onLogout && (
+            <button onClick={onLogout} className="p-2.5 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white transition-all">
+              <LogOut size={16} />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* TAB CONTENT HOUSING */}
+      <div className="tab-content hide-scrollbar">
+        {/* ==================== TAB: HOME ==================== */}
+        {activeTab === "home" && (
+          <div className="flex flex-col gap-5 animate-fade-in">
+            {/* User details card */}
+            <div className="glow-card p-6 rounded-3xl flex flex-col gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl" />
+              <div>
+                <span className="text-[9px] font-bold text-orange-500 uppercase tracking-widest block mb-1">
+                  Posto de Trabalho
+                </span>
+                <span className="text-lg font-black text-white leading-snug">
+                  {user.unidade_alocacao || "Aguardando Alocação"}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+                <div>
+                  <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest block mb-0.5">
+                    Escala
+                  </span>
+                  <span className="text-xs font-bold text-white">
+                    {user.carga_horaria || "Administrativo"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest block mb-0.5">
+                    Supervisor
+                  </span>
+                  <span className="text-xs font-bold text-white">
+                    {user.encarregado_rota || "Diretoria"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div className="flex flex-col gap-3 mt-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
+                Serviços e Solicitações
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div 
+                  onClick={() => triggerQuickAction("Fardamento e EPI", "Olá Clara, gostaria de solicitar novos equipamentos de EPI ou fardamento.")}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-3">
+                    <Package size={20} />
+                  </div>
+                  <span className="text-xs font-bold">Solicitar EPI</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Óculos, bota, camisa</span>
+                </div>
+
+                <div 
+                  onClick={() => triggerQuickAction("Falta ou Atestado", "Olá Clara, preciso justificar uma falta ou enviar um atestado médico.")}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-3">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <span className="text-xs font-bold">Atestado / Falta</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Enviar foto do atestado</span>
+                </div>
+
+                <div 
+                  onClick={() => triggerQuickAction("Registrar Ocorrência", "Olá Clara, preciso relatar um problema ou ocorrência na minha unidade.")}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 mb-3">
+                    <ShieldAlert size={20} />
+                  </div>
+                  <span className="text-xs font-bold">Ocorrência</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Relatar problemas</span>
+                </div>
+
+                <div 
+                  onClick={() => setDenunciaModal(true)}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-3">
+                    <Megaphone size={20} />
+                  </div>
+                  <span className="text-xs font-bold">Canal de Ética</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Denúncia anônima</span>
+                </div>
+              </div>
+
+              <div 
+                onClick={() => triggerQuickAction("Dúvidas Gerais", "Olá Clara, tenho dúvidas sobre benefícios, datas ou escala.")}
+                className="w-full p-4 rounded-2xl bg-zinc-900/40 border border-white/5 flex items-center gap-4 hover:bg-zinc-900/60 active:scale-95 transition-all mt-1"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+                  <HelpCircle size={20} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-xs font-bold">Tirar Dúvidas / Suporte</h4>
+                  <p className="text-[9px] text-zinc-500 mt-0.5">Pergunte sobre sua escala ou férias</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== TAB: CHAT ==================== */}
+        {activeTab === "chat" && (
+          <div className="flex-1 flex flex-col gap-4 animate-fade-in overflow-hidden h-full">
+            {!selectedContact ? (
+              // CONTACT LIST VIEW
+              <div className="flex-1 flex flex-col gap-4 overflow-hidden h-full">
+                <input 
+                  type="text" 
+                  placeholder="Pesquisar colega..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-zinc-900 border border-white/5 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-orange-500 transition-all font-semibold"
+                />
+
+                {loadingContacts ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <Loader2 className="animate-spin text-orange-500" size={28} />
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1 hide-scrollbar">
+                    {filteredContacts.length > 0 ? (
+                      filteredContacts.map((contact) => (
+                        <div 
+                          key={contact.id}
+                          onClick={() => setSelectedContact(contact)}
+                          className="w-full p-4 rounded-2xl bg-zinc-900/30 border border-white/5 flex items-center justify-between active:bg-zinc-900/75 transition-all"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-sm">
+                              {contact.nome.slice(0, 2).toUpperCase()}
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-white leading-snug">{contact.nome}</h4>
+                              <p className="text-[10px] text-zinc-500 font-semibold">{contact.cargo || "Operacional"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-zinc-500 text-center py-10 font-bold">Nenhum colega encontrado.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              // DIRECT MESSAGE BOX VIEW
+              <div className="fixed inset-0 z-50 bg-[#09090b] flex flex-col overflow-hidden">
+                {/* Chat header */}
+                <header className="px-5 py-4 border-b border-white/5 flex items-center gap-3 bg-zinc-950">
+                  <button onClick={() => setSelectedContact(null)} className="p-2 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400">
+                    <ChevronLeft size={20} />
+                  </button>
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-sm">
+                    {selectedContact.nome.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-white leading-tight">{selectedContact.nome}</h3>
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase">{selectedContact.cargo || "OPERACIONAL"}</p>
+                  </div>
+                </header>
+
+                {/* Messages body */}
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3 hide-scrollbar">
+                  {loadingMessages ? (
+                    <div className="flex-1 flex items-center justify-center">
+                      <Loader2 className="animate-spin text-orange-500" size={28} />
+                    </div>
+                  ) : chatMessages.length > 0 ? (
+                    chatMessages.map((msg) => {
+                      const isMe = msg.sender_id === user.id;
+                      return (
+                        <div 
+                          key={msg.id}
+                          className={`chat-bubble ${isMe ? 'sent' : 'received'}`}
+                        >
+                          <p>{msg.conteudo}</p>
+                          <div className="flex justify-end items-center gap-1 mt-1 text-[8px] opacity-70">
+                            <span>
+                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {isMe && (
+                              msg.lida ? <CheckCheck size={10} className="text-blue-200" /> : <Check size={10} />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 py-10">
+                      <MessageSquare size={36} className="opacity-20 mb-3" />
+                      <p className="text-xs font-bold">Sem histórico de mensagens.</p>
+                      <p className="text-[10px] opacity-70 mt-1">Envie uma mensagem para iniciar o chat!</p>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input bar */}
+                <div className="p-4 border-t border-white/5 bg-zinc-950 flex gap-2 items-center">
+                  <input 
+                    type="text" 
+                    placeholder="Digite sua mensagem..." 
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendDirectMessage()}
+                    className="flex-1 bg-zinc-900 border border-white/5 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-orange-500 font-semibold"
+                  />
+                  <button 
+                    onClick={handleSendDirectMessage}
+                    disabled={sendingMessage || !inputText.trim()}
+                    className="p-3.5 rounded-2xl bg-orange-600 text-white disabled:opacity-50 active:scale-95 transition-all shadow-lg shadow-orange-600/20"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ==================== TAB: CLARA ==================== */}
+        {activeTab === "clara" && (
+          <div className="flex-1 flex flex-col animate-fade-in overflow-hidden h-full relative">
+            <div className="flex-1 overflow-y-auto flex flex-col gap-3 pr-1 hide-scrollbar pb-4">
+              {claraMessages.map((msg) => (
+                <div 
+                  key={msg.id}
+                  className={`chat-bubble ${msg.sender === "user" ? "sent" : "received"}`}
+                >
+                  <p>{msg.text}</p>
+                </div>
+              ))}
+              {claraLoading && (
+                <div className="chat-bubble received flex items-center gap-2">
+                  <Loader2 className="animate-spin text-orange-500" size={14} />
+                  <span className="text-xs font-bold text-zinc-400">Clara está digitando...</span>
+                </div>
+              )}
+              <div ref={claraEndRef} />
+            </div>
+
+            {/* Input bar for Clara */}
+            <div className="mt-auto flex gap-2 items-center pt-3 border-t border-white/5">
+              <input 
+                type="text" 
+                placeholder="Pergunte à Clara..." 
+                value={claraInput}
+                onChange={(e) => setClaraInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSendClaraMessage()}
+                className="flex-1 bg-zinc-900 border border-white/5 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-orange-500 font-semibold"
+              />
+              <button 
+                onClick={() => handleSendClaraMessage()}
+                disabled={claraLoading || !claraInput.trim()}
+                className="p-3.5 rounded-2xl bg-orange-600 text-white disabled:opacity-50 active:scale-95 transition-all"
+              >
+                <Send size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ==================== TAB: NOTIFS ==================== */}
+        {activeTab === "notifs" && (
+          <div className="flex flex-col gap-3 animate-fade-in">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
+              Notificações do Sistema
+            </h3>
+            <div className="flex flex-col gap-2">
+              {notifs.length > 0 ? (
+                notifs.map((n) => (
+                  <div 
+                    key={n.id}
+                    className="p-4 rounded-2xl bg-zinc-900/30 border border-white/5 flex gap-3 items-start"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0 mt-0.5">
+                      <Bell size={16} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">{n.titulo || "Informativo"}</h4>
+                      <p className="text-[11px] text-zinc-400 mt-1 leading-snug">{n.mensagem}</p>
+                      <span className="text-[8px] text-zinc-600 font-semibold block mt-2">
+                        {new Date(n.created_at).toLocaleDateString("pt-BR")} às {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-20 text-zinc-500">
+                  <Bell size={36} className="opacity-20 mx-auto mb-3" />
+                  <p className="text-xs font-bold">Sem notificações no momento.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ==================== TAB: PROFILE ==================== */}
+        {activeTab === "profile" && (
+          <div className="flex flex-col gap-5 animate-fade-in">
+            {/* Detailed profile credentials */}
+            <div className="glow-card p-6 rounded-3xl flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-lg">
+                  {user.nome.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white leading-tight">{user.nome}</h3>
+                  <p className="text-[10px] text-zinc-500 font-semibold">{user.cargo || "Colaborador"}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-white/5 pt-4 text-xs">
+                <div className="flex justify-between py-1">
+                  <span className="text-zinc-500">Contato</span>
+                  <span className="font-semibold">{user.telefone}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-zinc-500">Unidade Alocada</span>
+                  <span className="font-semibold">{user.unidade_alocacao || "Não alocado"}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-zinc-500">Turno de Trabalho</span>
+                  <span className="font-semibold">{user.turno || "Manhã"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Uniform Size Cards */}
+            <div className="flex flex-col gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400 px-1">
+                Fardamento / Medidas
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-zinc-900/40 border border-white/5 rounded-2xl flex flex-col items-center">
+                  <span className="text-[9px] text-zinc-500 font-bold uppercase">Camisa</span>
+                  <span className="text-sm font-black text-white mt-1">{user.tamanho_camisa || "M"}</span>
+                </div>
+                <div className="p-3 bg-zinc-900/40 border border-white/5 rounded-2xl flex flex-col items-center">
+                  <span className="text-[9px] text-zinc-500 font-bold uppercase">Calça</span>
+                  <span className="text-sm font-black text-white mt-1">{user.tamanho_calca || "38"}</span>
+                </div>
+                <div className="p-3 bg-zinc-900/40 border border-white/5 rounded-2xl flex flex-col items-center">
+                  <span className="text-[9px] text-zinc-500 font-bold uppercase">Calçado</span>
+                  <span className="text-sm font-black text-white mt-1">{user.tamanho_sapato || "40"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Logout actions */}
+            {onLogout && (
+              <button 
+                onClick={onLogout}
+                className="w-full py-4 rounded-2xl bg-red-600/10 border border-red-600/20 text-red-500 font-bold text-xs hover:bg-red-600 hover:text-white transition-all mt-4 flex items-center justify-center gap-2"
+              >
+                <LogOut size={16} />
+                Sair da Conta
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: DENÚNCIA ANÔNIMA */}
+      {denunciaModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-orange-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500">
+                <ShieldCheck size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Canal de Ética Seguro</h3>
+                <p className="text-[9px] text-zinc-400">Sua identidade é mantida em sigilo total.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-2 block">Natureza do Assunto</label>
+                <select 
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-orange-500 text-white font-semibold"
+                  value={denunciaNatureza}
+                  onChange={e => setDenunciaNatureza(e.target.value)}
+                >
+                  <option>Conduta Ética / Assédio</option>
+                  <option>Fraude / Desvio de Patrimônio</option>
+                  <option>Segurança do Trabalho (Risco)</option>
+                  <option>Irregularidade Operacional</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-2 block">Detalhe o ocorrido</label>
+                <textarea 
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-orange-500 text-white min-h-[120px] resize-none font-semibold"
+                  placeholder="Descreva a situação com o máximo de detalhes possível..."
+                  value={denunciaDetalhe}
+                  onChange={e => setDenunciaDetalhe(e.target.value)}
+                />
+              </div>
+
+              <div className="p-3 bg-zinc-950 rounded-xl border border-dashed border-white/5 flex gap-2 items-start">
+                <Info size={14} className="text-orange-500 shrink-0 mt-0.5" />
+                <p className="text-[9px] text-zinc-500 leading-snug">
+                  Este protocolo será encaminhado diretamente ao comitê de conformidade para apuração sem registro do seu usuário.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400"
+                onClick={() => setDenunciaModal(false)}
+              >
+                Voltar
+              </button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-orange-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoDenuncia || !denunciaDetalhe.trim()}
+                onClick={handleRegisterDenuncia}
+              >
+                {enviandoDenuncia ? "Enviando..." : "Enviar Denúncia"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BOTTOM TAB NAV BAR */}
+      <nav className="bottom-bar">
+        <button 
+          onClick={() => setActiveTab("home")}
+          className={`tab-btn ${activeTab === "home" ? "active" : ""}`}
+        >
+          <Home size={22} strokeWidth={activeTab === "home" ? 2.5 : 1.8} />
+          <span>Início</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab("chat")}
+          className={`tab-btn ${activeTab === "chat" ? "active" : ""}`}
+        >
+          <MessageSquare size={22} strokeWidth={activeTab === "chat" ? 2.5 : 1.8} />
+          <span>Conversas</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab("clara")}
+          className={`tab-btn ${activeTab === "clara" ? "active" : ""}`}
+        >
+          <div className="relative">
+            <Bot size={22} strokeWidth={activeTab === "clara" ? 2.5 : 1.8} />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-orange-500 rounded-full animate-ping opacity-75" />
+            <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
+              <Sparkles size={8} className="text-white" />
+            </div>
+          </div>
+          <span>Clara IA</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab("notifs")}
+          className={`tab-btn ${activeTab === "notifs" ? "active" : ""}`}
+        >
+          <Bell size={22} strokeWidth={activeTab === "notifs" ? 2.5 : 1.8} />
+          <span>Avisos</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab("profile")}
+          className={`tab-btn ${activeTab === "profile" ? "active" : ""}`}
+        >
+          <User size={22} strokeWidth={activeTab === "profile" ? 2.5 : 1.8} />
+          <span>Perfil</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
