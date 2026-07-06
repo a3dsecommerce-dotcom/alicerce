@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { User, Lock, Save, Shield, Mail, Phone, Building2, Briefcase, KeyRound } from "lucide-react";
+import { User, Lock, Save, Shield, Mail, Phone, Building2, Briefcase, KeyRound, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
@@ -100,6 +100,65 @@ export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
       setMessage({ type: "error", text: "Erro ao mudar senha: " + err.message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Clube de Serviços Moderation Logic
+  const [adminServices, setAdminServices] = useState<any[]>([]);
+  const [loadingAdminServices, setLoadingAdminServices] = useState(false);
+
+  const loadAdminServices = async () => {
+    if ((user.nivel_acesso || 0) < 3) return;
+    try {
+      setLoadingAdminServices(true);
+      const { data, error } = await supabase
+        .from("servicos_colaboradores")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setAdminServices(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingAdminServices(false);
+    }
+  };
+
+  useEffect(() => {
+    if ((user.nivel_acesso || 0) >= 3) {
+      loadAdminServices();
+    }
+  }, [user.nivel_acesso]);
+
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("servicos_colaboradores")
+        .update({ ativo: !currentStatus })
+        .eq("id", id);
+      if (!error) {
+        setAdminServices(prev =>
+          prev.map(s => s.id === id ? { ...s, ativo: !currentStatus } : s)
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteService = async (id: string) => {
+    if (!confirm("Tem certeza que deseja remover este anúncio de serviço permanentemente?")) return;
+    try {
+      const { error } = await supabase
+        .from("servicos_colaboradores")
+        .delete()
+        .eq("id", id);
+      if (!error) {
+        setAdminServices(prev => prev.filter(s => s.id !== id));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -238,8 +297,74 @@ export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
                </button>
             </form>
 
-         </div>
-      </div>
-    </div>
+          </div>
+
+          {/* SEÇÃO: MODERAÇÃO CLUBE DE SERVIÇOS (Apenas Admins/Gestores) */}
+          {(user.nivel_acesso || 0) >= 3 && (
+            <div className="mt-12 border-t border-[var(--border)] pt-12">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-600 border border-teal-500/20">
+                  <Sparkles size={22} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black uppercase italic">Moderação - Clube de Serviços</h3>
+                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Gerencie os anúncios publicados pelos colaboradores</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto bg-[var(--bg-base)]/20 rounded-[2.5rem] border border-[var(--border)] p-6">
+                {loadingAdminServices ? (
+                  <div className="flex justify-center py-10">
+                    <Loader2 className="animate-spin text-teal-500" size={24} />
+                  </div>
+                ) : adminServices.length === 0 ? (
+                  <p className="text-xs text-[var(--text-muted)] text-center py-10 font-bold uppercase tracking-wider">Nenhum serviço anunciado no momento.</p>
+                ) : (
+                  <table className="w-full text-left text-xs leading-normal">
+                    <thead>
+                      <tr className="border-b border-[var(--border)] text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider">
+                        <th className="py-4 px-4">Prestador</th>
+                        <th className="py-4 px-4">Título</th>
+                        <th className="py-4 px-4">Categoria</th>
+                        <th className="py-4 px-4">Status</th>
+                        <th className="py-4 px-4 text-center">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminServices.map(s => (
+                        <tr key={s.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg-card-hover)]/20 transition-all">
+                          <td className="py-4 px-4 font-bold text-[var(--text-primary)]">{s.colaborador_nome}</td>
+                          <td className="py-4 px-4 text-[var(--text-muted)]">{s.titulo}</td>
+                          <td className="py-4 px-4"><span className="px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-600 font-bold text-[9px] uppercase">{s.categoria}</span></td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2.5 py-1 rounded-full font-bold text-[9px] uppercase ${s.ativo ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                              {s.ativo ? 'Ativo' : 'Pausado'}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 flex justify-center gap-3">
+                            <button 
+                              onClick={() => handleToggleStatus(s.id, s.ativo)}
+                              className={`px-3 py-1.5 rounded-xl border text-[9px] font-bold uppercase tracking-wider transition-all ${s.ativo ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-green-500/10 border-green-500/20 text-green-500'}`}
+                            >
+                              {s.ativo ? 'Pausar' : 'Ativar'}
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteService(s.id)}
+                              className="px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 text-[9px] font-bold uppercase tracking-wider transition-all"
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
+       </div>
+     </div>
   );
 }

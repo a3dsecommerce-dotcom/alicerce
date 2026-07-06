@@ -75,6 +75,16 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
   const [agendaMotivo, setAgendaMotivo] = useState("");
   const [enviandoAgenda, setEnviandoAgenda] = useState(false);
 
+  // Clube de Serviços States
+  const [servicosModal, setServicosModal] = useState(false);
+  const [novoServicoModal, setNovoServicoModal] = useState(false);
+  const [servicos, setServicos] = useState<any[]>([]);
+  const [servicoTitulo, setServicoTitulo] = useState("");
+  const [servicoCategoria, setServicoCategoria] = useState("Construção & Reformas");
+  const [servicoDesc, setServicoDesc] = useState("");
+  const [enviandoServico, setEnviandoServico] = useState(false);
+  const [loadingServicos, setLoadingServicos] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const claraEndRef = useRef<HTMLDivElement>(null);
 
@@ -522,6 +532,68 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   };
 
+  // Load active services
+  const loadServicos = async () => {
+    try {
+      setLoadingServicos(true);
+      const { data, error } = await supabase
+        .from("servicos_colaboradores")
+        .select("*")
+        .eq("ativo", true)
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setServicos(data);
+      }
+    } catch (err) {
+      console.error("Error loading services:", err);
+    } finally {
+      setLoadingServicos(false);
+    }
+  };
+
+  // Submit new service
+  const handleSubmitServico = async () => {
+    if (!servicoTitulo.trim() || !servicoDesc.trim()) {
+      toast.error("Preencha o título e a descrição do serviço.");
+      return;
+    }
+    setEnviandoServico(true);
+    try {
+      const { error } = await supabase
+        .from("servicos_colaboradores")
+        .insert([{
+          colaborador_id: user.id,
+          colaborador_nome: user.nome,
+          colaborador_telefone: user.telefone,
+          titulo: servicoTitulo,
+          categoria: servicoCategoria,
+          descricao: servicoDesc,
+          ativo: true
+        }]);
+
+      if (!error) {
+        toast.success("Serviço cadastrado com sucesso!");
+        setNovoServicoModal(false);
+        setServicoTitulo("");
+        setServicoDesc("");
+        loadServicos();
+      } else {
+        toast.error("Erro ao cadastrar serviço: " + error.message);
+      }
+    } catch (err) {
+      toast.error("Erro de conexão ao salvar.");
+    } finally {
+      setEnviandoServico(false);
+    }
+  };
+
+  // Trigger loading when modal opens
+  useEffect(() => {
+    if (servicosModal) {
+      loadServicos();
+    }
+  }, [servicosModal]);
+
   const filteredContacts = contacts.filter(c => 
     c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -821,6 +893,17 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   </div>
                   <span className="text-xs font-bold text-center">Agendar Escritório</span>
                   <span className="text-[9px] text-zinc-500 text-center mt-1">Atendimento presencial</span>
+                </div>
+
+                <div 
+                  onClick={() => setServicosModal(true)}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-500 mb-3">
+                    <Sparkles size={20} />
+                  </div>
+                  <span className="text-xs font-bold text-center">Clube de Serviços</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Divulgar e contratar</span>
                 </div>
               </div>
             </div>
@@ -1456,6 +1539,158 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                 onClick={handleRegisterAgendamento}
               >
                 {enviandoAgenda ? "Agendando..." : "Confirmar Agendamento"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: CLUBE DE SERVIÇOS (VITRINE) */}
+      {servicosModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex flex-col justify-end lg:justify-center lg:items-center p-0 lg:p-4">
+          <div className="glow-card w-full lg:max-w-[600px] h-[85vh] lg:h-[80vh] p-6 rounded-t-[2.5rem] lg:rounded-[2.5rem] flex flex-col bg-zinc-950 border-t-4 border-teal-500 overflow-hidden">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <div className="flex gap-3 items-center">
+                <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">Clube de Serviços</h3>
+                  <p className="text-[9px] text-zinc-400">Contrate serviços dos seus colegas de trabalho.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setServicosModal(false)}
+                className="p-2 bg-zinc-900 border border-white/5 rounded-xl text-zinc-400"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* List and Actions */}
+            <div className="flex-1 overflow-y-auto pr-1 space-y-4 custom-scrollbar mb-6">
+              <button 
+                onClick={() => setNovoServicoModal(true)}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-600 to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/20"
+              >
+                <Sparkles size={16} />
+                Quero Divulgar um Serviço
+              </button>
+
+              <div className="border-t border-white/5 pt-4">
+                <h4 className="text-xs font-black text-white mb-3">Serviços Disponíveis</h4>
+                
+                {loadingServicos ? (
+                  <div className="flex justify-center py-10">
+                    <Loader2 className="animate-spin text-teal-500" size={24} />
+                  </div>
+                ) : servicos.length === 0 ? (
+                  <p className="text-xs text-zinc-500 text-center py-10">Nenhum serviço divulgado ainda. Seja o primeiro!</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {servicos.map(s => (
+                      <div key={s.id} className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 px-3 py-1 bg-teal-500/10 text-teal-500 text-[8px] font-black uppercase tracking-wider rounded-bl-xl border-l border-b border-teal-500/20">
+                          {s.categoria}
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-black text-white">{s.titulo}</h5>
+                          <span className="text-[9px] text-zinc-500 mt-0.5 block">Oferecido por: <strong>{s.colaborador_nome.split(" ")[0]}</strong></span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-relaxed">{s.descricao}</p>
+                        
+                        <a 
+                          href={`https://wa.me/${s.colaborador_telefone.replace(/\D/g, "")}?text=Olá%20${s.colaborador_nome.split(" ")[0]},%20vi%20seu%20anúncio%20de%20${s.titulo}%20no%20Clube%20de%20Serviços%20da%20Alicerce!`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2 px-4 bg-zinc-950 hover:bg-zinc-900 border border-white/5 text-teal-400 font-bold text-[10px] rounded-xl flex items-center justify-center gap-2 transition-all mt-1"
+                        >
+                          <Phone size={12} />
+                          Falar com o Prestador no WhatsApp
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 7: CADASTRO DE NOVO SERVIÇO */}
+      {novoServicoModal && (
+        <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-teal-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center text-teal-500">
+                <Sparkles size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Divulgar Meu Serviço</h3>
+                <p className="text-[9px] text-zinc-400">Anuncie seus talentos e bicos para toda a equipe.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Título do Anúncio</label>
+                <input 
+                  type="text"
+                  placeholder="Ex: Eletricista Residencial, Pinturas, Bolos e Doces..."
+                  className="form-input"
+                  value={servicoTitulo}
+                  onChange={e => setServicoTitulo(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Categoria</label>
+                <select 
+                  className="form-input"
+                  value={servicoCategoria}
+                  onChange={e => setServicoCategoria(e.target.value)}
+                >
+                  <option>Construção & Reformas</option>
+                  <option>Elétrica & Hidráulica</option>
+                  <option>Gastronomia & Eventos</option>
+                  <option>Beleza & Estética</option>
+                  <option>Transportes & Mudanças</option>
+                  <option>Outros Serviços</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Descrição do Serviço</label>
+                <textarea 
+                  className="form-input resize-none min-h-[100px]"
+                  placeholder="Descreva o que você faz, valores aproximados se quiser, e sua disponibilidade..."
+                  value={servicoDesc}
+                  onChange={e => setServicoDesc(e.target.value)}
+                />
+              </div>
+
+              <div className="p-3 bg-zinc-950 rounded-xl border border-dashed border-white/5 flex gap-2 items-start">
+                <Info size={14} className="text-teal-500 shrink-0 mt-0.5" />
+                <p className="text-[9px] text-zinc-500 leading-snug">
+                  Seu contato de WhatsApp será disponibilizado nos detalhes do anúncio para os interessados falarem direto com você.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400"
+                onClick={() => setNovoServicoModal(false)}
+              >
+                Voltar
+              </button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-teal-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoServico || !servicoTitulo.trim() || !servicoDesc.trim()}
+                onClick={handleSubmitServico}
+              >
+                {enviandoServico ? "Anunciando..." : "Publicar Anúncio"}
               </button>
             </div>
           </div>
