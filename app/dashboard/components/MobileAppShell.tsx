@@ -68,6 +68,13 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
   const [denunciaDetalhe, setDenunciaDetalhe] = useState("");
   const [enviandoDenuncia, setEnviandoDenuncia] = useState(false);
 
+  // Agendamento Form State
+  const [agendamentoModal, setAgendamentoModal] = useState(false);
+  const [agendaData, setAgendaData] = useState("");
+  const [agendaHora, setAgendaHora] = useState("");
+  const [agendaMotivo, setAgendaMotivo] = useState("");
+  const [enviandoAgenda, setEnviandoAgenda] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const claraEndRef = useRef<HTMLDivElement>(null);
 
@@ -488,6 +495,43 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   };
 
+  // Submit Agendamento (Google Calendar & Supabase)
+  const handleRegisterAgendamento = async () => {
+    if (!agendaData || !agendaHora) {
+      toast.error("Informe a data e o horário desejado.");
+      return;
+    }
+    setEnviandoAgenda(true);
+    try {
+      const res = await fetch("/api/agendamento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          colaboradorId: user.id,
+          colaboradorNome: user.nome,
+          dataAgendamento: agendaData,
+          horario: agendaHora,
+          motivo: agendaMotivo
+        })
+      });
+
+      if (res.ok) {
+        toast.success("Atendimento agendado! Verifique a confirmação no painel.");
+        setAgendamentoModal(false);
+        setAgendaData("");
+        setAgendaHora("");
+        setAgendaMotivo("");
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Erro ao solicitar agendamento.");
+      }
+    } catch (err) {
+      toast.error("Erro de conexão ao salvar agendamento.");
+    } finally {
+      setEnviandoAgenda(false);
+    }
+  };
+
   const filteredContacts = contacts.filter(c => 
     c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -776,6 +820,17 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   </div>
                   <span className="text-xs font-bold text-center">Canal de Ética</span>
                   <span className="text-[9px] text-zinc-500 text-center mt-1">Anonimato total</span>
+                </div>
+
+                <div 
+                  onClick={() => setAgendamentoModal(true)}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 mb-3">
+                    <Calendar size={20} />
+                  </div>
+                  <span className="text-xs font-bold text-center">Agendar Escritório</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Atendimento presencial</span>
                 </div>
               </div>
             </div>
@@ -1329,6 +1384,88 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                 onClick={handleRegisterDenuncia}
               >
                 {enviandoDenuncia ? "Enviando..." : "Enviar Denúncia"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 5: AGENDAMENTO ATENDIMENTO */}
+      {agendamentoModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-blue-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500">
+                <Calendar size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Agendar Atendimento</h3>
+                <p className="text-[9px] text-zinc-400">Solicite sua visita de atendimento ao escritório.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Data da Visita</label>
+                <input 
+                  type="date"
+                  className="form-input"
+                  value={agendaData}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={e => setAgendaData(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Horário de Chegada</label>
+                <select 
+                  className="form-input"
+                  value={agendaHora}
+                  onChange={e => setAgendaHora(e.target.value)}
+                >
+                  <option value="">Selecione um horário...</option>
+                  <option value="09:00">09:00</option>
+                  <option value="10:00">10:00</option>
+                  <option value="11:00">11:00</option>
+                  <option value="13:00">13:00</option>
+                  <option value="14:00">14:00</option>
+                  <option value="15:00">15:00</option>
+                  <option value="16:00">16:00</option>
+                  <option value="17:00">17:00</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Motivo do Atendimento</label>
+                <textarea 
+                  className="form-input resize-none min-h-[80px]"
+                  placeholder="Ex: Entrega de documentos, tirar dúvidas de holerite, etc..."
+                  value={agendaMotivo}
+                  onChange={e => setAgendaMotivo(e.target.value)}
+                />
+              </div>
+
+              <div className="p-3 bg-zinc-950 rounded-xl border border-dashed border-white/5 flex gap-2 items-start">
+                <Info size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                <p className="text-[9px] text-zinc-500 leading-snug">
+                  Este agendamento será inserido automaticamente no Google Calendar do Escritório e ficará registrado no portal.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400"
+                onClick={() => setAgendamentoModal(false)}
+              >
+                Voltar
+              </button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-blue-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoAgenda || !agendaData || !agendaHora}
+                onClick={handleRegisterAgendamento}
+              >
+                {enviandoAgenda ? "Agendando..." : "Confirmar Agendamento"}
               </button>
             </div>
           </div>
