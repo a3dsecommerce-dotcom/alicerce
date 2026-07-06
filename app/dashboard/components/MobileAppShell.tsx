@@ -403,16 +403,6 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
       
       if (!error && data) {
         setChatMessages(prev => [...prev, data]);
-        
-        fetch("/api/chat/notificar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            senderName: user.nome,
-            receiverPhone: selectedContact.telefone,
-            text: textToSend
-          })
-        }).catch(err => console.error("Error triggering WhatsApp alert:", err));
       }
     } catch (err) {
       toast.error("Erro ao enviar mensagem.");

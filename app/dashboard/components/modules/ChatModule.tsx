@@ -174,17 +174,6 @@ export default function ChatModule({ user }: ChatModuleProps) {
 
       if (!error && data) {
         setChatMessages(prev => [...prev, data]);
-
-        // Send WhatsApp alert to collaborator notifying them of the new chat message
-        fetch("/api/chat/notificar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            senderName: user.nome || "Administrativo",
-            receiverPhone: selectedContact.telefone,
-            text: textToSend
-          })
-        }).catch(err => console.error("Error triggering WhatsApp alert:", err));
       } else {
         toast.error("Erro ao registrar mensagem no banco.");
       }
