@@ -1,5 +1,5 @@
 import { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, ShoppingBag, Truck, Zap, AlertTriangle, Clock, Settings, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Package, ShieldAlert, ShieldCheck, FileText, ShoppingCart, ShoppingBag, Truck, Zap, AlertTriangle, Clock, Settings, MapPin, MessageSquare } from 'lucide-react';
 
 export type NavItem = {
   href?: string;
@@ -10,6 +10,12 @@ export type NavItem = {
 };
 
 export const ALL_NAV: NavItem[] = [
+  {
+    label: 'Conversas / Chat',
+    icon: MessageSquare,
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'ENCARREGADO', 'RH_DP'],
+    href: '/dashboard?module=CHAT'
+  },
   {
     label: 'Painel de Controle',
     icon: LayoutDashboard,

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { 
   LayoutDashboard, Users, ShoppingBag, Megaphone, 
   Package, ShieldCheck, Activity, Bell, Settings,
-  Loader, AlertTriangle, FileText, BookOpen, Sparkles, Rocket, UserCheck
+  Loader, AlertTriangle, FileText, BookOpen, Sparkles, Rocket, UserCheck, MessageSquare
 } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
@@ -25,6 +25,7 @@ const EncarregadoModule = dynamic(() => import("./components/modules/Encarregado
 const OcorrenciasModule = dynamic(() => import("./components/modules/OcorrenciasModule"), { ssr: false });
 const ManualModule = dynamic(() => import("./components/modules/ManualModule"), { ssr: false });
 const DiretorModule = dynamic(() => import("./components/modules/DiretorModule"), { ssr: false });
+const ChatModule = dynamic(() => import("./components/modules/ChatModule"), { ssr: false });
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
   { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "GERENTE", "GERENCIA", "ENCARREGADO"] },
@@ -37,6 +38,7 @@ const ALL_MODULES = [
   { id: "SETTINGS", label: "Configurações", icon: Settings, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO", "DIRETOR_UNIDADE"] },
   { id: "MANUAL", label: "Manual de Boas Práticas", icon: FileText, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "RH_DP", "RH_PESSOAL", "COMPRADOR", "COMPRAS", "ALMOXARIFE", "ALMOXARIFADO", "TECNICO_SEGURANCA", "COLABORADOR", "SUPERVISOR", "ENCARREGADO", "DIRETOR_UNIDADE"] },
   { id: "DIRETOR", label: "Portal do Diretor", icon: UserCheck, roles: ["ADMIN", "DIRETORIA", "GERENTE", "GERENCIA", "DIRETOR_UNIDADE"] },
+  { id: "CHAT", label: "Conversas / Chat", icon: MessageSquare, roles: ["ADMIN", "GERENTE", "GERENCIA", "ENCARREGADO", "RH_DP"] },
 ];
 
 export default function UnifiedCockpitPage() {
@@ -274,6 +276,7 @@ function CockpitContent() {
             { activeModule === "SETTINGS" && <ConfiguracoesModule user={user} /> }
             { activeModule === "MANUAL" && <ManualModule /> }
             { activeModule === "DIRETOR" && <DiretorModule user={user} /> }
+            { activeModule === "CHAT" && <ChatModule user={user} />}
             { (activeModule === "COMMAND" || !activeModule) && (
                (safeRole === 'ENCARREGADO') 
                  ? <EncarregadoModule user={user} initialTab={tabParam as any} />
