@@ -110,16 +110,45 @@ async function processarFilaCobrancas(
         evolutionInstance: evolutionConfig.evolutionInstance
       };
 
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      // 1. Resolve supervisor/sender ID
+      let senderId = "00000000-0000-0000-0000-000000000000";
+      if (encarregadoTelefone) {
+        const cleanTel = encarregadoTelefone.replace(/\D/g, "");
+        const { data: sup } = await supabase.from('usuarios').select('id').or(`telefone.ilike.%${cleanTel}%`).limit(1).maybeSingle();
+        if (sup?.id) senderId = sup.id;
+      }
+      if (senderId === "00000000-0000-0000-0000-000000000000") {
+        const { data: adm } = await supabase.from('usuarios').select('id').eq('cargo', 'ADMIN').limit(1).maybeSingle();
+        if (adm?.id) senderId = adm.id;
+      }
 
-      if (!response.ok) {
-        console.error(`⚠️ [CRON] Webhook respondeu erro para ${ocorrencia.nome}: ${response.status}`);
+      // 2. Resolve message content based on phase
+      let msgTexto = "";
+      if (faseAtual === 1) {
+        msgTexto = `Olá! Identifiquei uma pendência no ajuste do seu ponto do dia *${ocorrencia.data_referencia}* no MarqPonto: _${ocorrencia.motivo || "Batida pendente"}_.\n\nPor favor, faça a correção no aplicativo.\n\n*Atenção: Esta é uma mensagem de cobrança automática.*`;
+      } else if (faseAtual === 2) {
+        msgTexto = `Atenção! Você ainda não ajustou o seu ponto do dia *${ocorrencia.data_referencia}* (_${ocorrencia.motivo || "Batida pendente"}_).\n\nEste ajuste é obrigatório. Caso tenha tido algum problema técnico, registre uma Ocorrência no menu de início.`;
       } else {
-        console.log(`✅ [CRON] Webhook enviado para ${ocorrencia.nome}`);
+        msgTexto = `⚠️ *URGENTE*: Este é o 3º e último aviso de ajuste de ponto do dia *${ocorrencia.data_referencia}*.\n\nA pendência não foi regularizada e o caso será encaminhado diretamente ao seu Supervisor/Encarregado.`;
+      }
+
+      // 3. Write message in chat_mensagens and notifications
+      if (ocorrencia.colaborador_id) {
+        await supabase.from('chat_mensagens').insert([{
+          sender_id: senderId,
+          receiver_id: ocorrencia.colaborador_id,
+          conteudo: msgTexto,
+          lida: false
+        }]);
+
+        await supabase.from('notificacoes').insert([{
+          user_id: ocorrencia.colaborador_id,
+          titulo: `Cobrança de Ponto (${ocorrencia.data_referencia})`,
+          mensagem: `Pendência no dia ${ocorrencia.data_referencia}: ${ocorrencia.motivo || 'Ajuste Geral'}. Regularize no app.`,
+          tipo: 'alerta',
+          lida: false
+        }]);
+        console.log(`✅ [CRON] Cobrança interna inserida no chat para ${ocorrencia.nome}`);
       }
 
       // Fase 3: escalonar para encarregado

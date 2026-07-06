@@ -146,6 +146,66 @@ export async function GET(req: Request) {
       }))
     };
 
+    // 8.5. Enviar escalas individuais no chat privado de cada volante
+  const dataFormatada = format(tomorrowDate, 'dd/MM/yyyy');
+  try {
+    const { data: adminUser } = await supabase.from('usuarios').select('id').eq('cargo', 'ADMIN').limit(1).maybeSingle();
+    const systemSenderId = adminUser?.id || "00000000-0000-0000-0000-000000000000";
+
+    for (const esc of escalas) {
+      try {
+        const { data: colab } = await supabase
+          .from('usuarios')
+          .select('id')
+          .ilike('nome', esc.colaborador_nome)
+          .limit(1)
+          .maybeSingle();
+
+        if (colab?.id) {
+          let msgTexto = `📋 *SUA ESCALA DE TRABALHO - AMANHÃ (${dataFormatada})*\n\n`;
+          const roteiro = (esc.detalhes_visitas || []);
+          if (roteiro.length > 0) {
+            roteiro.forEach((visita: any) => {
+              msgTexto += `📍 *Unidade:* ${visita.unidade.toUpperCase()}\n`;
+              msgTexto += `🕒 *Horário:* ${visita.entrada} às ${visita.saida || "17:00"}\n`;
+              if (visita.motivo) {
+                msgTexto += `📝 *Motivo:* ${visita.motivo}\n`;
+              }
+              msgTexto += `\n`;
+            });
+          } else {
+            msgTexto += `📍 Roteiro não definido ou aguardando postos.\n`;
+          }
+          if (esc.observacoes) {
+            msgTexto += `📝 *Observação:* ${esc.observacoes}\n`;
+          }
+          msgTexto += `_Por favor, confirme o recebimento._`;
+
+          await supabase.from('chat_mensagens').insert([{
+            sender_id: systemSenderId,
+            receiver_id: colab.id,
+            conteudo: msgTexto,
+            lida: false
+          }]);
+
+          await supabase.from('notificacoes').insert([{
+            user_id: colab.id,
+            titulo: `Escala de Trabalho (${dataFormatada})`,
+            mensagem: `Sua escala de amanhã foi publicada. Unidade: ${roteiro[0]?.unidade || 'Não especificada'}.`,
+            tipo: 'escala',
+            lida: false
+          }]);
+
+          console.log(`✅ [CRON VOLANTES] Escala inserida no chat para ${esc.colaborador_nome}`);
+        }
+      } catch (errColab: any) {
+        console.error(`❌ [CRON VOLANTES] Erro ao enviar para ${esc.colaborador_nome}:`, errColab.message);
+      }
+    }
+  } catch (errSystem: any) {
+    console.error("❌ [CRON VOLANTES] Erro ao obter admin user:", errSystem.message);
+  }
+
     // 9. Enviar POST ao webhook do n8n
     console.log(`📡 [CRON VOLANTES] Enviando post para n8n webhook em ${webhookUrl}...`);
     const response = await fetch(webhookUrl, {
