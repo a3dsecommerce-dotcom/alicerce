@@ -268,7 +268,15 @@ export default function ChatModule({ user }: ChatModuleProps) {
             </div>
 
             {/* Messages Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            <div 
+              className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar"
+              style={{
+                backgroundColor: "#0b141a",
+                backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0)",
+                backgroundSize: "20px 20px",
+                backgroundPosition: "0 0, 10px 10px"
+              }}
+            >
               {loadingMessages ? (
                 <div className="flex justify-center py-20">
                   <Loader2 className="animate-spin text-orange-500" size={24} />
@@ -284,7 +292,13 @@ export default function ChatModule({ user }: ChatModuleProps) {
                   const mine = m.sender_id === user.id;
                   return (
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} animate-fade-in`}>
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${mine ? "bg-orange-600 text-white rounded-br-none" : "bg-zinc-900 text-zinc-200 rounded-bl-none border border-white/5"}`}>
+                      <div 
+                        className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${mine ? "rounded-tr-none" : "rounded-tl-none border border-white/5"}`}
+                        style={{
+                          backgroundColor: mine ? "#005c4b" : "#202c33",
+                          color: "#e9edef"
+                        }}
+                      >
                         <p className="whitespace-pre-line">{m.conteudo}</p>
                         <div className="flex items-center justify-end gap-1.5 mt-1.5 text-[9px] opacity-60">
                           <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
@@ -304,7 +318,7 @@ export default function ChatModule({ user }: ChatModuleProps) {
             <div className="p-4 border-t border-white/5 bg-zinc-950/40">
               <div className="flex gap-2">
                 <textarea
-                  className="flex-1 bg-zinc-900/50 border border-white/5 text-white text-xs rounded-2xl px-4 py-3 placeholder-zinc-500 resize-none focus:outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all h-[44px] custom-scrollbar"
+                  className="flex-1 bg-zinc-900/50 border border-white/5 text-white text-sm rounded-2xl px-4 py-3 placeholder-zinc-500 resize-none focus:outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all h-[50px] custom-scrollbar"
                   placeholder={`Responder a ${selectedContact.nome.split(" ")[0]}...`}
                   value={inputText}
                   onChange={e => setInputText(e.target.value)}

@@ -765,29 +765,37 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         }
 
         .chat-bubble {
-          max-width: 80%;
-          padding: 12px 16px;
-          border-radius: 20px;
-          font-size: 14px;
-          line-height: 1.4;
-          margin-bottom: 8px;
+          max-width: 75%;
+          padding: 10px 14px;
+          border-radius: 16px;
+          font-size: 15px;
+          line-height: 1.45;
+          margin-bottom: 6px;
           word-break: break-word;
+          position: relative;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
         }
 
         .chat-bubble.sent {
-          background: linear-gradient(135deg, #ea580c, #f97316);
-          color: white;
+          background: #005c4b;
+          color: #e9edef;
           align-self: flex-end;
-          border-bottom-right-radius: 4px;
-          box-shadow: 0 4px 15px rgba(234, 88, 12, 0.25);
+          border-top-right-radius: 0px;
         }
 
         .chat-bubble.received {
-          background: rgba(39, 39, 42, 0.85);
-          color: #f4f4f5;
+          background: #202c33;
+          color: #e9edef;
           align-self: flex-start;
-          border-bottom-left-radius: 4px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-top-left-radius: 0px;
+          border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .chat-bg {
+          background-color: #0b141a;
+          background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0), radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 0);
+          background-size: 20px 20px;
+          background-position: 0 0, 10px 10px;
         }
 
         .hide-scrollbar::-webkit-scrollbar {
@@ -1071,7 +1079,7 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3 hide-scrollbar">
+                <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3 hide-scrollbar chat-bg">
                   {loadingMessages ? (
                     <div className="flex-1 flex items-center justify-center">
                       <Loader2 className="animate-spin text-orange-500" size={28} />
