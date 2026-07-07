@@ -153,82 +153,113 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   }, [claraMessages, activeTab]);
 
-  // Fetch contacts for chat
-  useEffect(() => {
-    async function loadContacts() {
-      setLoadingContacts(true);
-      try {
-        const { data, error } = await supabase
-          .from("usuarios")
-          .select("id, nome, cargo, telefone, unidade_alocacao")
-          .eq("status", "ATIVO")
-          .order("nome");
+  // Fetch contacts for chat (useCallback to prevent multiple recreations)
+  const loadContacts = React.useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("id, nome, cargo, telefone, unidade_alocacao")
+        .eq("status", "ATIVO")
+        .order("nome");
+      
+      if (!error && data) {
+        const filtered = data.filter((c: any) => c.id !== user.id);
         
-        if (!error && data) {
-          const filtered = data.filter((c: any) => c.id !== user.id);
-          
-          // Fetch unread count for each contact
-          const contactsWithUnread = await Promise.all(
-            filtered.map(async (contact) => {
-              const { count } = await supabase
-                .from("chat_mensagens")
-                .select("*", { count: "exact", head: true })
-                .eq("sender_id", contact.id)
-                .eq("receiver_id", user.id)
-                .eq("lida", false);
-              return { ...contact, unreadCount: count || 0 };
-            })
-          );
-          setContacts(contactsWithUnread);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingContacts(false);
+        // Fetch unread count for each contact
+        const contactsWithUnread = await Promise.all(
+          filtered.map(async (contact) => {
+            const { count } = await supabase
+              .from("chat_mensagens")
+              .select("*", { count: "exact", head: true })
+              .eq("sender_id", contact.id)
+              .eq("receiver_id", user.id)
+              .eq("lida", false);
+            return { ...contact, unreadCount: count || 0 };
+          })
+        );
+        setContacts(contactsWithUnread);
       }
-    }
-    
-    if (user?.id) {
-      loadContacts();
+    } catch (err) {
+      console.error(err);
     }
   }, [user?.id]);
 
   // Load chat messages when contact is selected
-  useEffect(() => {
+  const loadMessages = React.useCallback(async () => {
     if (!selectedContact || !user?.id) return;
-    
-    async function loadMessages() {
-      setLoadingMessages(true);
-      try {
-        const { data, error } = await supabase
-          .from("chat_mensagens")
-          .select("*")
-          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedContact.id}),and(sender_id.eq.${selectedContact.id},receiver_id.eq.${user.id})`)
-          .order("created_at", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("chat_mensagens")
+        .select("*")
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedContact.id}),and(sender_id.eq.${selectedContact.id},receiver_id.eq.${user.id})`)
+        .order("created_at", { ascending: true });
+      
+      if (!error && data) {
+        setChatMessages(data);
         
-        if (!error && data) {
-          setChatMessages(data);
-          
-          const unreadIds = data
-            .filter((m: any) => m.receiver_id === user.id && !m.lida)
-            .map((m: any) => m.id);
-          
-          if (unreadIds.length > 0) {
-            await supabase
-              .from("chat_mensagens")
-              .update({ lida: true })
-              .in("id", unreadIds);
-          }
+        const unreadIds = data
+          .filter((m: any) => m.receiver_id === user.id && !m.lida)
+          .map((m: any) => m.id);
+        
+        if (unreadIds.length > 0) {
+          await supabase
+            .from("chat_mensagens")
+            .update({ lida: true })
+            .in("id", unreadIds);
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoadingMessages(false);
       }
+    } catch (err) {
+      console.error(err);
     }
-    
-    loadMessages();
   }, [selectedContact, user?.id]);
+
+  // Effect to load contacts on mount / user change
+  useEffect(() => {
+    if (user?.id) {
+      setLoadingContacts(true);
+      loadContacts().finally(() => setLoadingContacts(false));
+    }
+  }, [user?.id, loadContacts]);
+
+  // Effect to load messages when contact selection changes
+  useEffect(() => {
+    if (selectedContact && user?.id) {
+      setLoadingMessages(true);
+      loadMessages().finally(() => setLoadingMessages(false));
+    }
+  }, [selectedContact, user?.id, loadMessages]);
+
+  // Periodic polling (fallback for locked screens/WebSocket sleep) + Page visibility handler
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        loadContacts();
+        if (selectedContact) {
+          loadMessages();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
+
+    // Polling interval as safety net
+    const interval = setInterval(() => {
+      loadContacts();
+      if (selectedContact) {
+        loadMessages();
+      }
+    }, 8000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
+      clearInterval(interval);
+    };
+  }, [user?.id, selectedContact, loadContacts, loadMessages]);
 
   // Realtime messages subscription
   useEffect(() => {
