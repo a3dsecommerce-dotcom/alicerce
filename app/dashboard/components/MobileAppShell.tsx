@@ -165,7 +165,21 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
           .order("nome");
         
         if (!error && data) {
-          setContacts(data.filter((c: any) => c.id !== user.id));
+          const filtered = data.filter((c: any) => c.id !== user.id);
+          
+          // Fetch unread count for each contact
+          const contactsWithUnread = await Promise.all(
+            filtered.map(async (contact) => {
+              const { count } = await supabase
+                .from("chat_mensagens")
+                .select("*", { count: "exact", head: true })
+                .eq("sender_id", contact.id)
+                .eq("receiver_id", user.id)
+                .eq("lida", false);
+              return { ...contact, unreadCount: count || 0 };
+            })
+          );
+          setContacts(contactsWithUnread);
         }
       } catch (err) {
         console.error(err);
@@ -243,7 +257,35 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
             }
           } else if (newMsg.receiver_id === user.id) {
             playChime();
-            toast.info(`Nova mensagem de outro colaborador no Chat!`);
+            
+            // Increment unread count in contacts state!
+            setContacts(prev =>
+              prev.map(c => c.id === newMsg.sender_id ? { ...c, unreadCount: (c.unreadCount || 0) + 1 } : c)
+            );
+
+            // Fetch sender info dynamically to prevent stale closures
+            supabase
+              .from("usuarios")
+              .select("id, nome, cargo, telefone, unidade_alocacao")
+              .eq("id", newMsg.sender_id)
+              .single()
+              .then(({ data: senderContact }) => {
+                if (senderContact) {
+                  const senderName = senderContact.nome || "Colaborador";
+                  toast.info(
+                    `Mensagem de ${senderName.split(" ")[0]}: "${newMsg.conteudo.slice(0, 30)}${newMsg.conteudo.length > 30 ? "..." : ""}"`,
+                    {
+                      action: {
+                        label: "Conversar",
+                        onClick: () => {
+                          setActiveTab("chat");
+                          setSelectedContact(senderContact);
+                        }
+                      }
+                    }
+                  );
+                }
+              });
           }
         }
       )
@@ -663,6 +705,8 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   }, [pedidosTransfModal]);
 
+  const totalUnreadDirect = contacts.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+
   const filteredContacts = contacts.filter(c => 
     c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -1055,6 +1099,11 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                               <p className="text-[10px] text-zinc-500 font-semibold">{contact.cargo || "Operacional"}</p>
                             </div>
                           </div>
+                          {contact.unreadCount > 0 && (
+                            <span className="w-5 h-5 bg-orange-600 text-white font-bold text-[10px] rounded-full flex items-center justify-center shadow-lg shadow-orange-600/20">
+                              {contact.unreadCount}
+                            </span>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -1956,7 +2005,14 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
           onClick={() => setActiveTab("chat")}
           className={`tab-btn ${activeTab === "chat" ? "active" : ""}`}
         >
-          <MessageSquare size={22} strokeWidth={activeTab === "chat" ? 2.5 : 1.8} />
+          <div className="relative">
+            <MessageSquare size={22} strokeWidth={activeTab === "chat" ? 2.5 : 1.8} />
+            {totalUnreadDirect > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-orange-600 rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                {totalUnreadDirect}
+              </span>
+            )}
+          </div>
           <span>Conversas</span>
         </button>
 
