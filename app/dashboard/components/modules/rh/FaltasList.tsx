@@ -22,13 +22,13 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
   const [filtroOrigem, setFiltroOrigem] = useState<string>("");
   const [selecionada, setSelecionada] = useState<any>(null);
 
-  // Lógica de Ciclo: 23 do mês anterior até 22 do mês atual
+  // Lógica de Ciclo: 21 do mês anterior até 20 do mês atual
   const getCycleRange = (date: Date) => {
     const currentYear = date.getFullYear();
     const currentMonth = date.getMonth();
     
-    const end = setDate(new Date(currentYear, currentMonth), 22);
-    const start = setDate(subMonths(new Date(currentYear, currentMonth), 1), 23);
+    const end = setDate(new Date(currentYear, currentMonth), 20);
+    const start = setDate(subMonths(new Date(currentYear, currentMonth), 1), 21);
     
     return { start, end };
   };
