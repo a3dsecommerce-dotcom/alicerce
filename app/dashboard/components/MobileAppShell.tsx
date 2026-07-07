@@ -1114,21 +1114,21 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   <div ref={messagesEndRef} />
                 </div>
 
-                <div className="p-4 border-t border-white/5 bg-zinc-950 flex gap-2 items-center">
+                <div className="p-4 border-t border-white/5 bg-zinc-950 flex gap-3 items-center">
                   <input 
                     type="text" 
                     placeholder="Digite sua mensagem..." 
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSendDirectMessage()}
-                    className="flex-1 bg-zinc-900 border border-white/5 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-orange-500 font-semibold"
+                    className="flex-1 bg-zinc-900 border border-white/5 rounded-2xl px-6 py-4 text-base focus:outline-none focus:border-orange-500 font-semibold text-white"
                   />
                   <button 
                     onClick={handleSendDirectMessage}
                     disabled={sendingMessage || !inputText.trim()}
-                    className="p-3.5 rounded-2xl bg-orange-600 text-white disabled:opacity-50 active:scale-95 transition-all shadow-lg shadow-orange-600/20"
+                    className="w-14 h-14 rounded-2xl bg-orange-600 text-white disabled:opacity-50 active:scale-95 transition-all flex items-center justify-center shadow-lg shadow-orange-600/20 shrink-0"
                   >
-                    <Send size={18} />
+                    <Send size={20} />
                   </button>
                 </div>
               </div>
@@ -1157,21 +1157,21 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               <div ref={claraEndRef} />
             </div>
 
-            <div className="mt-auto flex gap-2 items-center pt-3 border-t border-white/5">
+            <div className="mt-auto flex gap-3 items-center pt-3 border-t border-white/5">
               <input 
                 type="text" 
                 placeholder="Pergunte à Clara..." 
                 value={claraInput}
                 onChange={(e) => setClaraInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendClaraMessage()}
-                className="flex-1 bg-zinc-900 border border-white/5 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-orange-500 font-semibold"
+                className="flex-1 bg-zinc-900 border border-white/5 rounded-2xl px-6 py-4 text-base focus:outline-none focus:border-orange-500 font-semibold text-white"
               />
               <button 
                 onClick={() => handleSendClaraMessage()}
                 disabled={claraLoading || !claraInput.trim()}
-                className="p-3.5 rounded-2xl bg-orange-600 text-white disabled:opacity-50 active:scale-95 transition-all"
+                className="w-14 h-14 rounded-2xl bg-orange-600 text-white disabled:opacity-50 active:scale-95 transition-all flex items-center justify-center shadow-lg shadow-orange-600/20 shrink-0"
               >
-                <Send size={18} />
+                <Send size={20} />
               </button>
             </div>
           </div>
