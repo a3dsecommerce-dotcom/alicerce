@@ -188,9 +188,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
   }, [user?.id, user?.secretaria]);
 
+  const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024);
     };
@@ -198,6 +200,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  if (!mounted) {
+    return (
+      <div className="fixed inset-0 bg-[#09090b] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (
