@@ -25,10 +25,16 @@ export default function ExtrasList({ extras, onDelete }: ExtrasListProps) {
     return { start, end };
   };
 
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const { start, end } = getCycleRange(selectedCycle);
 
   const filtrados = extras.filter(e => {
-    const dataExtra = new Date(e.data);
+    const dataExtra = parseLocalDate(e.data);
     return (isAfter(dataExtra, start) || dataExtra.getTime() === start.getTime()) && 
            (isBefore(dataExtra, end) || dataExtra.getTime() === end.getTime());
   });
@@ -52,7 +58,7 @@ export default function ExtrasList({ extras, onDelete }: ExtrasListProps) {
       startY: 48,
       head: [['Data', 'Colaborador', 'Unidade', 'Período', 'Motivo (Substituído)']],
       body: filtrados.map(e => [
-        format(new Date(e.data), "dd/MM/yyyy"),
+        format(parseLocalDate(e.data), "dd/MM/yyyy"),
         e.colaborador_substituto_nome,
         e.unidade,
         e.periodo,
@@ -117,7 +123,7 @@ export default function ExtrasList({ extras, onDelete }: ExtrasListProps) {
                 <tr key={idx} className="hover:bg-[var(--bg-base)]/30 transition-colors group">
                   <td className="p-8 pl-10">
                     <div className="flex flex-col">
-                      <span className="text-sm font-black text-[var(--text-primary)]">{format(new Date(e.data), "dd/MM/yyyy")}</span>
+                      <span className="text-sm font-black text-[var(--text-primary)]">{format(parseLocalDate(e.data), "dd/MM/yyyy")}</span>
                       <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase italic mt-0.5">{e.horario}</span>
                     </div>
                   </td>

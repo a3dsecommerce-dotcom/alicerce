@@ -33,10 +33,16 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
     return { start, end };
   };
 
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const { start, end } = getCycleRange(selectedCycle);
 
   const filtrados = faltas.filter(e => {
-    const dataFalta = new Date(e.data);
+    const dataFalta = parseLocalDate(e.data);
     const inCycle = (isAfter(dataFalta, start) || dataFalta.getTime() === start.getTime()) && 
            (isBefore(dataFalta, end) || dataFalta.getTime() === end.getTime());
     const matchOrigem = !filtroOrigem || e._origem === filtroOrigem;
@@ -64,7 +70,7 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
       startY: 40,
       head: [['Data', 'Colaborador', 'Unidade', 'Origem', 'Justificada', 'Atestado', 'Observações']],
       body: filtrados.map(e => [
-        format(new Date(e.data), "dd/MM/yyyy"),
+        format(parseLocalDate(e.data), "dd/MM/yyyy"),
         e.colaborador_ausente_nome || "NÃO INFORMADO",
         e.unidade || "—",
         ORIGEM_CONFIG[e._origem]?.label || e._origem || "—",
@@ -157,7 +163,7 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
                   >
                     <td className="p-6 pl-8">
                       <span className="text-sm font-black text-[var(--text-primary)]">
-                        {e.data ? format(new Date(e.data), "dd/MM/yyyy") : "—"}
+                        {e.data ? format(parseLocalDate(e.data), "dd/MM/yyyy") : "—"}
                       </span>
                     </td>
                     <td className="p-6">
