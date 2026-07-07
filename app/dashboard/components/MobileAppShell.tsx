@@ -746,9 +746,16 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
           justify-content: center;
           padding: 18px 16px;
           border-radius: 24px;
-          border: 1px solid rgba(255, 255, 255, 0.03);
-          transition: all 0.2s ease;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
+        }
+
+        .action-button:hover {
+          transform: translateY(-2px);
+          border-color: rgba(255, 255, 255, 0.1);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
         }
 
         .action-button:active {
@@ -792,16 +799,30 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
-          padding: 12px 16px;
+          padding: 12px 18px;
           color: white;
           font-size: 13px;
           outline: none;
+          box-sizing: border-box;
           transition: all 0.2s;
         }
 
         .form-input:focus {
           border-color: #ea580c;
           background: rgba(234, 88, 12, 0.05);
+        }
+
+        select.form-input {
+          appearance: none;
+          background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 40px;
+        }
+
+        select.form-input option {
+          background: #18181b;
+          color: white;
         }
       `}</style>
 
