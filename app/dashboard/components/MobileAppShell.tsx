@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   Home, MessageSquare, Bot, Bell, User, Send, ChevronLeft,
   Package, AlertTriangle, ShieldAlert, Megaphone, HelpCircle,
-  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload, X
+  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload, X, ArrowLeftRight
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -84,6 +84,15 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
   const [servicoDesc, setServicoDesc] = useState("");
   const [enviandoServico, setEnviandoServico] = useState(false);
   const [loadingServicos, setLoadingServicos] = useState(false);
+
+  // Pedidos de Transferência States
+  const [pedidosTransfModal, setPedidosTransfModal] = useState(false);
+  const [novoPedidoTransfModal, setNovoPedidoTransfModal] = useState(false);
+  const [pedidosTransf, setPedidosTransf] = useState<any[]>([]);
+  const [tipoTransf, setTipoTransf] = useState("Posto de Trabalho");
+  const [detalhesTransf, setDetalhesTransf] = useState("");
+  const [enviandoPedidoTransf, setEnviandoPedidoTransf] = useState(false);
+  const [loadingPedidosTransf, setLoadingPedidosTransf] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const claraEndRef = useRef<HTMLDivElement>(null);
@@ -594,6 +603,66 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   }, [servicosModal]);
 
+  // Load collaborator's transfer requests
+  const loadPedidosTransf = async () => {
+    try {
+      setLoadingPedidosTransf(true);
+      const { data, error } = await supabase
+        .from("pedidos_transferencia_colaborador")
+        .select("*")
+        .eq("colaborador_id", user.id)
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        setPedidosTransf(data);
+      }
+    } catch (err) {
+      console.error("Error loading transfer requests:", err);
+    } finally {
+      setLoadingPedidosTransf(false);
+    }
+  };
+
+  // Submit new transfer request
+  const handleSubmitPedidoTransf = async () => {
+    if (!detalhesTransf.trim()) {
+      toast.error("Preencha as justificativas e detalhes do pedido.");
+      return;
+    }
+    setEnviandoPedidoTransf(true);
+    try {
+      const { error } = await supabase
+        .from("pedidos_transferencia_colaborador")
+        .insert([{
+          colaborador_id: user.id,
+          colaborador_nome: user.nome,
+          colaborador_telefone: user.telefone,
+          tipo_transferencia: tipoTransf,
+          detalhes: detalhesTransf,
+          status: 'Pendente'
+        }]);
+
+      if (!error) {
+        toast.success("Pedido de transferência enviado com sucesso!");
+        setNovoPedidoTransfModal(false);
+        setDetalhesTransf("");
+        loadPedidosTransf();
+      } else {
+        toast.error("Erro ao cadastrar pedido: " + error.message);
+      }
+    } catch (err) {
+      toast.error("Erro de conexão ao salvar.");
+    } finally {
+      setEnviandoPedidoTransf(false);
+    }
+  };
+
+  // Trigger loading when modal opens
+  useEffect(() => {
+    if (pedidosTransfModal) {
+      loadPedidosTransf();
+    }
+  }, [pedidosTransfModal]);
+
   const filteredContacts = contacts.filter(c => 
     c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -904,6 +973,17 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                   </div>
                   <span className="text-xs font-bold text-center">Clube de Serviços</span>
                   <span className="text-[9px] text-zinc-500 text-center mt-1">Divulgar e contratar</span>
+                </div>
+
+                <div 
+                  onClick={() => setPedidosTransfModal(true)}
+                  className="action-button bg-zinc-900/50"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-3">
+                    <ArrowLeftRight size={20} />
+                  </div>
+                  <span className="text-xs font-bold text-center">Pedir Transferência</span>
+                  <span className="text-[9px] text-zinc-500 text-center mt-1">Posto, escala ou cargo</span>
                 </div>
               </div>
             </div>
@@ -1691,6 +1771,142 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                 onClick={handleSubmitServico}
               >
                 {enviandoServico ? "Anunciando..." : "Publicar Anúncio"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 8: PEDIDOS DE TRANSFERÊNCIA (LISTA) */}
+      {pedidosTransfModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-md flex flex-col justify-end lg:justify-center lg:items-center p-0 lg:p-4">
+          <div className="glow-card w-full lg:max-w-[600px] h-[85vh] lg:h-[80vh] p-6 rounded-t-[2.5rem] lg:rounded-[2.5rem] flex flex-col bg-zinc-950 border-t-4 border-orange-500 overflow-hidden">
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <div className="flex gap-3 items-center">
+                <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500">
+                  <ArrowLeftRight size={24} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">Solicitar Transferência</h3>
+                  <p className="text-[9px] text-zinc-400">Solicite mudança de posto, escala ou cargo.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPedidosTransfModal(false)}
+                className="p-2 bg-zinc-900 border border-white/5 rounded-xl text-zinc-400"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* List and Actions */}
+            <div className="flex-1 overflow-y-auto pr-1 space-y-4 custom-scrollbar mb-6">
+              <button 
+                onClick={() => setNovoPedidoTransfModal(true)}
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
+              >
+                <ArrowLeftRight size={16} />
+                Nova Solicitação
+              </button>
+
+              <div className="border-t border-white/5 pt-4">
+                <h4 className="text-xs font-black text-white mb-3">Minhas Solicitações</h4>
+                
+                {loadingPedidosTransf ? (
+                  <div className="flex justify-center py-10">
+                    <Loader2 className="animate-spin text-orange-500" size={24} />
+                  </div>
+                ) : pedidosTransf.length === 0 ? (
+                  <p className="text-xs text-zinc-500 text-center py-10">Nenhuma solicitação enviada ainda.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {pedidosTransf.map(p => (
+                      <div key={p.id} className="p-4 rounded-2xl bg-zinc-900/60 border border-white/5 flex flex-col gap-3 relative overflow-hidden">
+                        <div className={`absolute top-0 right-0 px-3 py-1 text-[8px] font-black uppercase tracking-wider rounded-bl-xl border-l border-b ${p.status === 'Pendente' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : p.status.includes('Aprovado') ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                          {p.status}
+                        </div>
+                        <div>
+                          <h5 className="text-xs font-black text-white">{p.tipo_transferencia}</h5>
+                          <span className="text-[8px] text-zinc-500 mt-0.5 block">Enviado em: {new Date(p.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-relaxed italic">"{p.detalhes}"</p>
+                        
+                        {p.resposta_encarregado && (
+                          <div className="p-3 bg-zinc-950 rounded-xl border border-white/5 mt-1">
+                            <span className="text-[8px] font-bold text-zinc-500 uppercase block">Retorno do Encarregado ({p.encarregado_nome || 'Supervisor'}):</span>
+                            <p className="text-[10px] text-zinc-300 mt-1 leading-relaxed">"{p.resposta_encarregado}"</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 9: NOVO PEDIDO DE TRANSFERÊNCIA */}
+      {novoPedidoTransfModal && (
+        <div className="fixed inset-0 z-[1100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="glow-card w-full max-w-[450px] p-6 rounded-3xl animate-fade-in border-t-4 border-orange-500">
+            <div className="flex gap-3 items-center mb-6">
+              <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center text-orange-500">
+                <ArrowLeftRight size={24} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-white">Nova Solicitação de Transferência</h3>
+                <p className="text-[9px] text-zinc-400">Preencha os detalhes e justifique seu pedido.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Tipo de Transferência</label>
+                <select 
+                  className="form-input"
+                  value={tipoTransf}
+                  onChange={e => setTipoTransf(e.target.value)}
+                >
+                  <option>Posto de Trabalho</option>
+                  <option>Escala de Horário</option>
+                  <option>Função/Cargo</option>
+                  <option>Outro Pedido</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Justificativa e Detalhes</label>
+                <textarea 
+                  className="form-input resize-none min-h-[120px]"
+                  placeholder="Escreva detalhadamente para onde/qual escala/função deseja mudar e o motivo da sua solicitação..."
+                  value={detalhesTransf}
+                  onChange={e => setDetalhesTransf(e.target.value)}
+                />
+              </div>
+
+              <div className="p-3 bg-zinc-950 rounded-xl border border-dashed border-white/5 flex gap-2 items-start">
+                <Info size={14} className="text-orange-500 shrink-0 mt-0.5" />
+                <p className="text-[9px] text-zinc-500 leading-snug">
+                  Esta solicitação ficará salva no banco de dados e ficará visível no painel do seu encarregado de rota para avaliação.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                className="flex-1 py-3 rounded-xl bg-zinc-900 border border-white/5 text-xs font-bold text-zinc-400"
+                onClick={() => setNovoPedidoTransfModal(false)}
+              >
+                Voltar
+              </button>
+              <button 
+                className="flex-1 py-3 rounded-xl bg-orange-600 text-white text-xs font-bold disabled:opacity-50"
+                disabled={enviandoPedidoTransf || !detalhesTransf.trim()}
+                onClick={handleSubmitPedidoTransf}
+              >
+                {enviandoPedidoTransf ? "Enviando..." : "Enviar Solicitação"}
               </button>
             </div>
           </div>

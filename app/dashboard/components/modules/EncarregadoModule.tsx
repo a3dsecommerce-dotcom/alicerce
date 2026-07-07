@@ -139,6 +139,11 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
    const [filtroUnidadeColab, setFiltroUnidadeColab] = useState("");
    const [filtroCargoColab, setFiltroCargoColab] = useState("");
 
+   // Pedidos de transferência enviados pelos colaboradores
+   const [pedidosColab, setPedidosColab] = useState<any[]>([]);
+   const [analisandoPedido, setAnalisandoPedido] = useState<any>(null);
+   const [respostaPedidoText, setRespostaPedidoText] = useState("");
+
    // MISSIONS STATE (Top level to avoid Error #310)
    const [missoesAtivas, setMissoesAtivas] = useState<any[]>([]);
    const [selectedMissao, setSelectedMissao] = useState<any>(null);
@@ -308,6 +313,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       setEntregasEpi(entregasRes.data || []);
 
       // Queries dependentes de unitNames
+      let activeColabIds: string[] = [];
       if (unitNames.length > 0) {
         const [colabsRes, ticketsRes, advRes] = await Promise.all([
           supabase.from('usuarios').select('*').in('unidade_alocacao', unitNames),
@@ -317,7 +323,9 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           supabase.from('processos_disciplinares').select('*')
             .in('unidade_alocada', unitNames)
         ]);
-        setMyColabs(colabsRes.data || []);
+        const colabList = colabsRes.data || [];
+        setMyColabs(colabList);
+        activeColabIds = colabList.map((c: any) => c.id);
         setOcorrencias(ticketsRes.data || []);
         setAdvertencias(advRes.data || []);
       } else {
@@ -330,7 +338,7 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       }
 
       // Busca informativos do encarregado logado
-      const [infoDataRes, catDataRes] = await Promise.all([
+      const [infoDataRes, catDataRes, pedidosRes] = await Promise.all([
         supabase
           .from('informativos_operacionais')
           .select('*')
@@ -341,10 +349,21 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
           .from('investigacao_cat')
           .select('*')
           .eq('encarregado_responsavel_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('pedidos_transferencia_colaborador')
+          .select('*')
           .order('created_at', { ascending: false })
       ]);
       setHistoricoInformativos(infoDataRes.data || []);
       setHistoricoCats(catDataRes.data || []);
+      
+      if (activeColabIds.length > 0) {
+        const filtered = (pedidosRes.data || []).filter((p: any) => activeColabIds.includes(p.colaborador_id));
+        setPedidosColab(filtered);
+      } else {
+        setPedidosColab([]);
+      }
     } catch (err) {
       console.error("Erro ao carregar dados do encarregado:", err);
     } finally {
@@ -3010,6 +3029,48 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
     );
   };
 
+  const handleResponderPedidoTransf = async (pedidoId: string, acao: 'Aprovado' | 'Recusado', resposta: string) => {
+    if (!resposta.trim()) {
+      toast.warning("Escreva uma resposta/justificativa para o colaborador.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("pedidos_transferencia_colaborador")
+        .update({
+          status: acao === 'Aprovado' ? 'Aprovado pelo Encarregado' : 'Recusado pelo Encarregado',
+          resposta_encarregado: resposta,
+          encarregado_id: user.id,
+          encarregado_nome: user.nome || user.name,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", pedidoId);
+
+      if (!error) {
+        toast.success(`Pedido ${acao.toLowerCase()} com sucesso!`);
+        
+        // Registrar na atividade
+        await supabase.from('atividades').insert({
+          usuario_id: user.id,
+          usuario_nome: user.nome || user.name,
+          mensagem: `Encarregado respondeu pedido de transferência de colaborador: ${acao}`,
+          tipo: "RH"
+        });
+
+        setAnalisandoPedido(null);
+        setRespostaPedidoText("");
+        fetchEncarregadoData();
+      } else {
+        toast.error("Erro ao responder pedido: " + error.message);
+      }
+    } catch (err) {
+      toast.error("Erro de conexão ao salvar.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderTransferencias = () => {
 
     const selectedColab = myColabs.find(c => c.id === selectedTransferColabId);
@@ -3209,6 +3270,88 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        {/* Seção: Pedidos de Transferência Recebidos dos Colaboradores */}
+        <div className="bg-[var(--bg-card)] p-8 rounded-[2rem] border border-[var(--border)] shadow-xl flex flex-col gap-6 mt-8">
+          <div>
+            <h4 className="text-sm font-black uppercase text-[var(--text-primary)]">Pedidos de Transferência de Colaboradores (Recebidos)</h4>
+            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Solicitações enviadas diretamente pelos funcionários via portal celular</p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--border)]">
+                  <th className="pb-4">Colaborador</th>
+                  <th className="pb-4">Tipo de Transferência</th>
+                  <th className="pb-4">Justificativa / Detalhes</th>
+                  <th className="pb-4 text-center">Status</th>
+                  <th className="pb-4 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {pedidosColab.map((p: any) => (
+                  <tr key={p.id} className="text-xs font-bold">
+                    <td className="py-4 uppercase text-[var(--text-primary)]">
+                      <div>
+                        <p>{p.colaborador_nome}</p>
+                        <p className="text-[8px] text-[var(--text-muted)]">{p.colaborador_telefone}</p>
+                      </div>
+                    </td>
+                    <td className="py-4 text-[var(--text-primary)]">{p.tipo_transferencia}</td>
+                    <td className="py-4 text-[var(--text-muted)] italic max-w-md truncate" title={p.detalhes}>
+                      "{p.detalhes}"
+                    </td>
+                    <td className="py-4 text-center">
+                      <span className={`px-2.5 py-1 rounded text-[8px] font-black uppercase ${
+                        p.status === 'Pendente' ? 'bg-amber-100 text-amber-700' :
+                        p.status.includes('Aprovado') ? 'bg-green-100 text-green-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-4 text-center">
+                      {p.status === 'Pendente' ? (
+                        <div className="flex justify-center gap-2">
+                          <button 
+                            onClick={() => {
+                              const resp = prompt("Digite uma resposta/observação para o colaborador:");
+                              if (resp) handleResponderPedidoTransf(p.id, 'Aprovado', resp);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-all font-bold text-[9px] uppercase"
+                          >
+                            Aprovar
+                          </button>
+                          <button 
+                            onClick={() => {
+                              const resp = prompt("Digite o motivo da recusa para o colaborador:");
+                              if (resp) handleResponderPedidoTransf(p.id, 'Recusado', resp);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all font-bold text-[9px] uppercase"
+                          >
+                            Recusar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-[var(--text-muted)] font-black uppercase">
+                          Respondido por: {p.encarregado_nome || 'Supervisor'}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {pedidosColab.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] opacity-30 italic">
+                      Nenhuma solicitação de transferência recebida dos seus colaboradores.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
