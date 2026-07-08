@@ -19,8 +19,8 @@ export default function ExtrasList({ extras, onDelete }: ExtrasListProps) {
     const currentYear = date.getFullYear();
     const currentMonth = date.getMonth();
     
-    const end = setDate(new Date(currentYear, currentMonth), 20);
-    const start = setDate(subMonths(new Date(currentYear, currentMonth), 1), 21);
+    const start = new Date(currentYear, currentMonth - 1, 21, 0, 0, 0, 0);
+    const end = new Date(currentYear, currentMonth, 20, 23, 59, 59, 999);
     
     return { start, end };
   };
@@ -35,8 +35,7 @@ export default function ExtrasList({ extras, onDelete }: ExtrasListProps) {
 
   const filtrados = extras.filter(e => {
     const dataExtra = parseLocalDate(e.data);
-    return (isAfter(dataExtra, start) || dataExtra.getTime() === start.getTime()) && 
-           (isBefore(dataExtra, end) || dataExtra.getTime() === end.getTime());
+    return dataExtra >= start && dataExtra <= end;
   });
 
   const totalHoras = filtrados.length;

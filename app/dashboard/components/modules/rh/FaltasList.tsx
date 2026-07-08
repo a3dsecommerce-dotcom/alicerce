@@ -27,8 +27,8 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
     const currentYear = date.getFullYear();
     const currentMonth = date.getMonth();
     
-    const end = setDate(new Date(currentYear, currentMonth), 20);
-    const start = setDate(subMonths(new Date(currentYear, currentMonth), 1), 21);
+    const start = new Date(currentYear, currentMonth - 1, 21, 0, 0, 0, 0);
+    const end = new Date(currentYear, currentMonth, 20, 23, 59, 59, 999);
     
     return { start, end };
   };
@@ -43,8 +43,7 @@ export default function FaltasList({ faltas, onDelete }: FaltasListProps) {
 
   const filtrados = faltas.filter(e => {
     const dataFalta = parseLocalDate(e.data);
-    const inCycle = (isAfter(dataFalta, start) || dataFalta.getTime() === start.getTime()) && 
-           (isBefore(dataFalta, end) || dataFalta.getTime() === end.getTime());
+    const inCycle = dataFalta >= start && dataFalta <= end;
     const matchOrigem = !filtroOrigem || e._origem === filtroOrigem;
     return inCycle && matchOrigem;
   });
