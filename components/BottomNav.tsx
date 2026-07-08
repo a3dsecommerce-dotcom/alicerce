@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { label: "Suprimentos", icon: Package,          href: "/dashboard/almoxarifado",              roles: ["ADMIN", "GERENTE", "DIRETORIA", "ALMOXARIFADO", "ALMOXARIFE"] },
   { label: "Segurança",   icon: ShieldCheck,      href: "/dashboard/seguranca",                 roles: ["ADMIN", "GERENTE", "DIRETORIA", "TECNICO_SEGURANCA"] },
   { label: "Gestão",      icon: ShieldAlert,      href: "/dashboard?module=COMMAND",            roles: ["ADMIN", "GERENTE", "DIRETORIA", "ENCARREGADO"] },
-  { label: "Config",      icon: Settings,         href: "/dashboard/config",                    roles: ["ADMIN", "GERENTE", "DIRETORIA"] },
+  { label: "Config",      icon: Settings,         href: "/dashboard?module=SETTINGS",           roles: ["ADMIN", "GERENTE", "DIRETORIA", "RH_DP", "SUPERVISOR", "ENCARREGADO", "COLABORADOR", "DIRETOR_UNIDADE"] },
 ];
 
 export function BottomNav() {

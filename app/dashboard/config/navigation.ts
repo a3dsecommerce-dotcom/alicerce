@@ -81,5 +81,11 @@ export const ALL_NAV: NavItem[] = [
     icon: Building2,
     roles: ['DEV', 'ADMIN', 'DIRETOR_UNIDADE', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
     href: '/dashboard?module=DIRETOR'
+  },
+  {
+    label: 'Configurações',
+    icon: Settings,
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR', 'DIRETOR_UNIDADE'],
+    href: '/dashboard?module=SETTINGS'
   }
 ];

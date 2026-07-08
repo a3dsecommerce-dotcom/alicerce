@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Shield, ShieldCheck, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,6 +16,32 @@ export default function LoginPage() {
   const [modalTrabalhe, setModalTrabalhe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const saved = localStorage.getItem("crm_user");
+      if (saved) {
+        const user = JSON.parse(saved);
+        let dest = "/dashboard";
+        if (user.role === "COMPRADOR") dest = "/dashboard?module=COMPRAS";
+        else if (user.role === "ALMOXARIFADO" || user.role === "ALMOXARIFE") dest = "/dashboard?module=ALMOXARIFADO";
+        router.push(dest);
+      }
+    } catch (err) {
+      console.error("Erro no redirecionamento automático:", err);
+    }
+  }, [router]);
+
+  if (!mounted) {
+    return (
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center gap-6">
+        <img src="/logo.png" alt="Alicerce" className="w-20 h-20 animate-pulse animate-duration-1000" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <p className="text-zinc-400 text-sm font-medium">Carregando...</p>
+      </div>
+    );
+  }
 
   const [candidato, setCandidato] = useState({
     // Passo 1 - Identificação
@@ -170,7 +197,7 @@ export default function LoginPage() {
           margin-bottom: 20px;
         }
         .input-label {
-          font-size: 10px;
+          font-size: 13px;
           font-weight: 800;
           color: var(--text-secondary);
           text-transform: uppercase;
@@ -239,18 +266,18 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div className="login-card animate-fade-in">
+      <main className="login-card animate-fade-in" role="main" aria-label="Login">
         <div className="flex flex-col items-center text-center mb-12">
             <div className="w-16 h-16 bg-orange-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-600/30 mb-6">
               <ShieldCheck size={32} color="white" />
             </div>
             <h1 className="text-3xl font-black text-[var(--text-primary)] tracking-tighter mb-2">Alicerce</h1>
-            <p className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Portal Corporativo</p>
+            <p className="text-[13px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em]">Portal Corporativo</p>
           </div>
 
           <form onSubmit={handleLogin} className="flex-1">
             {error && (
-              <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold text-center animate-shake">
+              <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[13px] font-bold text-center animate-shake">
                 {error}
               </div>
             )}
@@ -293,9 +320,9 @@ export default function LoginPage() {
             <div className="flex justify-between items-center mb-10 px-2">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input type="checkbox" className="w-4 h-4 rounded border-[var(--border)] accent-orange-600" />
-                <span className="text-[11px] font-bold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">Manter conectado</span>
+                <span className="text-[13px] font-bold text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">Manter conectado</span>
               </label>
-              <a href="#" className="text-[11px] font-bold text-orange-600 hover:underline">Esqueci a senha</a>
+              <a href="#" className="text-[13px] font-bold text-orange-600 hover:underline">Esqueci a senha</a>
             </div>
 
             <button type="submit" className="btn-primary" disabled={loading}>
@@ -315,10 +342,10 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-auto pt-8 pb-4 text-center">
-            <p className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] opacity-40">Segurança de Nível Militar</p>
-            <p className="text-[8px] text-[var(--text-secondary)] mt-1 font-bold opacity-20 uppercase tracking-widest">Alicerce ERP • v1.0.0</p>
+            <p className="text-[12px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] opacity-40">Segurança de Nível Militar</p>
+            <p className="text-[12px] text-[var(--text-secondary)] mt-1 font-bold opacity-20 uppercase tracking-widest">Alicerce ERP • v1.0.0</p>
           </div>
-      </div>
+      </main>
 
       {/* Modal Trabalhe Conosco com Tema Smartphone */}
       <AdaptiveModal title="" isOpen={modalTrabalhe} onClose={() => { setModalTrabalhe(false); setStep(1); }} width="440px" fullHeight>
@@ -328,7 +355,7 @@ export default function LoginPage() {
               <Zap size={24} className="text-orange-600" />
             </div>
             <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">Recrutamento</h2>
-            <p className="text-xs font-bold text-[var(--text-secondary)] mt-2 max-w-[280px]">Faça parte da inteligência operacional da Alicerce.</p>
+            <p className="text-[13px] font-bold text-[var(--text-secondary)] mt-2 max-w-[280px]">Faça parte da inteligência operacional da Alicerce.</p>
           </div>
 
           <div className="flex gap-2 mb-8">
@@ -367,7 +394,7 @@ export default function LoginPage() {
                       <button 
                         key={s}
                         onClick={() => setCandidato({...candidato, sexo: s})}
-                        className={`flex-1 p-4 rounded-2xl border-2 transition-all font-bold text-xs ${candidato.sexo === s ? 'border-orange-600 bg-orange-600/10 text-orange-600' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
+                        className={`flex-1 p-4 rounded-2xl border-2 transition-all font-bold text-[13px] ${candidato.sexo === s ? 'border-orange-600 bg-orange-600/10 text-orange-600' : 'border-[var(--border)] text-[var(--text-muted)]'}`}
                       >
                         {s === "M" ? "Masculino" : "Feminino"}
                       </button>
@@ -465,7 +492,7 @@ export default function LoginPage() {
                 </div>
                 <div className="p-5 rounded-2xl bg-white/5 border border-[var(--border)]">
                   <label className="flex items-center justify-between cursor-pointer group">
-                    <span className="text-[11px] font-black uppercase text-[var(--text-secondary)]">Possui Experiência Prévia?</span>
+                    <span className="text-[13px] font-black uppercase text-[var(--text-secondary)]">Possui Experiência Prévia?</span>
                     <input 
                       type="checkbox" 
                       className="w-5 h-5 rounded accent-orange-600" 
@@ -522,19 +549,19 @@ export default function LoginPage() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${candidato.curriculo_file ? 'bg-green-500 text-white' : 'bg-orange-600/10 text-orange-600'}`}>
                           {candidato.curriculo_file ? <CheckCircle2 size={20} /> : <Zap size={20} />}
                         </div>
-                        <span className="text-xs font-black uppercase text-[var(--text-primary)]">
+                        <span className="text-[13px] font-black uppercase text-[var(--text-primary)]">
                           {candidato.curriculo_file ? candidato.curriculo_file.name : "Clique ou arraste seu PDF"}
                         </span>
-                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase">Tamanho máx: 5MB</p>
+                        <p className="text-[13px] font-bold text-[var(--text-muted)] uppercase">Tamanho máx: 5MB</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-6 rounded-3xl bg-orange-600/5 border border-orange-600/10">
-                    <p className="text-[11px] font-bold text-orange-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <p className="text-[13px] font-bold text-orange-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                       <Shield size={14} /> Declaração e Termos
                     </p>
-                    <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed font-medium">
+                    <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed font-medium">
                       Declaro que todas as informações acima são verdadeiras. Estou ciente de que meu cadastro passará por análise da equipe de RH e poderei ser convocado via WhatsApp para entrevista presencial.
                     </p>
                     <label className="flex items-center gap-3 mt-6 cursor-pointer group">
@@ -547,7 +574,7 @@ export default function LoginPage() {
                         />
                         {candidato.declaracao && <CheckCircle2 size={16} className="text-white" />}
                       </div>
-                      <span className="text-xs font-black text-[var(--text-primary)]">Aceito os Termos e Condições</span>
+                      <span className="text-[13px] font-black text-[var(--text-primary)]">Aceito os Termos e Condições</span>
                     </label>
                   </div>
                </div>
@@ -563,7 +590,7 @@ export default function LoginPage() {
               {loading ? "Enviando..." : step === 5 ? "Enviar Proposta" : `Próximo Passo (${step}/5)`}
             </button>
             {step > 1 && (
-              <button onClick={() => setStep(step - 1)} className="text-xs font-black text-[var(--text-secondary)] uppercase tracking-widest hover:text-orange-600 transition-colors">
+              <button onClick={() => setStep(step - 1)} className="text-[13px] font-black text-[var(--text-secondary)] uppercase tracking-widest hover:text-orange-600 transition-colors">
                 Voltar
               </button>
             )}

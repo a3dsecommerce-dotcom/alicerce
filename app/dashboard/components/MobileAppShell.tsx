@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   Home, MessageSquare, Bot, Bell, User, Send, ChevronLeft,
   Package, AlertTriangle, ShieldAlert, Megaphone, HelpCircle,
-  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload, X, ArrowLeftRight
+  LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload, X, ArrowLeftRight,
+  Settings, Lock, CheckCircle2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -14,7 +15,7 @@ interface MobileAppShellProps {
 }
 
 export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
-  const [activeTab, setActiveTab] = useState<"home" | "chat" | "clara" | "notifs" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "chat" | "clara" | "notifs" | "profile" | "settings">("home");
   const [searchQuery, setSearchQuery] = useState("");
   const [contacts, setContacts] = useState<any[]>([]);
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
@@ -94,6 +95,11 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
   const [enviandoPedidoTransf, setEnviandoPedidoTransf] = useState(false);
   const [loadingPedidosTransf, setLoadingPedidosTransf] = useState(false);
 
+  // Mobile settings states
+  const [mobileNovaSenha, setMobileNovaSenha] = useState("");
+  const [mobileConfirmSenha, setMobileConfirmSenha] = useState("");
+  const [mobileSenhaLoading, setMobileSenhaLoading] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const claraEndRef = useRef<HTMLDivElement>(null);
 
@@ -160,14 +166,13 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
       const { data, error } = await supabase
         .from("usuarios")
         .select("id, nome, cargo, telefone, unidade_alocacao")
-        .eq("status", "ATIVO")
-        .order("nome");
+        .eq("status", "ATIVO");
       
       if (!error && data) {
         const filtered = data.filter((c: any) => c.id !== user.id);
         
-        // Fetch unread count for each contact
-        const contactsWithUnread = await Promise.all(
+        // Fetch unread count and last message timestamp for each contact
+        const contactsWithDetails = await Promise.all(
           filtered.map(async (contact) => {
             const { count } = await supabase
               .from("chat_mensagens")
@@ -175,10 +180,30 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
               .eq("sender_id", contact.id)
               .eq("receiver_id", user.id)
               .eq("lida", false);
-            return { ...contact, unreadCount: count || 0 };
+
+            // Fetch last message time
+            const { data: msgData } = await supabase
+              .from("chat_mensagens")
+              .select("created_at")
+              .or(`and(sender_id.eq.${user.id},receiver_id.eq.${contact.id}),and(sender_id.eq.${contact.id},receiver_id.eq.${user.id})`)
+              .order("created_at", { ascending: false })
+              .limit(1);
+
+            const lastMessageTime = msgData && msgData.length > 0 
+              ? new Date(msgData[0].created_at).getTime() 
+              : 0;
+
+            return { 
+              ...contact, 
+              unreadCount: count || 0,
+              lastMessageTime
+            };
           })
         );
-        setContacts(contactsWithUnread);
+        
+        // Sort contacts: recent messages first
+        contactsWithDetails.sort((a, b) => b.lastMessageTime - a.lastMessageTime || a.nome.localeCompare(b.nome));
+        setContacts(contactsWithDetails);
       }
     } catch (err) {
       console.error(err);
@@ -729,6 +754,36 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
     }
   };
 
+  const handleMobileChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mobileNovaSenha !== mobileConfirmSenha) {
+      toast.error("As senhas não coincidem!");
+      return;
+    }
+    if (mobileNovaSenha.length < 4) {
+      toast.error("A senha deve ter pelo menos 4 caracteres.");
+      return;
+    }
+
+    setMobileSenhaLoading(true);
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ senha: mobileNovaSenha })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setMobileNovaSenha("");
+      setMobileConfirmSenha("");
+      toast.success("Senha alterada com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao mudar senha: " + err.message);
+    } finally {
+      setMobileSenhaLoading(false);
+    }
+  };
+
   // Trigger loading when modal opens
   useEffect(() => {
     if (pedidosTransfModal) {
@@ -738,10 +793,28 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
 
   const totalUnreadDirect = contacts.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
-  const filteredContacts = contacts.filter(c => 
-    c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredContacts = contacts.filter(c => {
+    // If searching, search matches all contacts
+    if (searchQuery.trim() !== "") {
+      return c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    
+    // Default list visibility: admins see all
+    const isAdmin = ["DEV", "ADMIN", "GERENTE", "GERENCIA", "RH_DP"].includes(String(user?.role || '').toUpperCase()) || (user?.nivel_acesso || 0) >= 3;
+    if (isAdmin) return true;
+
+    // Standard collaborators see Diogo, Encarregados, or same unit allocation, or someone who sent an unread message
+    const isDiogo = c.nome.toLowerCase().includes("diogo");
+    const isEncarregado = c.cargo && (
+      c.cargo.toLowerCase().includes("encarregado") || 
+      c.cargo.toLowerCase().includes("supervisor")
+    );
+    const isSameUnit = user.unidade_alocacao && c.unidade_alocacao === user.unidade_alocacao;
+    const hasUnread = c.unreadCount > 0;
+
+    return isDiogo || isEncarregado || isSameUnit || hasUnread;
+  });
 
   return (
     <div className="mobile-app-shell">
@@ -1352,6 +1425,83 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                 Sair da Conta
               </button>
             )}
+          </div>
+        )}
+
+        {/* ==================== TAB: SETTINGS ==================== */}
+        {activeTab === "settings" && (
+          <div className="flex flex-col gap-5 animate-fade-in pb-10">
+            <div className="flex items-center gap-3 px-1">
+              <Settings className="text-orange-500" size={20} />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Ajustes & Segurança</h3>
+            </div>
+
+            {/* Change Password Form */}
+            <form onSubmit={handleMobileChangePassword} className="glow-card p-5 rounded-3xl flex flex-col gap-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Lock size={16} className="text-orange-500" />
+                <h4 className="text-xs font-black text-white uppercase">Alterar Senha</h4>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Nova Senha</label>
+                  <input 
+                    type="password"
+                    placeholder="Mínimo 4 caracteres"
+                    className="form-input"
+                    value={mobileNovaSenha}
+                    onChange={e => setMobileNovaSenha(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-zinc-400 uppercase mb-1 block">Confirmar Senha</label>
+                  <input 
+                    type="password"
+                    placeholder="Digite novamente"
+                    className="form-input"
+                    value={mobileConfirmSenha}
+                    onChange={e => setMobileConfirmSenha(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={mobileSenhaLoading}
+                className="w-full py-3.5 rounded-2xl bg-orange-600 text-white font-bold text-xs hover:bg-orange-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/10 active:scale-98"
+              >
+                {mobileSenhaLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                Salvar Senha
+              </button>
+            </form>
+
+            {/* About App Card */}
+            <div className="glow-card p-5 rounded-3xl flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-orange-500" />
+                <h4 className="text-xs font-black text-white uppercase">Sobre o App</h4>
+              </div>
+
+              <div className="text-zinc-300 text-xs leading-relaxed space-y-3 font-medium">
+                <p>
+                  O **Alicerce ERP** é o portal de gestão operacional e inteligência de dados da nossa construtora e serviços.
+                </p>
+                <p>
+                  Idealizado e desenvolvido pelo supervisor e fundador **Diogo**, o sistema integra escalas, rotas, ponto e RH de forma 100% soberana.
+                </p>
+                <p>
+                  A interface foi desenhada com alto contraste e acessibilidade para simplificar a usabilidade de colaboradores de todas as idades, especialmente os idosos no trabalho de campo.
+                </p>
+              </div>
+
+              <div className="border-t border-white/5 pt-3 mt-1 flex justify-between items-center text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
+                <span>Alicerce ERP</span>
+                <span>v1.0.1 Stable</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -2075,6 +2225,14 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         >
           <User size={22} strokeWidth={activeTab === "profile" ? 2.5 : 1.8} />
           <span>Perfil</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveTab("settings")}
+          className={`tab-btn ${activeTab === "settings" ? "active" : ""}`}
+        >
+          <Settings size={22} strokeWidth={activeTab === "settings" ? 2.5 : 1.8} />
+          <span>Ajustes</span>
         </button>
       </nav>
     </div>

@@ -25,27 +25,47 @@ export default function ChatModule({ user }: ChatModuleProps) {
     async function loadContacts() {
       try {
         setLoadingContacts(true);
-        // Load all users to chat with (excluding current admin to avoid self-chatting)
+        // Load all users to chat with (excluding current user to avoid self-chatting)
         const { data, error } = await supabase
           .from("usuarios")
           .select("*")
-          .neq("id", user.id)
-          .order("nome", { ascending: true });
+          .neq("id", user.id);
 
         if (!error && data) {
-          // Fetch unread count for each contact
-          const contactsWithUnread = await Promise.all(
+          // Fetch unread count and last message timestamp for each contact
+          const contactsWithDetails = await Promise.all(
             data.map(async (contact) => {
+              // Fetch unread count
               const { count } = await supabase
                 .from("chat_mensagens")
                 .select("*", { count: "exact", head: true })
                 .eq("sender_id", contact.id)
                 .eq("receiver_id", user.id)
                 .eq("lida", false);
-              return { ...contact, unreadCount: count || 0 };
+
+              // Fetch last message time
+              const { data: msgData } = await supabase
+                .from("chat_mensagens")
+                .select("created_at")
+                .or(`and(sender_id.eq.${user.id},receiver_id.eq.${contact.id}),and(sender_id.eq.${contact.id},receiver_id.eq.${user.id})`)
+                .order("created_at", { ascending: false })
+                .limit(1);
+
+              const lastMessageTime = msgData && msgData.length > 0 
+                ? new Date(msgData[0].created_at).getTime() 
+                : 0;
+
+              return { 
+                ...contact, 
+                unreadCount: count || 0, 
+                lastMessageTime 
+              };
             })
           );
-          setContacts(contactsWithUnread);
+
+          // Sort contacts: recent messages first, then fallback to name alphabetically
+          contactsWithDetails.sort((a, b) => b.lastMessageTime - a.lastMessageTime || a.nome.localeCompare(b.nome));
+          setContacts(contactsWithDetails);
         }
       } catch (err) {
         console.error(err);
@@ -184,10 +204,29 @@ export default function ChatModule({ user }: ChatModuleProps) {
     }
   };
 
-  const filteredContacts = contacts.filter(c => 
-    c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const isAdmin = ["DEV", "ADMIN", "GERENTE", "GERENCIA", "RH_DP"].includes(String(user?.role || '').toUpperCase()) || (user?.nivel_acesso || 0) >= 3;
+
+  const filteredContacts = contacts.filter(c => {
+    // If searching, search matches all contacts
+    if (searchQuery.trim() !== "") {
+      return c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    
+    // Default list visibility: admins see all
+    if (isAdmin) return true;
+
+    // Standard collaborators see Diogo, Encarregados, or same unit allocation, or someone who sent an unread message
+    const isDiogo = c.nome.toLowerCase().includes("diogo");
+    const isEncarregado = c.cargo && (
+      c.cargo.toLowerCase().includes("encarregado") || 
+      c.cargo.toLowerCase().includes("supervisor")
+    );
+    const isSameUnit = user.unidade_alocacao && c.unidade_alocacao === user.unidade_alocacao;
+    const hasUnread = c.unreadCount > 0;
+
+    return isDiogo || isEncarregado || isSameUnit || hasUnread;
+  });
 
   return (
     <div className="flex h-[calc(100vh-140px)] w-full bg-zinc-950/20 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden">

@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
-import { User, Lock, Save, Shield, Mail, Phone, Building2, Briefcase, KeyRound, Sparkles, Loader2 } from "lucide-react";
+import { User, Lock, Save, Shield, Mail, Phone, Building2, Briefcase, KeyRound, Sparkles, Loader2, Info, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(propUser || {});
+  const [activeTab, setActiveTab] = useState<"perfil" | "seguranca" | "sobre" | "moderacao">("perfil");
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -55,14 +56,14 @@ export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
 
       if (error) throw error;
       
-      // Atualizar localStorage para manter consistência
+      // Update local storage
       const saved = localStorage.getItem("crm_user");
       if (saved) {
         const parsed = JSON.parse(saved);
         localStorage.setItem("crm_user", JSON.stringify({
           ...parsed,
           name: formData.nome,
-          email: formData.telefone // Usamos telefone como 'email' na sessão por padrão do sistema
+          email: formData.telefone
         }));
       }
 
@@ -162,167 +163,248 @@ export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
     }
   };
 
-  return (
-    <div className="flex flex-col gap-10 animate-fade-in pb-20">
-      
-      <div className="bg-[var(--bg-card)] p-10 rounded-[3rem] border border-[var(--border)] shadow-xl relative overflow-hidden">
-         <div className="absolute top-0 right-0 p-8 opacity-5">
-            <Shield size={120} className="text-[var(--brand)]" />
-         </div>
-         
-         <div className="mb-12">
-            <h2 className="text-3xl font-black text-[var(--text-primary)] italic tracking-tight">Configurações de Conta</h2>
-            <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mt-2">Gerencie seus dados pessoais e segurança de acesso</p>
-         </div>
+  const isModerator = (user.nivel_acesso || 0) >= 3;
 
+  return (
+    <div className="flex flex-col gap-8 animate-fade-in pb-20">
+      
+      {/* Tab Selectors */}
+      <div className="flex flex-wrap gap-2 p-1.5 bg-zinc-900/60 rounded-2xl border border-white/5 self-start max-w-full">
+        <button 
+          onClick={() => { setActiveTab("perfil"); setMessage({ type: "", text: "" }); }}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all uppercase tracking-wider flex items-center gap-2 ${activeTab === 'perfil' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/10' : 'text-zinc-400 hover:text-white'}`}
+        >
+          <User size={14} /> Meu Perfil
+        </button>
+        <button 
+          onClick={() => { setActiveTab("seguranca"); setMessage({ type: "", text: "" }); }}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all uppercase tracking-wider flex items-center gap-2 ${activeTab === 'seguranca' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/10' : 'text-zinc-400 hover:text-white'}`}
+        >
+          <Lock size={14} /> Alterar Senha
+        </button>
+        <button 
+          onClick={() => { setActiveTab("sobre"); setMessage({ type: "", text: "" }); }}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all uppercase tracking-wider flex items-center gap-2 ${activeTab === 'sobre' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/10' : 'text-zinc-400 hover:text-white'}`}
+        >
+          <Info size={14} /> Sobre o App
+        </button>
+        {isModerator && (
+          <button 
+            onClick={() => { setActiveTab("moderacao"); setMessage({ type: "", text: "" }); }}
+            className={`px-5 py-2.5 rounded-xl font-bold text-xs transition-all uppercase tracking-wider flex items-center gap-2 ${activeTab === 'moderacao' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/10' : 'text-zinc-400 hover:text-white'}`}
+          >
+            <Sparkles size={14} /> Moderação
+          </button>
+        )}
+      </div>
+
+      <div className="bg-zinc-900/40 backdrop-blur-xl p-6 md:p-10 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden">
+         
          {message.text && (
-            <div className={`mb-8 p-6 rounded-2xl border ${message.type === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'} text-xs font-black uppercase tracking-widest animate-bounce-subtle`}>
+            <div className={`mb-8 p-5 rounded-2xl border ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'} text-xs font-black uppercase tracking-widest`}>
                {message.text}
             </div>
          )}
 
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            
-            {/* 1. ATUALIZAR CADASTRO */}
-            <form onSubmit={handleUpdateProfile} className="space-y-8 bg-[var(--bg-base)]/30 p-10 rounded-[2.5rem] border border-[var(--border)]">
-               <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[var(--brand)] shadow-md border border-[var(--border)]"><User size={22} /></div>
-                  <h3 className="text-lg font-black uppercase italic">Dados Pessoais</h3>
-               </div>
-
-               <div className="space-y-6">
-                  <div className="space-y-2">
-                     <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest flex items-center gap-2"><User size={12} /> Nome Completo</label>
-                     <input 
-                        className="input-field w-full h-14" 
-                        value={formData.nome} 
-                        onChange={e => setFormData({...formData, nome: e.target.value})} 
-                        required
-                     />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest flex items-center gap-2"><Mail size={12} /> E-mail</label>
-                        <input 
-                           type="email"
-                           className="input-field w-full h-14" 
-                           value={formData.email} 
-                           onChange={e => setFormData({...formData, email: e.target.value})} 
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-[var(--text-muted)] tracking-widest flex items-center gap-2"><Phone size={12} /> WhatsApp/Tel</label>
-                        <input 
-                           className="input-field w-full h-14" 
-                           value={formData.telefone} 
-                           onChange={e => setFormData({...formData, telefone: e.target.value})} 
-                        />
-                     </div>
-                  </div>
-
-                  {/* DADOS CORPORATIVOS (READ-ONLY) */}
-                  <div className="pt-6 border-t border-[var(--border)] grid grid-cols-1 md:grid-cols-3 gap-4 opacity-60">
-                     <div className="p-4 bg-white rounded-xl border border-[var(--border)]">
-                        <p className="text-[8px] font-black uppercase text-[var(--text-muted)] mb-1">Cargo</p>
-                        <p className="text-[10px] font-black flex items-center gap-2"><Briefcase size={10} /> {user.cargo || '---'}</p>
-                     </div>
-                     <div className="p-4 bg-white rounded-xl border border-[var(--border)]">
-                        <p className="text-[8px] font-black uppercase text-[var(--text-muted)] mb-1">Secretaria</p>
-                        <p className="text-[10px] font-black flex items-center gap-2"><Building2 size={10} /> {user.unidade_alocacao || '---'}</p>
-                     </div>
-                     <div className="p-4 bg-white rounded-xl border border-[var(--border)]">
-                        <p className="text-[8px] font-black uppercase text-[var(--text-muted)] mb-1">Nível</p>
-                        <p className="text-[10px] font-black flex items-center gap-2"><KeyRound size={10} /> Nível {user.nivel_acesso || 1}</p>
-                     </div>
-                  </div>
-                  <p className="text-[8px] font-bold text-orange-600 uppercase text-center italic mt-2">* Dados corporativos só podem ser alterados pelo RH ou Administração.</p>
-               </div>
-
-               <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full h-16 bg-[var(--brand)] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-[var(--brand)]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-               >
-                  <Save size={18} /> Salvar Alterações
-               </button>
-            </form>
-
-            {/* 2. MUDAR SENHA */}
-            <form onSubmit={handleChangePassword} className="space-y-8 bg-slate-900 p-10 rounded-[2.5rem] border border-slate-800 shadow-2xl">
-               <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center text-orange-500 shadow-md border border-slate-700"><Lock size={22} /></div>
-                  <h3 className="text-lg font-black uppercase italic text-white">Privacidade & Senha</h3>
-               </div>
-
-               <div className="space-y-8">
-                  <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">
-                        Ao definir uma nova senha, a regra dos "4 últimos dígitos do telefone" deixará de funcionar para sua conta. Escolha uma senha forte.
-                     </p>
-                  </div>
-
-                  <div className="space-y-6">
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Nova Senha</label>
-                        <input 
-                           type="password"
-                           className="w-full h-14 bg-slate-800 border-2 border-slate-700 rounded-2xl px-6 text-white text-sm outline-none focus:border-orange-500 transition-all" 
-                           placeholder="••••••••"
-                           value={passwordData.novaSenha}
-                           onChange={e => setPasswordData({...passwordData, novaSenha: e.target.value})}
-                           required
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Confirmar Nova Senha</label>
-                        <input 
-                           type="password"
-                           className="w-full h-14 bg-slate-800 border-2 border-slate-700 rounded-2xl px-6 text-white text-sm outline-none focus:border-orange-500 transition-all" 
-                           placeholder="••••••••"
-                           value={passwordData.confirmarSenha}
-                           onChange={e => setPasswordData({...passwordData, confirmarSenha: e.target.value})}
-                           required
-                        />
-                     </div>
-                  </div>
-               </div>
-
-               <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full h-16 bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-orange-900/40 hover:scale-[1.02] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-               >
-                  <Lock size={18} /> Atualizar Senha de Acesso
-               </button>
-            </form>
-
-          </div>
-
-          {/* SEÇÃO: MODERAÇÃO CLUBE DE SERVIÇOS (Apenas Admins/Gestores) */}
-          {(user.nivel_acesso || 0) >= 3 && (
-            <div className="mt-12 border-t border-[var(--border)] pt-12">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-600 border border-teal-500/20">
-                  <Sparkles size={22} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-black uppercase italic">Moderação - Clube de Serviços</h3>
-                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Gerencie os anúncios publicados pelos colaboradores</p>
-                </div>
+         {/* 1. EDIT PROFILE TAB */}
+         {activeTab === "perfil" && (
+           <form onSubmit={handleUpdateProfile} className="space-y-8 animate-fade-in">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-orange-600/10 rounded-2xl flex items-center justify-center text-orange-500 border border-orange-500/20"><User size={22} /></div>
+                 <div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-white">Dados do Colaborador</h3>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Mantenha suas informações de contato atualizadas</p>
+                 </div>
               </div>
 
-              <div className="overflow-x-auto bg-[var(--bg-base)]/20 rounded-[2.5rem] border border-[var(--border)] p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-2"><User size={12} /> Nome Completo</label>
+                    <input 
+                       className="w-full h-14 bg-zinc-900/60 border border-white/5 rounded-2xl px-5 text-white text-sm outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all" 
+                       value={formData.nome} 
+                       onChange={e => setFormData({...formData, nome: e.target.value})} 
+                       required
+                    />
+                 </div>
+
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-2"><Phone size={12} /> WhatsApp/Tel</label>
+                    <input 
+                       className="w-full h-14 bg-zinc-900/60 border border-white/5 rounded-2xl px-5 text-white text-sm outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all" 
+                       value={formData.telefone} 
+                       onChange={e => setFormData({...formData, telefone: e.target.value})} 
+                       required
+                    />
+                 </div>
+
+                 <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest flex items-center gap-2"><Mail size={12} /> E-mail</label>
+                    <input 
+                       type="email"
+                       className="w-full h-14 bg-zinc-900/60 border border-white/5 rounded-2xl px-5 text-white text-sm outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all" 
+                       value={formData.email} 
+                       onChange={e => setFormData({...formData, email: e.target.value})} 
+                    />
+                 </div>
+              </div>
+
+              {/* READ-ONLY CORPORATE INFO */}
+              <div className="pt-8 border-t border-white/5">
+                 <h4 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest mb-4">Informações de Alocação (RH)</h4>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-zinc-950/40 rounded-2xl border border-white/5">
+                       <p className="text-[8px] font-black uppercase text-zinc-500 mb-1">Cargo</p>
+                       <p className="text-xs font-bold text-white flex items-center gap-2"><Briefcase size={13} className="text-orange-500" /> {user.cargo || 'Operacional'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-950/40 rounded-2xl border border-white/5">
+                       <p className="text-[8px] font-black uppercase text-zinc-500 mb-1">Posto de Trabalho</p>
+                       <p className="text-xs font-bold text-white flex items-center gap-2"><Building2 size={13} className="text-orange-500" /> {user.unidade_alocacao || 'Sem Alocação'}</p>
+                    </div>
+                    <div className="p-4 bg-zinc-950/40 rounded-2xl border border-white/5">
+                       <p className="text-[8px] font-black uppercase text-zinc-500 mb-1">Nível de Acesso</p>
+                       <p className="text-xs font-bold text-white flex items-center gap-2"><KeyRound size={13} className="text-orange-500" /> Nível {user.nivel_acesso || 1}</p>
+                    </div>
+                 </div>
+                 <p className="text-[9px] text-zinc-500 italic mt-3">* Informações corporativas são protegidas e auditadas pelo setor de Recursos Humanos.</p>
+              </div>
+
+              <button 
+                 type="submit" 
+                 disabled={loading}
+                 className="w-full h-14 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-orange-600/10 active:scale-98"
+              >
+                 <Save size={16} /> Salvar Alterações
+              </button>
+           </form>
+         )}
+
+         {/* 2. CHANGE PASSWORD TAB */}
+         {activeTab === "seguranca" && (
+           <form onSubmit={handleChangePassword} className="space-y-6 animate-fade-in max-w-xl">
+              <div className="flex items-center gap-4 mb-6">
+                 <div className="w-12 h-12 bg-orange-600/10 rounded-2xl flex items-center justify-center text-orange-500 border border-orange-500/20"><Lock size={22} /></div>
+                 <div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-white">Segurança de Acesso</h3>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Defina uma chave de acesso forte e exclusiva</p>
+                 </div>
+              </div>
+
+              <div className="p-4 bg-orange-600/5 rounded-2xl border border-orange-600/10 flex gap-3">
+                 <Shield size={18} className="text-orange-500 shrink-0 mt-0.5" />
+                 <p className="text-xs text-zinc-400 leading-relaxed font-semibold">
+                    Recomendamos definir uma senha personalizada de sua preferência. A regra de login baseada nos 4 últimos dígitos do seu telefone deixará de funcionar assim que cadastrar sua senha.
+                 </p>
+              </div>
+
+              <div className="space-y-4">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Nova Senha</label>
+                    <input 
+                       type="password"
+                       className="w-full h-14 bg-zinc-900/60 border border-white/5 rounded-2xl px-5 text-white text-sm outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all" 
+                       placeholder="Mínimo 4 caracteres"
+                       value={passwordData.novaSenha}
+                       onChange={e => setPasswordData({...passwordData, novaSenha: e.target.value})}
+                       required
+                    />
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Confirmar Nova Senha</label>
+                    <input 
+                       type="password"
+                       className="w-full h-14 bg-zinc-900/60 border border-white/5 rounded-2xl px-5 text-white text-sm outline-none focus:border-orange-500 focus:bg-orange-600/5 transition-all" 
+                       placeholder="Repita a nova senha"
+                       value={passwordData.confirmarSenha}
+                       onChange={e => setPasswordData({...passwordData, confirmarSenha: e.target.value})}
+                       required
+                    />
+                 </div>
+              </div>
+
+              <button 
+                 type="submit" 
+                 disabled={loading}
+                 className="w-full h-14 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-orange-600/10 active:scale-98"
+              >
+                 <Lock size={16} /> Atualizar Senha
+              </button>
+           </form>
+         )}
+
+         {/* 3. ABOUT THE APP TAB */}
+         {activeTab === "sobre" && (
+           <div className="space-y-8 animate-fade-in">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-orange-600/10 rounded-2xl flex items-center justify-center text-orange-500 border border-orange-500/20"><Info size={22} /></div>
+                 <div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-white">Sobre o Portal</h3>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">História, Propósito e Autoria do Sistema</p>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
+                {/* History Section */}
+                <div className="space-y-5 text-zinc-300 text-sm leading-relaxed font-semibold">
+                  <p>
+                    O **Alicerce ERP** é uma plataforma inovadora de Governança Soberana, criada e desenvolvida com o firme propósito de modernizar a gestão de serviços terceirizados, integrando as demandas administrativas e de campo de maneira fluida e automatizada.
+                  </p>
+                  <p>
+                    O sistema nasceu com o intuito de simplificar a rotina diária dos colaboradores. Pensando nisso, a interface foi desenhada com alto rigor de acessibilidade para garantir que todos os membros da nossa equipe, inclusive os mais experientes e idosos, possam interagir e navegar com total facilidade, clareza visual e autonomia.
+                  </p>
+                  <p>
+                    Seja solicitando equipamentos (EPI), informando faltas, consultando escalas ou se comunicando no chat corporativo seguro, a plataforma entrega controle e transparência imediata.
+                  </p>
+                  <div className="p-5 rounded-2xl bg-zinc-950/60 border border-white/5 flex flex-col gap-2">
+                    <span className="text-[10px] font-black uppercase text-orange-500 tracking-wider">Propósito Central</span>
+                    <p className="text-xs text-zinc-400">
+                      "Prover controle operacional absoluto com simplicidade e soberania digital, valorizando a comunicação interna e o cuidado com cada colaborador de ponta a ponta."
+                    </p>
+                  </div>
+                </div>
+
+                {/* Credits Card */}
+                <div className="glow-card p-6 rounded-3xl border border-white/5 bg-zinc-950/50 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-orange-600/5 rounded-full blur-2xl pointer-events-none" />
+                  <div className="w-20 h-20 rounded-3xl bg-orange-600 flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-orange-600/20 mb-4 uppercase">
+                    D
+                  </div>
+                  <h4 className="text-base font-black text-white">Diogo</h4>
+                  <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-1">Fundador & Desenvolvedor Principal</span>
+                  <p className="text-[11px] text-zinc-400 mt-4 max-w-[240px] leading-relaxed">
+                    Idealizador e supervisor de todo o ecossistema tecnológico do Alicerce ERP, liderando a transformação digital para trazer profissionalismo e segurança operacional.
+                  </p>
+                  <div className="w-full border-t border-white/5 mt-6 pt-4 flex justify-between items-center text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                    <span>Versão do ERP</span>
+                    <span className="text-white bg-zinc-900 border border-white/10 px-2 py-0.5 rounded">v1.0.1 Stable</span>
+                  </div>
+                </div>
+              </div>
+           </div>
+         )}
+
+         {/* 4. MODERATION TAB */}
+         {activeTab === "moderacao" && isModerator && (
+           <div className="space-y-6 animate-fade-in">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center text-teal-600 border border-teal-500/20"><Sparkles size={22} /></div>
+                 <div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-white">Moderação - Clube de Serviços</h3>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Aprove ou pause anúncios no mural do colaborador</p>
+                 </div>
+              </div>
+
+              <div className="overflow-x-auto bg-zinc-950/30 rounded-2xl border border-white/5 p-4">
                 {loadingAdminServices ? (
                   <div className="flex justify-center py-10">
                     <Loader2 className="animate-spin text-teal-500" size={24} />
                   </div>
                 ) : adminServices.length === 0 ? (
-                  <p className="text-xs text-[var(--text-muted)] text-center py-10 font-bold uppercase tracking-wider">Nenhum serviço anunciado no momento.</p>
+                  <p className="text-xs text-zinc-500 text-center py-10 font-bold uppercase tracking-wider">Nenhum serviço cadastrado.</p>
                 ) : (
                   <table className="w-full text-left text-xs leading-normal">
                     <thead>
-                      <tr className="border-b border-[var(--border)] text-[9px] font-black uppercase text-[var(--text-muted)] tracking-wider">
+                      <tr className="border-b border-white/5 text-[9px] font-black uppercase text-zinc-400 tracking-wider">
                         <th className="py-4 px-4">Prestador</th>
                         <th className="py-4 px-4">Título</th>
                         <th className="py-4 px-4">Categoria</th>
@@ -332,10 +414,10 @@ export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
                     </thead>
                     <tbody>
                       {adminServices.map(s => (
-                        <tr key={s.id} className="border-b border-[var(--border)]/50 hover:bg-[var(--bg-card-hover)]/20 transition-all">
-                          <td className="py-4 px-4 font-bold text-[var(--text-primary)]">{s.colaborador_nome}</td>
-                          <td className="py-4 px-4 text-[var(--text-muted)]">{s.titulo}</td>
-                          <td className="py-4 px-4"><span className="px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-600 font-bold text-[9px] uppercase">{s.categoria}</span></td>
+                        <tr key={s.id} className="border-b border-white/5 hover:bg-white/5 transition-all">
+                          <td className="py-4 px-4 font-bold text-white">{s.colaborador_nome}</td>
+                          <td className="py-4 px-4 text-zinc-400">{s.titulo}</td>
+                          <td className="py-4 px-4"><span className="px-2.5 py-1 rounded-full bg-teal-500/10 text-teal-500 font-bold text-[9px] uppercase">{s.categoria}</span></td>
                           <td className="py-4 px-4">
                             <span className={`px-2.5 py-1 rounded-full font-bold text-[9px] uppercase ${s.ativo ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
                               {s.ativo ? 'Ativo' : 'Pausado'}
@@ -361,10 +443,10 @@ export default function ConfiguracoesModule({ user: propUser }: { user: any }) {
                   </table>
                 )}
               </div>
-            </div>
-          )}
+           </div>
+         )}
 
-       </div>
-     </div>
+      </div>
+    </div>
   );
 }

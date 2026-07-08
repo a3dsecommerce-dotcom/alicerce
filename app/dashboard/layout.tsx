@@ -101,9 +101,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               localStorage.setItem("crm_user", JSON.stringify(updatedUser));
             }
           }
+        } else {
+          // Sem sessão salva → redirecionar para login
+          window.location.href = "/";
+          return;
         }
       } catch (err) {
         console.error("Erro ao sincronizar usuário no layout:", err);
+        window.location.href = "/";
       }
     }
     syncUser();
@@ -146,14 +151,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             setNotificacoes([{ text: "Nenhuma notificação nova", type: "info", time: "--" }]);
          }
 
-         // Fix #7: contar itens pendentes para badge na sidebar
-         try {
-           const [ocRes, denRes] = await Promise.all([
-             supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
-             supabase.from('denuncias_anonimas').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE')
-           ]);
-           setBadgeCounts({ OCORRENCIAS: ocRes.count || 0, CANAL_ETICO: denRes.count || 0 });
-         } catch (_) {}
+          // Fix #7: contar itens pendentes para badge na sidebar
+          try {
+            const [ocRes, denRes, chatRes] = await Promise.all([
+              supabase.from('tickets_sla').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
+              supabase.from('denuncias_anonimas').select('*', { count: 'exact', head: true }).eq('status', 'PENDENTE'),
+              supabase.from('chat_mensagens').select('*', { count: 'exact', head: true }).eq('receiver_id', user.id).eq('lida', false)
+            ]);
+            setBadgeCounts({ 
+              OCORRENCIAS: ocRes.count || 0, 
+              CANAL_ETICO: denRes.count || 0,
+              CHAT: chatRes.count || 0 
+            });
+          } catch (_) {}
 
        } catch (err) {
          console.error("Erro ao carregar notificações reais", err);
@@ -203,8 +213,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!mounted) {
     return (
-      <div className="fixed inset-0 bg-[#09090b] flex items-center justify-center">
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center gap-6">
+        <img src="/logo.png" alt="Alicerce" className="w-20 h-20 animate-pulse" />
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <p className="text-zinc-400 text-sm font-medium">Carregando...</p>
       </div>
     );
   }
@@ -322,7 +334,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 sidebarOpen={sidebarOpen}
                 badge={
                   item.href?.includes('OCORRENCIAS') ? (badgeCounts['OCORRENCIAS'] || 0) :
-                  item.href?.includes('CANAL') ? (badgeCounts['CANAL_ETICO'] || 0) : 0
+                  item.href?.includes('CANAL') ? (badgeCounts['CANAL_ETICO'] || 0) :
+                  item.href?.includes('CHAT') ? (badgeCounts['CHAT'] || 0) : 0
                 }
               />
             );
