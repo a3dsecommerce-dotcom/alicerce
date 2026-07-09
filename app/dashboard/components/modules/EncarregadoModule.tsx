@@ -719,6 +719,15 @@ export default function EncarregadoModule({ user, initialTab }: { user: any, ini
       return;
     }
 
+    // Validação de data futura: previne erro de digitação (ex: 06/12 ao invés de 12/06)
+    const dataInformada = new Date(informativo.data + 'T00:00:00');
+    const hoje = new Date();
+    const diffDias = Math.floor((dataInformada.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDias > 30) {
+      const confirmar = confirm(`⚠️ ATENÇÃO: A data informada (${informativo.data.split('-').reverse().join('/')}) está ${diffDias} dias no futuro. Tem certeza que a data está correta?`);
+      if (!confirmar) return;
+    }
+
     setSaving(true);
     
     const agora = new Date().toISOString();
