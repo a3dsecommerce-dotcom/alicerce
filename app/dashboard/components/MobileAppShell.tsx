@@ -1196,10 +1196,10 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-sm">
-                              {contact.nome.slice(0, 2).toUpperCase()}
+                              {(contact.nome || "U").slice(0, 2).toUpperCase()}
                             </div>
                             <div>
-                              <h4 className="text-sm font-bold text-white leading-snug">{contact.nome}</h4>
+                              <h4 className="text-sm font-bold text-white leading-snug">{contact.nome || "Usuário"}</h4>
                               <p className="text-[10px] text-zinc-500 font-semibold">{contact.cargo || "Operacional"}</p>
                             </div>
                           </div>
@@ -1224,10 +1224,10 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
                     <ChevronLeft size={20} />
                   </button>
                   <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-sm">
-                    {selectedContact.nome.slice(0, 2).toUpperCase()}
+                    {(selectedContact.nome || "U").slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white leading-tight">{selectedContact.nome}</h3>
+                    <h3 className="text-sm font-bold text-white leading-tight">{selectedContact.nome || "Usuário"}</h3>
                     <p className="text-[9px] text-zinc-500 font-bold uppercase">{selectedContact.cargo || "OPERACIONAL"}</p>
                   </div>
                 </header>

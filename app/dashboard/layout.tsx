@@ -276,7 +276,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             // Regra: Excluir Manual para Nível 1 da unidade PMG
             if (item.label === 'Manual de Boas Práticas') {
               const isLevel1 = (user?.nivel || 0) <= 1;
-              const isPMG = user?.unidade_alocacao?.toUpperCase().includes('PMG');
+              const isPMG = user?.unidade_alocacao ? user.unidade_alocacao.toUpperCase().includes('PMG') : false;
               if (isLevel1 && isPMG) return false;
             }
 
