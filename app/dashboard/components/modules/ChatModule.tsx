@@ -64,7 +64,7 @@ export default function ChatModule({ user }: ChatModuleProps) {
           );
 
           // Sort contacts: recent messages first, then fallback to name alphabetically
-          contactsWithDetails.sort((a, b) => b.lastMessageTime - a.lastMessageTime || a.nome.localeCompare(b.nome));
+          contactsWithDetails.sort((a, b) => b.lastMessageTime - a.lastMessageTime || (a.nome || "").localeCompare(b.nome || ""));
           setContacts(contactsWithDetails);
         }
       } catch (err) {
@@ -209,7 +209,7 @@ export default function ChatModule({ user }: ChatModuleProps) {
   const filteredContacts = contacts.filter(c => {
     // If searching, search matches all contacts
     if (searchQuery.trim() !== "") {
-      return c.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      return (c.nome || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
              (c.cargo && c.cargo.toLowerCase().includes(searchQuery.toLowerCase()));
     }
     
@@ -217,7 +217,7 @@ export default function ChatModule({ user }: ChatModuleProps) {
     if (isAdmin) return true;
 
     // Standard collaborators see Diogo, Encarregados, or same unit allocation, or someone who sent an unread message
-    const isDiogo = c.nome.toLowerCase().includes("diogo");
+    const isDiogo = (c.nome || "").toLowerCase().includes("diogo");
     const isEncarregado = c.cargo && (
       c.cargo.toLowerCase().includes("encarregado") || 
       c.cargo.toLowerCase().includes("supervisor")
