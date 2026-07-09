@@ -987,12 +987,12 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-orange-600 to-orange-400 p-0.5 shadow-lg shadow-orange-600/10">
             <div className="w-full h-full rounded-2xl bg-zinc-900 flex items-center justify-center font-bold text-orange-500 text-sm uppercase">
-              {user.nome.slice(0, 2)}
+              {(user?.nome || user?.name || "U").slice(0, 2)}
             </div>
           </div>
           <div>
             <h2 className="text-sm font-bold tracking-tight text-white leading-tight">
-              Olá, {user.nome.split(" ")[0]}
+              Olá, {(user?.nome || user?.name || "Colaborador").split(" ")[0]}
             </h2>
             <p className="text-[10px] text-zinc-400 font-semibold tracking-wider uppercase">
               {user.cargo || "COLABORADOR"} • {user.unidade_alocacao || "NÃO ALOCADO"}
@@ -1371,10 +1371,10 @@ export function MobileAppShell({ user, onLogout }: MobileAppShellProps) {
             <div className="glow-card p-6 rounded-3xl flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center font-bold text-orange-500 text-lg">
-                  {user.nome.slice(0, 2).toUpperCase()}
+                  {(user?.nome || user?.name || "U").slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white leading-tight">{user.nome}</h3>
+                  <h3 className="text-sm font-bold text-white leading-tight">{user?.nome || user?.name || "Colaborador"}</h3>
                   <p className="text-[10px] text-zinc-500 font-semibold">{user.cargo || "Colaborador"}</p>
                 </div>
               </div>

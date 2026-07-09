@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     "Segurança do Trabalho": true,
     "Gestor / Admin": false
   });
-  const [user, setUser] = useState({ name: "Diretoria", role: "ADMIN" });
+  const [user, setUser] = useState({ name: "Diretoria", nome: "Diretoria", role: "ADMIN" });
 
   // ESTADOS PARA DENÚNCIA ANÔNIMA
   const [naturezaDenuncia, setNaturezaDenuncia] = useState("Conduta Ética / Assédio");
