@@ -4,7 +4,7 @@ import {
   Home, MessageSquare, Bot, Bell, User, Send, ChevronLeft,
   Package, AlertTriangle, ShieldAlert, Megaphone, HelpCircle,
   LogOut, Check, CheckCheck, Loader2, Sparkles, Phone, ShieldCheck, Info, FileText, Calendar, Upload, X, ArrowLeftRight,
-  Settings, Lock, CheckCircle2
+  Settings, Lock, CheckCircle2, Save
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
