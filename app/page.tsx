@@ -33,16 +33,6 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  if (!mounted) {
-    return (
-      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center gap-6">
-        <img src="/logo.png" alt="Alicerce" className="w-20 h-20 animate-pulse animate-duration-1000" />
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
-        <p className="text-zinc-400 text-sm font-medium">Carregando...</p>
-      </div>
-    );
-  }
-
   const [candidato, setCandidato] = useState({
     // Passo 1 - Identificação
     nome: "", data_nascimento: "", sexo: "", estado_civil: "",
@@ -57,6 +47,16 @@ export default function LoginPage() {
     curriculo_file: null as File | null,
     curriculo_url: "",
   });
+
+  if (!mounted) {
+    return (
+      <div className="fixed inset-0 bg-[#09090b] flex flex-col items-center justify-center gap-6">
+        <img src="/logo.png" alt="Alicerce" className="w-20 h-20 animate-pulse animate-duration-1000" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <p className="text-zinc-400 text-sm font-medium">Carregando...</p>
+      </div>
+    );
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
