@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { 
-  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2, Plus, Edit2, Trash2, ShieldAlert, Activity
+  Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2, Plus, Edit2, Trash2, ShieldAlert, Activity, Calendar
 } from "lucide-react";
 import { useRHData } from "./rh/useRHData";
 import ColaboradoresTable from "./rh/ColaboradoresTable";
@@ -13,6 +13,7 @@ import VolantesEscala from "./rh/VolantesEscala";
 import RequisicoesRH from "./rh/RequisicoesRH";
 import QuadroVagas from "./rh/QuadroVagas";
 import AdmissaoModals from "./rh/AdmissaoModals";
+import FeriasList from "./rh/FeriasList";
 import FichaColaborador360 from "../FichaColaborador360";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 import TableSkeleton from "@/components/ui/TableSkeleton";
@@ -25,7 +26,7 @@ import AdvertenciasList from "./rh/AdvertenciasList";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "ADMISSAO_RAPIDA" | "PONTO";
+type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "ADMISSAO_RAPIDA" | "PONTO" | "FERIAS";
 
 export default function RHModule({ user }: { user: any }) {
   const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateChecklistColumn, deleteChecklistColumn, updateChecklistColor, reorderChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
@@ -601,7 +602,8 @@ export default function RHModule({ user }: { user: any }) {
             { id: "QUADRO", label: "Quadro de Vagas", icon: Building2 },
             { id: "ADVERTENCIAS", label: "Advertências", icon: ShieldAlert },
             { id: "ADMISSAO_RAPIDA", label: "Admissão Rápida", icon: UserPlus },
-            { id: "PONTO", label: "Gestão de Ponto", icon: Clock }
+            { id: "PONTO", label: "Gestão de Ponto", icon: Clock },
+            { id: "FERIAS", label: "Férias & Efetivo", icon: Calendar }
           ].map((t: any) => (
             <button key={t.id} onClick={() => {
               if (t.id === "PONTO") {
@@ -765,6 +767,10 @@ export default function RHModule({ user }: { user: any }) {
 
         {masterTab === "ADMISSAO_RAPIDA" && (
           renderQuickAdmission()
+        )}
+
+        {masterTab === "FERIAS" && (
+          <FeriasList colaboradores={colaboradores} />
         )}
       </div>
 
