@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS ferias_colaboradores (
   colaborador_nome text NOT NULL,
   data_inicio date NOT NULL,
   data_fim date NOT NULL,
-  created_at timestamp with zone DEFAULT now()
+  created_at timestamp with time zone DEFAULT now()
 );
 
 -- Habilitar RLS
