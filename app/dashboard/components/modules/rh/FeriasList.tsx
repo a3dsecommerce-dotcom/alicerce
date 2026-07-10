@@ -156,12 +156,12 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
     }
   };
 
-  // Sync global dates to all rows
+  // Sync global dates to all rows unconditionally
   useEffect(() => {
     setImportedRows(prev => prev.map(r => ({
       ...r,
-      dataInicio: r.dataInicio === prev[0]?.dataInicio ? globalDataInicio : r.dataInicio,
-      dataFim: r.dataFim === prev[0]?.dataFim ? globalDataFim : r.dataFim
+      dataInicio: globalDataInicio,
+      dataFim: globalDataFim
     })));
   }, [globalDataInicio, globalDataFim]);
 
