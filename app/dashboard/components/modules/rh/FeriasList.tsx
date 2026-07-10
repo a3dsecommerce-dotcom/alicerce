@@ -105,21 +105,19 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
 
     setLoadingSheet(true);
     try {
-      let csvUrl = sheetUrl.trim();
-      if (csvUrl.includes('/edit')) {
-        csvUrl = csvUrl.replace(/\/edit.*/, '/export?format=csv');
-      } else if (csvUrl.includes('/pubhtml')) {
-        csvUrl = csvUrl.replace('/pubhtml', '/pub?output=csv');
-      } else if (!csvUrl.includes('format=csv') && !csvUrl.includes('output=csv')) {
-        toast.warning("O link informado pode não ser um link válido do Google Planilhas.");
-      }
+      const response = await fetch('/api/ferias/importar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: sheetUrl })
+      });
 
-      const response = await fetch(csvUrl);
+      const resData = await response.json();
+      
       if (!response.ok) {
-        throw new Error("Não foi possível acessar a planilha. Verifique se o compartilhamento com link público está ativo.");
+        throw new Error(resData.error || "Não foi possível acessar a planilha. Verifique se o compartilhamento com link público está ativo.");
       }
 
-      const csvText = await response.text();
+      const csvText = resData.csv;
       const lines = csvText.split(/\r?\n/);
       
       const rows: SheetImportedRow[] = [];
