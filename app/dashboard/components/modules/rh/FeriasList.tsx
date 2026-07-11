@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Calendar, Search, Upload, RefreshCw, Check, AlertCircle, Trash2, ShieldAlert, Users, Clock, MapPin, Briefcase } from "lucide-react";
+import { Calendar, Search, Upload, RefreshCw, Check, AlertCircle, Trash2, ShieldAlert, Users, Clock, MapPin, Briefcase, FileText } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -57,6 +57,152 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
   useEffect(() => {
     loadFerias();
   }, []);
+
+  // PDF report states and unit route mapping loader
+  const [units, setUnits] = useState<any[]>([]);
+  const [printStartDate, setPrintStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [printEndDate, setPrintEndDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [printFilterRota, setPrintFilterRota] = useState("TODAS");
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  useEffect(() => {
+    const fetchUnits = async () => {
+      const { data, error } = await supabase.from('unidades').select('nome, rota').order('nome');
+      if (!error && data) {
+        setUnits(data);
+      }
+    };
+    fetchUnits();
+  }, []);
+
+  const handleGeneratePDF = async () => {
+    setGeneratingPdf(true);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF('l', 'mm', 'a4'); 
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Title & Header
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text("ROTEIRO OPERACIONAL - EFETIVO & AUSÊNCIAS (FÉRIAS)", pageWidth / 2, 16, { align: "center" });
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Período de Análise: ${printStartDate.split('-').reverse().join('/')} até ${printEndDate.split('-').reverse().join('/')} | Rota: ${printFilterRota === 'TODAS' ? 'TODAS AS ROTAS' : printFilterRota.toUpperCase()}`,
+        pageWidth / 2, 
+        23, 
+        { align: "center" }
+      );
+      doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth / 2, 28, { align: "center" });
+
+      const tableData: any[] = [];
+      const headers = ["COLABORADOR", "CARGO", "PERÍODO / TURNO", "SITUAÇÃO / FÉRIAS NO PERÍODO"];
+
+      // Get list of rotas to print
+      const rotas = printFilterRota === "TODAS" ? ["Rota 1", "Rota 2", "Rota 3", "Rota 4", "Rota 5"] : [printFilterRota];
+
+      // Parse dates for comparison
+      const filterStart = new Date(printStartDate + 'T00:00:00').getTime();
+      const filterEnd = new Date(printEndDate + 'T23:59:59').getTime();
+
+      rotas.forEach(rotaNome => {
+        // Find units belonging to this route
+        const unitsInRota = units.filter(u => u.rota && u.rota.toLowerCase() === rotaNome.toLowerCase());
+        if (unitsInRota.length === 0) return;
+
+        // Add Route Section Row
+        tableData.push([
+          { 
+            content: `★★★ CLASSIFICAÇÃO: ${rotaNome.toUpperCase()} ★★★`, 
+            colSpan: headers.length, 
+            styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, cellPadding: 3, halign: 'center' } 
+          }
+        ]);
+
+        unitsInRota.forEach(unit => {
+          const unitColabs = colaboradores.filter(c => 
+            c.unidade_alocacao && c.unidade_alocacao.toUpperCase() === unit.nome.toUpperCase() && 
+            (c.status_ciclo === "ATIVO" || c.status === "ATIVO")
+          );
+
+          // Add Unit Header Row
+          tableData.push([
+            { 
+              content: `POSTO / UNIDADE: ${unit.nome.toUpperCase()}`, 
+              colSpan: headers.length, 
+              styles: { fillColor: [75, 85, 99], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, cellPadding: 2.5 } 
+            }
+          ]);
+
+          if (unitColabs.length === 0) {
+            tableData.push([
+              { content: "NENHUM COLABORADOR ATIVO NESTA UNIDADE", colSpan: headers.length, styles: { halign: 'center', italic: true, textColor: [150, 150, 150], fontSize: 8 } }
+            ]);
+          } else {
+            unitColabs.forEach(colab => {
+              // Check if this colab has vacation overlapping with the filter range
+              const vacations = feriasDb.filter(f => f.colaborador_id === colab.id);
+              const activeVacation = vacations.find(v => {
+                const vacStart = new Date(v.data_inicio + 'T00:00:00').getTime();
+                const vacEnd = new Date(v.data_fim + 'T23:59:59').getTime();
+                return vacStart <= filterEnd && vacEnd >= filterStart;
+              });
+
+              const row: any[] = [];
+              row.push(colab.nome);
+              row.push(colab.cargo || "OPERACIONAL");
+              row.push(`${colab.periodo || "DIURNO"} / ${colab.turno || "12X36"}`);
+              
+              if (activeVacation) {
+                row.push({
+                  content: `⚠️ EM FÉRIAS: ${activeVacation.data_inicio.split('-').reverse().slice(0, 2).join('/')} a ${activeVacation.data_fim.split('-').reverse().slice(0, 2).join('/')}`,
+                  styles: { fontStyle: 'bold', textColor: [220, 38, 38], fillColor: [254, 242, 242] }
+                });
+              } else {
+                row.push({
+                  content: `✅ ATIVO / DISPONÍVEL`,
+                  styles: { textColor: [22, 163, 74], fillColor: [240, 253, 244] }
+                });
+              }
+              tableData.push(row);
+            });
+          }
+
+          // Small spacing row
+          tableData.push([{ content: "", colSpan: headers.length, styles: { cellPadding: 0.5, fillColor: [255, 255, 255] } }]);
+        });
+      });
+
+      autoTable(doc, {
+        startY: 33,
+        head: [headers],
+        body: tableData,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak', font: "helvetica" },
+        headStyles: { fillColor: [17, 24, 39], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 80 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 60 }
+        },
+        margin: { top: 33 },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid'
+      });
+
+      doc.save(`Roteiro_Efetivo_Ferias_${printFilterRota.replace(/\s+/g, '_')}.pdf`);
+      toast.success("PDF gerado com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao gerar PDF: " + err.message);
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   // Helper to normalize names for fuzzy matching
   const normalizeName = (name: string) => {
@@ -313,6 +459,64 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                 </div>
               </div>
               <Clock size={20} className="text-zinc-500" />
+            </div>
+          </div>
+
+          {/* Relatório de Rotas e Férias PDF Section */}
+          <div className="p-6 rounded-3xl bg-zinc-900/40 border border-white/5 flex flex-col gap-4">
+            <div>
+              <h4 className="text-xs font-black uppercase text-white tracking-wider flex items-center gap-2">
+                <FileText size={16} className="text-orange-500" /> Relatório Operacional de Rotas & Férias (PDF)
+              </h4>
+              <p className="text-[11px] text-zinc-400 font-semibold mt-1">
+                Gere um documento formatado para impressão contendo todas as unidades organizadas por suas respectivas rotas, listando o efetivo ativo e sinalizando claramente quem está de férias no período selecionado.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Filtrar por Rota</label>
+                <select 
+                  className="form-input w-full !h-11 font-black"
+                  value={printFilterRota}
+                  onChange={e => setPrintFilterRota(e.target.value)}
+                >
+                  <option value="TODAS">TODAS AS ROTAS</option>
+                  <option value="Rota 1">ROTA 1</option>
+                  <option value="Rota 2">ROTA 2</option>
+                  <option value="Rota 3">ROTA 3</option>
+                  <option value="Rota 4">ROTA 4</option>
+                  <option value="Rota 5">ROTA 5</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Início da Análise (PDF)</label>
+                <input 
+                  type="date"
+                  className="input-field w-full !h-11 font-black"
+                  value={printStartDate}
+                  onChange={e => setPrintStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Fim da Análise (PDF)</label>
+                <input 
+                  type="date"
+                  className="input-field w-full !h-11 font-black"
+                  value={printEndDate}
+                  onChange={e => setPrintEndDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <button
+                  onClick={handleGeneratePDF}
+                  disabled={generatingPdf}
+                  className="w-full h-11 bg-orange-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-orange-500 active:scale-98 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/10"
+                >
+                  {generatingPdf ? <RefreshCw size={14} className="animate-spin" /> : <FileText size={14} />}
+                  Gerar Roteiro PDF
+                </button>
+              </div>
             </div>
           </div>
 
