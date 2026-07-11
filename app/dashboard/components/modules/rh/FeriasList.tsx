@@ -58,6 +58,15 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
     loadFerias();
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedUrl = localStorage.getItem("rh_sheet_url_ferias");
+      if (savedUrl) {
+        setSheetUrl(savedUrl);
+      }
+    }
+  }, []);
+
   // PDF report states and unit route mapping loader
   const [units, setUnits] = useState<any[]>([]);
   const [gestaoRotas, setGestaoRotas] = useState<any[]>([]);
@@ -755,7 +764,13 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                 placeholder="Ex: https://docs.google.com/spreadsheets/d/1A2B3C.../edit?usp=sharing"
                 className="input-field flex-1 !h-12"
                 value={sheetUrl}
-                onChange={e => setSheetUrl(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  setSheetUrl(val);
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("rh_sheet_url_ferias", val.trim());
+                  }
+                }}
               />
               <button
                 onClick={handleImportSheet}
