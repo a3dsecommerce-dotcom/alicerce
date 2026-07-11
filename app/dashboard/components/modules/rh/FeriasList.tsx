@@ -13,7 +13,7 @@ interface SheetImportedRow {
   colaboradorCorrespondente: any | null;
   dataInicio: string;
   dataFim: string;
-  status: "Pendente" | "Confirmado" | "Erro";
+  status: "Pendente" | "Confirmado" | "Erro" | "Duplicado";
   mensagem?: string;
 }
 
@@ -337,13 +337,31 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
         }
 
         const match = findMatch(rawName);
+        let status: "Pendente" | "Duplicado" | "Erro" = "Pendente";
+        let mensagem = undefined;
+        
+        if (!match) {
+          status = "Erro";
+          mensagem = "Colaborador não cadastrado ou não ativo";
+        } else {
+          const isDuplicate = feriasDb.some(f => 
+            f.colaborador_id === match.id && 
+            f.data_inicio === globalDataInicio && 
+            f.data_fim === globalDataFim
+          );
+          if (isDuplicate) {
+            status = "Duplicado";
+            mensagem = "Férias já registradas para este período (Ignorado)";
+          }
+        }
+
         rows.push({
           nomePlanilha: rawName,
           colaboradorCorrespondente: match,
           dataInicio: globalDataInicio,
           dataFim: globalDataFim,
-          status: match ? "Pendente" : "Erro",
-          mensagem: match ? undefined : "Colaborador não cadastrado ou não ativo"
+          status,
+          mensagem
         });
       }
 
@@ -360,14 +378,71 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
     }
   };
 
-  // Sync global dates to all rows unconditionally
+  const handleGenerateUnmatchedPDF = async () => {
+    const unmatched = importedRows.filter(r => r.status === "Erro" && r.mensagem?.includes("não cadastrado"));
+    if (unmatched.length === 0) {
+      toast.info("Nenhum colaborador nao identificado para gerar relatorio.");
+      return;
+    }
+
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("RELATORIO DE COLABORADORES NAO IDENTIFICADOS", pageWidth / 2, 18, { align: "center" });
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("Nomes presentes na planilha importada que nao possuem cadastro ativo no CRM.", pageWidth / 2, 25, { align: "center" });
+      doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth / 2, 30, { align: "center" });
+
+      const headers = ["NOME NA PLANILHA", "MOTIVO DA NAO IDENTIFICACAO"];
+      const tableBody = unmatched.map(r => [
+        r.nomePlanilha.toUpperCase(),
+        "NOME NAO ENCONTRADO OU CADASTRO INATIVO NO BANCO DE DADOS"
+      ]);
+
+      autoTable(doc, {
+        startY: 35,
+        head: [headers],
+        body: tableBody,
+        theme: 'grid',
+        styles: { fontSize: 8.5, cellPadding: 3, font: "helvetica" },
+        headStyles: { fillColor: [185, 28, 28], textColor: [255, 255, 255], fontStyle: 'bold' },
+      });
+
+      doc.save(`Nomes_Nao_Identificados_Ferias_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success("PDF de inconsistencias gerado com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao gerar PDF: " + err.message);
+    }
+  };
+
+  // Sync global dates to all rows unconditionally and check for duplicates
   useEffect(() => {
-    setImportedRows(prev => prev.map(r => ({
-      ...r,
-      dataInicio: globalDataInicio,
-      dataFim: globalDataFim
-    })));
-  }, [globalDataInicio, globalDataFim]);
+    setImportedRows(prev => prev.map(r => {
+      if (!r.colaboradorCorrespondente) return r; // keep error rows as is
+
+      const isDuplicate = feriasDb.some(f => 
+        f.colaborador_id === r.colaboradorCorrespondente.id && 
+        f.data_inicio === globalDataInicio && 
+        f.data_fim === globalDataFim
+      );
+
+      return {
+        ...r,
+        dataInicio: globalDataInicio,
+        dataFim: globalDataFim,
+        status: isDuplicate ? "Duplicado" as const : "Pendente" as const,
+        mensagem: isDuplicate ? "Férias já registradas para este período (Ignorado)" : undefined
+      };
+    }));
+  }, [globalDataInicio, globalDataFim, feriasDb]);
 
   // Save selected holidays to Supabase
   const handleSaveFerias = async () => {
@@ -727,9 +802,17 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
 
               {importedRows.filter(r => r.status === "Erro").length > 0 && (
                 <div className="p-6 rounded-3xl bg-red-500/5 border border-red-500/10 flex flex-col gap-4 animate-fade-in">
-                  <h5 className="text-xs font-black uppercase text-red-500 flex items-center gap-2">
-                    <AlertCircle size={16} /> Colaboradores Não Identificados no CRM ({importedRows.filter(r => r.status === "Erro").length})
-                  </h5>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <h5 className="text-xs font-black uppercase text-red-500 flex items-center gap-2">
+                      <AlertCircle size={16} /> Colaboradores Não Identificados no CRM ({importedRows.filter(r => r.status === "Erro").length})
+                    </h5>
+                    <button
+                      onClick={handleGenerateUnmatchedPDF}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-red-600/10 active:scale-95"
+                    >
+                      <FileText size={12} /> Imprimir Inconsistencias
+                    </button>
+                  </div>
                   <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed">
                     Os seguintes nomes constam na sua planilha, mas não foram localizados ou não possuem cadastro de usuário ativo no banco de dados do CRM. Eles serão desconsiderados no salvamento de férias.
                   </p>
@@ -776,7 +859,21 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                               value={row.dataInicio}
                               onChange={e => {
                                 const val = e.target.value;
-                                setImportedRows(prev => prev.map((r, i) => i === idx ? { ...r, dataInicio: val } : r));
+                                setImportedRows(prev => prev.map((r, i) => {
+                                  if (i !== idx) return r;
+                                  if (!r.colaboradorCorrespondente) return { ...r, dataInicio: val };
+                                  const isDuplicate = feriasDb.some(f => 
+                                    f.colaborador_id === r.colaboradorCorrespondente.id && 
+                                    f.data_inicio === val && 
+                                    f.data_fim === r.dataFim
+                                  );
+                                  return {
+                                    ...r,
+                                    dataInicio: val,
+                                    status: isDuplicate ? "Duplicado" as const : "Pendente" as const,
+                                    mensagem: isDuplicate ? "Férias já registradas para este período (Ignorado)" : undefined
+                                  };
+                                }));
                               }}
                             />
                             <span>à</span>
@@ -786,7 +883,21 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                               value={row.dataFim}
                               onChange={e => {
                                 const val = e.target.value;
-                                setImportedRows(prev => prev.map((r, i) => i === idx ? { ...r, dataFim: val } : r));
+                                setImportedRows(prev => prev.map((r, i) => {
+                                  if (i !== idx) return r;
+                                  if (!r.colaboradorCorrespondente) return { ...r, dataFim: val };
+                                  const isDuplicate = feriasDb.some(f => 
+                                    f.colaborador_id === r.colaboradorCorrespondente.id && 
+                                    f.data_inicio === r.dataInicio && 
+                                    f.data_fim === val
+                                  );
+                                  return {
+                                    ...r,
+                                    dataFim: val,
+                                    status: isDuplicate ? "Duplicado" as const : "Pendente" as const,
+                                    mensagem: isDuplicate ? "Férias já registradas para este período (Ignorado)" : undefined
+                                  };
+                                }));
                               }}
                             />
                           </div>
@@ -795,6 +906,10 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                           {row.status === "Erro" ? (
                             <span className="px-2.5 py-1 rounded bg-red-500/10 text-red-500 border border-red-500/20 font-bold text-[9px] uppercase tracking-wide">
                               Rejeitado
+                            </span>
+                          ) : row.status === "Duplicado" ? (
+                            <span className="px-2.5 py-1 rounded bg-zinc-500/10 text-zinc-400 border border-white/10 font-bold text-[9px] uppercase tracking-wide">
+                              Ignorado
                             </span>
                           ) : (
                             <span className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold text-[9px] uppercase tracking-wide">
