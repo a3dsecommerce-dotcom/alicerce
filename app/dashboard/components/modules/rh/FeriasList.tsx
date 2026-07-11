@@ -99,7 +99,6 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
       );
       doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth / 2, 28, { align: "center" });
 
-      const tableData: any[] = [];
       const headers = ["COLABORADOR", "CARGO", "TURNO", "SITUACAO / FERIAS NO PERIODO"];
 
       // Get list of rotas to print
@@ -109,19 +108,30 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
       const filterStart = new Date(printStartDate + 'T00:00:00').getTime();
       const filterEnd = new Date(printEndDate + 'T23:59:59').getTime();
 
+      let currentY = 33;
+      const pageHeight = doc.internal.pageSize.height;
+
       rotas.forEach(rotaNome => {
         // Find units belonging to this route
         const unitsInRota = units.filter(u => u.rota && u.rota.toLowerCase() === rotaNome.toLowerCase());
         if (unitsInRota.length === 0) return;
 
-        // Add Route Section Row
-        tableData.push([
-          { 
-            content: `*** CLASSIFICACAO: ${rotaNome.toUpperCase()} ***`, 
-            colSpan: headers.length, 
-            styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, cellPadding: 3, halign: 'center' } 
-          }
-        ]);
+        // Check if route title fits, otherwise add page
+        if (currentY > pageHeight - 40) {
+          doc.addPage();
+          currentY = 20;
+        }
+
+        // Print Route classification header
+        autoTable(doc, {
+          startY: currentY,
+          body: [[`*** CLASSIFICACAO: ${rotaNome.toUpperCase()} ***`]],
+          theme: 'plain',
+          styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, cellPadding: 3, halign: 'center' },
+          margin: { left: 14, right: 14 }
+        });
+        
+        currentY = (doc as any).lastAutoTable.finalY + 4;
 
         unitsInRota.forEach(unit => {
           const unitColabs = colaboradores.filter(c => 
@@ -129,8 +139,20 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
             (c.status_ciclo === "ATIVO" || c.status === "ATIVO")
           );
 
-          // Add Unit Header Row
-          tableData.push([
+          // Calculate space needed: Header height (~12mm) + row heights (~7mm each) + spacing (~8mm)
+          const rowsCount = unitColabs.length || 1;
+          const estimatedHeight = 12 + (rowsCount * 7) + 8;
+
+          // Force page break if the entire unit table won't fit on this page
+          if (currentY + estimatedHeight > pageHeight - 15) {
+            doc.addPage();
+            currentY = 20;
+          }
+
+          const unitTableData: any[] = [];
+          
+          // Add Unit Header Row inside this table
+          unitTableData.push([
             { 
               content: `POSTO / UNIDADE: ${unit.nome.toUpperCase()}`, 
               colSpan: headers.length, 
@@ -139,7 +161,7 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
           ]);
 
           if (unitColabs.length === 0) {
-            tableData.push([
+            unitTableData.push([
               { content: "NENHUM COLABORADOR CADASTRADO NESTA UNIDADE", colSpan: headers.length, styles: { halign: 'center', italic: true, textColor: [150, 150, 150], fontSize: 8 } }
             ]);
           } else {
@@ -168,31 +190,30 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                   styles: { textColor: [22, 163, 74], fillColor: [240, 253, 244] }
                 });
               }
-              tableData.push(row);
+              unitTableData.push(row);
             });
           }
 
-          // Small spacing row
-          tableData.push([{ content: "", colSpan: headers.length, styles: { cellPadding: 0.5, fillColor: [255, 255, 255] } }]);
-        });
-      });
+          autoTable(doc, {
+            startY: currentY,
+            head: [headers],
+            body: unitTableData,
+            theme: 'grid',
+            styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak', font: "helvetica" },
+            headStyles: { fillColor: [17, 24, 39], textColor: [255, 255, 255], fontStyle: 'bold' },
+            columnStyles: {
+              0: { cellWidth: 80 },
+              1: { cellWidth: 50 },
+              2: { cellWidth: 45 },
+              3: { cellWidth: 60 }
+            },
+            margin: { left: 14, right: 14 },
+            pageBreak: 'avoid',
+            rowPageBreak: 'avoid'
+          });
 
-      autoTable(doc, {
-        startY: 33,
-        head: [headers],
-        body: tableData,
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak', font: "helvetica" },
-        headStyles: { fillColor: [17, 24, 39], textColor: [255, 255, 255], fontStyle: 'bold' },
-        columnStyles: {
-          0: { cellWidth: 80 },
-          1: { cellWidth: 50 },
-          2: { cellWidth: 45 },
-          3: { cellWidth: 60 }
-        },
-        margin: { top: 33 },
-        pageBreak: 'auto',
-        rowPageBreak: 'avoid'
+          currentY = (doc as any).lastAutoTable.finalY + 6;
+        });
       });
 
       doc.save(`Roteiro_Efetivo_Ferias_${printFilterRota.replace(/\s+/g, '_')}.pdf`);
