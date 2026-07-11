@@ -84,15 +84,15 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
       const doc = new jsPDF('l', 'mm', 'a4'); 
       const pageWidth = doc.internal.pageSize.width;
 
-      // Title & Header
+      // Title & Header (Accents removed for standard PDF font compatibility)
       doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      doc.text("ROTEIRO OPERACIONAL - EFETIVO & AUSÊNCIAS (FÉRIAS)", pageWidth / 2, 16, { align: "center" });
+      doc.text("ROTEIRO OPERACIONAL - EFETIVO E FERIAS", pageWidth / 2, 16, { align: "center" });
       
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text(
-        `Período de Análise: ${printStartDate.split('-').reverse().join('/')} até ${printEndDate.split('-').reverse().join('/')} | Rota: ${printFilterRota === 'TODAS' ? 'TODAS AS ROTAS' : printFilterRota.toUpperCase()}`,
+        `Periodo de Analise: ${printStartDate.split('-').reverse().join('/')} ate ${printEndDate.split('-').reverse().join('/')} | Rota: ${printFilterRota === 'TODAS' ? 'TODAS AS ROTAS' : printFilterRota.toUpperCase()}`,
         pageWidth / 2, 
         23, 
         { align: "center" }
@@ -100,7 +100,7 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
       doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth / 2, 28, { align: "center" });
 
       const tableData: any[] = [];
-      const headers = ["COLABORADOR", "CARGO", "PERÍODO / TURNO", "SITUAÇÃO / FÉRIAS NO PERÍODO"];
+      const headers = ["COLABORADOR", "CARGO", "TURNO", "SITUACAO / FERIAS NO PERIODO"];
 
       // Get list of rotas to print
       const rotas = printFilterRota === "TODAS" ? ["Rota 1", "Rota 2", "Rota 3", "Rota 4", "Rota 5"] : [printFilterRota];
@@ -117,7 +117,7 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
         // Add Route Section Row
         tableData.push([
           { 
-            content: `★★★ CLASSIFICAÇÃO: ${rotaNome.toUpperCase()} ★★★`, 
+            content: `*** CLASSIFICACAO: ${rotaNome.toUpperCase()} ***`, 
             colSpan: headers.length, 
             styles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, cellPadding: 3, halign: 'center' } 
           }
@@ -140,7 +140,7 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
 
           if (unitColabs.length === 0) {
             tableData.push([
-              { content: "NENHUM COLABORADOR ATIVO NESTA UNIDADE", colSpan: headers.length, styles: { halign: 'center', italic: true, textColor: [150, 150, 150], fontSize: 8 } }
+              { content: "NENHUM COLABORADOR CADASTRADO NESTA UNIDADE", colSpan: headers.length, styles: { halign: 'center', italic: true, textColor: [150, 150, 150], fontSize: 8 } }
             ]);
           } else {
             unitColabs.forEach(colab => {
@@ -155,16 +155,16 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
               const row: any[] = [];
               row.push(colab.nome);
               row.push(colab.cargo || "OPERACIONAL");
-              row.push(`${colab.periodo || "DIURNO"} / ${colab.turno || "12X36"}`);
+              row.push(colab.periodo || "DIURNO");
               
               if (activeVacation) {
                 row.push({
-                  content: `⚠️ EM FÉRIAS: ${activeVacation.data_inicio.split('-').reverse().slice(0, 2).join('/')} a ${activeVacation.data_fim.split('-').reverse().slice(0, 2).join('/')}`,
+                  content: `EM FERIAS: ${activeVacation.data_inicio.split('-').reverse().slice(0, 2).join('/')} a ${activeVacation.data_fim.split('-').reverse().slice(0, 2).join('/')}`,
                   styles: { fontStyle: 'bold', textColor: [220, 38, 38], fillColor: [254, 242, 242] }
                 });
               } else {
                 row.push({
-                  content: `✅ ATIVO / DISPONÍVEL`,
+                  content: `ATIVO / DISPONIVEL`,
                   styles: { textColor: [22, 163, 74], fillColor: [240, 253, 244] }
                 });
               }
