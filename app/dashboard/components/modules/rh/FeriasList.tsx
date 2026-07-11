@@ -60,19 +60,22 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
 
   // PDF report states and unit route mapping loader
   const [units, setUnits] = useState<any[]>([]);
+  const [gestaoRotas, setGestaoRotas] = useState<any[]>([]);
   const [printStartDate, setPrintStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [printEndDate, setPrintEndDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
   const [printFilterRota, setPrintFilterRota] = useState("TODAS");
+  const [printFilterEncarregado, setPrintFilterEncarregado] = useState("TODOS");
+  const [printFilterSecretaria, setPrintFilterSecretaria] = useState("");
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
-    const fetchUnits = async () => {
-      const { data, error } = await supabase.from('unidades').select('nome, rota').order('nome');
-      if (!error && data) {
-        setUnits(data);
-      }
+    const fetchData = async () => {
+      const { data: unitsData } = await supabase.from('unidades').select('nome, rota').order('nome');
+      if (unitsData) setUnits(unitsData);
+      const { data: gestaoData } = await supabase.from('gestao_rotas').select('unidade_nome, encarregado_nome');
+      if (gestaoData) setGestaoRotas(gestaoData);
     };
-    fetchUnits();
+    fetchData();
   }, []);
 
   const handleGeneratePDF = async () => {
@@ -89,10 +92,10 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
       doc.setFont("helvetica", "bold");
       doc.text("ROTEIRO OPERACIONAL - EFETIVO E FERIAS", pageWidth / 2, 16, { align: "center" });
       
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setFont("helvetica", "normal");
       doc.text(
-        `Periodo de Analise: ${printStartDate.split('-').reverse().join('/')} ate ${printEndDate.split('-').reverse().join('/')} | Rota: ${printFilterRota === 'TODAS' ? 'TODAS AS ROTAS' : printFilterRota.toUpperCase()}`,
+        `Periodo: ${printStartDate.split('-').reverse().join('/')} ate ${printEndDate.split('-').reverse().join('/')} | Rota: ${printFilterRota.toUpperCase()} | Encarregado: ${printFilterEncarregado.toUpperCase()} | Secretaria: ${printFilterSecretaria.trim() !== "" ? printFilterSecretaria.toUpperCase() : "TODAS"}`,
         pageWidth / 2, 
         23, 
         { align: "center" }
@@ -113,8 +116,33 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
 
       rotas.forEach(rotaNome => {
         // Find units belonging to this route
-        const unitsInRota = units.filter(u => u.rota && u.rota.toLowerCase() === rotaNome.toLowerCase());
+        let unitsInRota = units.filter(u => u.rota && u.rota.toLowerCase() === rotaNome.toLowerCase());
+        
+        // Filter by Supervisor (Encarregado) if selected
+        if (printFilterEncarregado !== "TODOS") {
+          unitsInRota = unitsInRota.filter(u => 
+            gestaoRotas.some(g => g.unidade_nome.toUpperCase() === u.nome.toUpperCase() && g.encarregado_nome === printFilterEncarregado)
+          );
+        }
+
         if (unitsInRota.length === 0) return;
+
+        // Determine if we have at least one unit with active collaborators for this route
+        const unitsWithColabs = unitsInRota.filter(unit => {
+          let unitColabs = colaboradores.filter(c => 
+            c.unidade_alocacao && c.unidade_alocacao.toUpperCase() === unit.nome.toUpperCase() && 
+            (c.status_ciclo === "ATIVO" || c.status === "ATIVO")
+          );
+          if (printFilterSecretaria.trim() !== "") {
+            unitColabs = unitColabs.filter(c => 
+              c.secretaria && c.secretaria.toUpperCase().includes(printFilterSecretaria.toUpperCase())
+            );
+          }
+          return unitColabs.length > 0;
+        });
+
+        // Skip printing Route Header if no matching units exist for selected Secretaria
+        if (printFilterSecretaria.trim() !== "" && unitsWithColabs.length === 0) return;
 
         // Check if route title fits, otherwise add page
         if (currentY > pageHeight - 40) {
@@ -134,10 +162,19 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
         currentY = (doc as any).lastAutoTable.finalY + 4;
 
         unitsInRota.forEach(unit => {
-          const unitColabs = colaboradores.filter(c => 
+          let unitColabs = colaboradores.filter(c => 
             c.unidade_alocacao && c.unidade_alocacao.toUpperCase() === unit.nome.toUpperCase() && 
             (c.status_ciclo === "ATIVO" || c.status === "ATIVO")
           );
+
+          // Apply Secretaria filter if specified
+          if (printFilterSecretaria.trim() !== "") {
+            unitColabs = unitColabs.filter(c => 
+              c.secretaria && c.secretaria.toUpperCase().includes(printFilterSecretaria.toUpperCase())
+            );
+            // Skip printing this unit header if there are no collaborators for selected Secretaria
+            if (unitColabs.length === 0) return;
+          }
 
           // Calculate space needed: Header height (~12mm) + row heights (~7mm each) + spacing (~8mm)
           const rowsCount = unitColabs.length || 1;
@@ -494,7 +531,7 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
               <div>
                 <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Filtrar por Rota</label>
                 <select 
@@ -511,7 +548,30 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                 </select>
               </div>
               <div>
-                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Início da Análise (PDF)</label>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Filtrar Encarregado</label>
+                <select 
+                  className="form-input w-full !h-11 font-black"
+                  value={printFilterEncarregado}
+                  onChange={e => setPrintFilterEncarregado(e.target.value)}
+                >
+                  <option value="TODOS">TODOS OS ENCARREGADOS</option>
+                  {Array.from(new Set(gestaoRotas.map(g => g.encarregado_nome).filter(Boolean))).sort().map((name: any, i: number) => (
+                    <option key={i} value={name}>{name.toUpperCase()}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Filtrar Secretaria</label>
+                <input 
+                  type="text"
+                  placeholder="TODAS (EX: SEMED)"
+                  className="input-field w-full !h-11 uppercase"
+                  value={printFilterSecretaria}
+                  onChange={e => setPrintFilterSecretaria(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Inicio Analise (PDF)</label>
                 <input 
                   type="date"
                   className="input-field w-full !h-11 font-black"
@@ -520,7 +580,7 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                 />
               </div>
               <div>
-                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Fim da Análise (PDF)</label>
+                <label className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5 block">Fim Analise (PDF)</label>
                 <input 
                   type="date"
                   className="input-field w-full !h-11 font-black"
