@@ -644,6 +644,25 @@ export default function FeriasList({ colaboradores }: FeriasListProps) {
                 </button>
               </div>
 
+              {importedRows.filter(r => r.status === "Erro").length > 0 && (
+                <div className="p-6 rounded-3xl bg-red-500/5 border border-red-500/10 flex flex-col gap-4 animate-fade-in">
+                  <h5 className="text-xs font-black uppercase text-red-500 flex items-center gap-2">
+                    <AlertCircle size={16} /> Colaboradores Não Identificados no CRM ({importedRows.filter(r => r.status === "Erro").length})
+                  </h5>
+                  <p className="text-[11px] text-zinc-400 font-semibold leading-relaxed">
+                    Os seguintes nomes constam na sua planilha, mas não foram localizados ou não possuem cadastro de usuário ativo no banco de dados do CRM. Eles serão desconsiderados no salvamento de férias.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {importedRows.filter(r => r.status === "Erro").map((row, idx) => (
+                      <span key={idx} className="px-3 py-1.5 rounded-lg bg-zinc-950 border border-white/5 text-xs text-zinc-300 font-bold uppercase flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        {row.nomePlanilha}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="bg-zinc-950/20 rounded-2xl border border-white/5 overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-zinc-900/50 border-b border-white/5 text-[9px] font-black uppercase text-zinc-400">
