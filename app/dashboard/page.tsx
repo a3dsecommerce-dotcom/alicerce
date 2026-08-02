@@ -26,6 +26,7 @@ const OcorrenciasModule = dynamic(() => import("./components/modules/Ocorrencias
 const ManualModule = dynamic(() => import("./components/modules/ManualModule"), { ssr: false });
 const DiretorModule = dynamic(() => import("./components/modules/DiretorModule"), { ssr: false });
 const ChatModule = dynamic(() => import("./components/modules/ChatModule"), { ssr: false });
+const SSTModule = dynamic(() => import("./components/modules/SSTModule"), { ssr: false });
 // Definição Estática dos Módulos do Sistema e suas permissões (RBAC)
 const ALL_MODULES = [
   { id: "COMMAND", label: "Painel de Controle", icon: LayoutDashboard, roles: ["ADMIN", "GERENTE", "GERENCIA", "ENCARREGADO"] },
@@ -283,12 +284,7 @@ function CockpitContent() {
                  : <GerenciaModule user={user} initialTab={tabParam as any} />
             )}
             
-            {activeModule === "SST" && (
-              <div className="flex flex-col items-center justify-center h-full py-20 bg-[var(--bg-card)] rounded-[3rem] border border-dashed border-[var(--border)]">
-                <Settings size={48} className="text-[var(--text-muted)] opacity-20 mb-4" />
-                <h3 className="text-lg font-black text-[var(--text-primary)]">Módulo SST em Sincronização</h3>
-              </div>
-            )}
+            {activeModule === "SST" && <SSTModule user={user} />}
             
             {/* Fallback caso nenhum módulo esteja ativo mas haja permissão */}
             {!activeModule && filteredModules.length > 0 && (
