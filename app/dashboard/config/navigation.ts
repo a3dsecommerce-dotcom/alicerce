@@ -43,7 +43,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Recursos Humanos',
     icon: Users,
-    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'RH_DP'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'RH_DP', 'RH_SEMED'],
     href: '/dashboard?module=RH'
   },
   {
@@ -91,7 +91,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Configurações',
     icon: Settings,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR', 'DIRETOR_UNIDADE'],
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR', 'DIRETOR_UNIDADE', 'RH_SEMED'],
     href: '/dashboard?module=SETTINGS'
   }
 ];

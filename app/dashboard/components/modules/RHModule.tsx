@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   Search, FileText, Loader, Briefcase, UserPlus, CheckCircle, ShieldCheck, Clock, Truck, Package, ArrowUpRight, Building2, Plus, Edit2, Trash2, ShieldAlert, Activity, Calendar
 } from "lucide-react";
@@ -29,12 +29,95 @@ import { ptBR } from "date-fns/locale";
 type MasterTab = "DP" | "CATS" | "EXTRAS" | "FALTAS" | "VOLANTES" | "REQUISICOES" | "TRANSFERENCIAS" | "QUADRO" | "ADVERTENCIAS" | "ADMISSAO_RAPIDA" | "PONTO" | "FERIAS";
 
 export default function RHModule({ user }: { user: any }) {
-  const { loading, colaboradores, gestaoPropria, candidatos, cats, extras, faltas, counts, volantes, requisicoesVolantes, updateStatus, finalizarAdmissao, updateExpDecision, updateDocs, updateOffboarding, updateAdmission, addChecklistColumn, updateChecklistColumn, deleteChecklistColumn, updateChecklistColor, reorderChecklistColumn, updateExtraCheck, configChecklist, deleteExtra, refresh } = useRHData(user);
-  const { transferencias, finalizarRH } = useTransferencias(user);
+  const { 
+    loading, 
+    colaboradores: rawColaboradores, 
+    gestaoPropria: rawGestaoPropria, 
+    candidatos, 
+    cats: rawCats, 
+    extras: rawExtras, 
+    faltas: rawFaltas, 
+    counts: rawCounts, 
+    volantes: rawVolantes, 
+    requisicoesVolantes: rawRequisicoesVolantes, 
+    updateStatus, 
+    finalizarAdmissao, 
+    updateExpDecision, 
+    updateDocs, 
+    updateOffboarding, 
+    updateAdmission, 
+    addChecklistColumn, 
+    updateChecklistColumn, 
+    deleteChecklistColumn, 
+    updateChecklistColor, 
+    reorderChecklistColumn, 
+    updateExtraCheck, 
+    configChecklist, 
+    deleteExtra, 
+    refresh 
+  } = useRHData(user);
+  const { transferencias: rawTransferencias, finalizarRH } = useTransferencias(user);
 
   const [unidades, setUnidades] = useState<any[]>([]);
   const [cargos, setCargos] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const isSemed = user?.role === 'RH_SEMED';
+
+  const semedUnitNames = useMemo(() => {
+    return unidades.filter((u: any) => u.secretaria === 'SEMED').map((u: any) => u.nome);
+  }, [unidades]);
+
+  const colaboradores = useMemo(() => {
+    if (!isSemed) return rawColaboradores;
+    return rawColaboradores.filter((c: any) => c.secretaria === 'SEMED' || semedUnitNames.includes(c.unidade));
+  }, [rawColaboradores, isSemed, semedUnitNames]);
+
+  const gestaoPropria = useMemo(() => {
+    if (!isSemed) return rawGestaoPropria;
+    return rawGestaoPropria.filter((c: any) => c.secretaria === 'SEMED' || semedUnitNames.includes(c.unidade));
+  }, [rawGestaoPropria, isSemed, semedUnitNames]);
+
+  const cats = useMemo(() => {
+    if (!isSemed) return rawCats;
+    return rawCats.filter((c: any) => semedUnitNames.includes(c.unidade_alocada));
+  }, [rawCats, isSemed, semedUnitNames]);
+
+  const extras = useMemo(() => {
+    if (!isSemed) return rawExtras;
+    return rawExtras.filter((e: any) => semedUnitNames.includes(e.unidade));
+  }, [rawExtras, isSemed, semedUnitNames]);
+
+  const faltas = useMemo(() => {
+    if (!isSemed) return rawFaltas;
+    return rawFaltas.filter((f: any) => semedUnitNames.includes(f.unidade));
+  }, [rawFaltas, isSemed, semedUnitNames]);
+
+  const volantes = useMemo(() => {
+    if (!isSemed) return rawVolantes;
+    return rawVolantes.filter((v: any) => semedUnitNames.includes(v.unidade));
+  }, [rawVolantes, isSemed, semedUnitNames]);
+
+  const requisicoesVolantes = useMemo(() => {
+    if (!isSemed) return rawRequisicoesVolantes;
+    return rawRequisicoesVolantes.filter((r: any) => semedUnitNames.includes(r.unidade));
+  }, [rawRequisicoesVolantes, isSemed, semedUnitNames]);
+
+  const transferencias = useMemo(() => {
+    if (!isSemed) return rawTransferencias;
+    return rawTransferencias.filter((t: any) => semedUnitNames.includes(t.origem) || semedUnitNames.includes(t.destino));
+  }, [rawTransferencias, isSemed, semedUnitNames]);
+
+  const counts = useMemo(() => {
+    return {
+      totalOficiais: colaboradores.filter((c: any) => c.status === 'ATIVO').length,
+      totalAdmitidos: colaboradores.filter((c: any) => c.status === 'EM_ADMISSAO').length + gestaoPropria.filter((c: any) => c.status === 'EM_ADMISSAO').length,
+      totalInterno: gestaoPropria.filter((c: any) => c.status === 'ATIVO').length,
+      catsPending: cats.filter((c: any) => c.status === 'EM_ANALISE').length,
+      extrasCycle: extras.length,
+      faltasPending: faltas.length
+    };
+  }, [colaboradores, gestaoPropria, cats, extras, faltas]);
   const [admissao, setAdmissao] = useState({
     nome: '',
     telefone: '',
