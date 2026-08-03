@@ -704,7 +704,7 @@ export default function RHModule({ user }: { user: any }) {
             { id: "PONTO", label: "Gestão de Ponto", icon: Clock },
             { id: "FERIAS", label: "Férias & Efetivo", icon: Calendar }
           ].filter((t: any) => {
-            if (isSemed && ["ADMISSAO_RAPIDA", "PONTO"].includes(t.id)) return false;
+            if (isSemed && ["ADMISSAO_RAPIDA", "PONTO", "REQUISICOES"].includes(t.id)) return false;
             return true;
           }).map((t: any) => (
             <button key={t.id} onClick={() => {

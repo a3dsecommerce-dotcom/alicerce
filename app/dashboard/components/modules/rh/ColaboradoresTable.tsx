@@ -450,7 +450,7 @@ export default function ColaboradoresTable({
                   {onDelete && (
                     <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Desativar/Excluir (Fluxo RH)"><Trash2 size={16} /></button>
                   )}
-                  {((user?.nivel_acesso >= 2) || (user?.role === 'DEV') || (user?.cargo === 'ENCARREGADO')) && (
+                  {((user?.nivel_acesso >= 2) || (user?.role === 'DEV') || (user?.cargo === 'ENCARREGADO')) && user?.role !== 'RH_SEMED' && (
                     <button 
                       onClick={async (e) => { 
                         e.stopPropagation(); 
@@ -670,19 +670,21 @@ export default function ColaboradoresTable({
               </div>
 
               {/* Excluir */}
-              <div className="pt-4 border-t border-slate-100">
-                <button 
-                  onClick={() => {
-                    if (confirm(`EXCLUIR DEFINITIVAMENTE A COLUNA "${modalConfig.label.toUpperCase()}"?\n\nAtenção: Todos os registros feitos nesta coluna serão perdidos.`)) {
-                      onDeleteConfigChecklist?.(modalConfig.id);
-                      setModalConfig(null);
-                    }
-                  }}
-                  className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2"
-                >
-                  <Trash2 size={16} /> Excluir Coluna
-                </button>
-              </div>
+              {user?.role !== 'RH_SEMED' && (
+                <div className="pt-4 border-t border-slate-100">
+                  <button 
+                    onClick={() => {
+                      if (confirm(`EXCLUIR DEFINITIVAMENTE A COLUNA "${modalConfig.label.toUpperCase()}"?\n\nAtenção: Todos os registros feitos nesta coluna serão perdidos.`)) {
+                        onDeleteConfigChecklist?.(modalConfig.id);
+                        setModalConfig(null);
+                      }
+                    }}
+                    className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-black uppercase text-[10px] hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={16} /> Excluir Coluna
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
