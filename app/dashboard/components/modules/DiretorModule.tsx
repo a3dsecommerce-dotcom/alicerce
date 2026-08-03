@@ -40,7 +40,10 @@ export default function DiretorModule({ user }: { user: any }) {
     try {
       setLoading(true);
 
-      const { data: listUnits } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
+      let { data: listUnits } = await supabase.from('unidades').select('*').eq('status', 'ATIVO').order('nome');
+      if (user?.role === 'RH_SEMED') {
+        listUnits = listUnits?.filter((u: any) => u.secretaria === 'SEMED') || [];
+      }
       setAllUnits(listUnits || []);
 
       let unitData: any = null;
