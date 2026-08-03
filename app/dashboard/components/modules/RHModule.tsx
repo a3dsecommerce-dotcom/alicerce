@@ -48,15 +48,31 @@ export default function RHModule({ user }: { user: any }) {
     updateAdmission, 
     addChecklistColumn, 
     updateChecklistColumn, 
-    deleteChecklistColumn, 
+    deleteChecklistColumn: rawDeleteChecklistColumn, 
     updateChecklistColor, 
     reorderChecklistColumn, 
     updateExtraCheck, 
     configChecklist, 
-    deleteExtra, 
+    deleteExtra: rawDeleteExtra, 
     refresh 
   } = useRHData(user);
   const { transferencias: rawTransferencias, finalizarRH } = useTransferencias(user);
+
+  const deleteExtra = async (id: string, justificativa: string) => {
+    if (isSemed) {
+      toast.error("Acesso negado: Perfil RH SEMED não tem permissão para excluir dados.");
+      return;
+    }
+    return rawDeleteExtra(id, justificativa);
+  };
+
+  const deleteChecklistColumn = async (id: string) => {
+    if (isSemed) {
+      toast.error("Acesso negado: Perfil RH SEMED não tem permissão para excluir dados.");
+      return;
+    }
+    return rawDeleteChecklistColumn(id);
+  };
 
   const [unidades, setUnidades] = useState<any[]>([]);
   const [cargos, setCargos] = useState<any[]>([]);
@@ -687,7 +703,10 @@ export default function RHModule({ user }: { user: any }) {
             { id: "ADMISSAO_RAPIDA", label: "Admissão Rápida", icon: UserPlus },
             { id: "PONTO", label: "Gestão de Ponto", icon: Clock },
             { id: "FERIAS", label: "Férias & Efetivo", icon: Calendar }
-          ].map((t: any) => (
+          ].filter((t: any) => {
+            if (isSemed && ["ADMISSAO_RAPIDA", "PONTO"].includes(t.id)) return false;
+            return true;
+          }).map((t: any) => (
             <button key={t.id} onClick={() => {
               if (t.id === "PONTO") {
                 window.location.href = "/dashboard/rh/ponto";
@@ -718,7 +737,10 @@ export default function RHModule({ user }: { user: any }) {
                    { id: "ativos", label: "Colab. Ativos", count: counts.totalOficiais },
                    { id: "desligamentos", label: "Desligamentos", count: colaboradores.filter(c => c.status === 'DESLIGADO').length },
                    { id: "arquivo", label: "Checklist Documentos", count: colaboradores.length }
-                 ].map((t: any) => (
+                 ].filter((t: any) => {
+                   if (isSemed && ["contratacao", "desligamentos", "arquivo"].includes(t.id)) return false;
+                   return true;
+                 }).map((t: any) => (
                    <button key={t.id} onClick={() => { setDpAba(t.id); setExpOnly(false); }} className={`px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dpAba === t.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}>{t.label} ({t.count})</button>
                  ))}
              </div>
