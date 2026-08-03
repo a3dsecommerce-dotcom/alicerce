@@ -73,7 +73,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Manual de Boas Práticas',
     icon: FileText,
-    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'TECNICO_SEGURANCA', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR', 'DIRETOR_UNIDADE'],
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'RH_DP', 'COMPRADOR', 'COMPRAS', 'ALMOXARIFE', 'ALMOXARIFADO', 'SUPERVISOR', 'ENCARREGADO', 'COLABORADOR', 'DIRETOR_UNIDADE'],
     href: '/dashboard?module=MANUAL'
   },
   {
@@ -81,6 +81,12 @@ export const ALL_NAV: NavItem[] = [
     icon: Building2,
     roles: ['DEV', 'ADMIN', 'DIRETOR_UNIDADE', 'DIRETORIA', 'GERENTE', 'GERENCIA'],
     href: '/dashboard?module=DIRETOR'
+  },
+  {
+    label: 'Segurança (SST)',
+    icon: ShieldCheck,
+    roles: ['DEV', 'ADMIN', 'DIRETORIA', 'GERENTE', 'GERENCIA', 'TECNICO_SEGURANCA'],
+    href: '/dashboard?module=SST'
   },
   {
     label: 'Configurações',
