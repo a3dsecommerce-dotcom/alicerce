@@ -110,7 +110,18 @@ export default function OcorrenciasModule({ user }: { user: any }) {
   async function fetchTickets() {
     setLoading(true);
     const { data } = await supabase.from('tickets_sla').select('*').order('data_abertura', { ascending: false });
-    if (data) setTickets(data);
+    if (data) {
+      if (user?.role === 'RH_SEMED') {
+        const filtered = data.filter(t => 
+          t.representante_id === user.id || 
+          t.criado_por === user.nome || 
+          t.criado_por === user.name
+        );
+        setTickets(filtered);
+      } else {
+        setTickets(data);
+      }
+    }
     setLoading(false);
   }
 

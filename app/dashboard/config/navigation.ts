@@ -61,7 +61,7 @@ export const ALL_NAV: NavItem[] = [
   {
     label: 'Central de Ocorrências',
     icon: AlertTriangle,
-    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'ENCARREGADO'],
+    roles: ['DEV', 'ADMIN', 'GERENTE', 'GERENCIA', 'RH_DP', 'ALMOXARIFE', 'ALMOXARIFADO', 'ENCARREGADO', 'RH_SEMED'],
     href: '/dashboard?module=OCORRENCIAS'
   },
   {
