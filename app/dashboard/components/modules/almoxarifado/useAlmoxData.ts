@@ -180,6 +180,47 @@ export function useAlmoxData() {
     await fetchAll();
   };
 
+  // Atualiza o número do Strato de todas as requisições sob um mesmo protocolo
+  const atualizarNumeroStrato = async (protocolo: string, numero_strato: string) => {
+    const { error } = await supabase
+      .from('requisicoes')
+      .update({ numero_strato: numero_strato || null })
+      .eq('protocolo', protocolo);
+    if (error) throw error;
+    await fetchAll();
+  };
+
+  // Cancela um item específico de uma requisição
+  // Se o item já havia sido entregue, devolvemos a quantidade entregue de volta ao estoque
+  const cancelarItemRequisicao = async (req: any) => {
+    const { id, status, item_id, quantidade_entregue, tipo_item } = req;
+    
+    // Se o item já estava entregue ou parcial, precisamos estornar o estoque
+    if ((status === 'ENTREGUE' || status === 'PARCIAL') && (quantidade_entregue || 0) > 0) {
+      const targetTable = tipo_item === 'EPI' ? 'almox_epi' : tipo_item === 'SUPRIMENTO' ? 'almox_suprimentos' : 'almox_escritorio';
+      
+      // Incrementa a quantidade no inventário
+      const { error: stockErr } = await supabase.rpc('baixar_estoque_item', {
+        p_item_id: item_id,
+        p_quantidade: -quantidade_entregue, // número negativo no decremento = incremento
+        p_categoria: tipo_item
+      });
+      if (stockErr) throw stockErr;
+    }
+
+    // Atualiza o status do item para CANCELADO
+    const { error: reqErr } = await supabase
+      .from('requisicoes')
+      .update({ 
+        status: 'CANCELADO',
+        quantidade_entregue: 0
+      })
+      .eq('id', id);
+      
+    if (reqErr) throw reqErr;
+    await fetchAll();
+  };
+
   return {
     loading,
     estoque,
@@ -199,6 +240,8 @@ export function useAlmoxData() {
     estornarEntregaRPC,
     arquivarRequisicao,
     arquivarProtocolo,
-    insertSecretaria
+    insertSecretaria,
+    atualizarNumeroStrato,
+    cancelarItemRequisicao
   };
 }

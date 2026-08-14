@@ -53,6 +53,11 @@ export default function RequisicoesTable({
                   <div className="bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg font-black text-[11px] border border-orange-100 shadow-sm">
                     {group.protocolo}
                   </div>
+                  {group.numero_strato && (
+                    <div className="mt-1.5 bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border border-slate-200">
+                      Strato #{group.numero_strato}
+                    </div>
+                  )}
                 </td>
                 <td className="px-6 py-6">
                   <div className="flex flex-col">

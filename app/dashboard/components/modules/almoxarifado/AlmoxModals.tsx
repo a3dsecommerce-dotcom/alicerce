@@ -36,6 +36,8 @@ interface AlmoxModalsProps {
   onFinalizarResolucao: () => void;
   onFinalizarRequisicaoInternal: () => void;
   onEstornarEntrega?: (id: string) => Promise<void>;
+  onAtualizarStrato?: (protocolo: string, numero: string) => Promise<void>;
+  onCancelarItem?: (itemReq: any) => Promise<void>;
   loading: boolean;
 }
 
@@ -50,6 +52,8 @@ export default function AlmoxModals({
   resolucaoData, setResolucaoData, onFinalizarResolucao,
   onFinalizarRequisicaoInternal,
   onEstornarEntrega,
+  onAtualizarStrato,
+  onCancelarItem,
   loading
 }: AlmoxModalsProps) {
 
@@ -449,6 +453,31 @@ export default function AlmoxModals({
                     <p className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 tracking-[0.2em]">Protocolo sob Análise</p>
                     <h4 className="text-2xl font-black text-[var(--text-primary)] italic">{reqEditando.protocolo}</h4>
                     <p className="text-[10px] font-bold text-orange-600 uppercase mt-1">{reqEditando.solicitante} • {reqEditando.unidade_destino}</p>
+                    {reqEditando.numero_strato && (
+                       <span className="inline-block mt-2 px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-black text-slate-700 uppercase">
+                         Strato: #{reqEditando.numero_strato}
+                       </span>
+                    )}
+                 </div>
+                 {/* Campo Strato */}
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400">Nº Gerado no Strato</label>
+                    <div className="flex gap-2">
+                       <input
+                          type="text"
+                          id="input-strato-analise"
+                          defaultValue={reqEditando.numero_strato || ""}
+                          placeholder="Ex: 859432"
+                          className="h-10 px-3 rounded-xl border-2 border-slate-200 text-xs font-black outline-none focus:border-[var(--brand)]"
+                       />
+                       <button
+                          onClick={() => {
+                             const val = (document.getElementById("input-strato-analise") as HTMLInputElement).value;
+                             onAtualizarStrato?.(reqEditando.protocolo, val);
+                          }}
+                          className="h-10 px-4 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all"
+                       >Vincular</button>
+                    </div>
                  </div>
                  <div className="flex gap-3 flex-wrap">
                     <button
@@ -493,7 +522,6 @@ export default function AlmoxModals({
               {/* Lista de itens */}
               <div className="space-y-4 max-h-[540px] overflow-auto pr-2 scrollbar-thin">
                 {reqEditando.itens.map((it:any) => {
-                  // Cruzamento com o catálogo de suprimentos para obter coeficiente
                   const estoqueItem = estoque.find((e:any) =>
                     String(e.id) === String(it.item_id) ||
                     e.item?.toLowerCase().trim() === it.item_nome?.toLowerCase().trim()
@@ -514,7 +542,6 @@ export default function AlmoxModals({
                   const temCota      = cotaCalculada > 0;
                   const tipoPedido   = reqEditando.tipo_pedido || 'MENSAL';
 
-                  // Lógica de aprovação automática e análise manual
                   const isMensalComCota = tipoPedido === 'MENSAL' && temCota;
                   const cotaAutomatica = isMensalComCota ? Math.min(solicitado, cotaCalculada) : 0;
                   const quantidadeEmAnalise = isMensalComCota
@@ -524,19 +551,17 @@ export default function AlmoxModals({
                   let cardColor = 'border-slate-200 bg-white';
                   if (isMensalComCota) {
                     if (quantidadeEmAnalise > 0) {
-                      cardColor = 'border-amber-300 bg-amber-50/20'; // Possui extra em análise
+                      cardColor = 'border-amber-300 bg-amber-50/20';
                     } else {
-                      cardColor = 'border-green-200 bg-green-50/20'; // 100% automático
+                      cardColor = 'border-green-200 bg-green-50/20';
                     }
                   } else {
-                    cardColor = 'border-blue-200 bg-blue-50/10'; // Emergencial ou Sem cota
+                    cardColor = 'border-blue-200 bg-blue-50/10';
                   }
 
                   return (
                     <div key={it.id} className={`p-6 rounded-2xl border-2 transition-all ${cardColor}`}>
-                      {/* Nome + métricas + ações */}
                       <div className="flex flex-wrap justify-between items-start gap-4">
-                        {/* Nome e categoria */}
                         <div className="flex-1 min-w-[180px]">
                           <h5 className="text-xs font-black text-slate-800 uppercase">{it.item_nome}</h5>
                           <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">
@@ -544,15 +569,12 @@ export default function AlmoxModals({
                           </p>
                         </div>
 
-                        {/* Cards de métricas simplificados */}
                         <div className="flex items-stretch gap-2 flex-wrap">
-                          {/* Total Solicitado */}
                           <div className="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 min-w-[75px]">
                             <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Total Pedido</span>
                             <span className="text-xl font-black text-slate-800">{totalSolicitado}</span>
                           </div>
 
-                          {/* Cota Limite — apenas se houver cota */}
                           {!isEPI && temCota && (
                             <div className="flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 min-w-[75px]">
                               <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Cota Limite</span>
@@ -560,7 +582,6 @@ export default function AlmoxModals({
                             </div>
                           )}
 
-                          {/* Aprovado Auto (Pré-Aprovado) — apenas se houver cota aprovada automaticamente */}
                           {isMensalComCota && cotaAutomatica > 0 && (
                             <div className="flex flex-col items-center justify-center bg-green-50 border border-green-200 rounded-xl px-4 py-3 min-w-[75px]">
                               <span className="text-[7px] font-black uppercase text-green-600 mb-1">Aprov. Auto (Cota)</span>
@@ -568,7 +589,6 @@ export default function AlmoxModals({
                             </div>
                           )}
 
-                          {/* A Mais / Em Análise — apenas se houver excedente/extra em análise */}
                           {quantidadeEmAnalise > 0 && (
                             <div className="flex flex-col items-center justify-center bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 min-w-[75px]">
                               <span className="text-[7px] font-black uppercase text-amber-600 mb-1">A Mais (Em Análise)</span>
@@ -576,7 +596,6 @@ export default function AlmoxModals({
                             </div>
                           )}
 
-                          {/* Estoque Central — ocultado para suprimentos */}
                           {it.tipo_item !== 'SUPRIMENTO' && (
                             <div className="flex flex-col items-center justify-center bg-blue-50/50 border border-blue-100 rounded-xl px-4 py-3 min-w-[75px]">
                               <span className="text-[7px] font-black uppercase text-slate-400 mb-1">Estoque Central</span>
@@ -584,7 +603,6 @@ export default function AlmoxModals({
                             </div>
                           )}
 
-                          {/* Campo de aprovação */}
                           {isMensalComCota ? (
                             quantidadeEmAnalise > 0 ? (
                               <div className="flex flex-col items-center justify-center gap-1">
@@ -613,7 +631,6 @@ export default function AlmoxModals({
                             </div>
                           )}
 
-                          {/* Botões Aprovar / Reprovar */}
                           <div className="flex gap-2 items-center">
                             <button
                               onClick={() => {
@@ -642,11 +659,19 @@ export default function AlmoxModals({
                             >
                               <Trash2 size={18} />
                             </button>
+                            {onCancelarItem && it.status !== 'CANCELADO' && (
+                              <button
+                                onClick={() => onCancelarItem(it)}
+                                className="px-3 py-3 bg-red-100 text-red-700 font-black text-[9px] uppercase tracking-wider rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                title="Cancelar suprimento definitivamente"
+                              >
+                                Cancelar
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
 
-                      {/* Alertas contextuais */}
                       <div className="flex flex-wrap gap-2 mt-3">
                         {isMensalComCota && cotaAutomatica > 0 && (
                           <div className="flex items-center gap-1.5 bg-green-100/60 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
@@ -664,26 +689,11 @@ export default function AlmoxModals({
                             </span>
                           </div>
                         )}
-                        {isMensalComCota && quantidadeEmAnalise === 0 && (
-                          <div className="flex items-center gap-1.5 bg-green-100/60 text-green-700 px-3 py-1.5 rounded-lg border border-green-200">
-                            <CheckCircle2 size={11} />
-                            <span className="text-[9px] font-black uppercase">
-                              ✓ Item 100% aprovado dentro da cota
-                            </span>
-                          </div>
-                        )}
                         {!isMensalComCota && (
                           <div className="flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-200">
                             <AlertTriangle size={11} />
                             <span className="text-[9px] font-black uppercase">
                               {tipoPedido === 'EMERGENCIAL' ? 'Pedido Emergencial' : 'Item sem cota calculada'} — Requer análise manual do total ({totalSolicitado} {it.unidade_medida || 'UN'})
-                            </span>
-                          </div>
-                        )}
-                        {it.tipo_item !== 'SUPRIMENTO' && estoqueAtual < totalSolicitado && (
-                          <div className="flex items-center gap-1.5 bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-200">
-                            <span className="text-[9px] font-black uppercase">
-                              Estoque central insuficiente ({estoqueAtual} disp.) — Compra sob demanda (Não bloqueia a aprovação)
                             </span>
                           </div>
                         )}
@@ -710,6 +720,30 @@ export default function AlmoxModals({
                        <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">
                           {reqEditando.solicitante} • Destino: {reqEditando.unidade_destino}
                        </p>
+                       {reqEditando.numero_strato && (
+                         <span className="inline-block mt-2 px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-[10px] font-black text-slate-700 uppercase">
+                           Strato: #{reqEditando.numero_strato}
+                         </span>
+                       )}
+                    </div>
+                 </div>
+                 <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black uppercase text-slate-400">Nº Gerado no Strato</label>
+                    <div className="flex gap-2">
+                       <input
+                          type="text"
+                          id="input-strato-entrega"
+                          defaultValue={reqEditando.numero_strato || ""}
+                          placeholder="Ex: 859432"
+                          className="h-10 px-3 rounded-xl border-2 border-slate-200 text-xs font-black outline-none focus:border-[var(--brand)]"
+                       />
+                       <button
+                          onClick={() => {
+                             const val = (document.getElementById("input-strato-entrega") as HTMLInputElement).value;
+                             onAtualizarStrato?.(reqEditando.protocolo, val);
+                          }}
+                          className="h-10 px-4 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all"
+                       >Vincular</button>
                     </div>
                  </div>
                  <div className="space-y-3">
@@ -759,6 +793,15 @@ export default function AlmoxModals({
                           >
                             <CheckCircle2 size={14} /> Confirmar
                           </button>
+                          {onCancelarItem && (
+                            <button
+                              onClick={() => onCancelarItem(it)}
+                              className="h-10 px-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[9px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                              title="Cancelar suprimento definitivamente"
+                            >
+                              Cancelar
+                            </button>
+                          )}
                        </div>
                     </div>
                  ))}

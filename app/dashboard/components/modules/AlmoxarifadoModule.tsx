@@ -22,7 +22,8 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
   const { 
     loading, estoque, requisicoes, usuarios, ocorrencias, cotasMap,
     notas, metas, secretarias,
-    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, estornarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh 
+    updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, estornarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh,
+    atualizarNumeroStrato, cancelarItemRequisicao
   } = useAlmoxData();
 
   const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
@@ -71,11 +72,16 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
         status_geral: current.status || 'SOLICITADO',
         arquivado: current.arquivado,
         tipo_pedido: current.tipo_pedido || 'MENSAL',
+        numero_strato: current.numero_strato || '',
         itens: [] 
       };
       acc.push(group);
     }
     group.itens.push(current);
+    // Preserva o número do strato se estiver em algum dos itens
+    if (current.numero_strato && !group.numero_strato) {
+      group.numero_strato = current.numero_strato;
+    }
     // Se algum item não estiver entregue, o status geral do grupo reflete isso para o almoxarife
     if (current.status !== 'ENTREGUE' && group.status_geral === 'ENTREGUE') {
       group.status_geral = current.status;
@@ -375,12 +381,23 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
             try {
               await estornarEntregaRPC(id);
               toast.success("Entrega estornada com sucesso! Item devolvido ao estoque.");
-              // Need to close modal or update reqEditando?
-              // The easiest way is to let the user close the modal or refresh closes it?
-              // Since reqEditando won't auto-update without fetching the specific requisition,
-              // it's best to refresh and close the modal.
               handleCloseModal();
             } catch (e: any) { toast.error("Erro ao estornar: " + e.message); }
+          }
+        }}
+        onAtualizarStrato={async (protocolo, numero) => {
+          try {
+            await atualizarNumeroStrato(protocolo, numero);
+            toast.success("Vínculo do Strato atualizado!");
+          } catch (e: any) { toast.error("Erro ao atualizar Strato: " + e.message); }
+        }}
+        onCancelarItem={async (itemReq) => {
+          if (window.confirm(`Deseja realmente CANCELAR o item "${itemReq.item_nome}" deste protocolo? O estoque será recalculado se necessário.`)) {
+            try {
+              await cancelarItemRequisicao(itemReq);
+              toast.success("Item cancelado com sucesso!");
+              handleCloseModal();
+            } catch (e: any) { toast.error("Erro ao cancelar item: " + e.message); }
           }
         }}
         loading={loading}
