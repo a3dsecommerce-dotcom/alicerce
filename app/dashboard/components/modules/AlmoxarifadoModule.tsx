@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { 
-  Search, Package, Plus, FileText, ShoppingBag, AlertTriangle, Loader, UserCheck, Archive
+  Search, Package, Plus, FileText, ShoppingBag, AlertTriangle, Loader, UserCheck, Archive,
+  BarChart2, Sliders
 } from "lucide-react";
 import { useAlmoxData } from "./almoxarifado/useAlmoxData";
 import EstoqueTable from "./almoxarifado/EstoqueTable";
@@ -9,15 +10,18 @@ import RequisicoesTable from "./almoxarifado/RequisicoesTable";
 import NovaRequisicaoForm from "./almoxarifado/NovaRequisicaoForm";
 import EntregasEPITable from "./almoxarifado/EntregasEPITable";
 import AlmoxModals from "./almoxarifado/AlmoxModals";
+import CoeficientesTab from "./almoxarifado/CoeficientesTab";
+import RelatoriosAlmoxTab from "./almoxarifado/RelatoriosAlmoxTab";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 
-type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI";
+type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI" | "COEFICIENTES" | "RELATORIOS";
 
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
     loading, estoque, requisicoes, usuarios, ocorrencias, cotasMap,
+    notas, metas, secretarias,
     updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, estornarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh 
   } = useAlmoxData();
 
@@ -216,6 +220,8 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
             { id: "REQUISICOES", label: "Requisições", icon: FileText },
             { id: "ENTREGAS_EPI", label: "Entregas EPI", icon: UserCheck },
             { id: "FAZER_REQ", label: "Fazer Requisição", icon: ShoppingBag },
+            { id: "COEFICIENTES", label: "Coeficientes", icon: Sliders },
+            { id: "RELATORIOS", label: "Relatórios", icon: BarChart2 },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id as TabType)} className={`flex items-center gap-3 px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-[var(--brand)] text-white shadow-lg' : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)]'}`}>
               <tab.icon size={16} /> {tab.label}
@@ -290,7 +296,8 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
               observacao={observacao}
               setObservacao={setObservacao}
               onFinalizar={() => setModalAberto("termo_requisicao")} 
-              loading={loading} 
+              loading={loading}
+              secretariaUser={(() => { try { return JSON.parse(localStorage.getItem("crm_user") || "{}").secretaria; } catch { return undefined; } })()}
             />
           )}
           {activeTab === "ENTREGAS_EPI" && (
@@ -314,12 +321,27 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
               }}
             />
           )}
+          {activeTab === "COEFICIENTES" && (
+            <CoeficientesTab
+              estoque={estoque}
+              metas={metas}
+              onRefresh={refresh}
+            />
+          )}
+          {activeTab === "RELATORIOS" && (
+            <RelatoriosAlmoxTab
+              notas={notas}
+              requisicoes={requisicoesAgrupadas}
+              estoque={estoque}
+              onRefresh={refresh}
+            />
+          )}
       </div>
 
       <AlmoxModals 
         modalAberto={modalAberto} setModalAberto={handleCloseModal}
         formData={formData} setFormData={setFormData} onSalvarItem={handleSalvarItem} onExcluirItem={handleExcluirItem}
-        entregaData={entregaData} setEntregaData={setEntregaData} buscaFuncionario={buscaFuncionario} setBuscaFuncionario={setBuscaFuncionario} usuarios={usuarios} estoque={estoque} onConfirmarEntregaEPI={handleConfirmarEntregaEPI}
+        entregaData={entregaData} setEntregaData={setEntregaData} buscaFuncionario={buscaFuncionario} setBuscaFuncionario={setBuscaFuncionario} usuarios={usuarios} estoque={estoque} secretarias={secretarias} onConfirmarEntregaEPI={handleConfirmarEntregaEPI}
         reqEditando={reqEditando} setReqEditando={setReqEditando} cotasMap={cotasMap} onProcessarReq={(id, status, qtd) => {
            processarRequisicao(id, {status, quantidade_aprovada: qtd});
            toast.success(`Requisição ${status === 'APROVADO' ? 'Aprovada' : 'Reprovada'}`);

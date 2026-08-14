@@ -10,14 +10,18 @@ export function useAlmoxData() {
   const [ocorrencias, setOcorrencias] = useState<any[]>([]);
   // Map de secretaria → qtdAsg (mesma lógica do módulo Compras)
   const [cotasMap, setCotasMap] = useState<Record<string, number>>({});
+  // Novas tabelas
+  const [notas, setNotas] = useState<any[]>([]);
+  const [metas, setMetas] = useState<any[]>([]);
+  const [secretarias, setSecretarias] = useState<any[]>([]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
       const [epiRes, supRes, escRes] = await Promise.all([
-        supabase.from('almox_epi').select('*'),
-        supabase.from('almox_suprimentos').select('*'),
-        supabase.from('almox_escritorio').select('*')
+        supabase.from('almox_epi').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
+        supabase.from('almox_suprimentos').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
+        supabase.from('almox_escritorio').select('*, preco_unitario, coeficiente, secretarias_permitidas')
       ]);
 
       const combined = [
@@ -36,6 +40,28 @@ export function useAlmoxData() {
 
       const { data: ocData } = await supabase.from('tickets_sla').select('*').order('created_at', { ascending: false });
       if (ocData) setOcorrencias(ocData);
+
+      // Notas fiscais
+      const { data: notasData } = await supabase
+        .from('almox_notas_requisicao')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (notasData) setNotas(notasData);
+
+      // Metas de redução
+      const { data: metasData } = await supabase
+        .from('almox_metas_reducao')
+        .select('*')
+        .order('ano', { ascending: false });
+      if (metasData) setMetas(metasData);
+
+      // Secretarias cadastradas
+      const { data: secsData } = await supabase
+        .from('almox_secretarias')
+        .select('*')
+        .eq('ativa', true)
+        .order('sigla');
+      if (secsData) setSecretarias(secsData);
 
       // Calcula qtdAsg por secretaria (mesma lógica do módulo Compras)
       // 1. Lê configurações manuais
@@ -145,6 +171,15 @@ export function useAlmoxData() {
     await fetchAll();
   };
 
+  // Insere nova secretaria no cadastro livre
+  const insertSecretaria = async (nome: string, sigla: string) => {
+    const { error } = await supabase
+      .from('almox_secretarias')
+      .insert([{ nome, sigla: sigla.toUpperCase() }]);
+    if (error) throw error;
+    await fetchAll();
+  };
+
   return {
     loading,
     estoque,
@@ -152,6 +187,9 @@ export function useAlmoxData() {
     usuarios,
     ocorrencias,
     cotasMap,
+    notas,
+    metas,
+    secretarias,
     refresh: fetchAll,
     updateItem,
     insertItem,
@@ -160,6 +198,7 @@ export function useAlmoxData() {
     processarEntregaRPC,
     estornarEntregaRPC,
     arquivarRequisicao,
-    arquivarProtocolo
+    arquivarProtocolo,
+    insertSecretaria
   };
 }

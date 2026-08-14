@@ -1,5 +1,5 @@
 "use client";
-import { UserCheck, Plus, Save, Trash2, Truck, AlertTriangle, CheckCircle2, Printer } from "lucide-react";
+import { UserCheck, Plus, Save, Trash2, Truck, AlertTriangle, CheckCircle2, Printer, X } from "lucide-react";
 import AdaptiveModal from "@/components/ui/AdaptiveModal";
 
 interface AlmoxModalsProps {
@@ -15,6 +15,7 @@ interface AlmoxModalsProps {
   setBuscaFuncionario: (v: string) => void;
   usuarios: any[];
   estoque: any[];
+  secretarias: any[];
   onConfirmarEntregaEPI: () => void;
   reqEditando: any;
   setReqEditando: (v: any) => void;
@@ -41,7 +42,8 @@ interface AlmoxModalsProps {
 export default function AlmoxModals({
   modalAberto, setModalAberto,
   formData, setFormData, onSalvarItem, onExcluirItem,
-  entregaData, setEntregaData, buscaFuncionario, setBuscaFuncionario, usuarios, estoque, onConfirmarEntregaEPI,
+  entregaData, setEntregaData, buscaFuncionario, setBuscaFuncionario, usuarios, estoque, secretarias,
+  onConfirmarEntregaEPI,
   reqEditando, setReqEditando, cotasMap, onProcessarReq,
   entregaConfirm, setEntregaConfirm, entregaParcialQtd, setEntregaParcialQtd, onConfirmarEntregaTotal, onConfirmarEntregaParcial, onConfirmarEntregaParcialExternal,
   ocorrenciaData, setOcorrenciaData, onSalvarOcorrencia,
@@ -50,6 +52,15 @@ export default function AlmoxModals({
   onEstornarEntrega,
   loading
 }: AlmoxModalsProps) {
+
+  // Helper para toggle de secretaria no multi-select
+  const toggleSecretaria = (sigla: string) => {
+    const atual: string[] = formData.secretarias_permitidas || [];
+    const nova = atual.includes(sigla)
+      ? atual.filter((s: string) => s !== sigla)
+      : [...atual, sigla];
+    setFormData({ ...formData, secretarias_permitidas: nova });
+  };
   
   const colaboradorInfo = usuarios.find(u => u.nome === entregaData.colaborador);
 
@@ -184,6 +195,70 @@ export default function AlmoxModals({
                   <p className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-wide">
                     Limite máximo que uma unidade pode solicitar por pedido mensal. Deixe 0 para não restringir.
                   </p>
+               </div>
+
+               {/* ── PREÇO UNITÁRIO ── */}
+               <div>
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Preço Unitário (R$)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="input-field w-full font-black text-emerald-600"
+                    value={formData.preco_unitario ?? ''}
+                    onChange={e => setFormData({...formData, preco_unitario: e.target.value === '' ? null : parseFloat(e.target.value)})}
+                    placeholder="0,00"
+                  />
+               </div>
+
+               {/* ── COEFICIENTE (apenas suprimentos) ── */}
+               {formData.categoria === 'SUPRIMENTO' && (
+                 <div>
+                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Coeficiente</label>
+                   <input
+                     type="number"
+                     min="0"
+                     max="9.99"
+                     step="0.01"
+                     className="input-field w-full font-black text-blue-600"
+                     value={formData.coeficiente ?? 1}
+                     onChange={e => setFormData({...formData, coeficiente: parseFloat(e.target.value) || 0})}
+                     placeholder="1.00"
+                   />
+                   <p className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-wide">
+                     Multiplicador da cota ASG (1.0 = 100%, 0.8 = 80%)
+                   </p>
+                 </div>
+               )}
+
+               {/* ── SECRETARIAS PERMITIDAS ── */}
+               <div className="col-span-2">
+                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">
+                    Secretarias com Acesso <span className="text-[9px] font-bold text-slate-400 normal-case tracking-normal">(vazio = todas podem pedir)</span>
+                  </label>
+                  {secretarias.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {secretarias.map((sec: any) => {
+                        const ativo = (formData.secretarias_permitidas || []).includes(sec.sigla);
+                        return (
+                          <button
+                            key={sec.sigla}
+                            type="button"
+                            onClick={() => toggleSecretaria(sec.sigla)}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                              ativo
+                                ? 'bg-[var(--brand)] text-white border-[var(--brand)] shadow-md'
+                                : 'bg-[var(--bg-base)] text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--brand)]/50'
+                            }`}
+                          >
+                            {sec.sigla}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-[var(--text-muted)] font-bold">Nenhuma secretaria cadastrada ainda. Cadastre na aba Coeficientes.</p>
+                  )}
                </div>
             </div>
 
