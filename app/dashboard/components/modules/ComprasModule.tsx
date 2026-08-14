@@ -108,6 +108,14 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
     } catch (e: any) { toast.error(e.message); }
   };
 
+  // Filtra itens do catálogo que o solicitante tem acesso
+  const catalogoFiltrado = (catalogo || []).filter((item: any) => {
+    const permitidas = item.secretarias_permitidas || [];
+    if (permitidas.length === 0) return true; // Geral (todos veem)
+    if (!user?.secretaria) return true; // Almox/Comprador central sem secretaria vê tudo
+    return permitidas.map((s: string) => s.toUpperCase()).includes(user.secretaria.toUpperCase());
+  });
+
   return (
     <div className="flex flex-col gap-10 animate-fade-in pb-32 max-w-full px-4 lg:px-20 py-10">
       
@@ -149,7 +157,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                     </button>
                  </div>
               </div>
-              <CatalogoTable catalogo={catalogo} qtdAsg={qtdAsg} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} />
+              <CatalogoTable catalogo={catalogoFiltrado} qtdAsg={qtdAsg} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} />
           </div>
         ) : (
           <TrackingTable requisicoesAgrupadas={requisicoesAgrupadas} getMesReferencia={getMesReferencia} getTempoAberto={getTempoAberto} onSelect={setSelectedProtocol} />
