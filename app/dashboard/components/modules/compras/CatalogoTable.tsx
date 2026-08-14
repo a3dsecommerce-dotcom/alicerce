@@ -60,11 +60,6 @@ export default function CatalogoTable({
                     <td className="p-8 text-center text-xs font-black text-[var(--text-muted)]">{prod.unidade_medida}</td>
                     <td className="p-8 text-center">
                       <span className="text-sm font-black text-blue-600">{cotaMaxima}</span>
-                      {reducaoGlobal > 0 && (
-                        <span className="block text-[8px] font-bold text-amber-500 uppercase mt-0.5">
-                          -{reducaoGlobal}% Ativo
-                        </span>
-                      )}
                     </td>
                     <td className="p-8 px-5">
                       <input 
