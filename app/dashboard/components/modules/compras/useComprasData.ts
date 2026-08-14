@@ -7,6 +7,7 @@ export function useComprasData(user: any) {
   const [requisicoesRaw, setRequisicoesRaw] = useState<any[]>([]);
   const [catalogo, setCatalogo] = useState<any[]>([]);
   const [qtdAsg, setQtdAsg] = useState<number>(1);
+  const [reducaoGlobal, setReducaoGlobal] = useState<number>(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -14,6 +15,12 @@ export function useComprasData(user: any) {
       // 1. Fetch Catálogo (Suprimentos)
       const { data: catData } = await supabase.from('almox_suprimentos').select('*').order('item');
       if (catData) setCatalogo(catData);
+
+      // 1.1 Fetch Redução Global
+      const { data: configRes } = await supabase.from('almox_configuracao').select('percentual_reducao').eq('id', 'config_global').single();
+      if (configRes) {
+        setReducaoGlobal(Number(configRes.percentual_reducao) || 0);
+      }
 
       // 2. Fetch Requisições (Respeitando a hierarquia definida na Fase A)
       let query = supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
@@ -94,6 +101,7 @@ export function useComprasData(user: any) {
     catalogo,
     requisicoesRaw,
     qtdAsg,
+    reducaoGlobal,
     refresh: fetchData,
     enviarRequisicao
   };

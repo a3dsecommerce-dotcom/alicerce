@@ -11,7 +11,7 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import { toast } from "sonner";
 
 export default function ComprasModule({ user, initialTab }: { user: any, initialTab?: string }) {
-  const { loading, catalogo, requisicoesRaw, qtdAsg, enviarRequisicao } = useComprasData(user);
+  const { loading, catalogo, requisicoesRaw, qtdAsg, reducaoGlobal, enviarRequisicao } = useComprasData(user);
   const [activeTab, setActiveTab] = useState<"CATALOGO" | "TRACKING">((initialTab?.toUpperCase() as any) || "CATALOGO");
   
   useEffect(() => {
@@ -157,7 +157,7 @@ export default function ComprasModule({ user, initialTab }: { user: any, initial
                     </button>
                  </div>
               </div>
-              <CatalogoTable catalogo={catalogoFiltrado} qtdAsg={qtdAsg} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} />
+              <CatalogoTable catalogo={catalogoFiltrado} qtdAsg={qtdAsg} reducaoGlobal={reducaoGlobal} volumes={volumes} setVolumes={setVolumes} volumesExtra={volumesExtra} setVolumesExtra={setVolumesExtra} />
           </div>
         ) : (
           <TrackingTable requisicoesAgrupadas={requisicoesAgrupadas} getMesReferencia={getMesReferencia} getTempoAberto={getTempoAberto} onSelect={setSelectedProtocol} />

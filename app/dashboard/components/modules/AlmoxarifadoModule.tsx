@@ -21,9 +21,9 @@ type TabType = "ESTOQUE" | "REQUISICOES" | "FAZER_REQ" | "ENTREGAS_EPI" | "COEFI
 export default function AlmoxarifadoModule({ reducao }: { reducao: number, setReducao: (v: number) => void }) {
   const { 
     loading, estoque, requisicoes, usuarios, ocorrencias, cotasMap,
-    notas, metas, secretarias,
+    notas, metas, secretarias, reducaoGlobal,
     updateItem, insertItem, deleteItem, processarRequisicao, processarEntregaRPC, estornarEntregaRPC, arquivarRequisicao, arquivarProtocolo, refresh,
-    atualizarNumeroStrato, cancelarItemRequisicao
+    atualizarNumeroStrato, cancelarItemRequisicao, salvarReducaoGlobal
   } = useAlmoxData();
 
   const [activeTab, setActiveTab] = useState<TabType>("ESTOQUE");
@@ -330,7 +330,8 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
           {activeTab === "COEFICIENTES" && (
             <CoeficientesTab
               estoque={estoque}
-              metas={metas}
+              reducaoGlobal={reducaoGlobal}
+              onSalvarReducaoGlobal={salvarReducaoGlobal}
               onRefresh={refresh}
             />
           )}

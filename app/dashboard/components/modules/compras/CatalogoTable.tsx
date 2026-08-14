@@ -12,6 +12,7 @@ interface ItemCatalogo {
 interface CatalogoTableProps {
   catalogo: ItemCatalogo[];
   qtdAsg: number;
+  reducaoGlobal?: number;
   volumes: Record<string, number>;
   setVolumes: (v: any) => void;
   volumesExtra: Record<string, number>;
@@ -19,7 +20,7 @@ interface CatalogoTableProps {
 }
 
 export default function CatalogoTable({ 
-  catalogo, qtdAsg, volumes, setVolumes, volumesExtra, setVolumesExtra 
+  catalogo, qtdAsg, reducaoGlobal = 0, volumes, setVolumes, volumesExtra, setVolumesExtra 
 }: CatalogoTableProps) {
   return (
     <div className="overflow-x-auto">
@@ -42,7 +43,8 @@ export default function CatalogoTable({
                 </td>
               </tr>
             ) : catalogo.map((prod) => {
-              const cotaMaxima = Math.floor(qtdAsg * (prod.coeficiente || 1.0));
+              const baseCota = qtdAsg * (prod.coeficiente || 1.0);
+              const cotaMaxima = Math.max(0, Math.floor(baseCota * (1 - reducaoGlobal / 100)));
               const volAtual = volumes[prod.id] || 0;
               const volExtra = volumesExtra[prod.id] || 0;
               
@@ -58,6 +60,11 @@ export default function CatalogoTable({
                     <td className="p-8 text-center text-xs font-black text-[var(--text-muted)]">{prod.unidade_medida}</td>
                     <td className="p-8 text-center">
                       <span className="text-sm font-black text-blue-600">{cotaMaxima}</span>
+                      {reducaoGlobal > 0 && (
+                        <span className="block text-[8px] font-bold text-amber-500 uppercase mt-0.5">
+                          -{reducaoGlobal}% Ativo
+                        </span>
+                      )}
                     </td>
                     <td className="p-8 px-5">
                       <input 

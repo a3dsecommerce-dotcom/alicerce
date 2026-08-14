@@ -14,14 +14,16 @@ export function useAlmoxData() {
   const [notas, setNotas] = useState<any[]>([]);
   const [metas, setMetas] = useState<any[]>([]);
   const [secretarias, setSecretarias] = useState<any[]>([]);
+  const [reducaoGlobal, setReducaoGlobal] = useState<number>(0);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [epiRes, supRes, escRes] = await Promise.all([
+      const [epiRes, supRes, escRes, configRes] = await Promise.all([
         supabase.from('almox_epi').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
         supabase.from('almox_suprimentos').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
-        supabase.from('almox_escritorio').select('*, preco_unitario, coeficiente, secretarias_permitidas')
+        supabase.from('almox_escritorio').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
+        supabase.from('almox_configuracao').select('percentual_reducao').eq('id', 'config_global').single()
       ]);
 
       const combined = [
@@ -31,6 +33,10 @@ export function useAlmoxData() {
       ].sort((a, b) => a.item.localeCompare(b.item));
 
       setEstoque(combined);
+
+      if (configRes.data) {
+        setReducaoGlobal(Number(configRes.data.percentual_reducao) || 0);
+      }
 
       const { data: reqData } = await supabase.from('requisicoes').select('*').order('data_solicitacao', { ascending: false });
       if (reqData) setRequisicoes(reqData);
@@ -221,6 +227,21 @@ export function useAlmoxData() {
     await fetchAll();
   };
 
+  // Salva o percentual de redução global ativa
+  const salvarReducaoGlobal = async (percentual: number) => {
+    const user = JSON.parse(localStorage.getItem("crm_user") || "{}");
+    const { error } = await supabase
+      .from('almox_configuracao')
+      .upsert({
+        id: 'config_global',
+        percentual_reducao: percentual,
+        atualizado_em: new Date().toISOString(),
+        atualizado_por: user?.nome || "Almoxarifado"
+      });
+    if (error) throw error;
+    await fetchAll();
+  };
+
   return {
     loading,
     estoque,
@@ -231,6 +252,7 @@ export function useAlmoxData() {
     notas,
     metas,
     secretarias,
+    reducaoGlobal,
     refresh: fetchAll,
     updateItem,
     insertItem,
@@ -242,6 +264,7 @@ export function useAlmoxData() {
     arquivarProtocolo,
     insertSecretaria,
     atualizarNumeroStrato,
-    cancelarItemRequisicao
+    cancelarItemRequisicao,
+    salvarReducaoGlobal
   };
 }
