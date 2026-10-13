@@ -20,17 +20,21 @@ export function useAlmoxData() {
     setLoading(true);
     try {
       const [epiRes, supRes, escRes, configRes] = await Promise.all([
-        supabase.from('almox_epi').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
-        supabase.from('almox_suprimentos').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
-        supabase.from('almox_escritorio').select('*, preco_unitario, coeficiente, secretarias_permitidas'),
+        supabase.from('almox_epi').select('*'),
+        supabase.from('almox_suprimentos').select('*'),
+        supabase.from('almox_escritorio').select('*'),
         supabase.from('almox_configuracao').select('percentual_reducao').eq('id', 'config_global').single()
       ]);
 
+      if (epiRes.error) console.error("Erro ao carregar almox_epi:", epiRes.error.message);
+      if (supRes.error) console.error("Erro ao carregar almox_suprimentos:", supRes.error.message);
+      if (escRes.error) console.error("Erro ao carregar almox_escritorio:", escRes.error.message);
+
       const combined = [
-        ...(epiRes.data || []),
-        ...(supRes.data || []),
-        ...(escRes.data || [])
-      ].sort((a, b) => a.item.localeCompare(b.item));
+        ...(epiRes.data || []).map((i: any) => ({ ...i, categoria: i.categoria || 'EPI' })),
+        ...(supRes.data || []).map((i: any) => ({ ...i, categoria: i.categoria || 'SUPRIMENTO' })),
+        ...(escRes.data || []).map((i: any) => ({ ...i, categoria: i.categoria || 'ESCRITORIO' }))
+      ].sort((a, b) => (a.item || '').localeCompare(b.item || ''));
 
       setEstoque(combined);
 
@@ -112,14 +116,55 @@ export function useAlmoxData() {
     fetchAll();
   }, [fetchAll]);
 
+  function sanitizePayloadForTable(table: string, raw: any) {
+    const base: any = {
+      item: String(raw.item || '').trim(),
+      categoria: raw.categoria || (table === 'almox_epi' ? 'EPI' : table === 'almox_suprimentos' ? 'SUPRIMENTO' : 'ESCRITORIO'),
+      unidade_medida: raw.unidade_medida || 'UN',
+      quantidade: Number(raw.quantidade) || 0,
+      estoque_minimo: Number(raw.estoque_minimo) || 0,
+    };
+
+    if (raw.codigo_registro !== undefined) {
+      base.codigo_registro = raw.codigo_registro ? String(raw.codigo_registro).trim() : null;
+    }
+    if (raw.tamanho !== undefined) {
+      base.tamanho = raw.tamanho ? String(raw.tamanho).trim() : null;
+    }
+    if (raw.preco_unitario !== undefined) {
+      base.preco_unitario = (raw.preco_unitario === '' || raw.preco_unitario === null) ? 0 : Number(raw.preco_unitario);
+    }
+    if (raw.secretarias_permitidas !== undefined) {
+      base.secretarias_permitidas = Array.isArray(raw.secretarias_permitidas) ? raw.secretarias_permitidas : [];
+    }
+
+    if (table === 'almox_epi') {
+      if (raw.ca !== undefined) {
+        base.ca = raw.ca ? String(raw.ca).trim() : null;
+      }
+      return base;
+    }
+
+    if (table === 'almox_suprimentos') {
+      if (raw.coeficiente !== undefined) {
+        base.coeficiente = (raw.coeficiente === '' || raw.coeficiente === null) ? 1.00 : Number(raw.coeficiente);
+      }
+      return base;
+    }
+
+    return base;
+  }
+
   const updateItem = async (targetTable: string, id: string, payload: any) => {
-    const { error } = await supabase.from(targetTable).update(payload).eq('id', id);
+    const cleanPayload = sanitizePayloadForTable(targetTable, payload);
+    const { error } = await supabase.from(targetTable).update(cleanPayload).eq('id', id);
     if (error) throw error;
     await fetchAll();
   };
 
   const insertItem = async (targetTable: string, payload: any) => {
-    const { error } = await supabase.from(targetTable).insert([payload]);
+    const cleanPayload = sanitizePayloadForTable(targetTable, payload);
+    const { error } = await supabase.from(targetTable).insert([cleanPayload]);
     if (error) throw error;
     await fetchAll();
   };

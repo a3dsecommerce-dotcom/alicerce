@@ -11,6 +11,8 @@ interface ItemEstoque {
   preco_unitario?: number;
   coeficiente?: number;
   secretarias_permitidas?: string[];
+  ca?: string;
+  tamanho?: string;
 }
 
 interface EstoqueTableProps {
@@ -45,6 +47,11 @@ export default function EstoqueTable({ estoque, busca, onEdit }: EstoqueTablePro
               <td className="px-6 py-6 text-center font-mono text-[var(--text-muted)] text-[11px]">{item.codigo_registro || '---'}</td>
               <td className="px-6 py-6">
                 <span className="text-[13px] font-black text-[var(--text-primary)] group-hover:text-[var(--brand)] transition-colors">{item.item}</span>
+                {item.categoria === 'EPI' && (item.ca || item.tamanho) && (
+                  <span className="block text-[9px] font-black text-orange-600 uppercase tracking-wider mt-0.5">
+                    {item.ca ? `CA: ${item.ca}` : ''} {item.ca && item.tamanho ? '· ' : ''}{item.tamanho ? `Tam: ${item.tamanho}` : ''}
+                  </span>
+                )}
                 {item.secretarias_permitidas && item.secretarias_permitidas.length > 0 && (
                   <span className="block text-[8px] font-black text-[var(--brand)]/50 uppercase tracking-widest mt-0.5">
                     {item.secretarias_permitidas.join(' · ')}

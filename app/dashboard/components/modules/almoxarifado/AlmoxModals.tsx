@@ -152,54 +152,56 @@ export default function AlmoxModals({
                </div>
                <div className="col-span-2">
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Descrição do Material *</label>
-                  <input className="input-field w-full font-black" value={formData.item} onChange={e => setFormData({...formData, item: e.target.value})} placeholder="Ex: Bota de Segurança Sete Léguas" />
+                  <input className="input-field w-full font-black" value={formData.item || ''} onChange={e => setFormData({...formData, item: e.target.value})} placeholder="Ex: Bota de Segurança Sete Léguas" />
                </div>
                <div>
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Código Reg.</label>
-                  <input className="input-field w-full font-mono" value={formData.codigo_registro} onChange={e => setFormData({...formData, codigo_registro: e.target.value})} placeholder="Ex: EPI-001" />
+                  <input className="input-field w-full font-mono" value={formData.codigo_registro || ''} onChange={e => setFormData({...formData, codigo_registro: e.target.value})} placeholder="Ex: EPI-001" />
                </div>
                <div>
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Unidade Medida</label>
-                  <input className="input-field w-full" value={formData.unidade_medida} onChange={e => setFormData({...formData, unidade_medida: e.target.value})} placeholder="Ex: UN, PAR, RL" />
+                  <input className="input-field w-full" value={formData.unidade_medida || 'UN'} onChange={e => setFormData({...formData, unidade_medida: e.target.value})} placeholder="Ex: UN, PAR, RL" />
                </div>
                
                {formData.categoria === 'EPI' && (
                   <>
                      <div>
                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">C.A. (Certificado)</label>
-                        <input className="input-field w-full font-black text-orange-600" value={formData.ca} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Ex: 42134" />
+                        <input className="input-field w-full font-black text-orange-600" value={formData.ca || ''} onChange={e => setFormData({...formData, ca: e.target.value})} placeholder="Ex: 42134" />
                      </div>
                      <div>
                         <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Tamanho</label>
-                        <input className="input-field w-full" value={formData.tamanho} onChange={e => setFormData({...formData, tamanho: e.target.value})} placeholder="Ex: G, 42, 40" />
+                        <input className="input-field w-full" value={formData.tamanho || ''} onChange={e => setFormData({...formData, tamanho: e.target.value})} placeholder="Ex: G, 42, 40" />
                      </div>
                   </>
                )}
 
                <div>
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Qtd. em Estoque</label>
-                  <input type="number" className="input-field w-full font-black text-blue-600" value={formData.quantidade} onChange={e => setFormData({...formData, quantidade: Number(e.target.value)})} />
+                  <input type="number" className="input-field w-full font-black text-blue-600" value={formData.quantidade ?? 0} onChange={e => setFormData({...formData, quantidade: Number(e.target.value)})} />
                </div>
                <div>
                   <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block">Estoque Mínimo</label>
-                  <input type="number" className="input-field w-full font-black text-red-600" value={formData.estoque_minimo} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
+                  <input type="number" className="input-field w-full font-black text-red-600" value={formData.estoque_minimo ?? 5} onChange={e => setFormData({...formData, estoque_minimo: Number(e.target.value)})} />
                </div>
-               <div className="col-span-2">
-                  <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block flex items-center gap-2">
-                    Cota Máxima por Requisição <span className="text-orange-500 font-black">★</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input-field w-full font-black text-orange-600"
-                    value={formData.quantidade_maxima ?? 0}
-                    min={0}
-                    onChange={e => setFormData({...formData, quantidade_maxima: Number(e.target.value)})}
-                    placeholder="0 = sem limite configurado"
-                  />
-                  <p className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-wide">
-                    Limite máximo que uma unidade pode solicitar por pedido mensal. Deixe 0 para não restringir.
-                  </p>
-               </div>
+               {formData.categoria === 'SUPRIMENTO' && (
+                 <div className="col-span-2">
+                    <label className="text-[10px] font-black uppercase text-[var(--text-muted)] mb-2 block flex items-center gap-2">
+                      Cota Máxima por Requisição <span className="text-orange-500 font-black">★</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="input-field w-full font-black text-orange-600"
+                      value={formData.quantidade_maxima ?? 0}
+                      min={0}
+                      onChange={e => setFormData({...formData, quantidade_maxima: Number(e.target.value)})}
+                      placeholder="0 = sem limite configurado"
+                    />
+                    <p className="text-[8px] font-bold text-slate-400 uppercase mt-1 tracking-wide">
+                      Limite máximo que uma unidade pode solicitar por pedido mensal. Deixe 0 para não restringir.
+                    </p>
+                 </div>
+               )}
 
                {/* ── PREÇO UNITÁRIO ── */}
                <div>

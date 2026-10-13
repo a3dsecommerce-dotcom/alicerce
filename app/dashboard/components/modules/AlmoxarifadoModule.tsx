@@ -106,7 +106,7 @@ export default function AlmoxarifadoModule({ reducao }: { reducao: number, setRe
       const targetTable = formData.categoria === 'EPI' ? 'almox_epi' : formData.categoria === 'SUPRIMENTO' ? 'almox_suprimentos' : 'almox_escritorio';
       await deleteItem(targetTable, formData.id);
       setModalAberto(null);
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { toast.error(e.message); }
   };
 
   const handleFinalizarPedidoInternal = async () => {
